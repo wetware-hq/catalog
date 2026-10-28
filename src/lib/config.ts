@@ -47,7 +47,7 @@ export function loadConfig(overrides?: Partial<CatalogConfig>): CatalogConfig {
       process.env.CATALOG_X402_PAY_TO ??
       "0x0000000000000000000000000000000000000001",
     maxTimeoutSeconds: Number(process.env.CATALOG_X402_TIMEOUT ?? "120"),
-    description: "Wetware catalog rank operation (peptide agent routing)",
+    description: "Catalog rank operation (peptide agent routing)",
     facilitatorMode:
       (process.env.CATALOG_X402_FACILITATOR_MODE as "mock" | "http") ?? "mock",
     facilitatorUrl: process.env.CATALOG_X402_FACILITATOR_URL,

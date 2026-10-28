@@ -35,7 +35,7 @@ async function main() {
   const json = values.json ?? false;
 
   if (values.help || !cmd) {
-    console.log(`Wetware catalog CLI — ${DISCLAIMER}
+    console.log(`Catalog CLI — ${DISCLAIMER}
 
 Usage:
   catalog list [--domain peptides] [--json]

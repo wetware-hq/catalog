@@ -62,7 +62,7 @@ export function createApp(config: CatalogConfig = loadConfig()) {
     const neg = negotiateJson(c.req.header("accept"));
     if (!neg.ok) return c.text("Not Acceptable", 406);
     const index = {
-      name: "Wetware Biomedical Agent Catalog",
+      name: "Biomedical Agent Catalog",
       version: "0.1.0",
       domains: listDomainIds(),
       links: {

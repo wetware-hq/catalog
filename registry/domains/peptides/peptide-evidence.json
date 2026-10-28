@@ -1,18 +1,18 @@
 {
-  "registryId": "wetware-peptide-evidence",
+  "registryId": "peptide-evidence",
   "domainId": "peptides",
   "agentCard": {
-    "name": "Wetware Peptide Evidence Summarizer",
+    "name": "Peptide Evidence Summarizer",
     "description": "Summarizes multi-model–verified peptide claims (RCT landscape, FDA status) with verification_status labels preserved. Decision support only. Endpoint NOT YET DEPLOYED.",
     "version": "0.1.0",
-    "documentationUrl": "https://github.com/wetware-hq/catalog",
+    "documentationUrl": "/docs/catalog",
     "provider": {
-      "organization": "Wetware",
-      "url": "https://github.com/wetware-hq"
+      "organization": "Catalog project",
+      "url": "http://localhost/catalog"
     },
     "supportedInterfaces": [
       {
-        "url": "https://agents.wetware.health/NOT_DEPLOYED/peptide-evidence/a2a/v1",
+        "url": "http://localhost/NOT_DEPLOYED/peptide-evidence/a2a/v1",
         "protocolBinding": "JSONRPC",
         "protocolVersion": "1.0"
       }

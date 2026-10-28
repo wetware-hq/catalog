@@ -35,15 +35,16 @@ export function getRegistryEntry(registryId: string): CatalogRegistryEntry | und
 }
 
 export function catalogAgentCard(baseUrl: string): AgentCard {
+  const root = baseUrl.replace(/\/$/, "");
   return {
-    name: "Wetware Biomedical Agent Catalog",
+    name: "Biomedical Agent Catalog",
     description:
       "Decision-support catalog that ranks A2A peptide specialist agents from synthetic patient context. Not a prescriber.",
     version: "0.1.0",
-    documentationUrl: "https://github.com/wetware-hq/catalog",
+    documentationUrl: `${root}/docs/catalog`,
     provider: {
-      organization: "Wetware",
-      url: "https://github.com/wetware-hq",
+      organization: "Catalog project",
+      url: root,
     },
     supportedInterfaces: [
       {
@@ -57,7 +58,7 @@ export function catalogAgentCard(baseUrl: string): AgentCard {
       pushNotifications: false,
       extensions: [
         {
-          uri: "https://wetware.health/catalog/v1/rank",
+          uri: `${root}/catalog/v1/rank`,
           description: "Rank registered agents for a patient context (HTTP POST mirror of JSON-RPC method)",
           required: false,
         },
@@ -70,7 +71,7 @@ export function catalogAgentCard(baseUrl: string): AgentCard {
         id: "catalog-rank",
         name: "Rank agents for patient",
         description:
-          "Accepts FHIR R4 Bundle or wetware.simple.v1 JSON; returns ordered agent cards with relevance scores and clinical rationales.",
+          "Accepts FHIR R4 Bundle or catalog.simple.v1 JSON; returns ordered agent cards with relevance scores and clinical rationales.",
         tags: ["catalog", "routing", "peptides", "decision-support"],
         examples: [
           "Rank peptide agents for a synthetic patient with type 2 diabetes seeking weight management",

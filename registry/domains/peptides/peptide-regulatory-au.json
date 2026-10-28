@@ -1,18 +1,18 @@
 {
-  "registryId": "wetware-peptide-regulatory-au",
+  "registryId": "peptide-regulatory-au",
   "domainId": "peptides",
   "agentCard": {
-    "name": "Wetware Peptide Regulatory (Australia)",
+    "name": "Peptide Regulatory Advisor (Australia)",
     "description": "Australian regulatory decision-support: TGA ARTG presence, Poisons Standard (incl. Appendix D), and WADA S0/GHRP listing checks. NOT a prescriber. Endpoint NOT YET DEPLOYED.",
     "version": "0.1.0",
-    "documentationUrl": "https://github.com/wetware-hq/catalog",
+    "documentationUrl": "/docs/catalog",
     "provider": {
-      "organization": "Wetware",
-      "url": "https://github.com/wetware-hq"
+      "organization": "Catalog project",
+      "url": "http://localhost/catalog"
     },
     "supportedInterfaces": [
       {
-        "url": "https://agents.wetware.health/NOT_DEPLOYED/peptide-regulatory-au/a2a/v1",
+        "url": "http://localhost/NOT_DEPLOYED/peptide-regulatory-au/a2a/v1",
         "protocolBinding": "JSONRPC",
         "protocolVersion": "1.0"
       }

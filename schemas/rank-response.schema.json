@@ -1,6 +1,6 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://wetware.health/schemas/rank-response.schema.json",
+  "$id": "rank-response.schema.json",
   "title": "Catalog rank response",
   "type": "object",
   "required": ["domainId", "disclaimer", "rankedAgents"],

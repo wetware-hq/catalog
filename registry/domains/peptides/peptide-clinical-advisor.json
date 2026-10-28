@@ -1,18 +1,18 @@
 {
-  "registryId": "wetware-peptide-clinical-advisor",
+  "registryId": "peptide-clinical-advisor",
   "domainId": "peptides",
   "agentCard": {
-    "name": "Wetware Peptide Clinical Advisor",
+    "name": "Peptide Clinical Advisor",
     "description": "Holistic peptide decision-support for clinicians (NOT a prescriber). Synthesizes patient context into interpretable peptide themes, routes to evidence and regulatory checks. Endpoint NOT YET DEPLOYED.",
     "version": "0.1.0",
-    "documentationUrl": "https://github.com/wetware-hq/catalog",
+    "documentationUrl": "/docs/catalog",
     "provider": {
-      "organization": "Wetware",
-      "url": "https://github.com/wetware-hq"
+      "organization": "Catalog project",
+      "url": "http://localhost/catalog"
     },
     "supportedInterfaces": [
       {
-        "url": "https://agents.wetware.health/NOT_DEPLOYED/peptide-clinical-advisor/a2a/v1",
+        "url": "http://localhost/NOT_DEPLOYED/peptide-clinical-advisor/a2a/v1",
         "protocolBinding": "JSONRPC",
         "protocolVersion": "1.0"
       }

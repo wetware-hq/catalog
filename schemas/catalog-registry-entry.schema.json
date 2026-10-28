@@ -1,7 +1,7 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://wetware.health/schemas/catalog-registry-entry.schema.json",
-  "title": "Wetware catalog registry entry",
+  "$id": "catalog-registry-entry.schema.json",
+  "title": "Catalog registry entry",
   "description": "An A2A AgentCard plus catalog metadata for routing. Domain-specific fields live under extensions, not inside the AgentCard core object.",
   "type": "object",
   "required": ["registryId", "domainId", "agentCard"],

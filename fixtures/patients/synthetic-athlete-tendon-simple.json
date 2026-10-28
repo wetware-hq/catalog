@@ -1,5 +1,5 @@
 {
-  "format": "wetware.simple.v1",
+  "format": "catalog.simple.v1",
   "id": "syn-athlete-001",
   "displayName": "Synthetic Athlete (tendon injury)",
   "ageYears": 28,

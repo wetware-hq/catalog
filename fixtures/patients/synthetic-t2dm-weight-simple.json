@@ -1,5 +1,5 @@
 {
-  "format": "wetware.simple.v1",
+  "format": "catalog.simple.v1",
   "id": "syn-t2dm-002",
   "displayName": "Synthetic Adult (T2DM + obesity)",
   "ageYears": 52,

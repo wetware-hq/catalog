@@ -1,6 +1,6 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://wetware.health/schemas/rank-request.schema.json",
+  "$id": "rank-request.schema.json",
   "title": "Catalog rank request",
   "type": "object",
   "required": ["domainId", "patient"],
@@ -19,7 +19,7 @@
       "type": "object",
       "required": ["id", "displayName"],
       "properties": {
-        "format": { "const": "wetware.simple.v1" },
+        "format": { "const": "catalog.simple.v1" },
         "id": { "type": "string" },
         "displayName": { "type": "string" },
         "ageYears": { "type": "number" },

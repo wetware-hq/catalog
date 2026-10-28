@@ -1,8 +1,8 @@
-# Wetware Biomedical Agent Catalog
+# Biomedical Agent Catalog
 
 A2A ([Agent2Agent](https://github.com/a2aproject/A2A)) catalog that ranks peptide specialist agents from **synthetic** patient context. Terminal-native CLI for humans; HTTP + JSON-RPC for agents. **Decision support only — not a prescriber.**
 
-Maintainer: [Wetware](https://github.com/wetware-hq) (open-source biomedical agent catalog). Domain `peptides` is seeded; schema supports future domains (e.g. infectious disease, psychiatry) without restructuring.
+Open-source A2A catalog for routing synthetic patient context to specialist agents. Domain `peptides` is seeded; schema supports future domains (e.g. infectious disease, psychiatry) without restructuring.
 
 ## Architecture
 
@@ -29,7 +29,7 @@ Maintainer: [Wetware](https://github.com/wetware-hq) (open-source biomedical age
 | **Catalog AgentCard** | This repo’s catalog is itself an A2A server (`/.well-known/agent-card.json`) with skills `catalog-rank` and `catalog-list`. |
 | **Registry entry** | `registryId`, `domainId`, `agentCard`, plus catalog-only `routing` and `skillEvidence` (claim_id refs). JSON Schema: `schemas/catalog-registry-entry.schema.json`. |
 | **Evidence** | Multi-model–verified peptide claims, reduced to ~1.4 MB `data/evidence/peptide-claims.compact.json` with `verification_status` preserved. See `data/evidence/PROVENANCE.md`. |
-| **Patient input** | `wetware.simple.v1` JSON or FHIR R4 `Bundle` (Patient + Condition / Goal / Observation / MedicationStatement / AllergyIntolerance). |
+| **Patient input** | `catalog.simple.v1` JSON or FHIR R4 `Bundle` (Patient + Condition / Goal / Observation / MedicationStatement / AllergyIntolerance). |
 | **x402 (optional)** | Config-gated payment on `POST /catalog/v1/rank` only ([x402 v1 HTTP transport](https://github.com/coinbase/x402/blob/main/specs/transports-v1/http.md): `402` + `accepts[]`, `X-PAYMENT`, `X-PAYMENT-RESPONSE`). Mock facilitator by default for offline tests. |
 
 ## Quick start
@@ -48,7 +48,7 @@ npm run catalog -- list --domain peptides
 npm run catalog -- list --domain peptides
 
 # Show one registry entry (A2A card + routing metadata)
-npm run catalog -- show wetware-peptide-regulatory-au
+npm run catalog -- show peptide-regulatory-au
 
 # Rank agents for a synthetic patient (human-readable)
 npm run catalog -- rank --patient fixtures/patients/synthetic-athlete-tendon-simple.json
@@ -80,13 +80,13 @@ Patient: Synthetic Athlete (tendon injury) (syn-athlete-001)
 Inferred peptide themes: bpc-157, tb-500
 
 Ranked agents:
-1. wetware-peptide-clinical-advisor  score=0.87
+1. peptide-clinical-advisor  score=0.87
    ... Top skill "holistic-peptide-recommendation" ...
    regulatory:
      ! Patient flagged as seeking compounded peptides — verify TGA ...
      ! [bpc-157] Verified claim 4d0b84024d846a41: no TGA ARTG entry located (confirmed_2of2).
 
-2. wetware-peptide-regulatory-au  score=0.78
+2. peptide-regulatory-au  score=0.78
    ... Top skill "wada-prohibited-list" ...
 ```
 
@@ -129,7 +129,7 @@ curl -sS -D - -o /tmp/rank402.json \
   -X POST http://127.0.0.1:8787/catalog/v1/rank \
   -H 'Content-Type: application/json' \
   -d @- <<'EOF'
-{"domainId":"peptides","patient":{"format":"wetware.simple.v1","id":"x","displayName":"Test","clinicalGoals":["weight management","obesity"],"countryCode":"AU"},"limit":3}
+{"domainId":"peptides","patient":{"format":"catalog.simple.v1","id":"x","displayName":"Test","clinicalGoals":["weight management","obesity"],"countryCode":"AU"},"limit":3}
 EOF
 ```
 
@@ -147,7 +147,7 @@ curl -sS -D - \
   -X POST http://127.0.0.1:8787/catalog/v1/rank \
   -H 'Content-Type: application/json' \
   -H "X-PAYMENT: $PAYMENT" \
-  -d '{"domainId":"peptides","patient":{"format":"wetware.simple.v1","id":"x","displayName":"Test","clinicalGoals":["obesity"],"countryCode":"AU"}}'
+  -d '{"domainId":"peptides","patient":{"format":"catalog.simple.v1","id":"x","displayName":"Test","clinicalGoals":["obesity"],"countryCode":"AU"}}'
 ```
 
 On success, the response includes `X-PAYMENT-RESPONSE` (base64 `SettlementResponse`) and ranked agents in the body.

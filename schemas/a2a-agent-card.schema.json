@@ -1,6 +1,6 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://wetware.health/schemas/a2a-agent-card.schema.json",
+  "$id": "a2a-agent-card.schema.json",
   "title": "A2A AgentCard (subset enforced by catalog registry)",
   "description": "Aligns with A2A v1.0 AgentCard required fields. See https://github.com/a2aproject/A2A/blob/main/docs/specification.md",
   "type": "object",

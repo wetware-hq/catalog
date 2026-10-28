@@ -51,7 +51,7 @@ export function buildPaymentRequirements(
     mimeType: "application/json",
     outputSchema: null,
     maxTimeoutSeconds: cfg.maxTimeoutSeconds,
-    extra: { catalog: "wetware-rank-v1" },
+    extra: { catalog: "catalog-rank-v1" },
   };
 }
 

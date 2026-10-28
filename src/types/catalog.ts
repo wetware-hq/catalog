@@ -52,7 +52,7 @@ export type CatalogRegistryEntry = {
 };
 
 export type SimplePatient = {
-  format?: "wetware.simple.v1";
+  format?: "catalog.simple.v1";
   id: string;
   displayName: string;
   ageYears?: number;
