@@ -1,0 +1,72 @@
+{
+  "registryId": "wetware-peptide-evidence",
+  "domainId": "peptides",
+  "agentCard": {
+    "name": "Wetware Peptide Evidence Summarizer",
+    "description": "Summarizes fleet-verified peptide claims (RCT landscape, FDA status) with verification_status labels preserved. Decision support only. Endpoint NOT YET DEPLOYED.",
+    "version": "0.1.0",
+    "documentationUrl": "https://github.com/wetware-hq/catalog",
+    "provider": {
+      "organization": "Wetware",
+      "url": "https://github.com/wetware-hq"
+    },
+    "supportedInterfaces": [
+      {
+        "url": "https://agents.wetware.health/NOT_DEPLOYED/peptide-evidence/a2a/v1",
+        "protocolBinding": "JSONRPC",
+        "protocolVersion": "1.0"
+      }
+    ],
+    "capabilities": {
+      "streaming": false,
+      "pushNotifications": false
+    },
+    "defaultInputModes": ["application/json"],
+    "defaultOutputModes": ["application/json"],
+    "skills": [
+      {
+        "id": "evidence-summary",
+        "name": "Evidence summary",
+        "description": "Returns human-readable evidence summaries tied to claim_id references and verification_status verbatim.",
+        "tags": ["evidence", "rct", "systematic"]
+      },
+      {
+        "id": "fda-approval-landscape",
+        "name": "FDA approval landscape",
+        "description": "Surfaces FDA-status fleet claims; unverified claims remain explicitly labeled.",
+        "tags": ["evidence", "fda", "regulatory"]
+      }
+    ]
+  },
+  "routing": {
+    "priority": 30,
+    "indicationTags": ["metabolic", "t2dm", "gh-axis", "hiv"],
+    "peptideSlugs": ["tirzepatide", "semaglutide", "tesamorelin", "bpc-157", "ipamorelin"]
+  },
+  "skillEvidence": {
+    "evidence-summary": [
+      {
+        "claim_id": "9c42ed7bee8fce9b",
+        "verification_status": "confirmed_2of2",
+        "verified": true
+      },
+      {
+        "claim_id": "4cfe89d1facf5c4c",
+        "verification_status": "confirmed_2of2_same_family",
+        "verified": true
+      }
+    ],
+    "fda-approval-landscape": [
+      {
+        "claim_id": "4e4f9ac4d0599b9c",
+        "verification_status": "confirmed_2of2",
+        "verified": true
+      },
+      {
+        "claim_id": "6832afc477c98623",
+        "verification_status": "confirmed_2of2",
+        "verified": true
+      }
+    ]
+  }
+}

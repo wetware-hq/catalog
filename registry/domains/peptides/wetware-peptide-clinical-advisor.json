@@ -1,0 +1,70 @@
+{
+  "registryId": "wetware-peptide-clinical-advisor",
+  "domainId": "peptides",
+  "agentCard": {
+    "name": "Wetware Peptide Clinical Advisor",
+    "description": "Holistic peptide decision-support for clinicians (NOT a prescriber). Synthesizes patient context into interpretable peptide themes, routes to evidence and regulatory checks. Endpoint NOT YET DEPLOYED.",
+    "version": "0.1.0",
+    "documentationUrl": "https://github.com/wetware-hq/catalog",
+    "provider": {
+      "organization": "Wetware",
+      "url": "https://github.com/wetware-hq"
+    },
+    "supportedInterfaces": [
+      {
+        "url": "https://agents.wetware.health/NOT_DEPLOYED/peptide-clinical-advisor/a2a/v1",
+        "protocolBinding": "JSONRPC",
+        "protocolVersion": "1.0"
+      }
+    ],
+    "capabilities": {
+      "streaming": true,
+      "pushNotifications": false,
+      "extensions": []
+    },
+    "defaultInputModes": ["application/json", "application/fhir+json"],
+    "defaultOutputModes": ["application/json"],
+    "skills": [
+      {
+        "id": "holistic-peptide-recommendation",
+        "name": "Holistic peptide recommendation",
+        "description": "Maps synthetic patient goals and conditions to peptide options with explicit uncertainty and non-prescribing framing.",
+        "tags": ["peptides", "holistic", "decision-support", "metabolic", "tissue-repair"],
+        "examples": ["Patient with obesity and T2DM seeking GLP-1 class options"]
+      },
+      {
+        "id": "contraindication-interaction-screen",
+        "name": "Contraindication and interaction screen",
+        "description": "Flags pregnancy, athlete status, drug interactions, and allergy-driven exclusions for peptide routing.",
+        "tags": ["safety", "contraindication", "interactions"]
+      }
+    ]
+  },
+  "routing": {
+    "priority": 10,
+    "indicationTags": ["metabolic", "glp1", "t2dm", "tissue-repair", "recovery", "reproductive", "cosmetic"],
+    "contraindicationTags": ["pregnancy", "cancer", "active-malignancy"],
+    "peptideSlugs": ["tirzepatide", "semaglutide", "bpc-157", "tb-500", "kisspeptin-10", "ghk-cu"]
+  },
+  "skillEvidence": {
+    "holistic-peptide-recommendation": [
+      {
+        "claim_id": "0e07607a57d1ca8b",
+        "verification_status": "confirmed_2of2_same_family",
+        "verified": true
+      },
+      {
+        "claim_id": "3f8b70f36a66063b",
+        "verification_status": "confirmed_2of3",
+        "verified": true
+      }
+    ],
+    "contraindication-interaction-screen": [
+      {
+        "claim_id": "dbf5061a83e046e7",
+        "verification_status": "confirmed_2of3",
+        "verified": true
+      }
+    ]
+  }
+}
