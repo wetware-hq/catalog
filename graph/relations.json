@@ -4,5 +4,11 @@
       { "domain": "item", "range": "item" }
     ],
     "transitive": false
+  },
+  "price": {
+    "domain_range": [
+      { "domain": "item", "range": "literal" }
+    ],
+    "transitive": false
   }
 }

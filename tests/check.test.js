@@ -27,16 +27,7 @@ const SRC1 = [{ source: "ref-1", date: "2026-01-01", licence: "CC0-1.0" }];
 const SRC2 = [{ source: "ref-2", date: "2026-01-02", licence: "CC0-1.0" }];
 
 function node(id, extra = {}) {
-  return canonicalLine(
-    {
-      id,
-      category: ["item"],
-      properties: {},
-      sources: SRC1,
-      ...extra,
-    },
-    "node",
-  );
+  return canonicalLine({ id, category: ["item"], sources: SRC1, ...extra }, "node");
 }
 
 function parseNode(line) {
@@ -45,21 +36,17 @@ function parseNode(line) {
 
 function edge(subj, pred, obj, extra = {}) {
   return canonicalLine(
-    {
-      subject: subj,
-      predicate: pred,
-      object: obj,
-      qualifiers: {},
-      sources: SRC1,
-      ...extra,
-    },
+    { subject: subj, predicate: pred, object: obj, qualifiers: {}, sources: SRC1, ...extra },
     "edge",
   );
 }
 
+function lit(value) {
+  return { value };
+}
+
 function asGraph(nodeLines, edgeLines) {
   const nodes = nodeLines.map(parseNode).sort((a, b) => (a.id < b.id ? -1 : a.id > b.id ? 1 : 0));
-  const edges = edgeLines.map((l) => JSON.parse(l));
   return {
     nodesText: nodes.map((n) => canonicalLine(n, "node")).join("\n"),
     edgesText: edgeLines.join("\n"),
@@ -111,6 +98,13 @@ test("unknown node category fails without edges", () => {
   assert.ok(issues.some((m) => m.includes('unknown category "missing_cat"')));
 });
 
+test("node properties are rejected", () => {
+  const raw =
+    '{"category":["item"],"id":"a","properties":{"x":1},"sources":[{"date":"2026-01-01","licence":"CC0-1.0","source":"ref-1"}]}';
+  const issues = validateGraph({ nodesText: raw, edgesText: "", ...loadVocab() });
+  assert.ok(issues.some((m) => m.includes("properties are not supported")));
+});
+
 test("category cycle fails", () => {
   const issues = validateCategoryVocabulary({ a: ["b"], b: ["a"] });
   assert.ok(issues.some((m) => m.includes("cycle")));
@@ -142,7 +136,7 @@ test("non-canonical node line order fails", () => {
 test("non-canonical key order fails", () => {
   const vocab = loadVocab();
   const raw =
-    '{"id":"a","category":["item"],"properties":{},"sources":[{"date":"2026-01-01","licence":"CC0-1.0","source":"ref-1"}]}';
+    '{"id":"a","category":["item"],"sources":[{"date":"2026-01-01","licence":"CC0-1.0","source":"ref-1"}]}';
   const issues = validateGraph({ nodesText: raw, edgesText: "", ...vocab });
   assert.ok(issues.some((m) => m.includes("not canonical")));
 });
@@ -150,34 +144,18 @@ test("non-canonical key order fails", () => {
 test("duplicate categories fail canonical check", () => {
   const vocab = loadVocab();
   const raw =
-    '{"category":["item","item"],"id":"a","properties":{},"sources":[{"date":"2026-01-01","licence":"CC0-1.0","source":"ref-1"}]}';
+    '{"category":["item","item"],"id":"a","sources":[{"date":"2026-01-01","licence":"CC0-1.0","source":"ref-1"}]}';
   const issues = validateGraph({ nodesText: raw, edgesText: "", ...vocab });
   assert.ok(issues.some((m) => m.includes("sorted unique")));
 });
 
 test("merge unions shared node and is byte-identical both orders", () => {
   const left = {
-    nodes: [
-      parseNode(
-        node("shared", {
-          category: ["item"],
-          sources: SRC1,
-          properties: { note: { value: "L", sources: SRC1 } },
-        }),
-      ),
-    ],
+    nodes: [parseNode(node("shared", { category: ["item"], sources: SRC1 }))],
     edges: [],
   };
   const right = {
-    nodes: [
-      parseNode(
-        node("shared", {
-          category: ["entity"],
-          sources: SRC2,
-          properties: { note: { value: "L", sources: SRC2 } },
-        }),
-      ),
-    ],
+    nodes: [parseNode(node("shared", { category: ["entity"], sources: SRC2 }))],
     edges: [],
   };
   const ab = graphBytes(mergeGraphs(left, right));
@@ -187,6 +165,22 @@ test("merge unions shared node and is byte-identical both orders", () => {
   assert.ok(ab.includes('"entity"') && ab.includes('"item"'));
 });
 
+test("conflicting attribute values merge as two literal edges with identical bytes", () => {
+  const x = parseNode(node("x"));
+  const left = {
+    nodes: [x],
+    edges: [JSON.parse(edge("x", "price", lit(10)))],
+  };
+  const right = {
+    nodes: [x],
+    edges: [JSON.parse(edge("x", "price", lit(12), { sources: SRC2 }))],
+  };
+  const ab = graphBytes(mergeGraphs(left, right));
+  const ba = graphBytes(mergeGraphs(right, left));
+  assert.equal(ab, ba);
+  assert.ok(ab.includes('"value":10') && ab.includes('"value":12'));
+});
+
 test("merge is commutative, associative, and idempotent on non-identical graphs", () => {
   const g1 = {
     nodes: [parseNode(node("a")), parseNode(node("b", { sources: SRC1 }))],
@@ -194,7 +188,7 @@ test("merge is commutative, associative, and idempotent on non-identical graphs"
   };
   const g2 = {
     nodes: [parseNode(node("b", { category: ["entity", "item"], sources: SRC2 })), parseNode(node("c"))],
-    edges: [JSON.parse(edge("b", "links_to", "c"))],
+    edges: [JSON.parse(edge("b", "links_to", "c")), JSON.parse(edge("c", "price", lit(3)))],
   };
   const g3 = { nodes: [parseNode(node("d", { sources: SRC2 }))], edges: [] };
 

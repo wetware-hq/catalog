@@ -3,8 +3,8 @@ import { join } from "node:path";
 import { fileURLToPath } from "node:url";
 
 /** @typedef {{ source: string, date: string, licence: string }} Source */
-/** @typedef {{ id: string, category: string[], properties?: Record<string, { value?: unknown, sources: Source[] }>, sources: Source[] }} Node */
-/** @typedef {{ subject: string, predicate: string, object: string, qualifiers?: Record<string, unknown>, sources: Source[] }} Edge */
+/** @typedef {{ id: string, category: string[], sources: Source[] }} Node */
+/** @typedef {{ subject: string, predicate: string, object: string | { value: unknown }, qualifiers?: Record<string, unknown>, sources: Source[] }} Edge */
 
 export function cmp(a, b) {
   if (a < b) return -1;
@@ -37,17 +37,26 @@ export function canonicalizeCategories(cats) {
   return [...new Set(cats ?? [])].sort(cmp);
 }
 
+export function isLiteralObject(object) {
+  return (
+    object !== null &&
+    typeof object === "object" &&
+    !Array.isArray(object) &&
+    Object.keys(object).length === 1 &&
+    "value" in object
+  );
+}
+
+export function canonicalizeObject(object) {
+  if (typeof object === "string") return object;
+  if (isLiteralObject(object)) return sortKeys(object);
+  return object;
+}
+
 export function canonicalizeNode(node) {
-  const properties = {};
-  for (const [key, prop] of Object.entries(node.properties ?? {})) {
-    if (prop && typeof prop === "object") {
-      properties[key] = sortKeys({ ...prop, sources: canonicalizeSources(prop.sources) });
-    }
-  }
   return sortKeys({
     id: node.id,
     category: canonicalizeCategories(node.category),
-    properties,
     sources: canonicalizeSources(node.sources),
   });
 }
@@ -56,7 +65,7 @@ export function canonicalizeEdge(edge) {
   return sortKeys({
     subject: edge.subject,
     predicate: edge.predicate,
-    object: edge.object,
+    object: canonicalizeObject(edge.object),
     qualifiers: sortKeys(edge.qualifiers ?? {}),
     sources: canonicalizeSources(edge.sources),
   });
@@ -79,9 +88,14 @@ export function parseJsonl(text) {
   });
 }
 
+export function edgeObjectKey(object) {
+  if (typeof object === "string") return `\0id\0${object}`;
+  return `\0lit\0${JSON.stringify(sortKeys(object))}`;
+}
+
 export function edgeSortKey(edge) {
   const q = JSON.stringify(sortKeys(edge.qualifiers ?? {}));
-  return `${edge.subject}\0${edge.predicate}\0${edge.object}\0${q}`;
+  return `${edge.subject}\0${edge.predicate}\0${edgeObjectKey(edge.object)}\0${q}`;
 }
 
 export function checkSources(sources, path) {
@@ -170,23 +184,21 @@ function checkCanonicalLines(text, records, kind) {
 }
 
 function mergeNodes(a, b) {
-  const properties = { ...(a.properties ?? {}) };
-  for (const [key, prop] of Object.entries(b.properties ?? {})) {
-    const left = properties[key];
-    properties[key] = left
-      ? { ...left, ...prop, sources: [...(left.sources ?? []), ...(prop?.sources ?? [])] }
-      : prop;
-  }
   return canonicalizeNode({
     id: a.id,
     category: [...(a.category ?? []), ...(b.category ?? [])],
-    properties,
     sources: [...(a.sources ?? []), ...(b.sources ?? [])],
   });
 }
 
 function mergeEdges(a, b) {
   return canonicalizeEdge({ ...a, sources: [...(a.sources ?? []), ...(b.sources ?? [])] });
+}
+
+function endpointCategories(object, byId) {
+  if (isLiteralObject(object)) return ["literal"];
+  const node = byId.get(object);
+  return node?.category ?? [];
 }
 
 /**
@@ -208,6 +220,7 @@ export function validateGraph(input) {
     const n = nodes[i];
     const p = `nodes[${i}]`;
     if (typeof n.id !== "string" || n.id === "") issues.push(`${p}.id: required non-empty string`);
+    if ("properties" in n) issues.push(`${p}: node properties are not supported; use literal-object edges`);
     if (!Array.isArray(n.category) || n.category.length === 0) issues.push(`${p}.category: required non-empty array`);
     else {
       for (const c of n.category) {
@@ -223,28 +236,21 @@ export function validateGraph(input) {
     if (JSON.stringify(canonSrc) !== JSON.stringify(sortKeys(n.sources))) {
       issues.push(`${p}.sources: must be sorted and deduplicated`);
     }
-    if (n.properties != null) {
-      if (typeof n.properties !== "object" || Array.isArray(n.properties)) {
-        issues.push(`${p}.properties: must be an object when present`);
-      } else {
-        for (const [key, prop] of Object.entries(n.properties)) {
-          if (prop && typeof prop === "object" && "sources" in prop) {
-            issues.push(...checkSources(prop.sources, `${p}.properties.${key}`));
-            const cs = canonicalizeSources(prop.sources);
-            if (JSON.stringify(cs) !== JSON.stringify(sortKeys(prop.sources))) {
-              issues.push(`${p}.properties.${key}.sources: must be sorted and deduplicated`);
-            }
-          }
-        }
-      }
-    }
   }
 
   for (let i = 0; i < edges.length; i++) {
     const e = edges[i];
     const p = `edges[${i}]`;
-    for (const field of ["subject", "predicate", "object"]) {
-      if (typeof e[field] !== "string" || e[field] === "") issues.push(`${p}.${field}: required non-empty string`);
+    if (typeof e.subject !== "string" || e.subject === "") issues.push(`${p}.subject: required non-empty string`);
+    if (typeof e.predicate !== "string" || e.predicate === "") issues.push(`${p}.predicate: required non-empty string`);
+    if (typeof e.object === "string") {
+      if (e.object === "") issues.push(`${p}.object: required non-empty string`);
+      else if (!byId.has(e.object)) issues.push(`${p}: object node "${e.object}" missing`);
+    } else if (isLiteralObject(e.object)) {
+      const litCanon = JSON.stringify(sortKeys(e.object));
+      if (JSON.stringify(e.object) !== litCanon) issues.push(`${p}.object: literal must be canonical {"value":...}`);
+    } else {
+      issues.push(`${p}.object: must be a node id string or {"value":...} literal`);
     }
     if (e.qualifiers != null && (typeof e.qualifiers !== "object" || Array.isArray(e.qualifiers))) {
       issues.push(`${p}.qualifiers: must be an object when present`);
@@ -255,19 +261,18 @@ export function validateGraph(input) {
       issues.push(`${p}.sources: must be sorted and deduplicated`);
     }
     if (!byId.has(e.subject)) issues.push(`${p}: subject node "${e.subject}" missing`);
-    if (!byId.has(e.object)) issues.push(`${p}: object node "${e.object}" missing`);
     const def = relations[e.predicate];
     if (!def) {
       issues.push(`${p}: unknown predicate "${e.predicate}"`);
       continue;
     }
     const subj = byId.get(e.subject);
-    const obj = byId.get(e.object);
-    if (subj && obj && Array.isArray(def.domain_range)) {
+    const objCats = endpointCategories(e.object, byId);
+    if (subj && objCats.length && Array.isArray(def.domain_range)) {
       const ok = def.domain_range.some(
-        ({ domain, range }) => subsumes(ancestors, subj.category, domain) && subsumes(ancestors, obj.category, range),
+        ({ domain, range }) => subsumes(ancestors, subj.category, domain) && subsumes(ancestors, objCats, range),
       );
-      if (!ok) issues.push(`${p}: node categories violate domain/range for "${e.predicate}"`);
+      if (!ok) issues.push(`${p}: categories violate domain/range for "${e.predicate}"`);
     }
   }
 
