@@ -32,6 +32,11 @@ requirements:
     title: Git blob oid sidecar + REFERENCES.md in sync
     check: npm run check
 
+  - id: REQ-KGX-001
+    title: KGX Biolink graph JSONL (registry + evidence), merge semilattice, repopulability
+    tests: [tests/graph-merge.test.ts]
+    check: npm run check
+
   - id: REQ-SE-001
-    title: Systems-engineering artifacts (schemas, requirements, ADRs, architecture)
+    title: Systems-engineering artifacts (schemas, requirements, ADRs, architecture, graph)
     tests: [tests/validate.test.ts]

@@ -107,6 +107,8 @@ All responses are `Content-Type: application/json`. Default listen: `127.0.0.1:8
 
 Errors: **400** invalid JSON or schema, **404** unknown path, **405** wrong method, **413** body &gt; 64 KiB, **500** generic JSON `{ "error": "…" }` (no stack traces). Use CLI `list` / `show` for registry browsing.
 
+**KGX graph:** Biolink JSONL at `graph/nodes.jsonl` and `graph/edges.jsonl` (pure build from registry + evidence; `npm run build:graph`). Catalog AgentCard skill `catalog-kgx` points at these artifacts — no extra HTTP route.
+
 ## Adding a domain or agent
 
 1. Create `registry/domains/<domainId>/<registryId>.json` matching `schemas/catalog-registry-entry.schema.json`.

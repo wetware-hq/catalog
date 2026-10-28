@@ -8,9 +8,10 @@
   },
   "scripts": {
     "build:evidence": "tsx scripts/build-evidence.ts",
-    "prebuild": "npm run build:evidence",
+    "build:graph": "tsx scripts/build-graph.ts",
+    "prebuild": "npm run build:evidence && npm run build:graph",
     "build": "tsc && node --input-type=module -e \"import fs from 'fs'; fs.chmodSync('dist/bin/catalog.js', 0o755);\"",
-    "check": "tsx scripts/build-evidence.ts --check",
+    "check": "tsx scripts/build-evidence.ts --check && tsx scripts/build-graph.ts --check",
     "catalog": "tsx src/bin/catalog.ts",
     "start": "node dist/bin/catalog.js serve",
     "test": "vitest run"

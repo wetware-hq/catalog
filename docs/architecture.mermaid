@@ -11,14 +11,16 @@ flowchart TB
     CORP[corpus.ts evidence load]
     CFG[config.ts]
     SRV[server.ts + Ajv schemas]
+    GBUILD[build-graph.ts pure buildGraph]
   end
 
   subgraph data [Data and contracts]
     REGJSON[registry/domains/*.json]
     SCHEMAS[schemas/*.json]
     EVID[data/evidence/peptide-claims.compact.json]
-    SHA[data/evidence/peptide-claims.compact.sha256]
+    GITOID[data/evidence/peptide-claims.compact.gitoid]
     REFS[data/evidence/REFERENCES.md]
+    KGX[graph/nodes.jsonl + edges.jsonl]
     FIX[fixtures/patients/*.json]
   end
 
@@ -42,6 +44,10 @@ flowchart TB
   PAT --> FIX
   CORP --> EVID
   BUILD --> EVID
-  CHK --> SHA
+  GBUILD --> REGJSON
+  GBUILD --> EVID
+  GBUILD --> KGX
+  CHK --> GITOID
   CHK --> REFS
+  CHK --> KGX
   TST --> HTTP

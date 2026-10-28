@@ -59,17 +59,6 @@ export function catalogAgentCard(baseUrl: string): AgentCard {
         protocolVersion: "1.0",
       },
     ],
-    capabilities: {
-      streaming: false,
-      pushNotifications: false,
-      extensions: [
-        {
-          uri: `${root}/catalog/v1/rank`,
-          description: "Rank registered agents for a patient context (HTTP POST mirror of JSON-RPC method)",
-          required: false,
-        },
-      ],
-    },
     defaultInputModes: ["application/json", "application/fhir+json"],
     defaultOutputModes: ["application/json"],
     skills: [
@@ -91,7 +80,35 @@ export function catalogAgentCard(baseUrl: string): AgentCard {
         description: "Returns registered agent cards for a biomedical domain.",
         tags: ["catalog", "registry"],
       },
+      {
+        id: "catalog-kgx",
+        name: "Catalog KGX graph (Biolink JSONL)",
+        description:
+          "Committed KGX export at graph/nodes.jsonl and graph/edges.jsonl (registry + evidence; regenerate via npm run build:graph).",
+        tags: ["kgx", "biolink", "graph"],
+      },
     ],
+    capabilities: {
+      streaming: false,
+      pushNotifications: false,
+      extensions: [
+        {
+          uri: `${root}/catalog/v1/rank`,
+          description: "Rank registered agents for a patient context (HTTP POST mirror of JSON-RPC method)",
+          required: false,
+        },
+        {
+          uri: "catalog:artifact:graph/nodes.jsonl",
+          description: "KGX node stream (Biolink categories, CURIE ids)",
+          required: false,
+        },
+        {
+          uri: "catalog:artifact:graph/edges.jsonl",
+          description: "KGX edge stream (biolink predicates, sources, publications)",
+          required: false,
+        },
+      ],
+    },
   };
 }
 
