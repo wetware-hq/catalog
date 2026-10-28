@@ -3,7 +3,7 @@
   "domainId": "peptides",
   "agentCard": {
     "name": "Wetware Peptide Evidence Summarizer",
-    "description": "Summarizes fleet-verified peptide claims (RCT landscape, FDA status) with verification_status labels preserved. Decision support only. Endpoint NOT YET DEPLOYED.",
+    "description": "Summarizes multi-model–verified peptide claims (RCT landscape, FDA status) with verification_status labels preserved. Decision support only. Endpoint NOT YET DEPLOYED.",
     "version": "0.1.0",
     "documentationUrl": "https://github.com/wetware-hq/catalog",
     "provider": {
@@ -33,7 +33,7 @@
       {
         "id": "fda-approval-landscape",
         "name": "FDA approval landscape",
-        "description": "Surfaces FDA-status fleet claims; unverified claims remain explicitly labeled.",
+        "description": "Surfaces FDA-status verified claims; unverified claims remain explicitly labeled.",
         "tags": ["evidence", "fda", "regulatory"]
       }
     ]

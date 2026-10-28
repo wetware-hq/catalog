@@ -9,7 +9,7 @@ export function loadEvidenceCorpus(): EvidenceCorpus {
   const path = repoPath("data", "evidence", "peptide-claims.compact.json");
   if (!existsSync(path)) {
     throw new Error(
-      `Missing ${path}. Run: npm run build:evidence (requires fleet v3 uploads; see data/evidence/PROVENANCE.md)`,
+      `Missing ${path}. Run: npm run build:evidence (requires verification uploads; see data/evidence/PROVENANCE.md)`,
     );
   }
   cached = JSON.parse(readFileSync(path, "utf8")) as EvidenceCorpus;

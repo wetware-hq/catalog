@@ -42,7 +42,7 @@ export function catalogAgentCard(baseUrl: string): AgentCard {
     version: "0.1.0",
     documentationUrl: "https://github.com/wetware-hq/catalog",
     provider: {
-      organization: "Wetware (Mathew Chu)",
+      organization: "Wetware",
       url: "https://github.com/wetware-hq",
     },
     supportedInterfaces: [

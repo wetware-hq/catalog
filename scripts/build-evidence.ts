@@ -1,17 +1,17 @@
 /**
- * Derives compact peptide evidence from fleet v3 uploads (not committed raw).
+ * Derives compact peptide evidence from verification uploads (not committed raw).
  * Run: npm run build:evidence
  *
  * Provenance: see data/evidence/PROVENANCE.md
  */
 import { createHash } from "node:crypto";
-import { readFileSync, writeFileSync, mkdirSync, existsSync } from "node:fs";
-import { dirname, join } from "node:path";
+import { readFileSync, writeFileSync, mkdirSync, existsSync, readdirSync } from "node:fs";
+import { basename, dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const ROOT = join(__dirname, "..");
-const UPLOADS = process.env.CLAIM_UPLOADS_DIR ?? "/home/ubuntu/.cursor/projects/workspace/uploads";
+const UPLOADS = process.env.CLAIM_UPLOADS_DIR ?? join(ROOT, "data", "evidence", "uploads");
 
 type MergedClaim = {
   claim_id: string;
@@ -36,6 +36,16 @@ type MergedClaim = {
 type TieClaim = MergedClaim & { worker?: { agent_id?: string } };
 
 type SpotRow = { claim_id: string; agree: boolean; note?: string };
+
+function resolveUploadFile(pattern: RegExp, preferredName: string): string {
+  const preferred = join(UPLOADS, preferredName);
+  if (existsSync(preferred)) return preferred;
+  if (existsSync(UPLOADS)) {
+    const hit = readdirSync(UPLOADS).find((f) => pattern.test(f));
+    if (hit) return join(UPLOADS, hit);
+  }
+  return preferred;
+}
 
 function loadJsonl<T>(path: string): T[] {
   return readFileSync(path, "utf8")
@@ -67,39 +77,39 @@ const VERIFIED_STATUSES = new Set([
   "spot_check_confirmed",
 ]);
 
+function sanitizeAuthority(authority: string | null | undefined): string | null {
+  if (!authority) return null;
+  return authority.replace(/\s*\(rater V\d+ from fetched primary sources\)/i, " (from primary sources)");
+}
+
 function resolveStatus(
   merged: MergedClaim,
   tie: TieClaim | undefined,
   spot: SpotRow | undefined,
 ): { verification_status: string; verified: boolean; resolution_note?: string } {
-  const cid = merged.claim_id;
-
   if (spot && !spot.agree) {
     return {
       verification_status: "unresolvable",
       verified: false,
-      resolution_note: `spot_check_disagree: ${spot.note ?? ""}`.trim(),
+      resolution_note: "spot_check_disagree: 5% spot-check reviewer disagreed with merged verification verdict.",
     };
   }
 
   if (merged.status === "needs_tiebreak" && tie) {
-    const verdicts = [
-      ...(merged.voters ?? []).map((v) => v.verdict),
-      tie.verdict,
-    ];
+    const verdicts = [...(merged.voters ?? []).map((v) => v.verdict), tie.verdict];
     const maj = majorityVerdict(verdicts);
     if (maj) {
       const base = spot?.agree ? "spot_check_confirmed" : "confirmed_2of3";
       return {
         verification_status: base,
         verified: true,
-        resolution_note: "Resolved needs_tiebreak via 2-of-3 majority (T01 tie-breaker).",
+        resolution_note: "Resolved needs_tiebreak via 2-of-3 majority (tie-break pass).",
       };
     }
     return {
       verification_status: "unresolvable",
       verified: false,
-      resolution_note: "needs_tiebreak: no 2-of-3 majority after T01.",
+      resolution_note: "needs_tiebreak: no 2-of-3 majority after tie-break pass.",
     };
   }
 
@@ -107,7 +117,7 @@ function resolveStatus(
     return {
       verification_status: "unresolvable",
       verified: false,
-      resolution_note: "needs_tiebreak: missing T01 record.",
+      resolution_note: "needs_tiebreak: missing tie-break record.",
     };
   }
 
@@ -115,7 +125,7 @@ function resolveStatus(
     return {
       verification_status: "spot_check_confirmed",
       verified: true,
-      resolution_note: "Spot-check agreed with fleet verdict.",
+      resolution_note: "Spot-check agreed with prior verification verdict.",
     };
   }
 
@@ -126,9 +136,9 @@ function resolveStatus(
 
 function main() {
   const outPath = join(ROOT, "data", "evidence", "peptide-claims.compact.json");
-  const mergedPath = join(UPLOADS, "merged_claims_6cee.jsonl");
-  const tiePath = join(UPLOADS, "T01_claims_cfd8.jsonl");
-  const spotPath = join(UPLOADS, "spot_check_results_8d5c.jsonl");
+  const mergedPath = resolveUploadFile(/^merged_claims.*\.jsonl$/, "merged_claims.jsonl");
+  const tiePath = resolveUploadFile(/^(tiebreak|T01).*\.jsonl$/i, "tiebreak_claims.jsonl");
+  const spotPath = resolveUploadFile(/^spot_check.*\.jsonl$/, "spot_check_results.jsonl");
 
   if (!existsSync(mergedPath)) {
     if (existsSync(outPath)) {
@@ -139,8 +149,12 @@ function main() {
   }
 
   const merged = loadJsonl<MergedClaim>(mergedPath);
-  const ties = new Map(loadJsonl<TieClaim>(tiePath).map((c) => [c.claim_id, c]));
-  const spots = new Map(loadJsonl<SpotRow>(spotPath).map((s) => [s.claim_id, s]));
+  const ties = new Map(
+    (existsSync(tiePath) ? loadJsonl<TieClaim>(tiePath) : []).map((c) => [c.claim_id, c]),
+  );
+  const spots = new Map(
+    (existsSync(spotPath) ? loadJsonl<SpotRow>(spotPath) : []).map((s) => [s.claim_id, s]),
+  );
 
   const outClaims = merged.map((m) => {
     const tie = ties.get(m.claim_id);
@@ -156,7 +170,7 @@ function main() {
       verified,
       verdict: m.verdict,
       claim_text: rep?.claim_text ?? null,
-      authority: rep?.authority ?? null,
+      authority: sanitizeAuthority(rep?.authority ?? null),
       evidence_type: rep?.evidence_type ?? null,
       identifiers: m.identifiers ?? {},
       resolution_note: resolution_note ?? null,
@@ -174,9 +188,9 @@ function main() {
   const summary = {
     generated_at: new Date().toISOString(),
     source_files: {
-      merged: mergedPath,
-      tiebreaker: tiePath,
-      spot_check: spotPath,
+      merged: basename(mergedPath),
+      tiebreaker: basename(tiePath),
+      spot_check: basename(spotPath),
     },
     total_claims: outClaims.length,
     verified_count: outClaims.filter((c) => c.verified).length,

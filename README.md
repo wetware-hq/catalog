@@ -2,7 +2,7 @@
 
 A2A ([Agent2Agent](https://github.com/a2aproject/A2A)) catalog that ranks peptide specialist agents from **synthetic** patient context. Terminal-native CLI for humans; HTTP + JSON-RPC for agents. **Decision support only — not a prescriber.**
 
-Owner context: Wetware (Mathew Chu, PGY1 / physician-scientist). Domain `peptides` is seeded; schema supports future domains (e.g. infectious disease, psychiatry) without restructuring.
+Maintainer: [Wetware](https://github.com/wetware-hq) (open-source biomedical agent catalog). Domain `peptides` is seeded; schema supports future domains (e.g. infectious disease, psychiatry) without restructuring.
 
 ## Architecture
 
@@ -28,7 +28,7 @@ Owner context: Wetware (Mathew Chu, PGY1 / physician-scientist). Domain `peptide
 | **A2A AgentCard** | Each registered agent exposes standard v1 fields (`name`, `description`, `version`, `supportedInterfaces`, `capabilities`, I/O modes, `skills`). Placeholder `NOT_DEPLOYED` URLs mark agents not yet live. |
 | **Catalog AgentCard** | This repo’s catalog is itself an A2A server (`/.well-known/agent-card.json`) with skills `catalog-rank` and `catalog-list`. |
 | **Registry entry** | `registryId`, `domainId`, `agentCard`, plus catalog-only `routing` and `skillEvidence` (claim_id refs). JSON Schema: `schemas/catalog-registry-entry.schema.json`. |
-| **Evidence** | Fleet v3 peptide claims, reduced to ~1.4 MB `data/evidence/peptide-claims.compact.json` with `verification_status` preserved. See `data/evidence/PROVENANCE.md`. |
+| **Evidence** | Multi-model–verified peptide claims, reduced to ~1.4 MB `data/evidence/peptide-claims.compact.json` with `verification_status` preserved. See `data/evidence/PROVENANCE.md`. |
 | **Patient input** | `wetware.simple.v1` JSON or FHIR R4 `Bundle` (Patient + Condition / Goal / Observation / MedicationStatement / AllergyIntolerance). |
 | **x402 (optional)** | Config-gated payment on `POST /catalog/v1/rank` only ([x402 v1 HTTP transport](https://github.com/coinbase/x402/blob/main/specs/transports-v1/http.md): `402` + `accepts[]`, `X-PAYMENT`, `X-PAYMENT-RESPONSE`). Mock facilitator by default for offline tests. |
 
@@ -84,7 +84,7 @@ Ranked agents:
    ... Top skill "holistic-peptide-recommendation" ...
    regulatory:
      ! Patient flagged as seeking compounded peptides — verify TGA ...
-     ! [bpc-157] Verified fleet claim 4d0b84024d846a41: no TGA ARTG entry located (confirmed_2of2).
+     ! [bpc-157] Verified claim 4d0b84024d846a41: no TGA ARTG entry located (confirmed_2of2).
 
 2. wetware-peptide-regulatory-au  score=0.78
    ... Top skill "wada-prohibited-list" ...
@@ -176,7 +176,7 @@ No private keys or wallets are stored in the repo.
 
 ## Evidence regeneration
 
-Raw fleet uploads are not committed. To rebuild from uploads:
+Raw verification uploads are not committed. To rebuild from uploads:
 
 ```bash
 CLAIM_UPLOADS_DIR=/path/to/uploads npm run build:evidence

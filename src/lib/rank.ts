@@ -8,7 +8,7 @@ import type {
 } from "../types/catalog.js";
 
 const DISCLAIMER =
-  "Clinical decision support only — not prescribing advice. Rankings reflect rule-based matching of synthetic patient features to catalog metadata and fleet-verified peptide claims. Verify regulatory status and contraindications before any clinical action.";
+  "Clinical decision support only — not prescribing advice. Rankings reflect rule-based matching of synthetic patient features to catalog metadata and verified peptide claim references. Verify regulatory status and contraindications before any clinical action.";
 
 const GOAL_PEPTIDE_MAP: Record<string, { slugs: string[]; tags: string[] }> = {
   weight: { slugs: ["tirzepatide", "semaglutide", "liraglutide"], tags: ["metabolic", "glp1"] },
@@ -156,7 +156,7 @@ function regulatoryAlerts(patient: NormalizedPatient, slugs: Set<string>): strin
     for (const c of claims) {
       if (c.claim_type === "tga_artg_status" && c.verified && c.verdict === "not_found") {
         alerts.push(
-          `[${slug}] Verified fleet claim ${c.claim_id}: no TGA ARTG entry located (${c.verification_status}).`,
+          `[${slug}] Verified claim ${c.claim_id}: no TGA ARTG entry located (${c.verification_status}).`,
         );
       }
       if (c.claim_type === "wada_status" && c.verified && c.verdict === "supported" && patient.flags.competitiveAthlete) {

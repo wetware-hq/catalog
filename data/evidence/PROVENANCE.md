@@ -1,23 +1,24 @@
-# Peptide evidence provenance (fleet v3)
+# Peptide evidence provenance
 
-Compact file `peptide-claims.compact.json` is generated from Wetware fleet v3 claim verification outputs. Raw uploads (~6.8 MB) are **not** committed; regenerate with:
+Compact file `peptide-claims.compact.json` is generated from **multi-model claim verification** outputs (2-of-2 / 2-of-3 with tie-break and a 5% spot-check). Raw upload JSONL (~6.8 MB) is **not** committed; regenerate with:
 
 ```bash
 CLAIM_UPLOADS_DIR=/path/to/uploads npm run build:evidence
 ```
 
-## Source files (default paths)
+## Source files (under `CLAIM_UPLOADS_DIR`)
 
 | File | Role |
 |------|------|
-| `merged_claims_*.jsonl` | 2,486 merged claims before tie-break (statuses: `confirmed_2of2`, `confirmed_2of2_same_family`, `needs_tiebreak`, `single_replica`, `unresolvable`) |
-| `T01_claims_*.jsonl` | Tie-breaker for 188 `needs_tiebreak` claims (third model family) |
-| `spot_check_results_*.jsonl` | 5% spot-check (36 claims); disagreements on **histrelin** and **GHK-Cu** force `unresolvable` |
-| `agreement.json`, fleet README | Run metadata |
+| `merged_claims.jsonl` (or `merged_claims_*.jsonl`) | Merged claims before tie-break (statuses: `confirmed_2of2`, `confirmed_2of2_same_family`, `needs_tiebreak`, `single_replica`, `unresolvable`) |
+| `tiebreak_claims.jsonl` (or `tiebreak_*.jsonl`) | Tie-break pass for `needs_tiebreak` claims (third model family) |
+| `spot_check_results.jsonl` (or `spot_check_*.jsonl`) | 5% spot-check sample; disagreements on **histrelin** and **GHK-Cu** force `unresolvable` |
+
+Optional run metadata (not required for build): `agreement.json`, README from the verification run.
 
 ## Resolution rules (implemented in `scripts/build-evidence.ts`)
 
-1. **`needs_tiebreak`**: apply T01; if any verdict appears ≥2 times across the two replicas + T01 → `confirmed_2of3` (verified).
+1. **`needs_tiebreak`**: apply tie-break pass; if any verdict appears ≥2 times across the two replicas + tie-break → `confirmed_2of3` (verified).
 2. **Spot-check disagree** → `unresolvable` (unverified), regardless of prior status.
 3. **Spot-check agree** on an already confirmed claim → label `spot_check_confirmed` (verified).
 4. Otherwise carry forward `verification_status` verbatim from merge output.
