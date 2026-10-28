@@ -4,7 +4,8 @@
   "description": "Minimal KGX-style graph catalog with vocabulary and validation",
   "type": "module",
   "scripts": {
-    "test": "node --test tests/**/*.test.js"
+    "test": "node --test tests/**/*.test.js",
+    "check": "node src/check.js graph/"
   },
   "engines": {
     "node": ">=20"

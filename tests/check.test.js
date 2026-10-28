@@ -1,12 +1,20 @@
 import { readFileSync } from "node:fs";
 import { join, dirname } from "node:path";
 import { fileURLToPath } from "node:url";
+import { spawnSync } from "node:child_process";
 import test from "node:test";
 import assert from "node:assert/strict";
-import { validateGraph, sortKeys, mergeGraphs } from "../src/check.js";
+import {
+  validateGraph,
+  canonicalLine,
+  mergeGraphs,
+  serializeGraph,
+  validateCategoryVocabulary,
+} from "../src/check.js";
 
 const root = join(dirname(fileURLToPath(import.meta.url)), "..");
 const graphDir = join(root, "graph");
+const checkScript = join(root, "src/check.js");
 
 function loadVocab() {
   return {
@@ -15,40 +23,53 @@ function loadVocab() {
   };
 }
 
-const SRC = [{ source: "ref-1", date: "2026-01-01", licence: "CC0-1.0" }];
+const SRC1 = [{ source: "ref-1", date: "2026-01-01", licence: "CC0-1.0" }];
+const SRC2 = [{ source: "ref-2", date: "2026-01-02", licence: "CC0-1.0" }];
 
 function node(id, extra = {}) {
-  return sortKeys({
-    id,
-    category: ["item"],
-    properties: {},
-    sources: SRC,
-    ...extra,
-  });
+  return canonicalLine(
+    {
+      id,
+      category: ["item"],
+      properties: {},
+      sources: SRC1,
+      ...extra,
+    },
+    "node",
+  );
+}
+
+function parseNode(line) {
+  return JSON.parse(line);
 }
 
 function edge(subj, pred, obj, extra = {}) {
-  return sortKeys({
-    subject: subj,
-    predicate: pred,
-    object: obj,
-    qualifiers: {},
-    sources: SRC,
-    ...extra,
-  });
+  return canonicalLine(
+    {
+      subject: subj,
+      predicate: pred,
+      object: obj,
+      qualifiers: {},
+      sources: SRC1,
+      ...extra,
+    },
+    "edge",
+  );
 }
 
-function asGraph(nodes, edges) {
-  const sortedNodes = [...nodes].sort((a, b) => a.id.localeCompare(b.id));
-  const sortedEdges = [...edges].sort((a, b) =>
-    [a.subject, a.predicate, a.object, JSON.stringify(a.qualifiers ?? {})].join("\0")
-      .localeCompare([b.subject, b.predicate, b.object, JSON.stringify(b.qualifiers ?? {})].join("\0")),
-  );
+function asGraph(nodeLines, edgeLines) {
+  const nodes = nodeLines.map(parseNode).sort((a, b) => (a.id < b.id ? -1 : a.id > b.id ? 1 : 0));
+  const edges = edgeLines.map((l) => JSON.parse(l));
   return {
-    nodesText: sortedNodes.map((n) => JSON.stringify(n)).join("\n"),
-    edgesText: sortedEdges.map((e) => JSON.stringify(e)).join("\n"),
+    nodesText: nodes.map((n) => canonicalLine(n, "node")).join("\n"),
+    edgesText: edgeLines.join("\n"),
     ...loadVocab(),
   };
+}
+
+function graphBytes(g) {
+  const { nodesText, edgesText } = serializeGraph(g);
+  return `${nodesText}\n---\n${edgesText}`;
 }
 
 test("empty graph passes validation", () => {
@@ -61,29 +82,43 @@ test("empty graph passes validation", () => {
   assert.deepEqual(issues, []);
 });
 
+test("CLI validates graph directory", () => {
+  const ok = spawnSync(process.execPath, [checkScript, graphDir], { encoding: "utf8" });
+  assert.equal(ok.status, 0, ok.stderr);
+});
+
 test("missing edge endpoint fails", () => {
-  const issues = validateGraph(
-    asGraph([node("a")], [edge("a", "links_to", "missing")]),
-  );
+  const issues = validateGraph(asGraph([node("a")], [edge("a", "links_to", "missing")]));
   assert.ok(issues.some((m) => m.includes('object node "missing" missing')));
 });
 
 test("unknown predicate fails", () => {
-  const issues = validateGraph(
-    asGraph([node("a"), node("b")], [edge("a", "unknown_pred", "b")]),
-  );
+  const issues = validateGraph(asGraph([node("a"), node("b")], [edge("a", "unknown_pred", "b")]));
   assert.ok(issues.some((m) => m.includes('unknown predicate "unknown_pred"')));
 });
 
 test("domain/range violation fails", () => {
-  const n = node("a", { category: ["entity"] });
-  const issues = validateGraph(asGraph([n, node("b")], [edge("a", "links_to", "b")]));
+  const n = parseNode(node("a", { category: ["entity"] }));
+  const issues = validateGraph(
+    asGraph([canonicalLine(n, "node"), node("b")], [edge("a", "links_to", "b")]),
+  );
   assert.ok(issues.some((m) => m.includes("domain/range")));
 });
 
+test("unknown node category fails without edges", () => {
+  const bad = parseNode(node("solo", { category: ["missing_cat"] }));
+  const issues = validateGraph(asGraph([canonicalLine(bad, "node")], []));
+  assert.ok(issues.some((m) => m.includes('unknown category "missing_cat"')));
+});
+
+test("category cycle fails", () => {
+  const issues = validateCategoryVocabulary({ a: ["b"], b: ["a"] });
+  assert.ok(issues.some((m) => m.includes("cycle")));
+});
+
 test("missing node source fails", () => {
-  const bad = node("a", { sources: [] });
-  const issues = validateGraph(asGraph([bad], []));
+  const bad = parseNode(node("a", { sources: [] }));
+  const issues = validateGraph(asGraph([canonicalLine(bad, "node")], []));
   assert.ok(issues.some((m) => m.includes("at least one source required")));
 });
 
@@ -96,10 +131,8 @@ test("missing edge source fails", () => {
 
 test("non-canonical node line order fails", () => {
   const vocab = loadVocab();
-  const b = node("b");
-  const a = node("a");
   const issues = validateGraph({
-    nodesText: [JSON.stringify(b), JSON.stringify(a)].join("\n"),
+    nodesText: [node("b"), node("a")].join("\n"),
     edgesText: "",
     ...vocab,
   });
@@ -108,33 +141,72 @@ test("non-canonical node line order fails", () => {
 
 test("non-canonical key order fails", () => {
   const vocab = loadVocab();
-  const raw = '{"id":"a","category":["item"],"properties":{},"sources":[{"date":"2026-01-01","licence":"CC0-1.0","source":"ref-1"}]}';
+  const raw =
+    '{"id":"a","category":["item"],"properties":{},"sources":[{"date":"2026-01-01","licence":"CC0-1.0","source":"ref-1"}]}';
   const issues = validateGraph({ nodesText: raw, edgesText: "", ...vocab });
   assert.ok(issues.some((m) => m.includes("not canonical")));
 });
 
-test("merge is commutative, associative, and idempotent", () => {
+test("duplicate categories fail canonical check", () => {
+  const vocab = loadVocab();
+  const raw =
+    '{"category":["item","item"],"id":"a","properties":{},"sources":[{"date":"2026-01-01","licence":"CC0-1.0","source":"ref-1"}]}';
+  const issues = validateGraph({ nodesText: raw, edgesText: "", ...vocab });
+  assert.ok(issues.some((m) => m.includes("sorted unique")));
+});
+
+test("merge unions shared node and is byte-identical both orders", () => {
+  const left = {
+    nodes: [
+      parseNode(
+        node("shared", {
+          category: ["item"],
+          sources: SRC1,
+          properties: { note: { value: "L", sources: SRC1 } },
+        }),
+      ),
+    ],
+    edges: [],
+  };
+  const right = {
+    nodes: [
+      parseNode(
+        node("shared", {
+          category: ["entity"],
+          sources: SRC2,
+          properties: { note: { value: "L", sources: SRC2 } },
+        }),
+      ),
+    ],
+    edges: [],
+  };
+  const ab = graphBytes(mergeGraphs(left, right));
+  const ba = graphBytes(mergeGraphs(right, left));
+  assert.equal(ab, ba);
+  assert.ok(ab.includes("ref-1") && ab.includes("ref-2"));
+  assert.ok(ab.includes('"entity"') && ab.includes('"item"'));
+});
+
+test("merge is commutative, associative, and idempotent on non-identical graphs", () => {
   const g1 = {
-    nodes: [node("a"), node("b")],
-    edges: [edge("a", "links_to", "b")],
+    nodes: [parseNode(node("a")), parseNode(node("b", { sources: SRC1 }))],
+    edges: [JSON.parse(edge("a", "links_to", "b"))],
   };
   const g2 = {
-    nodes: [node("b"), node("c")],
-    edges: [edge("b", "links_to", "c")],
+    nodes: [parseNode(node("b", { category: ["entity", "item"], sources: SRC2 })), parseNode(node("c"))],
+    edges: [JSON.parse(edge("b", "links_to", "c"))],
   };
-  const g3 = { nodes: [node("d")], edges: [] };
+  const g3 = { nodes: [parseNode(node("d", { sources: SRC2 }))], edges: [] };
 
   const ab = mergeGraphs(g1, g2);
   const ba = mergeGraphs(g2, g1);
-  assert.deepEqual(ab, ba);
+  assert.equal(graphBytes(ab), graphBytes(ba));
 
   const ab_c = mergeGraphs(ab, g3);
   const a_bc = mergeGraphs(g1, mergeGraphs(g2, g3));
-  assert.deepEqual(ab_c, a_bc);
+  assert.equal(graphBytes(ab_c), graphBytes(a_bc));
 
-  const once = mergeGraphs(g1, g1);
+  const once = mergeGraphs(g1, g2);
   const idempotent = mergeGraphs(g1, once);
-  assert.deepEqual(once, idempotent);
-  assert.deepEqual(once.nodes.map((n) => n.id), ["a", "b"]);
-  assert.equal(once.edges.length, 1);
+  assert.equal(graphBytes(once), graphBytes(idempotent));
 });
