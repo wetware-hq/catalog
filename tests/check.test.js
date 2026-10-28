@@ -170,6 +170,14 @@ test("literal non-integer number is rejected", () => {
   assert.ok(issues.some((m) => m.includes("safe integers")));
 });
 
+test("literal float form 10.0 in raw line is non-canonical", () => {
+  const vocab = loadVocab();
+  const raw =
+    '{"object":{"value":10.0},"predicate":"price","qualifiers":{},"sources":[{"date":"2026-01-01","licence":"CC0-1.0","source":"ref-1"}],"subject":"a"}';
+  const issues = validateGraph({ nodesText: node("a"), edgesText: raw, ...vocab });
+  assert.ok(issues.some((m) => m.includes("not canonical")));
+});
+
 test("literal decimal as string is accepted", () => {
   const issues = validateGraph(asGraph([node("a")], [edge("a", "price", lit("10.5"))]));
   assert.deepEqual(issues, []);
