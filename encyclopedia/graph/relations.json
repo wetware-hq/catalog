@@ -1,0 +1,13 @@
+{
+  "version": "0.1",
+  "sigma": {
+    "biolink:has_attribute": {
+      "domain": "biolink:Software",
+      "range": "biolink:Attribute"
+    },
+    "biolink:has_description": {
+      "domain": "biolink:Software",
+      "range": "biolink:NarrativeText"
+    }
+  }
+}

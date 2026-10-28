@@ -23,7 +23,9 @@ flowchart TD
 
   ENT --> L[catalog lint]
   L -->|schema / evidence / refs| FC
-  ENT --> Q[catalog query get / search<br/>scan entry files]
+  ENT --> G[catalog graph build]
+  G --> KGX[(graph/nodes.jsonl<br/>graph/edges.jsonl)]
+  KGX --> Q[catalog query get / search]
   GIT[(git commit per pipeline run<br/>message lists entry ids)] -.-> ENT
 ```
 
@@ -46,7 +48,8 @@ flowchart TD
 | `ecatalog/io.py` | CAS I/O, paths, taxonomy, entry iteration |
 | `ecatalog/pipeline.py` | research → extract → verify → write → dedup |
 | `ecatalog/lint.py` | Schema, evidence, REFERENCES |
-| `ecatalog/query.py` | get / search |
+| `ecatalog/graph.py` | KGX `nodes.jsonl` / `edges.jsonl`, sigma checks, merge |
+| `ecatalog/query.py` | get / search (entries + graph) |
 | `ecatalog/refs.py` | Bibliography + `REFERENCES.md` |
 | `ecatalog/cli.py` | `catalog` CLI |
 

@@ -5,6 +5,7 @@ import json
 import sys
 from pathlib import Path
 
+from ecatalog.graph import build_graph
 from ecatalog.lint import lint_catalog
 from ecatalog.pipeline import research_urls, run_dedup, validate_draft, verify_draft, write_entry
 from ecatalog.query import get_entry, search
@@ -46,6 +47,10 @@ def main(argv: list[str] | None = None) -> int:
 
     p_dedup = sub.add_parser("dedup")
     p_dedup.add_argument("--run-id", required=True)
+
+    p_graph = sub.add_parser("graph")
+    g_sub = p_graph.add_subparsers(dest="graph_cmd", required=True)
+    g_sub.add_parser("build")
 
     p_q = sub.add_parser("query")
     q_sub = p_q.add_subparsers(dest="query_cmd", required=True)
@@ -103,6 +108,9 @@ def main(argv: list[str] | None = None) -> int:
 
     if args.cmd == "dedup":
         return out(run_dedup(args.run_id))
+
+    if args.cmd == "graph" and args.graph_cmd == "build":
+        return out({"ok": True, **build_graph()})
 
     if args.cmd == "query":
         inc = getattr(args, "include_unverified", False)

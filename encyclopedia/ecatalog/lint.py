@@ -17,6 +17,7 @@ from ecatalog.io import (
     load_taxonomy,
     required_specs,
 )
+from ecatalog.graph import build_graph, validate_graph
 from ecatalog.refs import check_references_sync
 
 # References:
@@ -73,4 +74,6 @@ def lint_catalog() -> list[str]:
         errors.append("missing taxonomy.yaml")
     else:
         yaml.safe_load(TAXONOMY_PATH.read_text(encoding="utf-8"))
+    build_graph()
+    errors.extend(validate_graph())
     return errors

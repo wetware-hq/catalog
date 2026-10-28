@@ -6,6 +6,7 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
 
+from ecatalog.graph import build_graph
 from ecatalog.io import (
     ENTRIES_DIR,
     MERGE_CANDIDATES_PATH,
@@ -151,6 +152,7 @@ def write_entry(verified: dict[str, Any], run_id: str) -> tuple[Path, bool]:
     entry["history"] = history
     path.parent.mkdir(parents=True, exist_ok=True)
     path.write_text(json.dumps(order_entry(entry), indent=2) + "\n", encoding="utf-8")
+    build_graph()
     return path, False
 
 
