@@ -1,11 +1,11 @@
-import { claimsById, claimsForSlug } from "./corpus.js";
-import { getRegistryEntry, loadRegistryEntries } from "./registry.js";
 import type {
   CatalogRegistryEntry,
+  EvidenceCorpus,
   NormalizedPatient,
   RankResponse,
   RankedAgent,
 } from "../types/catalog.js";
+import { indexEvidence, type EvidenceIndex } from "./evidence-index.js";
 
 const DISCLAIMER =
   "Clinical decision support only — not prescribing advice. Rankings reflect rule-based matching of synthetic patient features to catalog metadata and verified peptide claim references. Verify regulatory status and contraindications before any clinical action.";
@@ -24,6 +24,14 @@ const GOAL_PEPTIDE_MAP: Record<string, { slugs: string[]; tags: string[] }> = {
   antiaging: { slugs: ["ghk-cu", "epitalon"], tags: ["longevity"] },
 };
 
+function canonicalRegistry(registry: CatalogRegistryEntry[]): CatalogRegistryEntry[] {
+  return [...registry].sort(
+    (a, b) =>
+      (a.routing?.priority ?? 100) - (b.routing?.priority ?? 100) ||
+      a.registryId.localeCompare(b.registryId),
+  );
+}
+
 function matchGoals(patient: NormalizedPatient): { slugs: Set<string>; tags: Set<string>; notes: string[] } {
   const slugs = new Set<string>();
   const tags = new Set<string>();
@@ -40,8 +48,7 @@ function matchGoals(patient: NormalizedPatient): { slugs: Set<string>; tags: Set
 }
 
 function skillTags(skillId: string, entry: CatalogRegistryEntry): string[] {
-  const skill = entry.agentCard.skills.find((s) => s.id === skillId);
-  return skill?.tags ?? [];
+  return entry.agentCard.skills.find((s) => s.id === skillId)?.tags ?? [];
 }
 
 function scoreSkill(
@@ -59,14 +66,9 @@ function scoreSkill(
   for (const tag of routingTags) {
     if (themeTags.has(tag) || [...patient.tokens].some((t) => tag.includes(t) || t.includes(tag))) {
       score += 0.15;
-      matches.push({
-        kind: "indication",
-        detail: `Patient context aligns with routing tag "${tag}"`,
-        weight: 0.15,
-      });
+      matches.push({ kind: "indication", detail: `Patient context aligns with routing tag "${tag}"`, weight: 0.15 });
     }
   }
-
   for (const skillTag of tags) {
     if (themeTags.has(skillTag)) {
       score += 0.1;
@@ -77,7 +79,6 @@ function scoreSkill(
       });
     }
   }
-
   const slugs = entry.routing?.peptideSlugs ?? [];
   const overlap = slugs.filter((s) => themeSlugs.has(s));
   if (overlap.length) {
@@ -88,7 +89,6 @@ function scoreSkill(
       weight: Math.min(0.4, overlap.length * 0.12),
     });
   }
-
   if (skillId.includes("regulatory") && patient.countryCode === "AU") {
     score += 0.2;
     matches.push({
@@ -97,7 +97,6 @@ function scoreSkill(
       weight: 0.2,
     });
   }
-
   if (skillId.includes("wada") && patient.flags.competitiveAthlete) {
     score += 0.35;
     matches.push({
@@ -106,7 +105,6 @@ function scoreSkill(
       weight: 0.35,
     });
   }
-
   if (skillId.includes("contraindication") || skillId.includes("safety")) {
     if (patient.allergies.length || patient.medications.length || patient.flags.pregnantOrBreastfeeding) {
       score += 0.25;
@@ -117,18 +115,14 @@ function scoreSkill(
       });
     }
   }
-
-  if (skillId.includes("evidence")) {
-    if (themeSlugs.size > 0) {
-      score += 0.15;
-      matches.push({
-        kind: "evidence",
-        detail: "Peptide themes identified → evidence summary skill",
-        weight: 0.15,
-      });
-    }
+  if (skillId.includes("evidence") && themeSlugs.size > 0) {
+    score += 0.15;
+    matches.push({
+      kind: "evidence",
+      detail: "Peptide themes identified → evidence summary skill",
+      weight: 0.15,
+    });
   }
-
   if (skillId.includes("holistic") && themeSlugs.size > 0) {
     score += 0.2;
     matches.push({
@@ -137,23 +131,22 @@ function scoreSkill(
       weight: 0.2,
     });
   }
-
   return { score: Math.min(1, score), matches };
 }
 
-function regulatoryAlerts(patient: NormalizedPatient, slugs: Set<string>): string[] {
+function regulatoryAlerts(
+  patient: NormalizedPatient,
+  slugs: Set<string>,
+  evidence: EvidenceIndex,
+): string[] {
   const alerts: string[] = [];
-  const byId = claimsById();
-
   if (patient.flags.seekingCompoundedPeptides) {
     alerts.push(
       "Patient flagged as seeking compounded peptides — verify TGA compounding exemptions, prescriber eligibility, and ARTG status before any supply pathway discussion.",
     );
   }
-
-  for (const slug of slugs) {
-    const claims = claimsForSlug(slug);
-    for (const c of claims) {
+  for (const slug of [...slugs].sort()) {
+    for (const c of evidence.claimsForSlug(slug)) {
       if (c.claim_type === "tga_artg_status" && c.verified && c.verdict === "not_found") {
         alerts.push(
           `[${slug}] Verified claim ${c.claim_id}: no TGA ARTG entry located (${c.verification_status}).`,
@@ -170,9 +163,8 @@ function regulatoryAlerts(patient: NormalizedPatient, slugs: Set<string>): strin
         );
       }
     }
-    void byId;
   }
-  return [...new Set(alerts)];
+  return [...new Set(alerts)].sort();
 }
 
 function contraindicationAlerts(patient: NormalizedPatient, entry: CatalogRegistryEntry): string[] {
@@ -187,30 +179,55 @@ function contraindicationAlerts(patient: NormalizedPatient, entry: CatalogRegist
       }
     }
   }
-  return alerts;
+  return alerts.sort();
 }
 
-function evidenceForSkill(entry: CatalogRegistryEntry, skillId: string) {
+function evidenceForSkill(entry: CatalogRegistryEntry, skillId: string, evidence: EvidenceIndex) {
   const refs = entry.skillEvidence?.[skillId] ?? [];
-  const byId = claimsById();
-  return refs.map((r) => {
-    const c = byId.get(r.claim_id);
-    return {
-      claim_id: r.claim_id,
-      verification_status: r.verification_status,
-      verified: r.verified,
-      claim_type: c?.claim_type,
-      slug: c?.slug,
-    };
-  });
+  return refs
+    .filter((r) => evidence.claimsById.has(r.claim_id))
+    .map((r) => {
+      const c = evidence.claimsById.get(r.claim_id)!;
+      return {
+        claim_id: r.claim_id,
+        verification_status: r.verification_status,
+        verified: r.verified,
+        claim_type: c.claim_type,
+        slug: c.slug,
+      };
+    });
 }
 
-export function rankAgents(domainId: string, patient: NormalizedPatient, limit = 10): RankResponse {
-  const entries = loadRegistryEntries(domainId);
+function buildSummary(
+  entry: CatalogRegistryEntry,
+  patient: NormalizedPatient,
+  slugs: Set<string>,
+  skills: RankedAgent["matchedSkills"],
+): string {
+  const top = skills[0];
+  const slugPart = slugs.size ? ` Peptide themes: ${[...slugs].sort().join(", ")}.` : "";
+  const skillPart = top ? ` Top skill "${top.skillId}" (score ${top.skillScore}).` : "";
+  const athlete = patient.flags.competitiveAthlete ? " Athlete flag elevates regulatory/WADA skills." : "";
+  return `${entry.agentCard.name} matched for ${patient.displayName} (${patient.countryCode}).${slugPart}${skillPart}${athlete}`;
+}
+
+/**
+ * Pure rank: no I/O, env, clock, network, or randomness. Caller loads registry + evidence.
+ */
+export function rank(
+  patient: NormalizedPatient,
+  registry: CatalogRegistryEntry[],
+  evidenceCorpus: EvidenceCorpus,
+  options: { domainId: string; limit?: number },
+): RankResponse {
+  const limit = options.limit ?? 10;
+  const domainId = options.domainId;
+  const entries = canonicalRegistry(registry.filter((e) => e.domainId === domainId));
   if (!entries.length) {
     throw new Error(`No registry entries for domain "${domainId}"`);
   }
 
+  const evidence = indexEvidence(evidenceCorpus);
   const { slugs: themeSlugs, tags: themeTags, notes: themeNotes } = matchGoals(patient);
   const ranked: RankedAgent[] = [];
 
@@ -226,11 +243,11 @@ export function rankAgents(domainId: string, patient: NormalizedPatient, limit =
         skillId: skill.id,
         skillScore: score,
         matches,
-        evidenceRefs: evidenceForSkill(entry, skill.id),
+        evidenceRefs: evidenceForSkill(entry, skill.id, evidence),
       });
     }
 
-    agentScore += (entry.routing?.priority ? (100 - entry.routing.priority) / 500 : 0);
+    agentScore += entry.routing?.priority ? (100 - entry.routing.priority) / 500 : 0;
     if (matchedSkills.length === 0) {
       agentScore = 0.05;
       matchedSkills.push({
@@ -241,35 +258,42 @@ export function rankAgents(domainId: string, patient: NormalizedPatient, limit =
       });
     }
 
-    const featureMatches = themeNotes.map((n) => ({
-      patientFeature: "clinicalGoals/conditions",
-      matchedTo: n,
-      effect: "increased peptide theme weight",
-    }));
-
-    for (const goal of patient.clinicalGoals) {
-      featureMatches.push({
-        patientFeature: `goal:${goal}`,
-        matchedTo: entry.routing?.indicationTags?.join(", ") ?? entry.registryId,
-        effect: "routing tag overlap",
-      });
-    }
+    const featureMatches = themeNotes
+      .map((n) => ({
+        patientFeature: "clinicalGoals/conditions",
+        matchedTo: n,
+        effect: "increased peptide theme weight",
+      }))
+      .concat(
+        patient.clinicalGoals.map((goal) => ({
+          patientFeature: `goal:${goal}`,
+          matchedTo: entry.routing?.indicationTags?.join(", ") ?? entry.registryId,
+          effect: "routing tag overlap",
+        })),
+      )
+      .sort(
+        (a, b) => a.patientFeature.localeCompare(b.patientFeature) || a.matchedTo.localeCompare(b.matchedTo),
+      );
 
     ranked.push({
       registryId: entry.registryId,
       relevanceScore: Math.min(1, Math.round(agentScore * 1000) / 1000),
       agentCard: entry.agentCard,
-      matchedSkills: matchedSkills.sort((a, b) => b.skillScore - a.skillScore),
+      matchedSkills: matchedSkills.sort(
+        (a, b) => b.skillScore - a.skillScore || a.skillId.localeCompare(b.skillId),
+      ),
       rationale: {
         summary: buildSummary(entry, patient, themeSlugs, matchedSkills),
         featureMatches,
-        regulatoryAlerts: regulatoryAlerts(patient, themeSlugs),
+        regulatoryAlerts: regulatoryAlerts(patient, themeSlugs, evidence),
         contraindicationAlerts: contraindicationAlerts(patient, entry),
       },
     });
   }
 
-  ranked.sort((a, b) => b.relevanceScore - a.relevanceScore);
+  ranked.sort(
+    (a, b) => b.relevanceScore - a.relevanceScore || a.registryId.localeCompare(b.registryId),
+  );
 
   return {
     domainId,
@@ -280,40 +304,9 @@ export function rankAgents(domainId: string, patient: NormalizedPatient, limit =
       source: patient.source,
       countryCode: patient.countryCode,
       flags: patient.flags,
-      inferredPeptideSlugs: [...themeSlugs],
+      inferredPeptideSlugs: [...themeSlugs].sort(),
       themeNotes,
     },
     rankedAgents: ranked.slice(0, limit),
   };
 }
-
-function buildSummary(
-  entry: CatalogRegistryEntry,
-  patient: NormalizedPatient,
-  slugs: Set<string>,
-  skills: RankedAgent["matchedSkills"],
-): string {
-  const top = skills[0];
-  const slugPart = slugs.size ? ` Peptide themes: ${[...slugs].join(", ")}.` : "";
-  const skillPart = top ? ` Top skill "${top.skillId}" (score ${top.skillScore}).` : "";
-  const athlete = patient.flags.competitiveAthlete ? " Athlete flag elevates regulatory/WADA skills." : "";
-  return `${entry.agentCard.name} matched for ${patient.displayName} (${patient.countryCode}).${slugPart}${skillPart}${athlete}`;
-}
-
-export function rankByRegistryId(registryId: string, patient: NormalizedPatient): RankedAgent | undefined {
-  const entry = getRegistryEntry(registryId);
-  if (!entry) return undefined;
-  const res = rankAgents(entry.domainId, patient, 50);
-  return res.rankedAgents.find((r) => r.registryId === registryId);
-}
-
-/*
- * References (third-party sources cited in regulatory routing and alerts):
- * [1] Therapeutic Goods Administration (TGA) — Australian Register of Therapeutic Goods (ARTG).
- *     https://www.tga.gov.au/resources/artg
- * [2] TGA Poisons Standard (Standard for the Uniform Scheduling of Medicines and Poisons, SUSMP),
- *     including Appendix D (e.g. instrument F2026L01327 as recorded on related claims).
- *     https://www.legislation.gov.au/F2026L01327
- * [3] World Anti-Doping Agency (WADA) Prohibited List (S0 / GHRP-related entries).
- *     https://www.wada-ama.org/en/resources/world-anti-doping-code-and-international-standards/prohibited-list
- */

@@ -1,0 +1,531 @@
+{
+  "disclaimer": "Clinical decision support only — not prescribing advice. Rankings reflect rule-based matching of synthetic patient features to catalog metadata and verified peptide claim references. Verify regulatory status and contraindications before any clinical action.",
+  "domainId": "peptides",
+  "patientSummary": {
+    "countryCode": "AU",
+    "displayName": "Synthetic Athlete (tendon injury)",
+    "flags": {
+      "competitiveAthlete": true,
+      "pregnantOrBreastfeeding": false,
+      "seekingCompoundedPeptides": true
+    },
+    "id": "syn-athlete-001",
+    "inferredPeptideSlugs": [
+      "bpc-157",
+      "tb-500"
+    ],
+    "source": "simple",
+    "themeNotes": [
+      "Clinical theme \"tendon\" → peptides: bpc-157, tb-500"
+    ]
+  },
+  "rankedAgents": [
+    {
+      "agentCard": {
+        "capabilities": {
+          "extensions": [],
+          "pushNotifications": false,
+          "streaming": true
+        },
+        "defaultInputModes": [
+          "application/json",
+          "application/fhir+json"
+        ],
+        "defaultOutputModes": [
+          "application/json"
+        ],
+        "description": "Holistic peptide decision-support for clinicians (NOT a prescriber). Synthesizes patient context into interpretable peptide themes, routes to evidence and regulatory checks. Endpoint NOT YET DEPLOYED.",
+        "documentationUrl": "/docs/catalog",
+        "name": "Peptide Clinical Advisor",
+        "provider": {
+          "organization": "Catalog project",
+          "url": "http://localhost/catalog"
+        },
+        "skills": [
+          {
+            "description": "Maps synthetic patient goals and conditions to peptide options with explicit uncertainty and non-prescribing framing.",
+            "examples": [
+              "Patient with obesity and T2DM seeking GLP-1 class options"
+            ],
+            "id": "holistic-peptide-recommendation",
+            "name": "Holistic peptide recommendation",
+            "tags": [
+              "peptides",
+              "holistic",
+              "decision-support",
+              "metabolic",
+              "tissue-repair"
+            ]
+          },
+          {
+            "description": "Flags pregnancy, athlete status, drug interactions, and allergy-driven exclusions for peptide routing.",
+            "id": "contraindication-interaction-screen",
+            "name": "Contraindication and interaction screen",
+            "tags": [
+              "safety",
+              "contraindication",
+              "interactions"
+            ]
+          }
+        ],
+        "supportedInterfaces": [
+          {
+            "protocolBinding": "JSONRPC",
+            "protocolVersion": "1.0",
+            "url": "http://localhost/NOT_DEPLOYED/peptide-clinical-advisor/a2a/v1"
+          }
+        ],
+        "version": "0.1.0"
+      },
+      "matchedSkills": [
+        {
+          "evidenceRefs": [
+            {
+              "claim_id": "0e07607a57d1ca8b",
+              "claim_type": "human_rct_exists",
+              "slug": "tirzepatide",
+              "verification_status": "confirmed_2of2_same_family",
+              "verified": true
+            },
+            {
+              "claim_id": "3f8b70f36a66063b",
+              "claim_type": "human_rct_exists",
+              "slug": "bpc-157",
+              "verification_status": "confirmed_2of3",
+              "verified": true
+            }
+          ],
+          "matches": [
+            {
+              "detail": "Patient context aligns with routing tag \"tissue-repair\"",
+              "kind": "indication",
+              "weight": 0.15
+            },
+            {
+              "detail": "Skill holistic-peptide-recommendation tag \"tissue-repair\" matches clinical theme",
+              "kind": "skill-tag",
+              "weight": 0.1
+            },
+            {
+              "detail": "Peptide focus overlap: bpc-157, tb-500",
+              "kind": "peptide-slug",
+              "weight": 0.24
+            },
+            {
+              "detail": "Active peptide clinical themes → holistic recommendation skill",
+              "kind": "holistic",
+              "weight": 0.2
+            }
+          ],
+          "skillId": "holistic-peptide-recommendation",
+          "skillScore": 0.69
+        },
+        {
+          "evidenceRefs": [
+            {
+              "claim_id": "dbf5061a83e046e7",
+              "claim_type": "wada_status",
+              "slug": "bpc-157",
+              "verification_status": "confirmed_2of3",
+              "verified": true
+            }
+          ],
+          "matches": [
+            {
+              "detail": "Patient context aligns with routing tag \"tissue-repair\"",
+              "kind": "indication",
+              "weight": 0.15
+            },
+            {
+              "detail": "Peptide focus overlap: bpc-157, tb-500",
+              "kind": "peptide-slug",
+              "weight": 0.24
+            },
+            {
+              "detail": "Allergies, medications, or pregnancy flag present → safety screen prioritized",
+              "kind": "safety-input",
+              "weight": 0.25
+            }
+          ],
+          "skillId": "contraindication-interaction-screen",
+          "skillScore": 0.64
+        }
+      ],
+      "rationale": {
+        "contraindicationAlerts": [],
+        "featureMatches": [
+          {
+            "effect": "increased peptide theme weight",
+            "matchedTo": "Clinical theme \"tendon\" → peptides: bpc-157, tb-500",
+            "patientFeature": "clinicalGoals/conditions"
+          },
+          {
+            "effect": "routing tag overlap",
+            "matchedTo": "metabolic, glp1, t2dm, tissue-repair, recovery, reproductive, cosmetic",
+            "patientFeature": "goal:return to sport"
+          },
+          {
+            "effect": "routing tag overlap",
+            "matchedTo": "metabolic, glp1, t2dm, tissue-repair, recovery, reproductive, cosmetic",
+            "patientFeature": "goal:tendon healing"
+          }
+        ],
+        "regulatoryAlerts": [
+          "Patient flagged as seeking compounded peptides — verify TGA compounding exemptions, prescriber eligibility, and ARTG status before any supply pathway discussion.",
+          "[bpc-157] Poisons Standard / SUSMP schedule claim available (6483b25cc8a69038, confirmed_2of2). Review Appendix D context.",
+          "[bpc-157] Verified claim 4d0b84024d846a41: no TGA ARTG entry located (confirmed_2of2).",
+          "[bpc-157] WADA prohibited-list match (confirmed_2of3, claim dbf5061a83e046e7) — athlete use may be prohibited.",
+          "[tb-500] Poisons Standard / SUSMP schedule claim available (9fc747faf786d2c8, confirmed_2of2). Review Appendix D context.",
+          "[tb-500] Verified claim 84da4f82cd2dc092: no TGA ARTG entry located (confirmed_2of2).",
+          "[tb-500] WADA prohibited-list match (confirmed_2of3, claim 25d5f3a5d6025a73) — athlete use may be prohibited."
+        ],
+        "summary": "Peptide Clinical Advisor matched for Synthetic Athlete (tendon injury) (AU). Peptide themes: bpc-157, tb-500. Top skill \"holistic-peptide-recommendation\" (score 0.69). Athlete flag elevates regulatory/WADA skills."
+      },
+      "registryId": "peptide-clinical-advisor",
+      "relevanceScore": 0.87
+    },
+    {
+      "agentCard": {
+        "capabilities": {
+          "pushNotifications": false,
+          "streaming": false
+        },
+        "defaultInputModes": [
+          "application/json"
+        ],
+        "defaultOutputModes": [
+          "application/json"
+        ],
+        "description": "Australian regulatory decision-support: TGA ARTG presence, Poisons Standard (incl. Appendix D), and WADA S0/GHRP listing checks. NOT a prescriber. Endpoint NOT YET DEPLOYED.",
+        "documentationUrl": "/docs/catalog",
+        "name": "Peptide Regulatory Advisor (Australia)",
+        "provider": {
+          "organization": "Catalog project",
+          "url": "http://localhost/catalog"
+        },
+        "skills": [
+          {
+            "description": "Checks whether a peptide is listed on the TGA ARTG public register for supplied patient context (Australia).",
+            "id": "tga-artg-availability",
+            "name": "TGA ARTG availability check",
+            "tags": [
+              "regulatory",
+              "tga",
+              "artg",
+              "australia"
+            ]
+          },
+          {
+            "description": "Surfaces Poisons Standard scheduling claims relevant to peptide access and compounding.",
+            "id": "poisons-standard-schedule",
+            "name": "Poisons Standard / SUSMP schedule",
+            "tags": [
+              "regulatory",
+              "poisons-standard",
+              "appendix-d",
+              "australia"
+            ]
+          },
+          {
+            "description": "Checks WADA Prohibited List naming for peptides when athlete flag is set.",
+            "id": "wada-prohibited-list",
+            "name": "WADA prohibited list (S0 / GHRP)",
+            "tags": [
+              "regulatory",
+              "wada",
+              "athlete",
+              "s0"
+            ]
+          }
+        ],
+        "supportedInterfaces": [
+          {
+            "protocolBinding": "JSONRPC",
+            "protocolVersion": "1.0",
+            "url": "http://localhost/NOT_DEPLOYED/peptide-regulatory-au/a2a/v1"
+          }
+        ],
+        "version": "0.1.0"
+      },
+      "matchedSkills": [
+        {
+          "evidenceRefs": [
+            {
+              "claim_id": "bd09022120b7195c",
+              "claim_type": "wada_status",
+              "slug": "ipamorelin",
+              "verification_status": "confirmed_2of3",
+              "verified": true
+            },
+            {
+              "claim_id": "dbf5061a83e046e7",
+              "claim_type": "wada_status",
+              "slug": "bpc-157",
+              "verification_status": "confirmed_2of3",
+              "verified": true
+            }
+          ],
+          "matches": [
+            {
+              "detail": "Patient context aligns with routing tag \"regulatory\"",
+              "kind": "indication",
+              "weight": 0.15
+            },
+            {
+              "detail": "Peptide focus overlap: bpc-157",
+              "kind": "peptide-slug",
+              "weight": 0.12
+            },
+            {
+              "detail": "Competitive athlete flag → WADA S0 / GHRP screening skill",
+              "kind": "athlete",
+              "weight": 0.35
+            }
+          ],
+          "skillId": "wada-prohibited-list",
+          "skillScore": 0.62
+        },
+        {
+          "evidenceRefs": [
+            {
+              "claim_id": "6483b25cc8a69038",
+              "claim_type": "tga_poisons_schedule",
+              "slug": "bpc-157",
+              "verification_status": "confirmed_2of2",
+              "verified": true
+            },
+            {
+              "claim_id": "fbe7df702fe9fc8b",
+              "claim_type": "tga_poisons_schedule",
+              "slug": "ipamorelin",
+              "verification_status": "confirmed_2of2",
+              "verified": true
+            }
+          ],
+          "matches": [
+            {
+              "detail": "Patient context aligns with routing tag \"regulatory\"",
+              "kind": "indication",
+              "weight": 0.15
+            },
+            {
+              "detail": "Peptide focus overlap: bpc-157",
+              "kind": "peptide-slug",
+              "weight": 0.12
+            }
+          ],
+          "skillId": "poisons-standard-schedule",
+          "skillScore": 0.27
+        },
+        {
+          "evidenceRefs": [
+            {
+              "claim_id": "4d0b84024d846a41",
+              "claim_type": "tga_artg_status",
+              "slug": "bpc-157",
+              "verification_status": "confirmed_2of2",
+              "verified": true
+            },
+            {
+              "claim_id": "52bf1e300b970cdc",
+              "claim_type": "tga_artg_status",
+              "slug": "semaglutide",
+              "verification_status": "confirmed_2of2",
+              "verified": true
+            }
+          ],
+          "matches": [
+            {
+              "detail": "Patient context aligns with routing tag \"regulatory\"",
+              "kind": "indication",
+              "weight": 0.15
+            },
+            {
+              "detail": "Peptide focus overlap: bpc-157",
+              "kind": "peptide-slug",
+              "weight": 0.12
+            }
+          ],
+          "skillId": "tga-artg-availability",
+          "skillScore": 0.27
+        }
+      ],
+      "rationale": {
+        "contraindicationAlerts": [],
+        "featureMatches": [
+          {
+            "effect": "increased peptide theme weight",
+            "matchedTo": "Clinical theme \"tendon\" → peptides: bpc-157, tb-500",
+            "patientFeature": "clinicalGoals/conditions"
+          },
+          {
+            "effect": "routing tag overlap",
+            "matchedTo": "regulatory, compounded, gh-axis",
+            "patientFeature": "goal:return to sport"
+          },
+          {
+            "effect": "routing tag overlap",
+            "matchedTo": "regulatory, compounded, gh-axis",
+            "patientFeature": "goal:tendon healing"
+          }
+        ],
+        "regulatoryAlerts": [
+          "Patient flagged as seeking compounded peptides — verify TGA compounding exemptions, prescriber eligibility, and ARTG status before any supply pathway discussion.",
+          "[bpc-157] Poisons Standard / SUSMP schedule claim available (6483b25cc8a69038, confirmed_2of2). Review Appendix D context.",
+          "[bpc-157] Verified claim 4d0b84024d846a41: no TGA ARTG entry located (confirmed_2of2).",
+          "[bpc-157] WADA prohibited-list match (confirmed_2of3, claim dbf5061a83e046e7) — athlete use may be prohibited.",
+          "[tb-500] Poisons Standard / SUSMP schedule claim available (9fc747faf786d2c8, confirmed_2of2). Review Appendix D context.",
+          "[tb-500] Verified claim 84da4f82cd2dc092: no TGA ARTG entry located (confirmed_2of2).",
+          "[tb-500] WADA prohibited-list match (confirmed_2of3, claim 25d5f3a5d6025a73) — athlete use may be prohibited."
+        ],
+        "summary": "Peptide Regulatory Advisor (Australia) matched for Synthetic Athlete (tendon injury) (AU). Peptide themes: bpc-157, tb-500. Top skill \"wada-prohibited-list\" (score 0.62). Athlete flag elevates regulatory/WADA skills."
+      },
+      "registryId": "peptide-regulatory-au",
+      "relevanceScore": 0.78
+    },
+    {
+      "agentCard": {
+        "capabilities": {
+          "pushNotifications": false,
+          "streaming": false
+        },
+        "defaultInputModes": [
+          "application/json"
+        ],
+        "defaultOutputModes": [
+          "application/json"
+        ],
+        "description": "Summarizes multi-model–verified peptide claims (RCT landscape, FDA status) with verification_status labels preserved. Decision support only. Endpoint NOT YET DEPLOYED.",
+        "documentationUrl": "/docs/catalog",
+        "name": "Peptide Evidence Summarizer",
+        "provider": {
+          "organization": "Catalog project",
+          "url": "http://localhost/catalog"
+        },
+        "skills": [
+          {
+            "description": "Returns human-readable evidence summaries tied to claim_id references and verification_status verbatim.",
+            "id": "evidence-summary",
+            "name": "Evidence summary",
+            "tags": [
+              "evidence",
+              "rct",
+              "systematic"
+            ]
+          },
+          {
+            "description": "Surfaces FDA-status verified claims; unverified claims remain explicitly labeled.",
+            "id": "fda-approval-landscape",
+            "name": "FDA approval landscape",
+            "tags": [
+              "evidence",
+              "fda",
+              "regulatory"
+            ]
+          }
+        ],
+        "supportedInterfaces": [
+          {
+            "protocolBinding": "JSONRPC",
+            "protocolVersion": "1.0",
+            "url": "http://localhost/NOT_DEPLOYED/peptide-evidence/a2a/v1"
+          }
+        ],
+        "version": "0.1.0"
+      },
+      "matchedSkills": [
+        {
+          "evidenceRefs": [
+            {
+              "claim_id": "9c42ed7bee8fce9b",
+              "claim_type": "human_rct_exists",
+              "slug": "semaglutide",
+              "verification_status": "confirmed_2of2",
+              "verified": true
+            },
+            {
+              "claim_id": "4cfe89d1facf5c4c",
+              "claim_type": "human_rct_exists",
+              "slug": "tesamorelin",
+              "verification_status": "confirmed_2of2_same_family",
+              "verified": true
+            }
+          ],
+          "matches": [
+            {
+              "detail": "Peptide focus overlap: bpc-157",
+              "kind": "peptide-slug",
+              "weight": 0.12
+            },
+            {
+              "detail": "Peptide themes identified → evidence summary skill",
+              "kind": "evidence",
+              "weight": 0.15
+            }
+          ],
+          "skillId": "evidence-summary",
+          "skillScore": 0.27
+        },
+        {
+          "evidenceRefs": [
+            {
+              "claim_id": "4e4f9ac4d0599b9c",
+              "claim_type": "fda_status",
+              "slug": "bpc-157",
+              "verification_status": "confirmed_2of2",
+              "verified": true
+            },
+            {
+              "claim_id": "6832afc477c98623",
+              "claim_type": "fda_status",
+              "slug": "ipamorelin",
+              "verification_status": "confirmed_2of2",
+              "verified": true
+            }
+          ],
+          "matches": [
+            {
+              "detail": "Peptide focus overlap: bpc-157",
+              "kind": "peptide-slug",
+              "weight": 0.12
+            }
+          ],
+          "skillId": "fda-approval-landscape",
+          "skillScore": 0.12
+        }
+      ],
+      "rationale": {
+        "contraindicationAlerts": [],
+        "featureMatches": [
+          {
+            "effect": "increased peptide theme weight",
+            "matchedTo": "Clinical theme \"tendon\" → peptides: bpc-157, tb-500",
+            "patientFeature": "clinicalGoals/conditions"
+          },
+          {
+            "effect": "routing tag overlap",
+            "matchedTo": "metabolic, t2dm, gh-axis, hiv",
+            "patientFeature": "goal:return to sport"
+          },
+          {
+            "effect": "routing tag overlap",
+            "matchedTo": "metabolic, t2dm, gh-axis, hiv",
+            "patientFeature": "goal:tendon healing"
+          }
+        ],
+        "regulatoryAlerts": [
+          "Patient flagged as seeking compounded peptides — verify TGA compounding exemptions, prescriber eligibility, and ARTG status before any supply pathway discussion.",
+          "[bpc-157] Poisons Standard / SUSMP schedule claim available (6483b25cc8a69038, confirmed_2of2). Review Appendix D context.",
+          "[bpc-157] Verified claim 4d0b84024d846a41: no TGA ARTG entry located (confirmed_2of2).",
+          "[bpc-157] WADA prohibited-list match (confirmed_2of3, claim dbf5061a83e046e7) — athlete use may be prohibited.",
+          "[tb-500] Poisons Standard / SUSMP schedule claim available (9fc747faf786d2c8, confirmed_2of2). Review Appendix D context.",
+          "[tb-500] Verified claim 84da4f82cd2dc092: no TGA ARTG entry located (confirmed_2of2).",
+          "[tb-500] WADA prohibited-list match (confirmed_2of3, claim 25d5f3a5d6025a73) — athlete use may be prohibited."
+        ],
+        "summary": "Peptide Evidence Summarizer matched for Synthetic Athlete (tendon injury) (AU). Peptide themes: bpc-157, tb-500. Top skill \"evidence-summary\" (score 0.27). Athlete flag elevates regulatory/WADA skills."
+      },
+      "registryId": "peptide-evidence",
+      "relevanceScore": 0.41
+    }
+  ]
+}

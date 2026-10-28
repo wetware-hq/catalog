@@ -13,7 +13,7 @@ Open-source A2A catalog for routing synthetic patient context to specialist agen
 └───────────────┬─────────────────────────────┬───────────────┘
                 │                             │
                 ▼                             ▼
-         rankAgents()                  node:http (3 routes)
+         rank()                        node:http (3 routes)
                 │                     rank + agent-card + health
                 ▼
     registry/domains/{domainId}/*.json  +  data/evidence/peptide-claims.compact.json

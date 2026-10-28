@@ -2,7 +2,7 @@
 requirements:
   - id: REQ-CLI-001
     title: Terminal-native CLI (rank, list, show, validate, serve)
-    tests: [tests/rank.test.ts, tests/validate.test.ts]
+    tests: [tests/rank-golden.test.ts, tests/validate.test.ts]
 
   - id: REQ-NO-UI-001
     title: No HTML frontend; JSON HTTP only (3 routes)
@@ -18,15 +18,18 @@ requirements:
 
   - id: REQ-SCHEMA-001
     title: JSON Schemas for registry and rank I/O
-    tests: [tests/validate.test.ts, tests/http.test.ts]
+    tests: [tests/validate.test.ts, tests/http.test.ts, tests/rank-golden.test.ts]
+
+  - id: REQ-RANK-PURE-001
+    title: Pure rank() with golden + reorder/citation properties
+    tests: [tests/rank-golden.test.ts, tests/rank-properties.test.ts]
 
   - id: REQ-EVIDENCE-STATUS-001
     title: verification_status preserved on claims
     tests: [tests/validate.test.ts]
 
   - id: REQ-EVIDENCE-INTEGRITY-001
-    title: SHA-256 sidecar + REFERENCES.md in sync
-    tests: [tests/evidence-integrity.test.ts]
+    title: Git blob oid sidecar + REFERENCES.md in sync
     check: npm run check
 
   - id: REQ-SE-001

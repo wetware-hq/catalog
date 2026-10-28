@@ -4,7 +4,7 @@
  *
  * Provenance: see data/evidence/PROVENANCE.md
  */
-import { createHash } from "node:crypto";
+import { execSync } from "node:child_process";
 import { readFileSync, writeFileSync, mkdirSync, existsSync, readdirSync } from "node:fs";
 import { basename, dirname, join } from "node:path";
 import { fileURLToPath, pathToFileURL } from "node:url";
@@ -12,6 +12,15 @@ import { fileURLToPath, pathToFileURL } from "node:url";
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const ROOT = join(__dirname, "..");
 const UPLOADS = process.env.CLAIM_UPLOADS_DIR ?? join(ROOT, "data", "evidence", "uploads");
+
+function gitBlobOid(filePath: string): string {
+  return execSync(`git hash-object "${filePath}"`, { encoding: "utf8", cwd: ROOT }).trim();
+}
+
+function writeGitOid(jsonPath: string): void {
+  const oidPath = join(dirname(jsonPath), "peptide-claims.compact.gitoid");
+  writeFileSync(oidPath, `${gitBlobOid(jsonPath)}\n`);
+}
 
 type MergedClaim = {
   claim_id: string;
@@ -162,11 +171,11 @@ export function generateEvidenceReferences(root: string = ROOT) {
     if (c.identifiers?.nct) ncts.add(String(c.identifiers.nct));
   }
 
-  const corpusHash = createHash("sha256").update(readFileSync(corpusPath)).digest("hex").slice(0, 16);
+  const corpusHash = gitBlobOid(corpusPath).slice(0, 16);
   const lines: string[] = [
     "# Evidence corpus references",
     "",
-    `Auto-generated from \`peptide-claims.compact.json\` (corpus sha256 prefix \`${corpusHash}\`).`,
+    `Auto-generated from \`peptide-claims.compact.json\` (git blob oid prefix \`${corpusHash}\`).`,
     "Regenerate after corpus changes via `npm run build:evidence` (when uploads present).",
     "",
     "Per-claim citations remain inline in the JSON (`authority`, `identifiers.url`, PMID, DOI, NCT).",
@@ -227,6 +236,7 @@ function buildCompactCorpus() {
   if (!existsSync(mergedPath)) {
     if (existsSync(outPath)) {
       console.log("Uploads missing; keeping existing", outPath);
+      writeGitOid(outPath);
       generateEvidenceReferences(ROOT);
       return;
     }
@@ -295,15 +305,11 @@ function buildCompactCorpus() {
   }
   const payload = { summary, claims: outClaims, by_slug };
   const json = JSON.stringify(payload);
-  const sha256 = createHash("sha256").update(json).digest("hex");
 
   const outDir = join(ROOT, "data", "evidence");
   mkdirSync(outDir, { recursive: true });
   writeFileSync(outPath, json);
-  writeFileSync(
-    join(outDir, "peptide-claims.compact.sha256"),
-    `${sha256}  peptide-claims.compact.json\n`,
-  );
+  writeGitOid(outPath);
 
   console.log("Wrote", outPath);
   console.log(JSON.stringify(summary, null, 2));
@@ -312,16 +318,15 @@ function buildCompactCorpus() {
 
 export function checkEvidenceArtifacts(root: string = ROOT): void {
   const jsonPath = join(root, "data", "evidence", "peptide-claims.compact.json");
-  const sidecarPath = join(root, "data", "evidence", "peptide-claims.compact.sha256");
+  const oidPath = join(root, "data", "evidence", "peptide-claims.compact.gitoid");
   const refPath = join(root, "data", "evidence", "REFERENCES.md");
-  if (!existsSync(jsonPath) || !existsSync(sidecarPath)) {
-    throw new Error("missing evidence corpus or sha256 sidecar");
+  if (!existsSync(jsonPath) || !existsSync(oidPath)) {
+    throw new Error("missing evidence corpus or gitoid sidecar");
   }
-  const json = readFileSync(jsonPath);
-  const expected = createHash("sha256").update(json).digest("hex");
-  const [recorded] = readFileSync(sidecarPath, "utf8").trim().split(/\s+/, 1);
+  const expected = gitBlobOid(jsonPath);
+  const recorded = readFileSync(oidPath, "utf8").trim();
   if (recorded !== expected) {
-    throw new Error("peptide-claims.compact.sha256 mismatch");
+    throw new Error("peptide-claims.compact.gitoid mismatch (run npm run build:evidence)");
   }
   if (!existsSync(refPath)) {
     throw new Error("missing data/evidence/REFERENCES.md");
@@ -349,6 +354,6 @@ if (isMain) {
 
 /*
  * References:
- * [1] FIPS 180-4 — Secure Hash Standard (SHA-256 sidecar for peptide-claims.compact.json).
- *     https://csrc.nist.gov/publications/detail/fips/180/4/final
+ * [1] Git blob object id (`git hash-object`) pinned in peptide-claims.compact.gitoid.
+ *     https://git-scm.com/docs/git-hash-object
  */

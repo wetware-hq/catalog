@@ -1,0 +1,372 @@
+{
+  "disclaimer": "Clinical decision support only — not prescribing advice. Rankings reflect rule-based matching of synthetic patient features to catalog metadata and verified peptide claim references. Verify regulatory status and contraindications before any clinical action.",
+  "domainId": "peptides",
+  "patientSummary": {
+    "countryCode": "AU",
+    "displayName": "Synthetic Patient (male infertility workup)",
+    "flags": {
+      "competitiveAthlete": false,
+      "pregnantOrBreastfeeding": false,
+      "seekingCompoundedPeptides": true
+    },
+    "id": "syn-fertility-003",
+    "inferredPeptideSlugs": [
+      "kisspeptin-10"
+    ],
+    "source": "fhir",
+    "themeNotes": [
+      "Clinical theme \"fertility\" → peptides: kisspeptin-10"
+    ]
+  },
+  "rankedAgents": [
+    {
+      "agentCard": {
+        "capabilities": {
+          "extensions": [],
+          "pushNotifications": false,
+          "streaming": true
+        },
+        "defaultInputModes": [
+          "application/json",
+          "application/fhir+json"
+        ],
+        "defaultOutputModes": [
+          "application/json"
+        ],
+        "description": "Holistic peptide decision-support for clinicians (NOT a prescriber). Synthesizes patient context into interpretable peptide themes, routes to evidence and regulatory checks. Endpoint NOT YET DEPLOYED.",
+        "documentationUrl": "/docs/catalog",
+        "name": "Peptide Clinical Advisor",
+        "provider": {
+          "organization": "Catalog project",
+          "url": "http://localhost/catalog"
+        },
+        "skills": [
+          {
+            "description": "Maps synthetic patient goals and conditions to peptide options with explicit uncertainty and non-prescribing framing.",
+            "examples": [
+              "Patient with obesity and T2DM seeking GLP-1 class options"
+            ],
+            "id": "holistic-peptide-recommendation",
+            "name": "Holistic peptide recommendation",
+            "tags": [
+              "peptides",
+              "holistic",
+              "decision-support",
+              "metabolic",
+              "tissue-repair"
+            ]
+          },
+          {
+            "description": "Flags pregnancy, athlete status, drug interactions, and allergy-driven exclusions for peptide routing.",
+            "id": "contraindication-interaction-screen",
+            "name": "Contraindication and interaction screen",
+            "tags": [
+              "safety",
+              "contraindication",
+              "interactions"
+            ]
+          }
+        ],
+        "supportedInterfaces": [
+          {
+            "protocolBinding": "JSONRPC",
+            "protocolVersion": "1.0",
+            "url": "http://localhost/NOT_DEPLOYED/peptide-clinical-advisor/a2a/v1"
+          }
+        ],
+        "version": "0.1.0"
+      },
+      "matchedSkills": [
+        {
+          "evidenceRefs": [
+            {
+              "claim_id": "0e07607a57d1ca8b",
+              "claim_type": "human_rct_exists",
+              "slug": "tirzepatide",
+              "verification_status": "confirmed_2of2_same_family",
+              "verified": true
+            },
+            {
+              "claim_id": "3f8b70f36a66063b",
+              "claim_type": "human_rct_exists",
+              "slug": "bpc-157",
+              "verification_status": "confirmed_2of3",
+              "verified": true
+            }
+          ],
+          "matches": [
+            {
+              "detail": "Patient context aligns with routing tag \"reproductive\"",
+              "kind": "indication",
+              "weight": 0.15
+            },
+            {
+              "detail": "Peptide focus overlap: kisspeptin-10",
+              "kind": "peptide-slug",
+              "weight": 0.12
+            },
+            {
+              "detail": "Active peptide clinical themes → holistic recommendation skill",
+              "kind": "holistic",
+              "weight": 0.2
+            }
+          ],
+          "skillId": "holistic-peptide-recommendation",
+          "skillScore": 0.47000000000000003
+        },
+        {
+          "evidenceRefs": [
+            {
+              "claim_id": "dbf5061a83e046e7",
+              "claim_type": "wada_status",
+              "slug": "bpc-157",
+              "verification_status": "confirmed_2of3",
+              "verified": true
+            }
+          ],
+          "matches": [
+            {
+              "detail": "Patient context aligns with routing tag \"reproductive\"",
+              "kind": "indication",
+              "weight": 0.15
+            },
+            {
+              "detail": "Peptide focus overlap: kisspeptin-10",
+              "kind": "peptide-slug",
+              "weight": 0.12
+            }
+          ],
+          "skillId": "contraindication-interaction-screen",
+          "skillScore": 0.27
+        }
+      ],
+      "rationale": {
+        "contraindicationAlerts": [],
+        "featureMatches": [
+          {
+            "effect": "increased peptide theme weight",
+            "matchedTo": "Clinical theme \"fertility\" → peptides: kisspeptin-10",
+            "patientFeature": "clinicalGoals/conditions"
+          },
+          {
+            "effect": "routing tag overlap",
+            "matchedTo": "metabolic, glp1, t2dm, tissue-repair, recovery, reproductive, cosmetic",
+            "patientFeature": "goal:fertility optimization and peptide counseling"
+          }
+        ],
+        "regulatoryAlerts": [
+          "Patient flagged as seeking compounded peptides — verify TGA compounding exemptions, prescriber eligibility, and ARTG status before any supply pathway discussion.",
+          "[kisspeptin-10] Poisons Standard / SUSMP schedule claim available (cee572cdffc90527, spot_check_confirmed). Review Appendix D context.",
+          "[kisspeptin-10] Verified claim 8530acc8d4abd615: no TGA ARTG entry located (confirmed_2of2)."
+        ],
+        "summary": "Peptide Clinical Advisor matched for Synthetic Patient (male infertility workup) (AU). Peptide themes: kisspeptin-10. Top skill \"holistic-peptide-recommendation\" (score 0.47000000000000003)."
+      },
+      "registryId": "peptide-clinical-advisor",
+      "relevanceScore": 0.65
+    },
+    {
+      "agentCard": {
+        "capabilities": {
+          "pushNotifications": false,
+          "streaming": false
+        },
+        "defaultInputModes": [
+          "application/json"
+        ],
+        "defaultOutputModes": [
+          "application/json"
+        ],
+        "description": "Summarizes multi-model–verified peptide claims (RCT landscape, FDA status) with verification_status labels preserved. Decision support only. Endpoint NOT YET DEPLOYED.",
+        "documentationUrl": "/docs/catalog",
+        "name": "Peptide Evidence Summarizer",
+        "provider": {
+          "organization": "Catalog project",
+          "url": "http://localhost/catalog"
+        },
+        "skills": [
+          {
+            "description": "Returns human-readable evidence summaries tied to claim_id references and verification_status verbatim.",
+            "id": "evidence-summary",
+            "name": "Evidence summary",
+            "tags": [
+              "evidence",
+              "rct",
+              "systematic"
+            ]
+          },
+          {
+            "description": "Surfaces FDA-status verified claims; unverified claims remain explicitly labeled.",
+            "id": "fda-approval-landscape",
+            "name": "FDA approval landscape",
+            "tags": [
+              "evidence",
+              "fda",
+              "regulatory"
+            ]
+          }
+        ],
+        "supportedInterfaces": [
+          {
+            "protocolBinding": "JSONRPC",
+            "protocolVersion": "1.0",
+            "url": "http://localhost/NOT_DEPLOYED/peptide-evidence/a2a/v1"
+          }
+        ],
+        "version": "0.1.0"
+      },
+      "matchedSkills": [
+        {
+          "evidenceRefs": [
+            {
+              "claim_id": "9c42ed7bee8fce9b",
+              "claim_type": "human_rct_exists",
+              "slug": "semaglutide",
+              "verification_status": "confirmed_2of2",
+              "verified": true
+            },
+            {
+              "claim_id": "4cfe89d1facf5c4c",
+              "claim_type": "human_rct_exists",
+              "slug": "tesamorelin",
+              "verification_status": "confirmed_2of2_same_family",
+              "verified": true
+            }
+          ],
+          "matches": [
+            {
+              "detail": "Peptide themes identified → evidence summary skill",
+              "kind": "evidence",
+              "weight": 0.15
+            }
+          ],
+          "skillId": "evidence-summary",
+          "skillScore": 0.15
+        }
+      ],
+      "rationale": {
+        "contraindicationAlerts": [],
+        "featureMatches": [
+          {
+            "effect": "increased peptide theme weight",
+            "matchedTo": "Clinical theme \"fertility\" → peptides: kisspeptin-10",
+            "patientFeature": "clinicalGoals/conditions"
+          },
+          {
+            "effect": "routing tag overlap",
+            "matchedTo": "metabolic, t2dm, gh-axis, hiv",
+            "patientFeature": "goal:fertility optimization and peptide counseling"
+          }
+        ],
+        "regulatoryAlerts": [
+          "Patient flagged as seeking compounded peptides — verify TGA compounding exemptions, prescriber eligibility, and ARTG status before any supply pathway discussion.",
+          "[kisspeptin-10] Poisons Standard / SUSMP schedule claim available (cee572cdffc90527, spot_check_confirmed). Review Appendix D context.",
+          "[kisspeptin-10] Verified claim 8530acc8d4abd615: no TGA ARTG entry located (confirmed_2of2)."
+        ],
+        "summary": "Peptide Evidence Summarizer matched for Synthetic Patient (male infertility workup) (AU). Peptide themes: kisspeptin-10. Top skill \"evidence-summary\" (score 0.15)."
+      },
+      "registryId": "peptide-evidence",
+      "relevanceScore": 0.29
+    },
+    {
+      "agentCard": {
+        "capabilities": {
+          "pushNotifications": false,
+          "streaming": false
+        },
+        "defaultInputModes": [
+          "application/json"
+        ],
+        "defaultOutputModes": [
+          "application/json"
+        ],
+        "description": "Australian regulatory decision-support: TGA ARTG presence, Poisons Standard (incl. Appendix D), and WADA S0/GHRP listing checks. NOT a prescriber. Endpoint NOT YET DEPLOYED.",
+        "documentationUrl": "/docs/catalog",
+        "name": "Peptide Regulatory Advisor (Australia)",
+        "provider": {
+          "organization": "Catalog project",
+          "url": "http://localhost/catalog"
+        },
+        "skills": [
+          {
+            "description": "Checks whether a peptide is listed on the TGA ARTG public register for supplied patient context (Australia).",
+            "id": "tga-artg-availability",
+            "name": "TGA ARTG availability check",
+            "tags": [
+              "regulatory",
+              "tga",
+              "artg",
+              "australia"
+            ]
+          },
+          {
+            "description": "Surfaces Poisons Standard scheduling claims relevant to peptide access and compounding.",
+            "id": "poisons-standard-schedule",
+            "name": "Poisons Standard / SUSMP schedule",
+            "tags": [
+              "regulatory",
+              "poisons-standard",
+              "appendix-d",
+              "australia"
+            ]
+          },
+          {
+            "description": "Checks WADA Prohibited List naming for peptides when athlete flag is set.",
+            "id": "wada-prohibited-list",
+            "name": "WADA prohibited list (S0 / GHRP)",
+            "tags": [
+              "regulatory",
+              "wada",
+              "athlete",
+              "s0"
+            ]
+          }
+        ],
+        "supportedInterfaces": [
+          {
+            "protocolBinding": "JSONRPC",
+            "protocolVersion": "1.0",
+            "url": "http://localhost/NOT_DEPLOYED/peptide-regulatory-au/a2a/v1"
+          }
+        ],
+        "version": "0.1.0"
+      },
+      "matchedSkills": [
+        {
+          "evidenceRefs": [],
+          "matches": [
+            {
+              "detail": "General peptide domain agent (weak match)",
+              "kind": "fallback",
+              "weight": 0.05
+            }
+          ],
+          "skillId": "tga-artg-availability",
+          "skillScore": 0.05
+        }
+      ],
+      "rationale": {
+        "contraindicationAlerts": [],
+        "featureMatches": [
+          {
+            "effect": "increased peptide theme weight",
+            "matchedTo": "Clinical theme \"fertility\" → peptides: kisspeptin-10",
+            "patientFeature": "clinicalGoals/conditions"
+          },
+          {
+            "effect": "routing tag overlap",
+            "matchedTo": "regulatory, compounded, gh-axis",
+            "patientFeature": "goal:fertility optimization and peptide counseling"
+          }
+        ],
+        "regulatoryAlerts": [
+          "Patient flagged as seeking compounded peptides — verify TGA compounding exemptions, prescriber eligibility, and ARTG status before any supply pathway discussion.",
+          "[kisspeptin-10] Poisons Standard / SUSMP schedule claim available (cee572cdffc90527, spot_check_confirmed). Review Appendix D context.",
+          "[kisspeptin-10] Verified claim 8530acc8d4abd615: no TGA ARTG entry located (confirmed_2of2)."
+        ],
+        "summary": "Peptide Regulatory Advisor (Australia) matched for Synthetic Patient (male infertility workup) (AU). Peptide themes: kisspeptin-10. Top skill \"tga-artg-availability\" (score 0.05)."
+      },
+      "registryId": "peptide-regulatory-au",
+      "relevanceScore": 0.05
+    }
+  ]
+}

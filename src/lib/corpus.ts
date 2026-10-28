@@ -2,6 +2,7 @@ import { readFileSync, existsSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import type { CompactClaim, EvidenceCorpus } from "../types/catalog.js";
+import { indexEvidence } from "./evidence-index.js";
 
 const packageRoot = join(dirname(fileURLToPath(import.meta.url)), "..", "..");
 
@@ -23,14 +24,11 @@ export function loadEvidenceCorpus(): EvidenceCorpus {
   return cached;
 }
 
+/** Edge loader helper — prefer passing corpus into pure rank(). */
 export function claimsById(): Map<string, CompactClaim> {
-  const corpus = loadEvidenceCorpus();
-  return new Map(corpus.claims.map((c) => [c.claim_id, c]));
+  return new Map(indexEvidence(loadEvidenceCorpus()).claimsById);
 }
 
 export function claimsForSlug(slug: string): CompactClaim[] {
-  const corpus = loadEvidenceCorpus();
-  const ids = corpus.by_slug[slug] ?? [];
-  const byId = claimsById();
-  return ids.map((id) => byId.get(id)).filter(Boolean) as CompactClaim[];
+  return indexEvidence(loadEvidenceCorpus()).claimsForSlug(slug);
 }

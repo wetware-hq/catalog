@@ -3,7 +3,8 @@ import { readFileSync } from "node:fs";
 import { parseArgs } from "node:util";
 import { loadConfig } from "../lib/config.js";
 import { normalizePatientInput } from "../lib/patient.js";
-import { rankAgents } from "../lib/rank.js";
+import { loadEvidenceCorpus } from "../lib/corpus.js";
+import { rank } from "../lib/rank.js";
 import {
   getRegistryEntry,
   listDomainIds,
@@ -121,9 +122,7 @@ Usage:
   catalog serve [--port 8787] [--host 127.0.0.1]
 
 Environment (serve / HTTP):
-  CATALOG_X402_ENABLED=true|false (default false)
-  CATALOG_X402_PAY_TO, CATALOG_X402_AMOUNT, CATALOG_X402_NETWORK, ...
-  CATALOG_PUBLIC_BASE_URL=http://127.0.0.1:8787
+  CATALOG_HOST, CATALOG_PORT, CATALOG_PUBLIC_BASE_URL
 `);
     process.exit(cmd ? 0 : 1);
   }
@@ -163,7 +162,11 @@ Environment (serve / HTTP):
     }
     const raw = readPatientArg(patientPath);
     const patient = normalizePatientInput(raw);
-    const result = rankAgents(values.domain!, patient, Number(values.limit));
+    const domain = values.domain!;
+    const result = rank(patient, loadRegistryEntries(domain), loadEvidenceCorpus(), {
+      domainId: domain,
+      limit: Number(values.limit),
+    });
     if (json) console.log(JSON.stringify(result, null, 2));
     else console.log(formatRank(result));
     return;

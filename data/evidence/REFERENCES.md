@@ -1,6 +1,6 @@
 # Evidence corpus references
 
-Auto-generated from `peptide-claims.compact.json` (corpus sha256 prefix `b3986baa28f3892a`).
+Auto-generated from `peptide-claims.compact.json` (git blob oid prefix `917630ce6e13450d`).
 Regenerate after corpus changes via `npm run build:evidence` (when uploads present).
 
 Per-claim citations remain inline in the JSON (`authority`, `identifiers.url`, PMID, DOI, NCT).

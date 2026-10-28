@@ -7,7 +7,9 @@ import type { CatalogConfig } from "./lib/config.js";
 import { loadConfig } from "./lib/config.js";
 import { repoPath } from "./lib/corpus.js";
 import { normalizePatientInput } from "./lib/patient.js";
-import { rankAgents } from "./lib/rank.js";
+import { loadEvidenceCorpus } from "./lib/corpus.js";
+import { loadRegistryEntries } from "./lib/registry.js";
+import { rank } from "./lib/rank.js";
 import { catalogAgentCard } from "./lib/registry.js";
 
 export const MAX_BODY_BYTES = 64 * 1024;
@@ -61,7 +63,12 @@ export function handleRequest(
   if (!validateRankRequest(parsed)) return json(400, { error: "invalid_request" });
   try {
     const input = parsed as { domainId: string; patient: unknown; limit?: number };
-    const result = rankAgents(input.domainId, normalizePatientInput(input.patient), input.limit ?? 10);
+    const domainId = input.domainId;
+    const patient = normalizePatientInput(input.patient);
+    const result = rank(patient, loadRegistryEntries(domainId), loadEvidenceCorpus(), {
+      domainId,
+      limit: input.limit ?? 10,
+    });
     if (!validateRankResponse(result)) return json(500, { error: "internal_error" });
     return json(200, result);
   } catch {

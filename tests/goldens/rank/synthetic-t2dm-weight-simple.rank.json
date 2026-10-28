@@ -1,0 +1,622 @@
+{
+  "disclaimer": "Clinical decision support only — not prescribing advice. Rankings reflect rule-based matching of synthetic patient features to catalog metadata and verified peptide claim references. Verify regulatory status and contraindications before any clinical action.",
+  "domainId": "peptides",
+  "patientSummary": {
+    "countryCode": "AU",
+    "displayName": "Synthetic Adult (T2DM + obesity)",
+    "flags": {
+      "competitiveAthlete": false,
+      "pregnantOrBreastfeeding": false,
+      "seekingCompoundedPeptides": false
+    },
+    "id": "syn-t2dm-002",
+    "inferredPeptideSlugs": [
+      "ipamorelin",
+      "liraglutide",
+      "semaglutide",
+      "sermorelin",
+      "tesamorelin",
+      "tirzepatide"
+    ],
+    "source": "simple",
+    "themeNotes": [
+      "Clinical theme \"weight\" → peptides: tirzepatide, semaglutide, liraglutide",
+      "Clinical theme \"obesity\" → peptides: tirzepatide, semaglutide",
+      "Clinical theme \"diabetes\" → peptides: tirzepatide, semaglutide, liraglutide",
+      "Clinical theme \"gh\" → peptides: ipamorelin, tesamorelin, sermorelin"
+    ]
+  },
+  "rankedAgents": [
+    {
+      "agentCard": {
+        "capabilities": {
+          "extensions": [],
+          "pushNotifications": false,
+          "streaming": true
+        },
+        "defaultInputModes": [
+          "application/json",
+          "application/fhir+json"
+        ],
+        "defaultOutputModes": [
+          "application/json"
+        ],
+        "description": "Holistic peptide decision-support for clinicians (NOT a prescriber). Synthesizes patient context into interpretable peptide themes, routes to evidence and regulatory checks. Endpoint NOT YET DEPLOYED.",
+        "documentationUrl": "/docs/catalog",
+        "name": "Peptide Clinical Advisor",
+        "provider": {
+          "organization": "Catalog project",
+          "url": "http://localhost/catalog"
+        },
+        "skills": [
+          {
+            "description": "Maps synthetic patient goals and conditions to peptide options with explicit uncertainty and non-prescribing framing.",
+            "examples": [
+              "Patient with obesity and T2DM seeking GLP-1 class options"
+            ],
+            "id": "holistic-peptide-recommendation",
+            "name": "Holistic peptide recommendation",
+            "tags": [
+              "peptides",
+              "holistic",
+              "decision-support",
+              "metabolic",
+              "tissue-repair"
+            ]
+          },
+          {
+            "description": "Flags pregnancy, athlete status, drug interactions, and allergy-driven exclusions for peptide routing.",
+            "id": "contraindication-interaction-screen",
+            "name": "Contraindication and interaction screen",
+            "tags": [
+              "safety",
+              "contraindication",
+              "interactions"
+            ]
+          }
+        ],
+        "supportedInterfaces": [
+          {
+            "protocolBinding": "JSONRPC",
+            "protocolVersion": "1.0",
+            "url": "http://localhost/NOT_DEPLOYED/peptide-clinical-advisor/a2a/v1"
+          }
+        ],
+        "version": "0.1.0"
+      },
+      "matchedSkills": [
+        {
+          "evidenceRefs": [
+            {
+              "claim_id": "0e07607a57d1ca8b",
+              "claim_type": "human_rct_exists",
+              "slug": "tirzepatide",
+              "verification_status": "confirmed_2of2_same_family",
+              "verified": true
+            },
+            {
+              "claim_id": "3f8b70f36a66063b",
+              "claim_type": "human_rct_exists",
+              "slug": "bpc-157",
+              "verification_status": "confirmed_2of3",
+              "verified": true
+            }
+          ],
+          "matches": [
+            {
+              "detail": "Patient context aligns with routing tag \"metabolic\"",
+              "kind": "indication",
+              "weight": 0.15
+            },
+            {
+              "detail": "Patient context aligns with routing tag \"glp1\"",
+              "kind": "indication",
+              "weight": 0.15
+            },
+            {
+              "detail": "Patient context aligns with routing tag \"t2dm\"",
+              "kind": "indication",
+              "weight": 0.15
+            },
+            {
+              "detail": "Skill holistic-peptide-recommendation tag \"metabolic\" matches clinical theme",
+              "kind": "skill-tag",
+              "weight": 0.1
+            },
+            {
+              "detail": "Peptide focus overlap: tirzepatide, semaglutide",
+              "kind": "peptide-slug",
+              "weight": 0.24
+            },
+            {
+              "detail": "Active peptide clinical themes → holistic recommendation skill",
+              "kind": "holistic",
+              "weight": 0.2
+            }
+          ],
+          "skillId": "holistic-peptide-recommendation",
+          "skillScore": 0.99
+        },
+        {
+          "evidenceRefs": [
+            {
+              "claim_id": "dbf5061a83e046e7",
+              "claim_type": "wada_status",
+              "slug": "bpc-157",
+              "verification_status": "confirmed_2of3",
+              "verified": true
+            }
+          ],
+          "matches": [
+            {
+              "detail": "Patient context aligns with routing tag \"metabolic\"",
+              "kind": "indication",
+              "weight": 0.15
+            },
+            {
+              "detail": "Patient context aligns with routing tag \"glp1\"",
+              "kind": "indication",
+              "weight": 0.15
+            },
+            {
+              "detail": "Patient context aligns with routing tag \"t2dm\"",
+              "kind": "indication",
+              "weight": 0.15
+            },
+            {
+              "detail": "Peptide focus overlap: tirzepatide, semaglutide",
+              "kind": "peptide-slug",
+              "weight": 0.24
+            },
+            {
+              "detail": "Allergies, medications, or pregnancy flag present → safety screen prioritized",
+              "kind": "safety-input",
+              "weight": 0.25
+            }
+          ],
+          "skillId": "contraindication-interaction-screen",
+          "skillScore": 0.94
+        }
+      ],
+      "rationale": {
+        "contraindicationAlerts": [],
+        "featureMatches": [
+          {
+            "effect": "increased peptide theme weight",
+            "matchedTo": "Clinical theme \"diabetes\" → peptides: tirzepatide, semaglutide, liraglutide",
+            "patientFeature": "clinicalGoals/conditions"
+          },
+          {
+            "effect": "increased peptide theme weight",
+            "matchedTo": "Clinical theme \"gh\" → peptides: ipamorelin, tesamorelin, sermorelin",
+            "patientFeature": "clinicalGoals/conditions"
+          },
+          {
+            "effect": "increased peptide theme weight",
+            "matchedTo": "Clinical theme \"obesity\" → peptides: tirzepatide, semaglutide",
+            "patientFeature": "clinicalGoals/conditions"
+          },
+          {
+            "effect": "increased peptide theme weight",
+            "matchedTo": "Clinical theme \"weight\" → peptides: tirzepatide, semaglutide, liraglutide",
+            "patientFeature": "clinicalGoals/conditions"
+          },
+          {
+            "effect": "routing tag overlap",
+            "matchedTo": "metabolic, glp1, t2dm, tissue-repair, recovery, reproductive, cosmetic",
+            "patientFeature": "goal:glycemic control"
+          },
+          {
+            "effect": "routing tag overlap",
+            "matchedTo": "metabolic, glp1, t2dm, tissue-repair, recovery, reproductive, cosmetic",
+            "patientFeature": "goal:weight management"
+          }
+        ],
+        "regulatoryAlerts": [
+          "[ipamorelin] Poisons Standard / SUSMP schedule claim available (fbe7df702fe9fc8b, confirmed_2of2). Review Appendix D context.",
+          "[ipamorelin] Verified claim 8c0844d056b42f65: no TGA ARTG entry located (confirmed_2of2).",
+          "[semaglutide] Poisons Standard / SUSMP schedule claim available (746e413f0d0c4049, confirmed_2of2). Review Appendix D context.",
+          "[sermorelin] Verified claim 497d26914c43c0fb: no TGA ARTG entry located (confirmed_2of2).",
+          "[tesamorelin] Verified claim 04e211e867f7d716: no TGA ARTG entry located (confirmed_2of2)."
+        ],
+        "summary": "Peptide Clinical Advisor matched for Synthetic Adult (T2DM + obesity) (AU). Peptide themes: ipamorelin, liraglutide, semaglutide, sermorelin, tesamorelin, tirzepatide. Top skill \"holistic-peptide-recommendation\" (score 0.99)."
+      },
+      "registryId": "peptide-clinical-advisor",
+      "relevanceScore": 1
+    },
+    {
+      "agentCard": {
+        "capabilities": {
+          "pushNotifications": false,
+          "streaming": false
+        },
+        "defaultInputModes": [
+          "application/json"
+        ],
+        "defaultOutputModes": [
+          "application/json"
+        ],
+        "description": "Summarizes multi-model–verified peptide claims (RCT landscape, FDA status) with verification_status labels preserved. Decision support only. Endpoint NOT YET DEPLOYED.",
+        "documentationUrl": "/docs/catalog",
+        "name": "Peptide Evidence Summarizer",
+        "provider": {
+          "organization": "Catalog project",
+          "url": "http://localhost/catalog"
+        },
+        "skills": [
+          {
+            "description": "Returns human-readable evidence summaries tied to claim_id references and verification_status verbatim.",
+            "id": "evidence-summary",
+            "name": "Evidence summary",
+            "tags": [
+              "evidence",
+              "rct",
+              "systematic"
+            ]
+          },
+          {
+            "description": "Surfaces FDA-status verified claims; unverified claims remain explicitly labeled.",
+            "id": "fda-approval-landscape",
+            "name": "FDA approval landscape",
+            "tags": [
+              "evidence",
+              "fda",
+              "regulatory"
+            ]
+          }
+        ],
+        "supportedInterfaces": [
+          {
+            "protocolBinding": "JSONRPC",
+            "protocolVersion": "1.0",
+            "url": "http://localhost/NOT_DEPLOYED/peptide-evidence/a2a/v1"
+          }
+        ],
+        "version": "0.1.0"
+      },
+      "matchedSkills": [
+        {
+          "evidenceRefs": [
+            {
+              "claim_id": "9c42ed7bee8fce9b",
+              "claim_type": "human_rct_exists",
+              "slug": "semaglutide",
+              "verification_status": "confirmed_2of2",
+              "verified": true
+            },
+            {
+              "claim_id": "4cfe89d1facf5c4c",
+              "claim_type": "human_rct_exists",
+              "slug": "tesamorelin",
+              "verification_status": "confirmed_2of2_same_family",
+              "verified": true
+            }
+          ],
+          "matches": [
+            {
+              "detail": "Patient context aligns with routing tag \"metabolic\"",
+              "kind": "indication",
+              "weight": 0.15
+            },
+            {
+              "detail": "Patient context aligns with routing tag \"t2dm\"",
+              "kind": "indication",
+              "weight": 0.15
+            },
+            {
+              "detail": "Patient context aligns with routing tag \"gh-axis\"",
+              "kind": "indication",
+              "weight": 0.15
+            },
+            {
+              "detail": "Peptide focus overlap: tirzepatide, semaglutide, tesamorelin, ipamorelin",
+              "kind": "peptide-slug",
+              "weight": 0.4
+            },
+            {
+              "detail": "Peptide themes identified → evidence summary skill",
+              "kind": "evidence",
+              "weight": 0.15
+            }
+          ],
+          "skillId": "evidence-summary",
+          "skillScore": 1
+        },
+        {
+          "evidenceRefs": [
+            {
+              "claim_id": "4e4f9ac4d0599b9c",
+              "claim_type": "fda_status",
+              "slug": "bpc-157",
+              "verification_status": "confirmed_2of2",
+              "verified": true
+            },
+            {
+              "claim_id": "6832afc477c98623",
+              "claim_type": "fda_status",
+              "slug": "ipamorelin",
+              "verification_status": "confirmed_2of2",
+              "verified": true
+            }
+          ],
+          "matches": [
+            {
+              "detail": "Patient context aligns with routing tag \"metabolic\"",
+              "kind": "indication",
+              "weight": 0.15
+            },
+            {
+              "detail": "Patient context aligns with routing tag \"t2dm\"",
+              "kind": "indication",
+              "weight": 0.15
+            },
+            {
+              "detail": "Patient context aligns with routing tag \"gh-axis\"",
+              "kind": "indication",
+              "weight": 0.15
+            },
+            {
+              "detail": "Peptide focus overlap: tirzepatide, semaglutide, tesamorelin, ipamorelin",
+              "kind": "peptide-slug",
+              "weight": 0.4
+            }
+          ],
+          "skillId": "fda-approval-landscape",
+          "skillScore": 0.85
+        }
+      ],
+      "rationale": {
+        "contraindicationAlerts": [],
+        "featureMatches": [
+          {
+            "effect": "increased peptide theme weight",
+            "matchedTo": "Clinical theme \"diabetes\" → peptides: tirzepatide, semaglutide, liraglutide",
+            "patientFeature": "clinicalGoals/conditions"
+          },
+          {
+            "effect": "increased peptide theme weight",
+            "matchedTo": "Clinical theme \"gh\" → peptides: ipamorelin, tesamorelin, sermorelin",
+            "patientFeature": "clinicalGoals/conditions"
+          },
+          {
+            "effect": "increased peptide theme weight",
+            "matchedTo": "Clinical theme \"obesity\" → peptides: tirzepatide, semaglutide",
+            "patientFeature": "clinicalGoals/conditions"
+          },
+          {
+            "effect": "increased peptide theme weight",
+            "matchedTo": "Clinical theme \"weight\" → peptides: tirzepatide, semaglutide, liraglutide",
+            "patientFeature": "clinicalGoals/conditions"
+          },
+          {
+            "effect": "routing tag overlap",
+            "matchedTo": "metabolic, t2dm, gh-axis, hiv",
+            "patientFeature": "goal:glycemic control"
+          },
+          {
+            "effect": "routing tag overlap",
+            "matchedTo": "metabolic, t2dm, gh-axis, hiv",
+            "patientFeature": "goal:weight management"
+          }
+        ],
+        "regulatoryAlerts": [
+          "[ipamorelin] Poisons Standard / SUSMP schedule claim available (fbe7df702fe9fc8b, confirmed_2of2). Review Appendix D context.",
+          "[ipamorelin] Verified claim 8c0844d056b42f65: no TGA ARTG entry located (confirmed_2of2).",
+          "[semaglutide] Poisons Standard / SUSMP schedule claim available (746e413f0d0c4049, confirmed_2of2). Review Appendix D context.",
+          "[sermorelin] Verified claim 497d26914c43c0fb: no TGA ARTG entry located (confirmed_2of2).",
+          "[tesamorelin] Verified claim 04e211e867f7d716: no TGA ARTG entry located (confirmed_2of2)."
+        ],
+        "summary": "Peptide Evidence Summarizer matched for Synthetic Adult (T2DM + obesity) (AU). Peptide themes: ipamorelin, liraglutide, semaglutide, sermorelin, tesamorelin, tirzepatide. Top skill \"evidence-summary\" (score 1)."
+      },
+      "registryId": "peptide-evidence",
+      "relevanceScore": 1
+    },
+    {
+      "agentCard": {
+        "capabilities": {
+          "pushNotifications": false,
+          "streaming": false
+        },
+        "defaultInputModes": [
+          "application/json"
+        ],
+        "defaultOutputModes": [
+          "application/json"
+        ],
+        "description": "Australian regulatory decision-support: TGA ARTG presence, Poisons Standard (incl. Appendix D), and WADA S0/GHRP listing checks. NOT a prescriber. Endpoint NOT YET DEPLOYED.",
+        "documentationUrl": "/docs/catalog",
+        "name": "Peptide Regulatory Advisor (Australia)",
+        "provider": {
+          "organization": "Catalog project",
+          "url": "http://localhost/catalog"
+        },
+        "skills": [
+          {
+            "description": "Checks whether a peptide is listed on the TGA ARTG public register for supplied patient context (Australia).",
+            "id": "tga-artg-availability",
+            "name": "TGA ARTG availability check",
+            "tags": [
+              "regulatory",
+              "tga",
+              "artg",
+              "australia"
+            ]
+          },
+          {
+            "description": "Surfaces Poisons Standard scheduling claims relevant to peptide access and compounding.",
+            "id": "poisons-standard-schedule",
+            "name": "Poisons Standard / SUSMP schedule",
+            "tags": [
+              "regulatory",
+              "poisons-standard",
+              "appendix-d",
+              "australia"
+            ]
+          },
+          {
+            "description": "Checks WADA Prohibited List naming for peptides when athlete flag is set.",
+            "id": "wada-prohibited-list",
+            "name": "WADA prohibited list (S0 / GHRP)",
+            "tags": [
+              "regulatory",
+              "wada",
+              "athlete",
+              "s0"
+            ]
+          }
+        ],
+        "supportedInterfaces": [
+          {
+            "protocolBinding": "JSONRPC",
+            "protocolVersion": "1.0",
+            "url": "http://localhost/NOT_DEPLOYED/peptide-regulatory-au/a2a/v1"
+          }
+        ],
+        "version": "0.1.0"
+      },
+      "matchedSkills": [
+        {
+          "evidenceRefs": [
+            {
+              "claim_id": "6483b25cc8a69038",
+              "claim_type": "tga_poisons_schedule",
+              "slug": "bpc-157",
+              "verification_status": "confirmed_2of2",
+              "verified": true
+            },
+            {
+              "claim_id": "fbe7df702fe9fc8b",
+              "claim_type": "tga_poisons_schedule",
+              "slug": "ipamorelin",
+              "verification_status": "confirmed_2of2",
+              "verified": true
+            }
+          ],
+          "matches": [
+            {
+              "detail": "Patient context aligns with routing tag \"gh-axis\"",
+              "kind": "indication",
+              "weight": 0.15
+            },
+            {
+              "detail": "Peptide focus overlap: ipamorelin, tesamorelin, semaglutide, tirzepatide",
+              "kind": "peptide-slug",
+              "weight": 0.4
+            }
+          ],
+          "skillId": "poisons-standard-schedule",
+          "skillScore": 0.55
+        },
+        {
+          "evidenceRefs": [
+            {
+              "claim_id": "4d0b84024d846a41",
+              "claim_type": "tga_artg_status",
+              "slug": "bpc-157",
+              "verification_status": "confirmed_2of2",
+              "verified": true
+            },
+            {
+              "claim_id": "52bf1e300b970cdc",
+              "claim_type": "tga_artg_status",
+              "slug": "semaglutide",
+              "verification_status": "confirmed_2of2",
+              "verified": true
+            }
+          ],
+          "matches": [
+            {
+              "detail": "Patient context aligns with routing tag \"gh-axis\"",
+              "kind": "indication",
+              "weight": 0.15
+            },
+            {
+              "detail": "Peptide focus overlap: ipamorelin, tesamorelin, semaglutide, tirzepatide",
+              "kind": "peptide-slug",
+              "weight": 0.4
+            }
+          ],
+          "skillId": "tga-artg-availability",
+          "skillScore": 0.55
+        },
+        {
+          "evidenceRefs": [
+            {
+              "claim_id": "bd09022120b7195c",
+              "claim_type": "wada_status",
+              "slug": "ipamorelin",
+              "verification_status": "confirmed_2of3",
+              "verified": true
+            },
+            {
+              "claim_id": "dbf5061a83e046e7",
+              "claim_type": "wada_status",
+              "slug": "bpc-157",
+              "verification_status": "confirmed_2of3",
+              "verified": true
+            }
+          ],
+          "matches": [
+            {
+              "detail": "Patient context aligns with routing tag \"gh-axis\"",
+              "kind": "indication",
+              "weight": 0.15
+            },
+            {
+              "detail": "Peptide focus overlap: ipamorelin, tesamorelin, semaglutide, tirzepatide",
+              "kind": "peptide-slug",
+              "weight": 0.4
+            }
+          ],
+          "skillId": "wada-prohibited-list",
+          "skillScore": 0.55
+        }
+      ],
+      "rationale": {
+        "contraindicationAlerts": [],
+        "featureMatches": [
+          {
+            "effect": "increased peptide theme weight",
+            "matchedTo": "Clinical theme \"diabetes\" → peptides: tirzepatide, semaglutide, liraglutide",
+            "patientFeature": "clinicalGoals/conditions"
+          },
+          {
+            "effect": "increased peptide theme weight",
+            "matchedTo": "Clinical theme \"gh\" → peptides: ipamorelin, tesamorelin, sermorelin",
+            "patientFeature": "clinicalGoals/conditions"
+          },
+          {
+            "effect": "increased peptide theme weight",
+            "matchedTo": "Clinical theme \"obesity\" → peptides: tirzepatide, semaglutide",
+            "patientFeature": "clinicalGoals/conditions"
+          },
+          {
+            "effect": "increased peptide theme weight",
+            "matchedTo": "Clinical theme \"weight\" → peptides: tirzepatide, semaglutide, liraglutide",
+            "patientFeature": "clinicalGoals/conditions"
+          },
+          {
+            "effect": "routing tag overlap",
+            "matchedTo": "regulatory, compounded, gh-axis",
+            "patientFeature": "goal:glycemic control"
+          },
+          {
+            "effect": "routing tag overlap",
+            "matchedTo": "regulatory, compounded, gh-axis",
+            "patientFeature": "goal:weight management"
+          }
+        ],
+        "regulatoryAlerts": [
+          "[ipamorelin] Poisons Standard / SUSMP schedule claim available (fbe7df702fe9fc8b, confirmed_2of2). Review Appendix D context.",
+          "[ipamorelin] Verified claim 8c0844d056b42f65: no TGA ARTG entry located (confirmed_2of2).",
+          "[semaglutide] Poisons Standard / SUSMP schedule claim available (746e413f0d0c4049, confirmed_2of2). Review Appendix D context.",
+          "[sermorelin] Verified claim 497d26914c43c0fb: no TGA ARTG entry located (confirmed_2of2).",
+          "[tesamorelin] Verified claim 04e211e867f7d716: no TGA ARTG entry located (confirmed_2of2)."
+        ],
+        "summary": "Peptide Regulatory Advisor (Australia) matched for Synthetic Adult (T2DM + obesity) (AU). Peptide themes: ipamorelin, liraglutide, semaglutide, sermorelin, tesamorelin, tirzepatide. Top skill \"poisons-standard-schedule\" (score 0.55)."
+      },
+      "registryId": "peptide-regulatory-au",
+      "relevanceScore": 0.71
+    }
+  ]
+}
