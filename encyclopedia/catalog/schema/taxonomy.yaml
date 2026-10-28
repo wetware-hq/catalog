@@ -1,0 +1,14 @@
+version: "0.1"
+categories:
+  lab/liquid-handling/pipettes:
+    kind: equipment
+    attributes:
+      required: [max_volume, channels]
+  compute/hardware/single-board-computer:
+    kind: equipment
+    attributes:
+      required: [cpu, ram_gb]
+  software/devtools/version-control:
+    kind: software
+    attributes:
+      required: [license, distributed]

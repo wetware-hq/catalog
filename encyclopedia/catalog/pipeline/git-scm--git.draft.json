@@ -1,0 +1,53 @@
+{
+  "run_id": "run-bootstrap",
+  "entry": {
+    "schema_version": "0.1",
+    "id": "git-scm--git",
+    "name": "Git",
+    "aliases": ["git"],
+    "kind": "software",
+    "category": "software/devtools/version-control",
+    "tags": ["version-control", "dvcs"],
+    "maker": {
+      "name": "Git",
+      "url": "https://git-scm.com/"
+    },
+    "identifiers": {
+      "mpn": "git",
+      "repo_url": "https://github.com/git/git"
+    },
+    "status": "active",
+    "sources": [
+      "88b6b8e99a4059b695185efd7b888ee4d7f6ff1ba0f5a1ea350ca256826449ee",
+      "c86f70fc51d5db144e1b266500fa164a90eb4516c34515928800828b0f39b9c9"
+    ]
+  },
+  "fields": {
+    "description": {
+      "raw": "Git thinks of its data more like a series of snapshots of a miniature filesystem.",
+      "value": "Git thinks of its data more like a series of snapshots of a miniature filesystem.",
+      "source": "88b6b8e99a4059b695185efd7b888ee4d7f6ff1ba0f5a1ea350ca256826449ee",
+      "evidence": "Git thinks of its data more like a series of snapshots of a miniature filesystem.",
+      "observed_at": "2026-10-28T20:35:00Z",
+      "confidence": 0.6
+    },
+    "specs": {
+      "license": {
+        "raw": "GPL-2.0",
+        "value": "gpl-2.0",
+        "source": "c86f70fc51d5db144e1b266500fa164a90eb4516c34515928800828b0f39b9c9",
+        "evidence": "GNU GENERAL PUBLIC LICENSE Version 2, June 1991",
+        "observed_at": "2026-10-28T20:35:00Z",
+        "confidence": 0.6
+      },
+      "distributed": {
+        "raw": "true",
+        "value": true,
+        "source": "88b6b8e99a4059b695185efd7b888ee4d7f6ff1ba0f5a1ea350ca256826449ee",
+        "evidence": "Most operations in Git need only local files and resources to operate -- generally no information is needed from another computer on your network.",
+        "observed_at": "2026-10-28T20:35:00Z",
+        "confidence": 0.6
+      }
+    }
+  }
+}

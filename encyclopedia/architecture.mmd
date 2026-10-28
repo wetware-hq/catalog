@@ -1,0 +1,22 @@
+flowchart TD
+  SRC[Remote source URLs] --> R[catalog research]
+  R --> CAS[(Snapshot store<br/>sources/text/sha256.txt<br/>sources/sha256.json)]
+  R -->|fetch or CAS error| FC[Fail closed<br/>nonzero exit + diagnostics]
+
+  DRAFT[Hand-authored extract draft] --> E[catalog extract]
+  E -->|invalid shape| FC
+
+  CAS --> V[catalog verify]
+  DRAFT --> V
+  V -->|evidence not in snapshot| FC
+  V -->|ok| W[catalog write]
+
+  W --> ENT[(entries/category/id.json<br/>versioned in git)]
+  ENT --> D[catalog dedup]
+  D -->|exact GTIN or MPN+maker| MERGE[Auto-merge entries]
+  D -->|other pairs| FLAG[(queue/merge_candidates.jsonl)]
+
+  ENT --> L[catalog lint]
+  L -->|schema / evidence / refs| FC
+  ENT --> Q[catalog query get / search<br/>scan entry files]
+  GIT[(git commit per pipeline run<br/>message lists entry ids)] -.-> ENT
