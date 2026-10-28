@@ -1,0 +1,56 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://wetware.health/schemas/rank-request.schema.json",
+  "title": "Catalog rank request",
+  "type": "object",
+  "required": ["domainId", "patient"],
+  "properties": {
+    "domainId": { "type": "string", "enum": ["peptides"] },
+    "patient": {
+      "oneOf": [
+        { "$ref": "#/$defs/simplePatient" },
+        { "$ref": "#/$defs/fhirBundle" }
+      ]
+    },
+    "limit": { "type": "integer", "minimum": 1, "maximum": 50, "default": 10 }
+  },
+  "$defs": {
+    "simplePatient": {
+      "type": "object",
+      "required": ["id", "displayName"],
+      "properties": {
+        "format": { "const": "wetware.simple.v1" },
+        "id": { "type": "string" },
+        "displayName": { "type": "string" },
+        "ageYears": { "type": "number" },
+        "sex": { "type": "string", "enum": ["male", "female", "other", "unknown"] },
+        "countryCode": { "type": "string" },
+        "conditions": { "type": "array", "items": { "type": "string" } },
+        "clinicalGoals": { "type": "array", "items": { "type": "string" } },
+        "allergies": { "type": "array", "items": { "type": "string" } },
+        "medications": { "type": "array", "items": { "type": "string" } },
+        "observations": {
+          "type": "object",
+          "additionalProperties": { "type": "number" }
+        },
+        "flags": {
+          "type": "object",
+          "properties": {
+            "competitiveAthlete": { "type": "boolean" },
+            "pregnantOrBreastfeeding": { "type": "boolean" },
+            "seekingCompoundedPeptides": { "type": "boolean" }
+          }
+        }
+      }
+    },
+    "fhirBundle": {
+      "type": "object",
+      "required": ["resourceType"],
+      "properties": {
+        "resourceType": { "const": "Bundle" },
+        "type": { "type": "string" },
+        "entry": { "type": "array" }
+      }
+    }
+  }
+}
