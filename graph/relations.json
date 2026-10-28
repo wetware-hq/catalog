@@ -1,0 +1,8 @@
+{
+  "links_to": {
+    "domain_range": [
+      { "domain": "item", "range": "item" }
+    ],
+    "transitive": false
+  }
+}
