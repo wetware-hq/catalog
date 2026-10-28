@@ -2,7 +2,40 @@ import { Hono } from "hono";
 import { createHash } from "node:crypto";
 import type { CatalogConfig } from "../lib/config.js";
 import { loadConfig } from "../lib/config.js";
-import { cacheControlPublic, computeEtag, negotiateJson } from "../lib/http-cache.js";
+
+function computeEtag(body: string | Buffer): string {
+  const hash = createHash("sha256").update(body).digest("hex").slice(0, 16);
+  return `"${hash}"`;
+}
+
+function cacheControlPublic(maxAgeSeconds = 60): string {
+  return `public, max-age=${maxAgeSeconds}`;
+}
+
+function negotiateJson(
+  accept: string | undefined,
+  defaultType = "application/json",
+): { ok: true; contentType: string } | { ok: false } {
+  if (!accept || accept.includes("*/*") || accept.includes("application/json")) {
+    return { ok: true, contentType: defaultType };
+  }
+  if (accept.includes("application/fhir+json")) {
+    return { ok: true, contentType: "application/json" };
+  }
+  return { ok: false };
+}
+
+/** Documented HTTP surface (kept in sync with openapi/catalog.openapi.yaml via tests). */
+export const CATALOG_HTTP_ROUTES = [
+  { method: "GET", path: "/.well-known/agent-card.json" },
+  { method: "GET", path: "/catalog/v1/index" },
+  { method: "GET", path: "/catalog/v1/domains" },
+  { method: "GET", path: "/catalog/v1/domains/:domainId/agents" },
+  { method: "GET", path: "/catalog/v1/agents/:registryId" },
+  { method: "POST", path: "/catalog/v1/rank" },
+  { method: "POST", path: "/a2a/v1" },
+  { method: "GET", path: "/health" },
+] as const;
 import { normalizePatientInput } from "../lib/patient.js";
 import { rankAgents } from "../lib/rank.js";
 import { catalogAgentCard, listDomainIds, loadRegistryEntries } from "../lib/registry.js";
@@ -209,10 +242,6 @@ export function createApp(config: CatalogConfig = loadConfig()) {
   app.get("/health", (c) => c.json({ ok: true }));
 
   return app;
-}
-
-export function stableConfigFingerprint(config: CatalogConfig): string {
-  return createHash("sha256").update(JSON.stringify(config.x402)).digest("hex").slice(0, 8);
 }
 
 /*

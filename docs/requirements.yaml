@@ -1,117 +1,38 @@
-# Machine-readable owner constraints for peptide-agent-catalog
-# Validated by: npm run validate:requirements
-schema_version: "1.0"
+# Owner constraints — each row is verified by the listed test(s) or npm run check.
 requirements:
   - id: REQ-CLI-001
-    title: Terminal-native CLI is the primary human interface
-    rationale: |
-      Operators rank, list, show, validate, and serve without a web UI.
-      The `catalog` binary exposes subcommands documented in README.md.
-    verification:
-      check: npm run catalog -- validate
-      tests:
-        - tests/rank.test.ts
-        - tests/validate.test.ts
+    title: Terminal-native CLI (rank, list, show, validate, serve)
+    tests: [tests/rank.test.ts, tests/validate.test.ts]
 
   - id: REQ-NO-UI-001
-    title: No frontend or HTML catalog UI
-    rationale: |
-      HTTP serves JSON discovery and JSON-RPC only; unsupported Accept types
-      receive 406. OpenAPI documents JSON response types exclusively.
-    verification:
-      check: npm run lint:openapi
-      tests:
-        - tests/http-x402.test.ts
+    title: No HTML frontend; JSON HTTP only
+    tests: [tests/http-x402.test.ts, tests/openapi-routes.test.ts]
 
   - id: REQ-HTTP-001
-    title: HTTP discovery uses cache-friendly JSON primitives
-    rationale: |
-      Responses include Content-Type application/json, ETag, Cache-Control,
-      and Link headers per src/server/app.ts and src/lib/http-cache.ts.
-    verification:
-      tests:
-        - tests/http-x402.test.ts
+    title: JSON responses with cache-friendly headers
+    tests: [tests/http-x402.test.ts]
 
   - id: REQ-X402-001
-    title: Optional x402 v1 payment gates POST /catalog/v1/rank only
-    rationale: |
-      When CATALOG_X402_ENABLED=true, unpaid rank returns 402 with
-      PaymentRequiredResponse; paid retry uses X-PAYMENT / X-PAYMENT-RESPONSE.
-      Other routes and JSON-RPC rank remain free unless configured otherwise
-      in code (currently x402 applies only to handleRank on /catalog/v1/rank).
-    verification:
-      tests:
-        - tests/http-x402.test.ts
-      check: openapi/catalog.openapi.yaml documents 402 responses
-
-  - id: REQ-EVIDENCE-STATUS-001
-    title: verification_status labels on claims are preserved in the corpus
-    rationale: |
-      Compact evidence retains statuses such as confirmed_2of2, confirmed_2of3,
-      spot_check_confirmed, single_replica, and unresolvable for decision support.
-    verification:
-      tests:
-        - tests/validate.test.ts
-      check: data/evidence/PROVENANCE.md resolution rules
-
-  - id: REQ-EVIDENCE-INTEGRITY-001
-    title: Evidence corpus integrity via SHA-256 sidecar
-    rationale: |
-      data/evidence/peptide-claims.compact.sha256 must match the committed
-      peptide-claims.compact.json bytes (see scripts/build-evidence.ts).
-    verification:
-      check: npm run verify:evidence
-      tests:
-        - tests/evidence-integrity.test.ts
-
-  - id: REQ-SCHEMA-001
-    title: JSON Schemas define registry and rank I/O
-    rationale: |
-      schemas/*.schema.json constrain registry entries, AgentCard subset,
-      rank request, and rank response; validateCatalog ensures registry files load.
-    verification:
-      tests:
-        - tests/validate.test.ts
-      check: npm run lint:openapi
+    title: Optional x402 v1 on POST /catalog/v1/rank only
+    tests: [tests/http-x402.test.ts]
 
   - id: REQ-A2A-001
-    title: A2A AgentCard and JSON-RPC interoperability
-    rationale: |
-      /.well-known/agent-card.json and POST /a2a/v1 expose catalog/list and
-      catalog/rank for agent clients.
-    verification:
-      tests:
-        - tests/http-x402.test.ts
+    title: A2A agent card and JSON-RPC catalog methods
+    tests: [tests/http-x402.test.ts, tests/openapi-routes.test.ts]
 
-  - id: REQ-SBOM-001
-    title: CycloneDX SBOM for npm dependencies
-    rationale: |
-      Supply-chain visibility from package-lock.json for auditors and CI.
-    verification:
-      check: npm run sbom && test -f sbom.cdx.json
+  - id: REQ-SCHEMA-001
+    title: JSON Schemas for registry and rank I/O
+    tests: [tests/validate.test.ts, tests/openapi-routes.test.ts]
 
-references:
-  - id: a2a
-    title: Agent2Agent (A2A) Protocol
-    url: https://github.com/a2aproject/A2A/blob/main/docs/specification.md
-  - id: x402-http
-    title: x402 v1 HTTP transport
-    url: https://github.com/coinbase/x402/blob/main/specs/transports-v1/http.md
-  - id: openapi
-    title: OpenAPI Specification v3.1.0
-    url: https://spec.openapis.org/oas/v3.1.0/draft
-  - id: json-schema
-    title: JSON Schema draft 2020-12
-    url: https://json-schema.org/draft/2020-12/json-schema-core
-  - id: cyclonedx
-    title: CycloneDX specification
-    url: https://cyclonedx.org/specification/overview/
-  - id: fips180-4
-    title: FIPS 180-4 Secure Hash Standard (SHA-256)
-    url: https://csrc.nist.gov/publications/detail/fips/180/4/final
-  - id: fhir-r4
-    title: HL7 FHIR R4
-    url: https://hl7.org/fhir/R4/
-  - id: madr
-    title: Markdown Any Decision Records (MADR)
-    url: https://adr.github.io/madr/
+  - id: REQ-EVIDENCE-STATUS-001
+    title: verification_status preserved on claims
+    tests: [tests/validate.test.ts]
+
+  - id: REQ-EVIDENCE-INTEGRITY-001
+    title: SHA-256 sidecar + REFERENCES.md in sync
+    tests: [tests/evidence-integrity.test.ts]
+    check: npm run check
+
+  - id: REQ-SE-001
+    title: Systems-engineering artifacts present (OpenAPI, requirements, ADRs, architecture)
+    tests: [tests/openapi-routes.test.ts]

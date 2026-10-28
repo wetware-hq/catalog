@@ -3,7 +3,7 @@ import { readFileSync } from "node:fs";
 import { createApp } from "../src/server/app.js";
 import { loadConfig } from "../src/lib/config.js";
 import { mockPaymentHeader } from "../src/lib/x402.js";
-import { repoPath } from "../src/lib/paths.js";
+import { repoPath } from "../src/lib/corpus.js";
 
 describe("HTTP catalog", () => {
   const baseConfig = loadConfig({ port: 0, publicBaseUrl: "http://127.0.0.1:8787" });

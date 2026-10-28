@@ -1,6 +1,13 @@
 import { readFileSync, existsSync } from "node:fs";
+import { dirname, join } from "node:path";
+import { fileURLToPath } from "node:url";
 import type { CompactClaim, EvidenceCorpus } from "../types/catalog.js";
-import { repoPath } from "./paths.js";
+
+const packageRoot = join(dirname(fileURLToPath(import.meta.url)), "..", "..");
+
+export function repoPath(...segments: string[]): string {
+  return join(packageRoot, ...segments);
+}
 
 let cached: EvidenceCorpus | null = null;
 

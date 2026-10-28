@@ -1,0 +1,53 @@
+flowchart TB
+  subgraph entry [Entry points]
+    CLI[catalog CLI\nrank list show validate serve]
+    HTTP[Hono HTTP server]
+    RPC[POST /a2a/v1 JSON-RPC]
+  end
+
+  subgraph core [Core libraries]
+    RANK[rank.ts]
+    REG[registry.ts + validate]
+    PAT[patient.ts]
+    CORP[corpus.ts evidence load]
+    CFG[config.ts + x402.ts]
+  end
+
+  subgraph data [Data and contracts]
+    REGJSON[registry/domains/*.json]
+    SCHEMAS[schemas/*.json]
+    EVID[data/evidence/peptide-claims.compact.json]
+    SHA[data/evidence/peptide-claims.compact.sha256]
+    REFS[data/evidence/REFERENCES.md]
+    FIX[fixtures/patients/*.json]
+    OAS[openapi/catalog.openapi.yaml]
+  end
+
+  subgraph pay [Optional payment]
+    X402[x402 gate on POST /catalog/v1/rank]
+  end
+
+  subgraph ci [CI]
+    BUILD[npm run build]
+    CHK[npm run check]
+    TST[npm test]
+  end
+
+  CLI --> RANK
+  CLI --> REG
+  HTTP --> RANK
+  HTTP --> REG
+  RPC --> RANK
+  HTTP --> X402
+  RANK --> CORP
+  RANK --> REG
+  REG --> REGJSON
+  REG --> SCHEMAS
+  REG --> CORP
+  PAT --> FIX
+  CORP --> EVID
+  BUILD --> EVID
+  CHK --> SHA
+  CHK --> REFS
+  TST --> HTTP
+  TST --> OAS

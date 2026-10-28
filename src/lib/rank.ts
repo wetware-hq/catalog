@@ -1,4 +1,4 @@
-import { claimsById, claimsForSlug } from "./evidence.js";
+import { claimsById, claimsForSlug } from "./corpus.js";
 import { getRegistryEntry, loadRegistryEntries } from "./registry.js";
 import type {
   CatalogRegistryEntry,

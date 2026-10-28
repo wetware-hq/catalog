@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { createHash } from "node:crypto";
 import { readFileSync } from "node:fs";
-import { repoPath } from "../src/lib/paths.js";
+import { repoPath } from "../src/lib/corpus.js";
 
 describe("evidence corpus integrity", () => {
   it("matches peptide-claims.compact.sha256 sidecar", () => {

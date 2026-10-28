@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { validateCatalog } from "../src/lib/validate.js";
+import { validateCatalog } from "../src/lib/registry.js";
 
 describe("validateCatalog", () => {
   it("passes with no errors on seeded registry", () => {

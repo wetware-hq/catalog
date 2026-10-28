@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { readFileSync } from "node:fs";
-import { repoPath } from "../src/lib/paths.js";
+import { repoPath } from "../src/lib/corpus.js";
 import { normalizePatientInput } from "../src/lib/patient.js";
 import { rankAgents } from "../src/lib/rank.js";
 

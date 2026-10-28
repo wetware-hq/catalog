@@ -4,11 +4,10 @@
  *
  * Provenance: see data/evidence/PROVENANCE.md
  */
-import { execSync } from "node:child_process";
 import { createHash } from "node:crypto";
 import { readFileSync, writeFileSync, mkdirSync, existsSync, readdirSync } from "node:fs";
 import { basename, dirname, join } from "node:path";
-import { fileURLToPath } from "node:url";
+import { fileURLToPath, pathToFileURL } from "node:url";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const ROOT = join(__dirname, "..");
@@ -135,7 +134,91 @@ function resolveStatus(
   return { verification_status: status, verified };
 }
 
-function main() {
+type RefClaim = {
+  authority?: string | null;
+  identifiers?: { url?: string; pmid?: string; doi?: string; nct?: string };
+};
+
+/** Writes data/evidence/REFERENCES.md from the committed compact corpus. */
+export function generateEvidenceReferences(root: string = ROOT) {
+  const corpusPath = join(root, "data", "evidence", "peptide-claims.compact.json");
+  const out = join(root, "data", "evidence", "REFERENCES.md");
+  const claims = (JSON.parse(readFileSync(corpusPath, "utf8")) as { claims: RefClaim[] }).claims;
+  const authorityStats = new Map<string, { count: number; sampleUrl?: string }>();
+  const pmids = new Set<string>();
+  const dois = new Set<string>();
+  const ncts = new Set<string>();
+
+  for (const c of claims) {
+    if (c.authority) {
+      const cur = authorityStats.get(c.authority) ?? { count: 0 };
+      cur.count++;
+      const url = c.identifiers?.url;
+      if (url && !cur.sampleUrl) cur.sampleUrl = url;
+      authorityStats.set(c.authority, cur);
+    }
+    if (c.identifiers?.pmid) pmids.add(String(c.identifiers.pmid));
+    if (c.identifiers?.doi) dois.add(String(c.identifiers.doi));
+    if (c.identifiers?.nct) ncts.add(String(c.identifiers.nct));
+  }
+
+  const corpusHash = createHash("sha256").update(readFileSync(corpusPath)).digest("hex").slice(0, 16);
+  const lines: string[] = [
+    "# Evidence corpus references",
+    "",
+    `Auto-generated from \`peptide-claims.compact.json\` (corpus sha256 prefix \`${corpusHash}\`).`,
+    "Regenerate after corpus changes via `npm run build:evidence` (when uploads present).",
+    "",
+    "Per-claim citations remain inline in the JSON (`authority`, `identifiers.url`, PMID, DOI, NCT).",
+    "",
+    "## Regulatory and database authorities",
+    "",
+    "| Ref | Authority (as recorded on claims) | Example URL in corpus | Claims |",
+    "|-----|-----------------------------------|------------------------|--------|",
+  ];
+
+  let aRef = 1;
+  for (const [name, stat] of [...authorityStats.entries()].sort((a, b) => b[1].count - a[1].count)) {
+    const url = stat.sampleUrl ?? "—";
+    lines.push(`| [A${aRef++}] | ${name.replace(/\|/g, "\\|")} | ${url.replace(/\|/g, "\\|")} | ${stat.count} |`);
+  }
+
+  lines.push(
+    "",
+    "## PubMed identifiers (PMID)",
+    "",
+    `${pmids.size} unique PMIDs. Resolve at \`https://pubmed.ncbi.nlm.nih.gov/{pmid}/\`.`,
+    "",
+  );
+  for (const pmid of [...pmids].sort()) {
+    lines.push(`- [P${pmid}](https://pubmed.ncbi.nlm.nih.gov/${pmid}/)`);
+  }
+  lines.push(
+    "",
+    "## DOI identifiers",
+    "",
+    `${dois.size} unique DOIs. Resolve at \`https://doi.org/{doi}\`.`,
+    "",
+  );
+  for (const doi of [...dois].sort()) {
+    lines.push(`- [D${doi}](https://doi.org/${doi})`);
+  }
+  lines.push(
+    "",
+    "## ClinicalTrials.gov identifiers (NCT)",
+    "",
+    `${ncts.size} unique NCT numbers. Resolve at \`https://clinicaltrials.gov/study/{nct}\`.`,
+    "",
+  );
+  for (const nct of [...ncts].sort()) {
+    lines.push(`- [N${nct}](https://clinicaltrials.gov/study/${nct})`);
+  }
+  lines.push("");
+  mkdirSync(dirname(out), { recursive: true });
+  writeFileSync(out, lines.join("\n"));
+}
+
+function buildCompactCorpus() {
   const outPath = join(ROOT, "data", "evidence", "peptide-claims.compact.json");
   const mergedPath = resolveUploadFile(/^merged_claims.*\.jsonl$/, "merged_claims.jsonl");
   const tiePath = resolveUploadFile(/^(tiebreak|T01).*\.jsonl$/i, "tiebreak_claims.jsonl");
@@ -144,6 +227,7 @@ function main() {
   if (!existsSync(mergedPath)) {
     if (existsSync(outPath)) {
       console.log("Uploads missing; keeping existing", outPath);
+      generateEvidenceReferences(ROOT);
       return;
     }
     throw new Error(`Missing uploads at ${UPLOADS} and no existing ${outPath}`);
@@ -223,15 +307,45 @@ function main() {
 
   console.log("Wrote", outPath);
   console.log(JSON.stringify(summary, null, 2));
+  generateEvidenceReferences(ROOT);
+}
 
-  try {
-    execSync("npm run generate:evidence-references", { cwd: ROOT, stdio: "inherit" });
-  } catch {
-    console.warn("Could not regenerate data/evidence/REFERENCES.md");
+export function checkEvidenceArtifacts(root: string = ROOT): void {
+  const jsonPath = join(root, "data", "evidence", "peptide-claims.compact.json");
+  const sidecarPath = join(root, "data", "evidence", "peptide-claims.compact.sha256");
+  const refPath = join(root, "data", "evidence", "REFERENCES.md");
+  if (!existsSync(jsonPath) || !existsSync(sidecarPath)) {
+    throw new Error("missing evidence corpus or sha256 sidecar");
+  }
+  const json = readFileSync(jsonPath);
+  const expected = createHash("sha256").update(json).digest("hex");
+  const [recorded] = readFileSync(sidecarPath, "utf8").trim().split(/\s+/, 1);
+  if (recorded !== expected) {
+    throw new Error("peptide-claims.compact.sha256 mismatch");
+  }
+  if (!existsSync(refPath)) {
+    throw new Error("missing data/evidence/REFERENCES.md");
+  }
+  const before = readFileSync(refPath, "utf8");
+  generateEvidenceReferences(root);
+  const after = readFileSync(refPath, "utf8");
+  if (before !== after) {
+    throw new Error("REFERENCES.md out of sync with peptide-claims.compact.json");
   }
 }
 
-main();
+const isMain =
+  process.argv[1] !== undefined &&
+  import.meta.url === pathToFileURL(process.argv[1]).href;
+
+if (isMain) {
+  if (process.argv.includes("--check")) {
+    checkEvidenceArtifacts(ROOT);
+    console.log("evidence artifacts OK");
+  } else {
+    buildCompactCorpus();
+  }
+}
 
 /*
  * References:

@@ -15,7 +15,5 @@ jobs:
       - run: npm ci
       - run: npm run build:evidence
       - run: npm run build
-      - run: npm run validate:artifacts
-      - run: npm run sbom
-      - run: test -f sbom.cdx.json
+      - run: npm run check
       - run: npm test

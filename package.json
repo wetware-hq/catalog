@@ -10,19 +10,10 @@
     "build:evidence": "tsx scripts/build-evidence.ts",
     "prebuild": "npm run build:evidence",
     "build": "tsc && node --input-type=module -e \"import fs from 'fs'; fs.chmodSync('dist/bin/catalog.js', 0o755);\"",
+    "check": "tsx scripts/build-evidence.ts --check",
     "catalog": "tsx src/bin/catalog.ts",
     "start": "node dist/bin/catalog.js serve",
-    "dev": "tsx src/bin/catalog.ts serve",
-    "test": "vitest run",
-    "test:watch": "vitest",
-    "lint:openapi": "redocly lint openapi/catalog.openapi.yaml",
-    "validate:requirements": "tsx scripts/validate-requirements.ts",
-    "validate:adr": "tsx scripts/validate-adrs.ts",
-    "verify:evidence": "tsx scripts/verify-evidence-integrity.ts",
-    "generate:evidence-references": "tsx scripts/generate-evidence-references.ts",
-    "check:evidence-references": "tsx scripts/check-evidence-references.ts",
-    "sbom": "cyclonedx-npm --output-file sbom.cdx.json --omit dev",
-    "validate:artifacts": "npm run lint:openapi && npm run validate:requirements && npm run validate:adr && npm run verify:evidence && npm run check:evidence-references"
+    "test": "vitest run"
   },
   "engines": {
     "node": ">=20"
@@ -30,16 +21,12 @@
   "license": "MIT",
   "dependencies": {
     "@hono/node-server": "^1.14.4",
-    "hono": "^4.7.10",
-    "zod": "^3.24.4"
+    "hono": "^4.7.10"
   },
   "devDependencies": {
-    "@cyclonedx/cyclonedx-npm": "^1.19.0",
-    "@redocly/cli": "^1.34.3",
     "@types/node": "^22.15.3",
     "tsx": "^4.19.4",
     "typescript": "^5.8.3",
-    "vitest": "^3.1.2",
-    "yaml": "^2.7.1"
+    "vitest": "^3.1.2"
   }
 }

@@ -182,6 +182,13 @@ Raw verification uploads are not committed. To rebuild from uploads:
 CLAIM_UPLOADS_DIR=/path/to/uploads npm run build:evidence
 ```
 
+## CI checks
+
+```bash
+npm run check    # evidence SHA-256 sidecar + REFERENCES.md in sync
+npm test         # registry, rank, HTTP/x402, OpenAPI ↔ routes
+```
+
 ## Tests
 
 ```bash
@@ -201,5 +208,4 @@ MIT — see [LICENSE](LICENSE).
 5. Therapeutic Goods Administration (TGA) — Australian Register of Therapeutic Goods (ARTG). https://www.tga.gov.au/resources/artg
 6. World Anti-Doping Agency (WADA) Prohibited List. https://www.wada-ama.org/en/resources/world-anti-doping-code-and-international-standards/prohibited-list
 7. OpenAPI Specification v3.1.0. https://spec.openapis.org/oas/v3.1.0/draft
-8. CycloneDX specification (SBOM). https://cyclonedx.org/specification/overview/
-9. Markdown Any Decision Records (MADR). https://adr.github.io/madr/
+8. Markdown Any Decision Records (MADR). https://adr.github.io/madr/
