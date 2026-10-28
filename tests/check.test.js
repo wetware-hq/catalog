@@ -165,6 +165,16 @@ test("merge unions shared node and is byte-identical both orders", () => {
   assert.ok(ab.includes('"entity"') && ab.includes('"item"'));
 });
 
+test("literal non-integer number is rejected", () => {
+  const issues = validateGraph(asGraph([node("a")], [edge("a", "price", lit(10.5))]));
+  assert.ok(issues.some((m) => m.includes("safe integers")));
+});
+
+test("literal decimal as string is accepted", () => {
+  const issues = validateGraph(asGraph([node("a")], [edge("a", "price", lit("10.5"))]));
+  assert.deepEqual(issues, []);
+});
+
 test("conflicting attribute values merge as two literal edges with identical bytes", () => {
   const x = parseNode(node("x"));
   const left = {

@@ -47,6 +47,21 @@ export function isLiteralObject(object) {
   );
 }
 
+/** @param {unknown} value @param {string} path @param {string[]} issues */
+function validateLiteralNumbers(value, path, issues) {
+  if (typeof value === "number") {
+    if (!Number.isSafeInteger(value)) {
+      issues.push(`${path}: numbers must be safe integers (write decimals as strings)`);
+    }
+    return;
+  }
+  if (Array.isArray(value)) {
+    for (let i = 0; i < value.length; i++) validateLiteralNumbers(value[i], `${path}[${i}]`, issues);
+  } else if (value !== null && typeof value === "object") {
+    for (const [k, v] of Object.entries(value)) validateLiteralNumbers(v, `${path}.${k}`, issues);
+  }
+}
+
 export function canonicalizeObject(object) {
   if (typeof object === "string") return object;
   if (isLiteralObject(object)) return sortKeys(object);
@@ -247,6 +262,7 @@ export function validateGraph(input) {
       if (e.object === "") issues.push(`${p}.object: required non-empty string`);
       else if (!byId.has(e.object)) issues.push(`${p}: object node "${e.object}" missing`);
     } else if (isLiteralObject(e.object)) {
+      validateLiteralNumbers(e.object.value, `${p}.object.value`, issues);
       const litCanon = JSON.stringify(sortKeys(e.object));
       if (JSON.stringify(e.object) !== litCanon) issues.push(`${p}.object: literal must be canonical {"value":...}`);
     } else {

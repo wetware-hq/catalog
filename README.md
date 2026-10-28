@@ -39,6 +39,8 @@ One line = `JSON.stringify` on recursively key-sorted objects: no extra whitespa
 
 Nodes sort by `id`; edges by `(subject, predicate, object, qualifiers)` with plain code-unit string order (literals included in `object`).
 
+In literal `{"value": ...}` payloads, every JSON number must be a safe integer (`Number.isSafeInteger` / no float form in any language). Write decimals as strings (e.g. `"10.5"`, not `10.5`).
+
 ## Checks
 
 - Edge endpoints exist (node ids) or are literal objects; predicates declared; domain/range via category ancestry
