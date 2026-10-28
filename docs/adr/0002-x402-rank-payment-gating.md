@@ -2,7 +2,7 @@
 
 ## Status
 
-Accepted
+Superseded by [0005-payments-deferred-node-http.md](./0005-payments-deferred-node-http.md) (payments deferred; x402 removed from the public catalog).
 
 ## Context
 

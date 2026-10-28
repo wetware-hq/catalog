@@ -6,7 +6,7 @@ Accepted
 
 ## Context
 
-The catalog had grown separate validate scripts, Redocly/CycloneDX tooling, and many small library files. Owner requirements are unchanged: CLI + HTTP + optional x402, evidence integrity, JSON Schemas, OpenAPI, requirements traceability, ADRs, and citation sections.
+The catalog had grown separate validate scripts, Redocly/CycloneDX tooling, and many small library files. Owner requirements are unchanged: CLI + HTTP (see ADR 0005 for node:http and deferred payments), evidence integrity, JSON Schemas, OpenAPI, requirements traceability, ADRs, and citation sections.
 
 ## Decision
 
@@ -20,7 +20,7 @@ The catalog had grown separate validate scripts, Redocly/CycloneDX tooling, and 
 ## Consequences
 
 - Positive: Smaller lockfile, fewer files, every check traces to a test or `npm run check`.
-- Positive: OpenAPI still documented; route parity enforced in `tests/openapi-routes.test.ts`.
+- Positive: HTTP contract lives in JSON Schemas; `tests/http.test.ts` covers the three routes.
 - Negative: OpenAPI lint is no longer Redocly-validated; structural checks are route-level only.
 - Verification: `npm run check`, `npm test`, REQ-* rows in `docs/requirements.yaml`.
 

@@ -5,24 +5,20 @@ requirements:
     tests: [tests/rank.test.ts, tests/validate.test.ts]
 
   - id: REQ-NO-UI-001
-    title: No HTML frontend; JSON HTTP only
-    tests: [tests/http-x402.test.ts, tests/openapi-routes.test.ts]
+    title: No HTML frontend; JSON HTTP only (3 routes)
+    tests: [tests/http.test.ts]
 
   - id: REQ-HTTP-001
-    title: JSON responses with cache-friendly headers
-    tests: [tests/http-x402.test.ts]
-
-  - id: REQ-X402-001
-    title: Optional x402 v1 on POST /catalog/v1/rank only
-    tests: [tests/http-x402.test.ts]
+    title: Primitive node:http JSON API with schema-validated rank
+    tests: [tests/http.test.ts]
 
   - id: REQ-A2A-001
-    title: A2A agent card and JSON-RPC catalog methods
-    tests: [tests/http-x402.test.ts, tests/openapi-routes.test.ts]
+    title: A2A AgentCard at /.well-known/agent-card.json
+    tests: [tests/http.test.ts]
 
   - id: REQ-SCHEMA-001
     title: JSON Schemas for registry and rank I/O
-    tests: [tests/validate.test.ts, tests/openapi-routes.test.ts]
+    tests: [tests/validate.test.ts, tests/http.test.ts]
 
   - id: REQ-EVIDENCE-STATUS-001
     title: verification_status preserved on claims
@@ -34,5 +30,5 @@ requirements:
     check: npm run check
 
   - id: REQ-SE-001
-    title: Systems-engineering artifacts present (OpenAPI, requirements, ADRs, architecture)
-    tests: [tests/openapi-routes.test.ts]
+    title: Systems-engineering artifacts (schemas, requirements, ADRs, architecture)
+    tests: [tests/validate.test.ts]

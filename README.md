@@ -1,6 +1,6 @@
 # Biomedical Agent Catalog
 
-A2A ([Agent2Agent][1]) catalog that ranks peptide specialist agents from **synthetic** patient context. Terminal-native CLI for humans; HTTP + JSON-RPC for agents. **Decision support only — not a prescriber.**
+A2A ([Agent2Agent][1]) catalog that ranks peptide specialist agents from **synthetic** patient context. Terminal-native CLI for humans; a **three-route** JSON HTTP API for agents. **Decision support only — not a prescriber.**
 
 Open-source A2A catalog for routing synthetic patient context to specialist agents. Domain `peptides` is seeded; schema supports future domains (e.g. infectious disease, psychiatry) without restructuring.
 
@@ -13,9 +13,8 @@ Open-source A2A catalog for routing synthetic patient context to specialist agen
 └───────────────┬─────────────────────────────┬───────────────┘
                 │                             │
                 ▼                             ▼
-         rankAgents()                  Hono HTTP + JSON-RPC
-                │                     /.well-known/agent-card.json
-                │                     /catalog/v1/*  /a2a/v1
+         rankAgents()                  node:http (3 routes)
+                │                     rank + agent-card + health
                 ▼
     registry/domains/{domainId}/*.json  +  data/evidence/peptide-claims.compact.json
                 │
@@ -26,11 +25,11 @@ Open-source A2A catalog for routing synthetic patient context to specialist agen
 | Layer | Role |
 |-------|------|
 | **A2A AgentCard** | Each registered agent exposes standard v1 fields (`name`, `description`, `version`, `supportedInterfaces`, `capabilities`, I/O modes, `skills`). Placeholder `NOT_DEPLOYED` URLs mark agents not yet live. |
-| **Catalog AgentCard** | This repo’s catalog is itself an A2A server (`/.well-known/agent-card.json`) with skills `catalog-rank` and `catalog-list`. |
+| **Catalog AgentCard** | Served at `GET /.well-known/agent-card.json` when `catalog serve` is running. |
 | **Registry entry** | `registryId`, `domainId`, `agentCard`, plus catalog-only `routing` and `skillEvidence` (claim_id refs). JSON Schema [4]: `schemas/catalog-registry-entry.schema.json`. |
 | **Evidence** | Multi-model–verified peptide claims, reduced to ~1.4 MB `data/evidence/peptide-claims.compact.json` with `verification_status` preserved. See `data/evidence/PROVENANCE.md` and generated `data/evidence/REFERENCES.md`. |
 | **Patient input** | `catalog.simple.v1` JSON or FHIR R4 [3] `Bundle` (Patient + Condition / Goal / Observation / MedicationStatement / AllergyIntolerance). |
-| **x402 (optional)** | Config-gated payment on `POST /catalog/v1/rank` only ([x402 v1 HTTP transport][2]: `402` + `accepts[]`, `X-PAYMENT`, `X-PAYMENT-RESPONSE`). Mock facilitator by default for offline tests. |
+| **HTTP contract** | Rank I/O: `schemas/rank-request.schema.json`, `schemas/rank-response.schema.json` (validated in `src/server.ts`). |
 
 ## Quick start
 
@@ -59,7 +58,7 @@ npm run catalog -- rank --patient fixtures/patients/synthetic-t2dm-weight-simple
 # Validate registry + evidence references
 npm run catalog -- validate
 
-# Start HTTP server (A2A + catalog index; no HTML UI)
+# Start HTTP server (127.0.0.1 by default; no HTML UI)
 npm run catalog -- serve --port 8787
 ```
 
@@ -96,75 +95,17 @@ Fixtures (all synthetic):
 - `fixtures/patients/synthetic-t2dm-weight-simple.json`
 - `fixtures/patients/synthetic-fertility-fhir.json` (FHIR Bundle)
 
-## HTTP discovery (agents, not a frontend)
+## HTTP API (3 routes)
 
-| Resource | Description |
-|----------|-------------|
-| `GET /.well-known/agent-card.json` | Catalog’s A2A AgentCard |
-| `GET /catalog/v1/index` | Catalog index + link map |
-| `GET /catalog/v1/domains` | Domain list |
-| `GET /catalog/v1/domains/peptides/agents` | Agent cards in domain |
-| `GET /catalog/v1/agents/{registryId}` | Full registry entry |
-| `POST /catalog/v1/rank` | Rank operation (optional x402) |
-| `POST /a2a/v1` | JSON-RPC 2.0 (`catalog/list`, `catalog/rank`) |
+All responses are `Content-Type: application/json`. Default listen: `127.0.0.1:8787` (`CATALOG_HOST`, `CATALOG_PORT`, optional `CATALOG_PUBLIC_BASE_URL` for AgentCard URLs).
 
-Responses use `Content-Type: application/json`, `ETag`, `Cache-Control`, and `Link` headers. `Accept: application/json` is expected; unsupported types receive `406`.
+| Method | Path | Body / response |
+|--------|------|-----------------|
+| `POST` | `/catalog/v1/rank` | Request → `schemas/rank-request.schema.json`; response → `schemas/rank-response.schema.json` |
+| `GET` | `/.well-known/agent-card.json` | Catalog A2A AgentCard |
+| `GET` | `/health` | `{"ok":true}` |
 
-### x402 payment for `POST /catalog/v1/rank`
-
-Disabled by default. Enable for testing:
-
-```bash
-export CATALOG_X402_ENABLED=true
-export CATALOG_X402_PAY_TO=0x0000000000000000000000000000000000000001
-export CATALOG_X402_AMOUNT=1000
-export CATALOG_PUBLIC_BASE_URL=http://127.0.0.1:8787
-npm run catalog -- serve
-```
-
-**1. Unpaid request → 402** with `PaymentRequirements` in the JSON body (`x402Version: 1`, `accepts[]`):
-
-```bash
-curl -sS -D - -o /tmp/rank402.json \
-  -X POST http://127.0.0.1:8787/catalog/v1/rank \
-  -H 'Content-Type: application/json' \
-  -d @- <<'EOF'
-{"domainId":"peptides","patient":{"format":"catalog.simple.v1","id":"x","displayName":"Test","clinicalGoals":["weight management","obesity"],"countryCode":"AU"},"limit":3}
-EOF
-```
-
-**2. Paid retry** — build an `X-PAYMENT` header (base64 JSON `PaymentPayload` per x402 v1). Tests use the mock facilitator (`src/lib/x402.ts`); it accepts authorizations where `to` / `value` match the `accepts[0]` entry. Example using Node for a mock header:
-
-```bash
-PAYMENT=$(node --input-type=module -e "
-  import { loadConfig } from './dist/lib/config.js';
-  import { mockPaymentHeader } from './dist/lib/x402.js';
-  const cfg = loadConfig({ x402: { enabled: true } });
-  console.log(mockPaymentHeader(cfg.x402));
-")
-
-curl -sS -D - \
-  -X POST http://127.0.0.1:8787/catalog/v1/rank \
-  -H 'Content-Type: application/json' \
-  -H "X-PAYMENT: $PAYMENT" \
-  -d '{"domainId":"peptides","patient":{"format":"catalog.simple.v1","id":"x","displayName":"Test","clinicalGoals":["obesity"],"countryCode":"AU"}}'
-```
-
-On success, the response includes `X-PAYMENT-RESPONSE` (base64 `SettlementResponse`) and ranked agents in the body.
-
-Environment variables (all optional):
-
-| Variable | Default | Purpose |
-|----------|---------|---------|
-| `CATALOG_X402_ENABLED` | `false` | Gate rank endpoint |
-| `CATALOG_X402_FACILITATOR_MODE` | `mock` | `mock` or `http` |
-| `CATALOG_X402_FACILITATOR_URL` | — | Remote verify/settle when `http` |
-| `CATALOG_X402_PAY_TO` | placeholder | Must be set in production via env |
-| `CATALOG_X402_AMOUNT` | `1000` | Atomic units |
-| `CATALOG_X402_NETWORK` | `base-sepolia` | x402 network id |
-| `CATALOG_X402_ASSET` | USDC test address | Asset contract |
-
-No private keys or wallets are stored in the repo.
+Errors: **400** invalid JSON or schema, **404** unknown path, **405** wrong method, **413** body &gt; 64 KiB, **500** generic JSON `{ "error": "…" }` (no stack traces). Use CLI `list` / `show` for registry browsing.
 
 ## Adding a domain or agent
 
@@ -186,7 +127,7 @@ CLAIM_UPLOADS_DIR=/path/to/uploads npm run build:evidence
 
 ```bash
 npm run check    # evidence SHA-256 sidecar + REFERENCES.md in sync
-npm test         # registry, rank, HTTP/x402, OpenAPI ↔ routes
+npm test         # registry, rank, HTTP, evidence integrity
 ```
 
 ## Tests
@@ -202,10 +143,9 @@ MIT — see [LICENSE](LICENSE).
 ## References
 
 1. Agent2Agent (A2A) Protocol. https://github.com/a2aproject/A2A/blob/main/docs/specification.md
-2. x402 v1 HTTP transport specification. https://github.com/coinbase/x402/blob/main/specs/transports-v1/http.md
-3. HL7 FHIR R4. https://hl7.org/fhir/R4/
-4. JSON Schema (draft 2020-12). https://json-schema.org/draft/2020-12/json-schema-core
-5. Therapeutic Goods Administration (TGA) — Australian Register of Therapeutic Goods (ARTG). https://www.tga.gov.au/resources/artg
-6. World Anti-Doping Agency (WADA) Prohibited List. https://www.wada-ama.org/en/resources/world-anti-doping-code-and-international-standards/prohibited-list
-7. OpenAPI Specification v3.1.0. https://spec.openapis.org/oas/v3.1.0/draft
-8. Markdown Any Decision Records (MADR). https://adr.github.io/madr/
+2. HL7 FHIR R4. https://hl7.org/fhir/R4/
+3. JSON Schema (draft 2020-12). https://json-schema.org/draft/2020-12/json-schema-core
+4. Therapeutic Goods Administration (TGA) — Australian Register of Therapeutic Goods (ARTG). https://www.tga.gov.au/resources/artg
+5. World Anti-Doping Agency (WADA) Prohibited List. https://www.wada-ama.org/en/resources/world-anti-doping-code-and-international-standards/prohibited-list
+6. Node.js HTTP module. https://nodejs.org/api/http.html
+7. Markdown Any Decision Records (MADR). https://adr.github.io/madr/

@@ -54,8 +54,8 @@ export function catalogAgentCard(baseUrl: string): AgentCard {
     },
     supportedInterfaces: [
       {
-        url: `${baseUrl.replace(/\/$/, "")}/a2a/v1`,
-        protocolBinding: "JSONRPC",
+        url: `${root}/catalog/v1/rank`,
+        protocolBinding: "HTTP+JSON",
         protocolVersion: "1.0",
       },
     ],

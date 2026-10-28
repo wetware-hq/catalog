@@ -1,7 +1,6 @@
 #!/usr/bin/env node
 import { readFileSync } from "node:fs";
 import { parseArgs } from "node:util";
-import { serve } from "@hono/node-server";
 import { loadConfig } from "../lib/config.js";
 import { normalizePatientInput } from "../lib/patient.js";
 import { rankAgents } from "../lib/rank.js";
@@ -13,7 +12,7 @@ import {
   type ValidationIssue,
 } from "../lib/registry.js";
 import type { CatalogRegistryEntry, RankResponse } from "../types/catalog.js";
-import { createApp } from "../server/app.js";
+import { createCatalogServer } from "../server.js";
 
 const DISCLAIMER =
   "Decision support only — not prescribing advice. Synthetic fixtures only; no real PHI.";
@@ -186,11 +185,11 @@ Environment (serve / HTTP):
       port: values.port ? Number(values.port) : undefined,
       host: values.host,
     });
-    const app = createApp(config);
-    console.error(`Catalog listening on http://${config.host}:${config.port}`);
-    console.error(`Agent card: ${config.publicBaseUrl}/.well-known/agent-card.json`);
-    console.error(`x402 rank gate: ${config.x402.enabled ? "enabled" : "disabled"}`);
-    serve({ fetch: app.fetch, port: config.port, hostname: config.host });
+    const server = createCatalogServer(config);
+    server.listen(config.port, config.host, () => {
+      console.error(`Catalog listening on http://${config.host}:${config.port}`);
+      console.error(`Agent card: ${config.publicBaseUrl}/.well-known/agent-card.json`);
+    });
     return;
   }
 

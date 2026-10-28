@@ -1,30 +1,28 @@
-# Terminal CLI plus JSON HTTP discovery (no frontend)
+# Terminal CLI + minimal JSON HTTP (no frontend)
 
 ## Status
 
-Accepted
+Accepted (HTTP scope narrowed by ADR 0005)
 
 ## Context
 
-The catalog routes synthetic patient context to ranked A2A [1] peptide specialist agents. Human operators and autonomous agents both need access, but a browser UI would add maintenance, accessibility, and security surface without improving machine-to-machine discovery. The owner constraint is terminal-native operation for humans and JSON primitives for agents.
+The catalog must stay terminal-native for operators while exposing a small machine interface for agents. No HTML UI.
 
 ## Decision
 
-- Ship a **CLI** (`src/bin/catalog.ts`) with `rank`, `list`, `show`, `validate`, and `serve` as the primary human interface.
-- Implement **HTTP** in `src/server/app.ts` using Hono [2]: JSON responses only, `Accept: application/json` negotiation (406 otherwise), ETag/Cache-Control/Link headers [5], no HTML routes.
-- Expose **A2A** discovery via `/.well-known/agent-card.json` and JSON-RPC [4] `POST /a2a/v1` for `catalog/list` and `catalog/rank`.
+- Primary interface: **`catalog` CLI** (`src/bin/catalog.ts`) — rank, list, show, validate, serve.
+- HTTP: **`src/server.ts`** with Node `node:http` — three JSON routes only (see ADR 0005); rank request/response validated against JSON Schemas in `schemas/`.
+- Registry and rank I/O validated in CLI via `validateCatalog()` and shared rank logic in `src/lib/rank.ts`.
 
 ## Consequences
 
-- Positive: Single codebase serves CLI and HTTP; agents consume the same rank logic as the CLI.
-- Positive: OpenAPI [3] (`openapi/catalog.openapi.yaml`) can describe the HTTP surface without UI drift.
-- Negative: No visual ranking dashboard; operators use terminal output or their own clients.
-- Verification: `tests/http-x402.test.ts`, `tests/rank.test.ts`, REQ-CLI-001 and REQ-NO-UI-001 in `docs/requirements.yaml`.
+- Positive: Clear split — CLI for browsing, HTTP for rank + AgentCard discovery.
+- Negative: No HTTP catalog index or JSON-RPC shim.
+- Verification: `tests/http.test.ts`, `tests/rank.test.ts`, REQ-* in `docs/requirements.yaml`.
 
 ## References
 
 1. Agent2Agent (A2A) Protocol. https://github.com/a2aproject/A2A/blob/main/docs/specification.md
-2. Hono web framework. https://hono.dev/
-3. OpenAPI Specification v3.1.0. https://spec.openapis.org/oas/v3.1.0/draft
-4. JSON-RPC 2.0 Specification. https://www.jsonrpc.org/specification
-5. RFC 9110 — HTTP Semantics; RFC 8288 — Web Linking. https://www.rfc-editor.org/rfc/rfc9110
+2. Node.js HTTP module. https://nodejs.org/api/http.html
+3. JSON Schema draft 2020-12. https://json-schema.org/draft/2020-12/json-schema-core
+4. RFC 9110 — HTTP Semantics. https://www.rfc-editor.org/rfc/rfc9110

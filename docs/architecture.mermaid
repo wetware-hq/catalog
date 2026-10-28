@@ -1,8 +1,7 @@
 flowchart TB
   subgraph entry [Entry points]
     CLI[catalog CLI\nrank list show validate serve]
-    HTTP[Hono HTTP server]
-    RPC[POST /a2a/v1 JSON-RPC]
+    HTTP[node:http — 3 routes]
   end
 
   subgraph core [Core libraries]
@@ -10,7 +9,8 @@ flowchart TB
     REG[registry.ts + validate]
     PAT[patient.ts]
     CORP[corpus.ts evidence load]
-    CFG[config.ts + x402.ts]
+    CFG[config.ts]
+    SRV[server.ts + Ajv schemas]
   end
 
   subgraph data [Data and contracts]
@@ -20,11 +20,6 @@ flowchart TB
     SHA[data/evidence/peptide-claims.compact.sha256]
     REFS[data/evidence/REFERENCES.md]
     FIX[fixtures/patients/*.json]
-    OAS[openapi/catalog.openapi.yaml]
-  end
-
-  subgraph pay [Optional payment]
-    X402[x402 gate on POST /catalog/v1/rank]
   end
 
   subgraph ci [CI]
@@ -35,10 +30,10 @@ flowchart TB
 
   CLI --> RANK
   CLI --> REG
-  HTTP --> RANK
-  HTTP --> REG
-  RPC --> RANK
-  HTTP --> X402
+  HTTP --> SRV
+  SRV --> RANK
+  SRV --> REG
+  SRV --> SCHEMAS
   RANK --> CORP
   RANK --> REG
   REG --> REGJSON
@@ -50,4 +45,3 @@ flowchart TB
   CHK --> SHA
   CHK --> REFS
   TST --> HTTP
-  TST --> OAS
