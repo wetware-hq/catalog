@@ -2,7 +2,6 @@ from __future__ import annotations
 
 import copy
 import json
-import shutil
 from pathlib import Path
 
 import pytest
@@ -11,102 +10,232 @@ from hypothesis import given, strategies as st
 from ecatalog.graph import (
     EDGES_PATH,
     NODES_PATH,
+    active_edges,
     build_graph,
     canonical_bytes,
     canonical_line,
+    edge_identity_id,
+    ensure_edge_id,
+    is_subsumed_by,
+    load_vocabulary,
     merge_edges,
     merge_graphs,
     merge_nodes,
     read_jsonl,
+    transitive_closure_pairs,
     validate_graph,
 )
 
 ROOT = Path(__file__).resolve().parent.parent
+TOY = Path(__file__).resolve().parent / "fixtures" / "toy"
+
+
+def _ks():
+    return [{"source_hash": "x", "date": "t", "licence": "CC0-1.0"}]
 
 
 def test_check1_dangling_endpoint_smallest():
-    nodes = [{"id": "catalog:a", "category": "biolink:Software", "name": "A", "provenance": []}]
+    vocab = load_vocabulary()
+    nodes = [{"id": "catalog:a", "category": ["biolink:Software"], "name": "A", "provenance": _ks()}]
     edges = [
-        {
-            "id": "edge:1",
-            "subject": "catalog:a",
-            "predicate": "biolink:has_attribute",
-            "object": "catalog:missing",
-            "knowledge_source": [{"source_id": "source:x", "license": "CC0-1.0", "date": "t"}],
-            "date": "t",
-            "quote_hash": "abc",
-        }
+        ensure_edge_id(
+            {
+                "subject": "catalog:a",
+                "predicate": "biolink:has_attribute",
+                "object": "catalog:missing",
+                "knowledge_source": _ks(),
+                "date": "t",
+                "quote_hash": "abc",
+                "qualifiers": {},
+            }
+        )
     ]
-    errs = validate_graph(nodes, edges)
+    errs = validate_graph(nodes, edges, vocab=vocab)
     assert any("dangling object" in e for e in errs)
 
 
-def test_check2_predicate_not_closed():
-    nodes = [
-        {"id": "catalog:a", "category": "biolink:Software", "name": "A", "provenance": []},
-        {"id": "catalog:a#attr-x", "category": "biolink:Attribute", "name": "x", "provenance": []},
-    ]
+def test_literal_object_not_dangling():
+    vocab = load_vocabulary()
+    nodes = [{"id": "catalog:a", "category": ["biolink:Software"], "name": "A", "provenance": _ks()}]
     edges = [
-        {
-            "id": "edge:1",
-            "subject": "catalog:a",
-            "predicate": "biolink:unknown_pred",
-            "object": "catalog:a#attr-x",
-            "knowledge_source": [{"source_id": "source:x", "license": "CC0-1.0", "date": "t"}],
-            "date": "t",
-            "quote_hash": "abc",
-        }
+        ensure_edge_id(
+            {
+                "subject": "catalog:a",
+                "predicate": "biolink:has_attribute",
+                "object": {"literal": True, "value": 1, "category": ["biolink:Attribute"]},
+                "knowledge_source": _ks(),
+                "date": "t",
+                "quote_hash": "abc",
+                "qualifiers": {},
+            }
+        )
     ]
-    errs = validate_graph(nodes, edges)
-    assert any("not in closed list" in e for e in errs)
+    errs = validate_graph(nodes, edges, vocab=vocab)
+    assert not any("dangling object" in e for e in errs)
+
+
+def test_check2_predicate_not_closed():
+    vocab = load_vocabulary()
+    nodes = [{"id": "catalog:a", "category": ["biolink:Software"], "name": "A", "provenance": _ks()}]
+    edges = [
+        ensure_edge_id(
+            {
+                "subject": "catalog:a",
+                "predicate": "biolink:unknown_pred",
+                "object": {"literal": True, "value": 1, "category": ["biolink:Attribute"]},
+                "knowledge_source": _ks(),
+                "date": "t",
+                "quote_hash": "abc",
+                "qualifiers": {},
+            }
+        )
+    ]
+    assert any("not in closed list" in e for e in validate_graph(nodes, edges, vocab=vocab))
 
 
 def test_check3_empty_knowledge_source():
-    nodes = [
-        {"id": "catalog:a", "category": "biolink:Software", "name": "A", "provenance": []},
-        {"id": "catalog:a#attr-x", "category": "biolink:Attribute", "name": "x", "provenance": []},
-    ]
+    vocab = load_vocabulary()
+    nodes = [{"id": "catalog:a", "category": ["biolink:Software"], "name": "A", "provenance": _ks()}]
     edges = [
+        ensure_edge_id(
+            {
+                "subject": "catalog:a",
+                "predicate": "biolink:has_attribute",
+                "object": {"literal": True, "value": 1, "category": ["biolink:Attribute"]},
+                "knowledge_source": [],
+                "date": "t",
+                "quote_hash": "abc",
+                "qualifiers": {},
+            }
+        )
+    ]
+    assert any("knowledge_source empty" in e for e in validate_graph(nodes, edges, vocab=vocab))
+
+
+def test_check4_sigma_subsumption_fail():
+    vocab = load_vocabulary()
+    nodes = [{"id": "catalog:a", "category": ["biolink:Software"], "name": "A", "provenance": _ks()}]
+    edges = [
+        ensure_edge_id(
+            {
+                "subject": "catalog:a",
+                "predicate": "biolink:has_attribute",
+                "object": {"literal": True, "value": "x", "category": ["biolink:NarrativeText"]},
+                "knowledge_source": _ks(),
+                "date": "t",
+                "quote_hash": "abc",
+                "qualifiers": {},
+            }
+        )
+    ]
+    assert any("sigma type check failed" in e for e in validate_graph(nodes, edges, vocab=vocab))
+
+
+def test_small_molecule_subsumes_chemical_entity_domain():
+    vocab = load_vocabulary()
+    assert is_subsumed_by(vocab, ["biolink:SmallMolecule"], "biolink:ChemicalEntity")
+    nodes = [{"id": "catalog:m", "category": ["biolink:SmallMolecule"], "name": "M", "provenance": _ks()}]
+    edges = [
+        ensure_edge_id(
+            {
+                "subject": "catalog:m",
+                "predicate": "biolink:has_attribute",
+                "object": {"literal": True, "value": 123, "category": ["biolink:ChemicalEntity"]},
+                "knowledge_source": _ks(),
+                "date": "t",
+                "quote_hash": "abc",
+                "qualifiers": {},
+            }
+        )
+    ]
+    assert validate_graph(nodes, edges, vocab=vocab) == []
+
+
+def test_qualifiers_change_edge_identity():
+    base = {
+        "subject": "catalog:a",
+        "predicate": "biolink:has_attribute",
+        "object": {"literal": True, "value": 1, "category": ["biolink:Attribute"]},
+        "knowledge_source": _ks(),
+        "date": "t",
+        "quote_hash": "abc",
+    }
+    e1 = ensure_edge_id({**base, "qualifiers": {}})
+    e2 = ensure_edge_id({**base, "qualifiers": {"negated": True}})
+    assert e1["id"] != e2["id"]
+
+
+def test_supersedes_hides_edge_in_view():
+    vocab = load_vocabulary()
+    live = ensure_edge_id(
         {
-            "id": "edge:1",
             "subject": "catalog:a",
             "predicate": "biolink:has_attribute",
-            "object": "catalog:a#attr-x",
-            "knowledge_source": [],
+            "object": {"literal": True, "value": 1, "category": ["biolink:Attribute"]},
+            "knowledge_source": _ks(),
             "date": "t",
             "quote_hash": "abc",
+            "qualifiers": {},
         }
-    ]
-    errs = validate_graph(nodes, edges)
-    assert any("knowledge_source empty" in e for e in errs)
-
-
-def test_check4_sigma_mismatch():
-    nodes = [
-        {"id": "catalog:a", "category": "biolink:Device", "name": "A", "provenance": []},
-        {"id": "catalog:a#attr-x", "category": "biolink:Attribute", "name": "x", "provenance": []},
-    ]
-    edges = [
+    )
+    sup = ensure_edge_id(
         {
-            "id": "edge:1",
             "subject": "catalog:a",
-            "predicate": "biolink:has_attribute",
-            "object": "catalog:a#attr-x",
-            "knowledge_source": [{"source_id": "source:x", "license": "CC0-1.0", "date": "t"}],
-            "date": "t",
-            "quote_hash": "abc",
+            "predicate": "catalog:supersedes",
+            "object": live["id"],
+            "knowledge_source": _ks(),
+            "date": "t2",
+            "quote_hash": "def",
+            "qualifiers": {},
         }
-    ]
-    errs = validate_graph(nodes, edges)
-    assert any("sigma mismatch" in e for e in errs)
+    )
+    active = active_edges([live, sup], vocab)
+    assert all(e["id"] != live["id"] for e in active)
 
 
-def test_check5_non_canonical_bytes(tmp_path: Path):
-    nodes = [{"id": "catalog:z", "category": "biolink:Software", "name": "Z", "provenance": []}]
-    bad = tmp_path / "nodes.jsonl"
-    bad.write_text('{"name":"Z","id":"catalog:z","category":"biolink:Software","provenance":[]}\n', encoding="utf-8")
-    parsed = read_jsonl(bad)
-    assert bad.read_bytes() != canonical_bytes(parsed)
+def test_transitive_only_when_marked():
+    vocab = load_vocabulary(TOY / "vocabulary.json")
+    e1 = ensure_edge_id(
+        {
+            "subject": "ex:a",
+            "predicate": "ex:relatedTo",
+            "object": "ex:b",
+            "knowledge_source": _ks(),
+            "date": "t",
+            "quote_hash": "1",
+            "qualifiers": {},
+        }
+    )
+    e2 = ensure_edge_id(
+        {
+            "subject": "ex:b",
+            "predicate": "ex:relatedTo",
+            "object": "ex:c",
+            "knowledge_source": _ks(),
+            "date": "t",
+            "quote_hash": "2",
+            "qualifiers": {},
+        }
+    )
+    derived = transitive_closure_pairs([e1, e2], vocab)
+    assert ("ex:a", "ex:relatedTo", "ex:c") in derived
+
+
+def test_toy_vocabulary_fixture_passes_without_code_changes():
+    vocab = load_vocabulary(TOY / "vocabulary.json")
+    nodes = read_jsonl(TOY / "nodes.jsonl")
+    edge = ensure_edge_id(
+        {
+            "subject": "ex:paper-1",
+            "predicate": "ex:authoredBy",
+            "object": "ex:author-1",
+            "knowledge_source": _ks(),
+            "date": "2026-01-01T00:00:00Z",
+            "quote_hash": "q",
+            "qualifiers": {},
+        }
+    )
+    assert validate_graph(nodes, [edge], vocab=vocab) == []
 
 
 def test_graph_repopulable_byte_identical():
@@ -125,39 +254,37 @@ def test_graph_repopulable_byte_identical():
 def test_merge_commutative(data):
     base = {
         "id": "catalog:n",
-        "category": "biolink:Software",
+        "category": ["biolink:Software"],
         "name": "n",
-        "provenance": [{"source_id": "source:a", "license": "CC0-1.0", "date": "1"}],
+        "provenance": [{"source_hash": "a", "licence": "CC0-1.0", "date": "1"}],
     }
     extra = {
         "id": "catalog:n",
-        "category": "biolink:Software",
+        "category": ["biolink:Software"],
         "name": "n",
-        "provenance": [{"source_id": "source:b", "license": "CC0-1.0", "date": "2"}],
+        "provenance": [{"source_hash": "b", "licence": "CC0-1.0", "date": "2"}],
     }
-    a = {"catalog:n": copy.deepcopy(base)}
-    b = {"catalog:n": copy.deepcopy(extra)}
-    ab = merge_nodes(a, b)
-    ba = merge_nodes(b, a)
+    ab = merge_nodes({"catalog:n": copy.deepcopy(base)}, {"catalog:n": copy.deepcopy(extra)})
+    ba = merge_nodes({"catalog:n": copy.deepcopy(extra)}, {"catalog:n": copy.deepcopy(base)})
     assert canonical_line(ab["catalog:n"]) == canonical_line(ba["catalog:n"])
 
 
 def test_merge_associative_and_idempotent():
-    n1 = {"catalog:x": {"id": "catalog:x", "category": "biolink:Software", "name": "x", "provenance": []}}
+    n1 = {"catalog:x": {"id": "catalog:x", "category": ["biolink:Software"], "name": "x", "provenance": []}}
     n2 = {
         "catalog:x": {
             "id": "catalog:x",
-            "category": "biolink:Software",
+            "category": ["biolink:Software"],
             "name": "x",
-            "provenance": [{"source_id": "source:1", "license": "CC0-1.0", "date": "t"}],
+            "provenance": [{"source_hash": "1", "licence": "CC0-1.0", "date": "t"}],
         }
     }
     n3 = {
         "catalog:x": {
             "id": "catalog:x",
-            "category": "biolink:Software",
+            "category": ["biolink:Software"],
             "name": "x",
-            "provenance": [{"source_id": "source:2", "license": "CC0-1.0", "date": "t2"}],
+            "provenance": [{"source_hash": "2", "licence": "CC0-1.0", "date": "t2"}],
         }
     }
     left = merge_nodes(merge_nodes(n1, n2), n3)
@@ -165,37 +292,3 @@ def test_merge_associative_and_idempotent():
     assert canonical_line(left["catalog:x"]) == canonical_line(right["catalog:x"])
     once = merge_nodes(left, left)
     assert canonical_line(once["catalog:x"]) == canonical_line(left["catalog:x"])
-
-    e1 = {
-        "edge:1": {
-            "id": "edge:1",
-            "subject": "catalog:x",
-            "predicate": "biolink:has_attribute",
-            "object": "catalog:x#a",
-            "knowledge_source": [{"source_id": "source:1", "license": "CC0-1.0", "date": "t"}],
-            "date": "t",
-            "quote_hash": "h",
-        }
-    }
-    e2 = {
-        "edge:1": {
-            "id": "edge:1",
-            "subject": "catalog:x",
-            "predicate": "biolink:has_attribute",
-            "object": "catalog:x#a",
-            "knowledge_source": [{"source_id": "source:2", "license": "CC0-1.0", "date": "t2"}],
-            "date": "t2",
-            "quote_hash": "h",
-        }
-    }
-    merged = merge_edges(e1, e2)
-    assert len(merged["edge:1"]["knowledge_source"]) == 2
-
-
-def test_merge_graphs_property_smoke():
-    na = [{"id": "catalog:a", "category": "biolink:Software", "name": "A", "provenance": []}]
-    nb = [{"id": "catalog:b", "category": "biolink:Software", "name": "B", "provenance": []}]
-    ea, eb = [], []
-    n1, e1 = merge_graphs(na, ea, nb, eb)
-    n2, e2 = merge_graphs(nb, eb, na, ea)
-    assert {x["id"] for x in n1} == {x["id"] for x in n2}

@@ -1,0 +1,27 @@
+{
+  "version": "0.1",
+  "prefixes": {"ex": "https://example.org/"},
+  "supersedes_predicate": "ex:supersedes",
+  "category_closure": {
+    "ex:Paper": ["ex:Document", "ex:Thing"],
+    "ex:Author": ["ex:Person", "ex:Thing"],
+    "ex:Document": ["ex:Thing"],
+    "ex:Person": ["ex:Thing"],
+    "ex:Thing": []
+  },
+  "predicates": {
+    "ex:authoredBy": {
+      "pairs": [{"domain": "ex:Document", "range": "ex:Person"}],
+      "transitive": false
+    },
+    "ex:relatedTo": {
+      "pairs": [{"domain": "ex:Thing", "range": "ex:Thing"}],
+      "transitive": true
+    },
+    "ex:supersedes": {
+      "pairs": [{"domain": "ex:Thing", "range": "ex:Thing"}],
+      "transitive": false
+    }
+  },
+  "default_licence": "CC0-1.0"
+}

@@ -1,0 +1,56 @@
+{
+  "version": "0.1",
+  "prefixes": {
+    "catalog": "https://example.org/catalog/",
+    "source": "https://example.org/source/"
+  },
+  "supersedes_predicate": "catalog:supersedes",
+  "category_closure": {
+    "biolink:Software": ["biolink:NamedThing"],
+    "biolink:Device": ["biolink:NamedThing"],
+    "biolink:Product": ["biolink:NamedThing"],
+    "biolink:Procedure": ["biolink:NamedThing"],
+    "biolink:Attribute": ["biolink:NamedThing"],
+    "biolink:NarrativeText": ["biolink:NamedThing"],
+    "biolink:SmallMolecule": ["biolink:ChemicalEntity", "biolink:NamedThing"],
+    "biolink:ChemicalEntity": ["biolink:NamedThing"],
+    "biolink:NamedThing": []
+  },
+  "predicates": {
+    "biolink:has_attribute": {
+      "pairs": [
+        {"domain": "biolink:NamedThing", "range": "biolink:Attribute"},
+        {"domain": "biolink:ChemicalEntity", "range": "biolink:ChemicalEntity"}
+      ],
+      "transitive": false
+    },
+    "biolink:has_description": {
+      "pairs": [{"domain": "biolink:NamedThing", "range": "biolink:NarrativeText"}],
+      "transitive": false
+    },
+    "catalog:supersedes": {
+      "pairs": [{"domain": "biolink:NamedThing", "range": "biolink:NamedThing"}],
+      "transitive": false
+    }
+  },
+  "default_licence": "UNKNOWN",
+  "licence_rules": [
+    {"url_contains": "COPYING", "licence": "GPL-2.0"},
+    {"url_contains": "progit", "licence": "CC-BY-NC-SA-3.0"}
+  ],
+  "catalog_mapping": {
+    "entry_id_prefix": "catalog",
+    "kind_categories": {
+      "software": ["biolink:Software"],
+      "equipment": ["biolink:Device"],
+      "tool": ["biolink:Device"],
+      "product": ["biolink:Product"],
+      "consumable": ["biolink:ChemicalEntity"],
+      "service": ["biolink:Procedure"]
+    },
+    "default_categories": ["biolink:NamedThing"],
+    "spec_predicate": "biolink:has_attribute",
+    "description_predicate": "biolink:has_description",
+    "literal_value_categories": ["biolink:Attribute"]
+  }
+}
