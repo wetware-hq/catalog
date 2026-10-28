@@ -53,6 +53,19 @@
           }
         }
       }
+    },
+    "sources": {
+      "type": "array",
+      "description": "Third-party sources cited by this registry entry (must be last field in authored JSON files).",
+      "items": {
+        "type": "object",
+        "required": ["title"],
+        "properties": {
+          "id": { "type": "string" },
+          "title": { "type": "string" },
+          "url": { "type": "string", "format": "uri" }
+        }
+      }
     }
   }
 }

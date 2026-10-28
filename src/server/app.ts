@@ -214,3 +214,13 @@ export function createApp(config: CatalogConfig = loadConfig()) {
 export function stableConfigFingerprint(config: CatalogConfig): string {
   return createHash("sha256").update(JSON.stringify(config.x402)).digest("hex").slice(0, 8);
 }
+
+/*
+ * References:
+ * [1] Agent2Agent (A2A) Protocol — AgentCard and JSON-RPC discovery patterns.
+ *     https://github.com/a2aproject/A2A/blob/main/docs/specification.md
+ * [2] JSON-RPC 2.0 Specification.
+ *     https://www.jsonrpc.org/specification
+ * [3] x402 v1 HTTP transport (payment-required responses on POST /catalog/v1/rank).
+ *     https://github.com/coinbase/x402/blob/main/specs/transports-v1/http.md
+ */

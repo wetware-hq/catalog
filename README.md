@@ -1,6 +1,6 @@
 # Biomedical Agent Catalog
 
-A2A ([Agent2Agent](https://github.com/a2aproject/A2A)) catalog that ranks peptide specialist agents from **synthetic** patient context. Terminal-native CLI for humans; HTTP + JSON-RPC for agents. **Decision support only — not a prescriber.**
+A2A ([Agent2Agent][1]) catalog that ranks peptide specialist agents from **synthetic** patient context. Terminal-native CLI for humans; HTTP + JSON-RPC for agents. **Decision support only — not a prescriber.**
 
 Open-source A2A catalog for routing synthetic patient context to specialist agents. Domain `peptides` is seeded; schema supports future domains (e.g. infectious disease, psychiatry) without restructuring.
 
@@ -27,10 +27,10 @@ Open-source A2A catalog for routing synthetic patient context to specialist agen
 |-------|------|
 | **A2A AgentCard** | Each registered agent exposes standard v1 fields (`name`, `description`, `version`, `supportedInterfaces`, `capabilities`, I/O modes, `skills`). Placeholder `NOT_DEPLOYED` URLs mark agents not yet live. |
 | **Catalog AgentCard** | This repo’s catalog is itself an A2A server (`/.well-known/agent-card.json`) with skills `catalog-rank` and `catalog-list`. |
-| **Registry entry** | `registryId`, `domainId`, `agentCard`, plus catalog-only `routing` and `skillEvidence` (claim_id refs). JSON Schema: `schemas/catalog-registry-entry.schema.json`. |
-| **Evidence** | Multi-model–verified peptide claims, reduced to ~1.4 MB `data/evidence/peptide-claims.compact.json` with `verification_status` preserved. See `data/evidence/PROVENANCE.md`. |
-| **Patient input** | `catalog.simple.v1` JSON or FHIR R4 `Bundle` (Patient + Condition / Goal / Observation / MedicationStatement / AllergyIntolerance). |
-| **x402 (optional)** | Config-gated payment on `POST /catalog/v1/rank` only ([x402 v1 HTTP transport](https://github.com/coinbase/x402/blob/main/specs/transports-v1/http.md): `402` + `accepts[]`, `X-PAYMENT`, `X-PAYMENT-RESPONSE`). Mock facilitator by default for offline tests. |
+| **Registry entry** | `registryId`, `domainId`, `agentCard`, plus catalog-only `routing` and `skillEvidence` (claim_id refs). JSON Schema [4]: `schemas/catalog-registry-entry.schema.json`. |
+| **Evidence** | Multi-model–verified peptide claims, reduced to ~1.4 MB `data/evidence/peptide-claims.compact.json` with `verification_status` preserved. See `data/evidence/PROVENANCE.md` and generated `data/evidence/REFERENCES.md`. |
+| **Patient input** | `catalog.simple.v1` JSON or FHIR R4 [3] `Bundle` (Patient + Condition / Goal / Observation / MedicationStatement / AllergyIntolerance). |
+| **x402 (optional)** | Config-gated payment on `POST /catalog/v1/rank` only ([x402 v1 HTTP transport][2]: `402` + `accepts[]`, `X-PAYMENT`, `X-PAYMENT-RESPONSE`). Mock facilitator by default for offline tests. |
 
 ## Quick start
 
@@ -83,11 +83,11 @@ Ranked agents:
 1. peptide-clinical-advisor  score=0.87
    ... Top skill "holistic-peptide-recommendation" ...
    regulatory:
-     ! Patient flagged as seeking compounded peptides — verify TGA ...
-     ! [bpc-157] Verified claim 4d0b84024d846a41: no TGA ARTG entry located (confirmed_2of2).
+     ! Patient flagged as seeking compounded peptides — verify TGA [5] ...
+     ! [bpc-157] Verified claim 4d0b84024d846a41: no TGA ARTG [5] entry located (confirmed_2of2).
 
 2. peptide-regulatory-au  score=0.78
-   ... Top skill "wada-prohibited-list" ...
+   ... Top skill "wada-prohibited-list" (WADA Prohibited List [6]) ...
 ```
 
 Fixtures (all synthetic):
@@ -191,3 +191,15 @@ npm test
 ## License
 
 MIT — see [LICENSE](LICENSE).
+
+## References
+
+1. Agent2Agent (A2A) Protocol. https://github.com/a2aproject/A2A/blob/main/docs/specification.md
+2. x402 v1 HTTP transport specification. https://github.com/coinbase/x402/blob/main/specs/transports-v1/http.md
+3. HL7 FHIR R4. https://hl7.org/fhir/R4/
+4. JSON Schema (draft 2020-12). https://json-schema.org/draft/2020-12/json-schema-core
+5. Therapeutic Goods Administration (TGA) — Australian Register of Therapeutic Goods (ARTG). https://www.tga.gov.au/resources/artg
+6. World Anti-Doping Agency (WADA) Prohibited List. https://www.wada-ama.org/en/resources/world-anti-doping-code-and-international-standards/prohibited-list
+7. OpenAPI Specification v3.1.0. https://spec.openapis.org/oas/v3.1.0/draft
+8. CycloneDX specification (SBOM). https://cyclonedx.org/specification/overview/
+9. Markdown Any Decision Records (MADR). https://adr.github.io/madr/

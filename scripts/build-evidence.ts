@@ -4,6 +4,7 @@
  *
  * Provenance: see data/evidence/PROVENANCE.md
  */
+import { execSync } from "node:child_process";
 import { createHash } from "node:crypto";
 import { readFileSync, writeFileSync, mkdirSync, existsSync, readdirSync } from "node:fs";
 import { basename, dirname, join } from "node:path";
@@ -222,6 +223,18 @@ function main() {
 
   console.log("Wrote", outPath);
   console.log(JSON.stringify(summary, null, 2));
+
+  try {
+    execSync("npm run generate:evidence-references", { cwd: ROOT, stdio: "inherit" });
+  } catch {
+    console.warn("Could not regenerate data/evidence/REFERENCES.md");
+  }
 }
 
 main();
+
+/*
+ * References:
+ * [1] FIPS 180-4 — Secure Hash Standard (SHA-256 sidecar for peptide-claims.compact.json).
+ *     https://csrc.nist.gov/publications/detail/fips/180/4/final
+ */

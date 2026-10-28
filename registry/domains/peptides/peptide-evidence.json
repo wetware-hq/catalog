@@ -68,5 +68,22 @@
         "verified": true
       }
     ]
-  }
+  },
+  "sources": [
+    {
+      "id": "1",
+      "title": "PubMed",
+      "url": "https://pubmed.ncbi.nlm.nih.gov/"
+    },
+    {
+      "id": "2",
+      "title": "U.S. FDA — Drugs@FDA / openFDA drug labels",
+      "url": "https://open.fda.gov/apis/drug/label/"
+    },
+    {
+      "id": "3",
+      "title": "ClinicalTrials.gov",
+      "url": "https://clinicaltrials.gov/"
+    }
+  ]
 }

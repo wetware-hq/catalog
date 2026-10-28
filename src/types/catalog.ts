@@ -49,6 +49,7 @@ export type CatalogRegistryEntry = {
     string,
     { claim_id: string; verification_status: string; verified: boolean }[]
   >;
+  sources?: { id?: string; title: string; url?: string }[];
 };
 
 export type SimplePatient = {

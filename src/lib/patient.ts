@@ -160,3 +160,9 @@ export function normalizePatientInput(patient: unknown): NormalizedPatient {
   }
   return normalizeSimplePatient(p as SimplePatient);
 }
+
+/*
+ * References:
+ * [1] HL7 FHIR R4 — Bundle, Patient, Condition, Goal, Observation, MedicationStatement, AllergyIntolerance.
+ *     https://hl7.org/fhir/R4/
+ */

@@ -86,5 +86,22 @@
         "verified": true
       }
     ]
-  }
+  },
+  "sources": [
+    {
+      "id": "1",
+      "title": "Therapeutic Goods Administration (TGA) — Australian Register of Therapeutic Goods (ARTG)",
+      "url": "https://www.tga.gov.au/resources/artg"
+    },
+    {
+      "id": "2",
+      "title": "TGA Poisons Standard (SUSMP) F2026L01327 (Appendix D scheduling context on related claims)",
+      "url": "https://www.legislation.gov.au/F2026L01327"
+    },
+    {
+      "id": "3",
+      "title": "World Anti-Doping Agency (WADA) Prohibited List 2026",
+      "url": "https://www.wada-ama.org/en/resources/world-anti-doping-code-and-international-standards/prohibited-list"
+    }
+  ]
 }

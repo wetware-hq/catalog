@@ -89,3 +89,29 @@ requirements:
       Supply-chain visibility from package-lock.json for auditors and CI.
     verification:
       check: npm run sbom && test -f sbom.cdx.json
+
+references:
+  - id: a2a
+    title: Agent2Agent (A2A) Protocol
+    url: https://github.com/a2aproject/A2A/blob/main/docs/specification.md
+  - id: x402-http
+    title: x402 v1 HTTP transport
+    url: https://github.com/coinbase/x402/blob/main/specs/transports-v1/http.md
+  - id: openapi
+    title: OpenAPI Specification v3.1.0
+    url: https://spec.openapis.org/oas/v3.1.0/draft
+  - id: json-schema
+    title: JSON Schema draft 2020-12
+    url: https://json-schema.org/draft/2020-12/json-schema-core
+  - id: cyclonedx
+    title: CycloneDX specification
+    url: https://cyclonedx.org/specification/overview/
+  - id: fips180-4
+    title: FIPS 180-4 Secure Hash Standard (SHA-256)
+    url: https://csrc.nist.gov/publications/detail/fips/180/4/final
+  - id: fhir-r4
+    title: HL7 FHIR R4
+    url: https://hl7.org/fhir/R4/
+  - id: madr
+    title: Markdown Any Decision Records (MADR)
+    url: https://adr.github.io/madr/

@@ -66,5 +66,17 @@
         "verified": true
       }
     ]
-  }
+  },
+  "sources": [
+    {
+      "id": "1",
+      "title": "PubMed (literature indexed on attached skillEvidence claims)",
+      "url": "https://pubmed.ncbi.nlm.nih.gov/"
+    },
+    {
+      "id": "2",
+      "title": "U.S. FDA — Drugs@FDA (regulatory claims referenced via skillEvidence)",
+      "url": "https://www.fda.gov/drugs/drug-approvals-and-databases/drugsfda-data-files"
+    }
+  ]
 }

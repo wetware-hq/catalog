@@ -169,3 +169,9 @@ export function mockPaymentHeader(cfg: X402Config, payer = "0x000000000000000000
   };
   return encodeHeaderJson(payload);
 }
+
+/*
+ * References:
+ * [1] x402 v1 HTTP transport specification.
+ *     https://github.com/coinbase/x402/blob/main/specs/transports-v1/http.md
+ */

@@ -60,3 +60,9 @@ export function loadConfig(overrides?: Partial<CatalogConfig>): CatalogConfig {
     x402: { ...x402, ...overrides?.x402 },
   };
 }
+
+/*
+ * References:
+ * [1] x402 v1 HTTP transport — PaymentRequirements and header encoding defaults.
+ *     https://github.com/coinbase/x402/blob/main/specs/transports-v1/http.md
+ */

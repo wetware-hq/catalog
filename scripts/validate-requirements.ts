@@ -20,6 +20,7 @@ function main() {
   const doc = parse(readFileSync(reqPath, "utf8")) as {
     schema_version?: string;
     requirements?: Requirement[];
+    references?: { id?: string; title?: string; url?: string }[];
   };
   if (!doc.schema_version) {
     fail("missing schema_version");
@@ -62,6 +63,13 @@ function main() {
       const prov = join(ROOT, "data", "evidence", "PROVENANCE.md");
       if (!existsSync(prov)) {
         fail(`${prefix} PROVENANCE.md missing`);
+      }
+    }
+  }
+  if (doc.references) {
+    for (const [i, ref] of doc.references.entries()) {
+      if (!ref.title || !ref.url) {
+        fail(`references[${i}] needs title and url`);
       }
     }
   }

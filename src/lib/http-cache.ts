@@ -21,3 +21,11 @@ export function negotiateJson(
   }
   return { ok: false };
 }
+
+/*
+ * References:
+ * [1] RFC 9110 — HTTP Semantics (ETag, Cache-Control, content negotiation).
+ *     https://www.rfc-editor.org/rfc/rfc9110
+ * [2] RFC 8288 — Web Linking (Link header relations).
+ *     https://www.rfc-editor.org/rfc/rfc8288
+ */

@@ -306,3 +306,14 @@ export function rankByRegistryId(registryId: string, patient: NormalizedPatient)
   const res = rankAgents(entry.domainId, patient, 50);
   return res.rankedAgents.find((r) => r.registryId === registryId);
 }
+
+/*
+ * References (third-party sources cited in regulatory routing and alerts):
+ * [1] Therapeutic Goods Administration (TGA) — Australian Register of Therapeutic Goods (ARTG).
+ *     https://www.tga.gov.au/resources/artg
+ * [2] TGA Poisons Standard (Standard for the Uniform Scheduling of Medicines and Poisons, SUSMP),
+ *     including Appendix D (e.g. instrument F2026L01327 as recorded on related claims).
+ *     https://www.legislation.gov.au/F2026L01327
+ * [3] World Anti-Doping Agency (WADA) Prohibited List (S0 / GHRP-related entries).
+ *     https://www.wada-ama.org/en/resources/world-anti-doping-code-and-international-standards/prohibited-list
+ */

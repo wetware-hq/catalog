@@ -12,7 +12,7 @@ CLAIM_UPLOADS_DIR=/path/to/uploads npm run build:evidence
 |------|------|
 | `merged_claims.jsonl` (or `merged_claims_*.jsonl`) | Merged claims before tie-break (statuses: `confirmed_2of2`, `confirmed_2of2_same_family`, `needs_tiebreak`, `single_replica`, `unresolvable`) |
 | `tiebreak_claims.jsonl` (or `tiebreak_*.jsonl`) | Tie-break pass for `needs_tiebreak` claims (third model family) |
-| `spot_check_results.jsonl` (or `spot_check_*.jsonl`) | 5% spot-check sample; disagreements on **histrelin** and **GHK-Cu** force `unresolvable` |
+| `spot_check_results.jsonl` (or `spot_check_*.jsonl`) | 5% spot-check sample; disagreements on **histrelin** and **GHK-Cu** force `unresolvable` (see attached claim citations in [1]) |
 
 Optional run metadata (not required for build): `agreement.json`, README from the verification run.
 
@@ -27,3 +27,10 @@ Optional run metadata (not required for build): `agreement.json`, README from th
 ## Clinical use
 
 Evidence references attached to catalog skills are **decision-support citations**, not prescribing instructions. Unverified claims are labeled explicitly and must not be treated as clinical fact.
+
+Full bibliographic and regulatory source index: **`REFERENCES.md`** [1] (auto-generated from the compact JSON).
+
+## References
+
+1. `data/evidence/REFERENCES.md` — authorities, PMIDs, DOIs, and NCT identifiers drawn from `peptide-claims.compact.json` (regenerate with `npm run generate:evidence-references`).
+2. FIPS 180-4 — SHA-256 digest for `peptide-claims.compact.sha256`. https://csrc.nist.gov/publications/detail/fips/180/4/final
