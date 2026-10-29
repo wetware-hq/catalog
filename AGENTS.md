@@ -136,3 +136,17 @@ Implement from this section alone. Tags: **pure** = decidable from one file's by
 6. This repository ships no updater, cron or CI. Compliance is your behaviour against this contract.
 
 A proposed row failing any rule above is **refused**, naming the condition that failed.
+
+## 10. Skills
+
+`skills/*.md` are procedures subordinate to this file; on any conflict this file governs (§0). Each skill declares its own description at its head and this file does not restate it: read the skill for what it does, read this section for where it may act.
+
+| skill | signature | write scope |
+|---|---|---|
+| `skills/get-info.md` | `Key -> Identity \| unresolved \| unavailable`; keys per §3, verdicts per §7 | none; read-only |
+| `skills/fill-db.md` | candidate pairs -> `proposals.json` per §9.4 | `proposals.json` only, never `graph.json` |
+
+- A skill may refuse more than this file requires, never less: it never admits a key §3 rejects.
+- No skill discharges §8.16. `fill-db` proposes; a reader admits (§9.3).
+- A skill does not widen §0. One needing to write anything else requires a change to this file first.
+- Two skills, named here exactly. A procedure not listed in this section is not part of this contract.
