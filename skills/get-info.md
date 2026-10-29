@@ -38,11 +38,16 @@ total. no network. never fails. intrinsic: reads the bytes, needs no library and
 ns, body = split(Key, ':', 1)
     ns == "aa"                      -> assert body subset_of PROTEIN_MONOMERS ; admit
     ns == "helm", all blocks PEPTIDE-> assert monomers(body) subset_of PROTEIN_MONOMERS ; admit
-    ns == "uniprot"                 -> admit
-    otherwise                       -> refuse (out of scope)
+    ns == "uniprot", body matches AGENTS §3 accession grammar -> admit
+    otherwise                       -> refuse (out of scope or ungrammatical)
 
 refuse is not a classification. an RNA or DNA block is refused unexamined;
 nothing downstream ever sees a non-protein key. the refusal is recorded.
+
+grammar is checked HERE, never at resolve. an ungrammatical accession makes the
+service answer 400: not unresolved (no record answered) and not unavailable (the
+service did answer). admitting it would force a third verdict. refusing it keeps
+stage 1 two-valued.
 
 PROTEIN_MONOMERS is one flat set. one block type, one alphabet, no per-block scoping.
     d-prefixed tokens are D-stereoisomers, never deoxy: dA is D-alanine, dR is D-arginine.
