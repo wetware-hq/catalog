@@ -5,8 +5,8 @@
 ## 0. Scope
 
 - **Read:** `graph.json`, `AGENTS.md`, `LICENSE`.
-- **Write:** `graph.json` only, under §9.
-- **Refuse:** scripts, workflows, CI, package manifests or secondary data files in this repo; stored ranks, scores or grades; citations other than bare `pmid:<digits>`; empty citation arrays; pairs without qualifying evidence (§4); removal or rewriting of existing rows absent explicit human supersession.
+- **Write:** `graph.json` and `proposals.json` only, under §9.
+- **Refuse:** scripts, workflows, CI, package manifests or secondary data files in this repo, `proposals.json` (§9) being the single named exception; stored ranks, scores or grades; citations other than bare `pmid:<digits>`; empty citation arrays; pairs without qualifying evidence (§4); removal or rewriting of existing rows absent explicit human supersession.
 
 ## 1. Purpose
 
@@ -75,7 +75,16 @@ Merge valid `A`, `B` → `M`:
 
 Re-serialise per §5. Commutative, associative, idempotent.
 
-## 7. Read-time matching
+## 7. Read contract
+
+For a consumer reading the catalogue at runtime:
+
+- **Pin the read.** Fetch `graph.json` at a commit SHA or a tag, never at a branch name. A branch tip moves; an agent that reads `main` twice may get two catalogues and cannot tell which it had. Read through the repository contents API at that SHA, not a CDN mirror — mirrors serve stale bytes.
+- **Refuse an unknown `version`** outright (§8.4). Never read the recognised part of a newer file.
+- **The reverse index belongs to the reader.** `pair` is keyed binder → target; the runtime question, target → binders, is derivable from those bytes and is the consumer's to build at read time. It is never stored: a second copy of the same facts has no merge law.
+- **Absence is not a negative.** A missing pair means no qualifying paper has been entered. At present coverage that is not evidence that no such binder exists.
+
+### Ranking
 
 Never stored. Rank **within one dictionary only**; a `preclinical` row and a `pair` row are not comparable and must not appear in one ordering. For target `t` in dictionary `D`:
 
@@ -118,8 +127,9 @@ Implement from this section alone. Tags: **pure** = decidable from one file's by
 
 1. Satisfy §8.19 against the prior committed `graph.json`; add only rows satisfying §2–§4 and §8.1–§8.18.
 2. Re-serialise to §5 before persisting.
-3. **Branch boundary.** Autonomous intake writes to branch `data` only. `main` changes only by a human-reviewed merge. The merge is the admission gate for condition 16, which no run can discharge for itself.
-4. Intake procedure: `skills/fill-db.md`. It enumerates structured authorities; it does not crawl prose, and its own acceptance test is rediscovery of the rows already committed.
-5. This repository ships no updater, cron or CI. Compliance is your behaviour against this contract.
+3. **File boundary.** Autonomous intake writes `proposals.json` only, and never writes `graph.json` on any branch. Admission is the act of reading the paper, and that act is what moves bytes from `proposals.json` into `graph.json`, choosing the dictionary per §4. **Trust is carried by the file, not by a branch:** a branch name is mutable and has no merge law, so a fence of the form "unverified rows live on branch X" dissolves at the first merge and relaunders those rows as verified, while `proposals.json` merges into `proposals.json` on every branch. Condition 16 is therefore discharged at the file move, by a reader, and never by the run that proposed the row.
+4. **`proposals.json`.** Root: a non-array object with exactly `version` (the number `2`) and `proposal` (an array). Each element has exactly `binder`, `target`, `pmid`, each satisfying §3. A proposal carries **no dictionary assignment**: `pair` versus `preclinical` is part of the oracle and is chosen when the paper is read. Serialise per §5; add-only per §8.19. It is not catalogue-shaped and must not be read as one.
+5. Intake procedure: `skills/fill-db.md`. It enumerates structured authorities; it does not crawl prose, and its own acceptance test is rediscovery of the rows already committed.
+6. This repository ships no updater, cron or CI. Compliance is your behaviour against this contract.
 
 A proposed row failing any rule above is **refused**, naming the condition that failed.
