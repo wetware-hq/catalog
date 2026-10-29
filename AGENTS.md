@@ -156,7 +156,19 @@ A proposed row failing any rule above is **refused**, naming the condition that 
 | [`skills/resolve-key.md`](skills/resolve-key.md) | `aa:` `helm:` `uniprot:`; never `pmid:` | `Key -> Identity \| unresolved \| unavailable`; verdicts per §7 | none; read-only |
 | [`skills/propose-pairs.md`](skills/propose-pairs.md) | binder `aa:` `helm:`, target `uniprot:`, citation `pmid:` | candidate pairs -> `proposals.json` per §9.4 | `proposals.json` only, never `graph.json` |
 
+**Special class.** The classes are defined by what a skill does to claims. A **catalogue** skill is conservative: it relocates facts that already exist, and is bound by §4. A **`class: special`** skill originates a claim no source has reported; it writes nothing, its output is categorically ineligible for `graph.json` and for `proposals.json`, and its oracle is not a read paper. Classify the next skill by that test, not by precedent.
+
+No separate directory is needed, and none is used: a `special` skill has **no output file**, so there is no boundary to erode. That write-nothing contract is what the class rests on, and it is checkable — **a `class: special` row declares write scope `none`**, and a skill whose output could reach either dictionary is not `special`, it is a catalogue skill and §4 binds it.
+
+The reader-facing warning is therefore not carried by a path either. It is carried by the **emitted report**, verbatim on the same block as every sequence (see the skill's §7), because the report is the only thing that leaves.
+
+| skill | class | namespaces (§3) | signature | write scope |
+|---|---|---|---|---|
+| [`skills/design-binder.md`](skills/design-binder.md) | `special` | target `uniprot:` (human only); emits binder `aa:` `helm:`; never `pmid:` | `(Target, Indication) -> Binder \| unranked candidates`; refusals per the skill's §3 and §7 | **none**; writes no file in this repository |
+
+
 - A skill may refuse more than this file requires, never less: it never admits a key §3 rejects.
 - No skill discharges §8.16. `propose-pairs` proposes; a reader admits (§9.3).
+- `design-binder` is `special` and writes nothing (§4, §9.4): a de novo design has no qualifying paper, so no element of `graph.json` or `proposals.json` can hold it. There is no designs file either — its oracle is a measured Kd, which makes its output an experimental worklist rather than a database. A designed molecule enters only once a paper exists, by `propose-pairs` and a reader.
 - A skill does not widen §0. One needing to write anything else requires a change to this file first.
-- Two skills, named here exactly. A procedure not listed in this section is not part of this contract.
+- Three skills, named here exactly — two catalogue procedures and one `special`. A procedure not listed in this section is not part of this contract.
