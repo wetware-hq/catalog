@@ -1,0 +1,11 @@
+{
+  "version": 2,
+  "pair": {
+    "helm:PEPTIDE1{A.[CCO].C}$$$$": {
+      "uniprot:P12345": [
+        "pmid:1"
+      ]
+    }
+  },
+  "preclinical": {}
+}
