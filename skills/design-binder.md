@@ -111,7 +111,7 @@ The screen above has a published success rate, and the report carries it (§7). 
 | ipTM | 0.51 | 60% | 38% | 31% |
 | AF2 pAE interaction | 0.38 | 12% | 20% | 29% |
 
-Each cell is a **median experimental success rate across 15 targets**, and the error bars are the **inter-quartile range**, which is enormous: roughly **9% to 90%** at recall 0.2. A median drawn from a spread that wide is a weak summary of any single target, including yours.
+Each cell is a **median experimental success rate across 15 targets**, and the error bars are the **inter-quartile range**, which is enormous: at recall 0.2 the widest whiskers in the panel run from roughly **9% to 90%**, and ipSAE_min's own run from roughly **9% to 66%** around its 29% median. Those bounds are estimated off the axis and are approximate; only the bar labels are printed values. A median drawn from a spread that wide is a weak summary of any single target, including yours.
 
 **Average precision and median success rate disagree, and the disagreement is the finding.** ipSAE_min is the best *single* feature on AP — 0.54 against ipTM's 0.51 and the AF2 pAE interaction baseline's 0.38, which is the comparison the 1.4-fold claim is made against, and the gap to ipTM is small — yet it returns **29% at recall 0.2**, below ipTM's 60% at the same stringency, and below every feature in the panel there except the AF2 baseline. The two measures answer different questions: AP scores the **whole ranking**, median success rate scores only **what you actually order at a stated stringency**. A run that quotes AP and then orders at low recall has quoted the wrong number. Report both, name the operating point, and carry the inter-quartile range beside the median.
 
