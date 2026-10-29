@@ -48,6 +48,8 @@ Root: a non-array object with **exactly** `version`, `pair`, `preclinical`, in t
 
 Prefixes do not cross roles: no target or citation prefix on a binder key, and none of the reverse.
 
+The four namespace prefixes — `aa:`, `helm:`, `uniprot:`, `pmid:` — are **grammar, not style**: fixed, case-sensitive tokens with no synonyms and no abbreviations. Re-casing or renaming one invalidates every row that uses it. Files in this repository may be renamed; a key prefix may not.
+
 ## 4. Citation admission
 
 - `pair[binder][target]` **iff** the paper reports **clinical benefit in humans** for that binder against that target.
@@ -83,6 +85,7 @@ For a consumer reading the catalogue at runtime:
 - **Refuse an unknown `version`** outright (§8.4). Never read the recognised part of a newer file.
 - **The reverse index belongs to the reader.** `pair` is keyed binder → target; the runtime question, target → binders, is derivable from those bytes and is the consumer's to build at read time. It is never stored: a second copy of the same facts has no merge law.
 - **Absence is not a negative.** A missing pair means no qualifying paper has been entered. At present coverage that is not evidence that no such binder exists.
+- **Absence is not a resolve failure.** Key resolution (`skills/get-info.md`) has exactly two failure verdicts: `unresolved`, the record answered and matched zero or more than one entry — final, cacheable — and `unavailable`, the service did not answer — retry, cache nothing. Catalogue absence is neither. It is a read-layer fact about these bytes, reported by the reader's reverse index and never by the resolver: a binder can resolve perfectly and still not be entered. Mapping absence onto `unresolved` reads not-yet-entered as resolve-failed.
 
 ### Ranking
 
