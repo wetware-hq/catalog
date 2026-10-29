@@ -42,12 +42,12 @@ There is no `ref` map and no evidence grades.
 
 **Binder** (biological keys only):
 
-- `aa:` + one or more canonical L-chain segments. Residues: `ACDEFGHIKLMNPQRSTVWY`. Multi-chain: chain strings **must** be sorted ascending by **byte order** (UTF-8 code unit order), then joined with `/`. An unsorted multi-chain key is **invalid**, not something to fix silently by re-sorting during validation. Pattern after normalisation: `^aa:[ACDEFGHIKLMNPQRSTVWY]+(/[ACDEFGHIKLMNPQRSTVWY]+)*$`
+- `aa:` + one or more canonical L-chain segments. Residues: `ACDEFGHIKLMNPQRSTVWY`. Multi-chain: the `/`-separated segments must be in **non-decreasing** order by **byte order** (UTF-8 code unit order)—a **sorted multiset of chains** (equal segments allowed, e.g. `aa:ACD/ACD`). If reordering segments would change the multiset or the on-disk segment order is not non-decreasing → **invalid**. Pattern: `^aa:[ACDEFGHIKLMNPQRSTVWY]+(/[ACDEFGHIKLMNPQRSTVWY]+)*$` with that order constraint.
 - `helm:` + HELM notation copied verbatim from the source record (no leading/trailing whitespace in the payload). The payload **must** be well-formed HELM (see §8). A SMILES or other non-HELM linear notation (e.g. `CC(=O)Oc1ccccc1C(=O)O`) **must** be rejected.
 
 **Target** (single protein):
 
-- `uniprot:` + UniProt accession. Use the official accession form (6 or 10 characters, per UniProt release rules): either `[OPQ][0-9][A-Z0-9]{3}[0-9]` or `[A-NR-Z][0-9]([A-Z][A-Z0-9]{2}[0-9]){1,2}`. **Isoform suffixes are allowed:** optional `-` followed by one or more digits (e.g. `P12345-2`). Full pattern: `^uniprot:((?:[OPQ][0-9][A-Z0-9]{3}[0-9])|(?:[A-NR-Z][0-9](?:[A-Z][A-Z0-9]{2}[0-9]){1,2}))(-\d+)?$`
+- `uniprot:` + UniProt accession. Official accession body: either `[OPQ][0-9][A-Z0-9]{3}[0-9]` or `[A-NR-Z][0-9]([A-Z][A-Z0-9]{2}[0-9]){1,2}`. Optional isoform suffix: `-` plus a **positive integer with no leading zeros** (`-1`, `-2`, …). `-0`, `-01`, etc. → **invalid**. `uniprot:P12345` and `uniprot:P12345-1` are **distinct keys**; a producer must pick one form per target and must not treat them as interchangeable. Pattern: `^uniprot:((?:[OPQ][0-9][A-Z0-9]{3}[0-9])|(?:[A-NR-Z][0-9](?:[A-Z][A-Z0-9]{2}[0-9]){1,2}))(?:-[1-9]\d*)?$`
 
 **Citation**:
 
@@ -96,49 +96,47 @@ For each target `t`:
 
 ## 8. Validation predicates
 
-Implement a validator from this section alone. A **single-file** check decides conditions **1–19**; condition **20** requires two file versions.
+Implement a validator from this section alone. Each condition is tagged **pure** (decidable from one file’s bytes alone), **relational** (needs a predecessor file), or **oracle** (needs an external source). **Passing a validator run proves only that the pure conditions hold**; relational and oracle conditions require separate checks.
 
-1. **UTF-8:** Raw bytes decode as valid UTF-8. Any invalid sequence → **invalid** (do not substitute U+FFFD or strip bytes).
+1. **[pure] UTF-8:** Raw bytes decode as valid UTF-8. Any invalid sequence → **invalid** (do not substitute U+FFFD or strip bytes).
 
-2. **Final newline:** The file ends with exactly one `\n` and no other trailing whitespace (no spaces, tabs, or extra newlines after that byte). Missing final newline → **invalid**.
+2. **[pure] Final newline:** The file ends with exactly one `\n` and no other trailing whitespace (no spaces, tabs, or extra newlines after that byte). Missing final newline → **invalid**.
 
-3. **JSON root:** Content parses as JSON; root is a non-array object with **exactly** keys `pair` and `status` (no extra top-level keys).
+3. **[pure] JSON root:** Content parses as JSON; root is a non-array object with **exactly** keys `pair` and `status` (no extra top-level keys).
 
-4. **`pair` / `status` shape:** Both values are non-null objects (not arrays).
+4. **[pure] `pair` / `status` shape:** Both values are non-null objects (not arrays).
 
-5. **Canonical bytes:** After parsing, re-serialising per §5 yields the same byte sequence as on disk (for a file that already passes binder-key rules).
+5. **[pure] Canonical bytes:** After parsing, re-serialising per §5 yields the same byte sequence as on disk (for a file that already passes binder-key rules).
 
-6. **`aa:` chain order:** For every `aa:` binder key, the `/`-separated chain segments are strictly sorted ascending by byte order. If reordering segments would change the key string → **invalid** (not merely non-canonical).
+6. **[pure] `aa:` chain order:** For every `aa:` binder key, the `/`-separated chain segments form a **non-decreasing** sequence by byte order (a **sorted multiset of chains**; repeats allowed). If the segment order is not non-decreasing → **invalid** (not merely non-canonical).
 
-7. **`helm:` well-formedness:** For every `helm:` key, the payload after `helm:` matches HELM structural rules: zero or more **simple polymers** separated by `$`, each simple polymer matching `PEPTIDE[1-9][0-9]*\{[^}]*\}` (HELM peptide polymer block with numeric index and braced monomer list); optional `PEPTIDE…|…` connection notation and `GROUP…` sections may follow the same `$`-separated grammar. Payloads that are SMILES/InChI or other non-HELM line notations (e.g. starting with organic chemistry tokens like `CC(`) → **invalid**.
+7. **[pure] `helm:` well-formedness:** For every `helm:` key, the payload after `helm:` is either bare HELM1/HELM2 text or HELM2 with an optional version suffix such as `V2.0` appended after the `$…$` sections. Structure: one or more **polymer blocks** separated by `|` (not `$`), each block `<TYPE><index>{<monomers>}` where `TYPE` is `PEPTIDE`, `RNA`, `CHEM`, or `BLOB` and `index` is a positive integer with no leading zeros; `{<monomers>}` is a **non-empty** dot-separated list of monomer symbols, each either one uppercase letter from the 20 standard residues or a bracketed symbol `[...]`; empty `{}`, SMILES or other non-monomer strings inside a `PEPTIDE{…}` block, and ASCII control characters or NUL bytes anywhere in the payload → **invalid**. After the polymer section comes `$<connections>$<groupings>$<ext>$` (`$` begins the connections section; it is **not** a polymer separator). At least one `PEPTIDE` polymer block is **required**. Payloads that are wholly non-HELM (e.g. a bare SMILES string such as `CC(=O)Oc1ccccc1C(=O)O` with no HELM polymer grammar) → **invalid**. **Open scope (ADC / multi-polymer):** whether a `CHEM` or `RNA` polymer may appear alongside a `PEPTIDE` polymer is **pending the repository owner**; this rule **neither admits nor rejects** such combinations—it only enforces the structural tests above when those blocks are present.
 
-8. **`uniprot:` accessions:** Every target key matches the full pattern in §3, including optional isoform suffix `-` + digits.
+8. **[pure] `uniprot:` accessions:** Every target key matches §3, including isoform suffix `-` + positive integer without leading zeros when present.
 
-9. **`pmid:` digits:** Every citation matches `^pmid:(?:0|[1-9]\d*)$` (no leading zeros on multi-digit PMIDs).
+9. **[pure] `pmid:` digits:** Every citation matches `^pmid:(?:0|[1-9]\d*)$` (no leading zeros on multi-digit PMIDs).
 
-10. **`status` keys:** Every key satisfies binder grammar (conditions 6–7 as applicable); every value is `approved`, `investigational`, or `unapproved`.
+10. **[pure] `status` keys:** Every key satisfies binder grammar (conditions 6–7 as applicable); every value is `approved`, `investigational`, or `unapproved`.
 
-11. **`pair` binders in `status`:** Every key in `pair` is a key in `status`.
+11. **[pure] `pair` binders in `status`:** Every key in `pair` is a key in `status`.
 
-12. **`status` binders in `pair`:** Every key in `status` is a key in `pair`.
+12. **[pure] `status` binders in `pair`:** Every key in `status` is a key in `pair`.
 
-13. **`pair` targets present:** Every binder in `pair` maps to a non-empty object with at least one target key.
+13. **[pure] `pair` targets present:** Every binder in `pair` maps to a non-empty object with at least one target key.
 
-14. **Target rows:** Each inner key satisfies §3 target grammar; each value is a non-empty array; elements satisfy condition 9; arrays are strictly sorted and duplicate-free.
+14. **[pure] Target rows:** Each inner key satisfies §3 target grammar; each value is a non-empty array; elements satisfy condition 9; arrays are strictly sorted and duplicate-free.
 
-15. **One molecule, one key:** No two distinct binder keys among `pair` and `status` denote the same molecule: for `aa:` keys, equality of the multiset of chain segments after sorting segments; for `helm:` keys, identical payload after `helm:`; never mix types for the same molecule. Violation → **invalid**.
+15. **[pure] One molecule, one key:** Each biological molecule has **exactly one canonical key form** in this catalogue. Identity rules (decidable): (a) two `aa:` keys denote the same molecule iff their **sorted multisets** of `/`-separated chain segments are equal; (b) two `helm:` keys denote the same molecule iff their payloads are equal after normalising polymer **index** digits only (same `TYPE`, `{monomers}`, and `$…$` sections; indices may differ); (c) an `aa:` key and a `helm:` key that denote the same plain L-chain sequence denote the **same molecule**, and only the **`aa:` form is valid**—the `helm:` duplicate is **invalid**. No two distinct binder keys among `pair` and `status` may share a molecule under these rules.
 
-16. **Cross-prefix hygiene:** No target or citation prefix on binder keys; no binder/citation prefix on target keys; citations only under `pair` lists.
+16. **[pure] Cross-prefix hygiene:** No target or citation prefix on binder keys; no binder/citation prefix on target keys; citations only under `pair` lists.
 
-17. **Inclusion (semantic):** Every stored `(binder, target, pmid)` triple satisfies §4 (requires literature review).
+17. **[oracle] Inclusion (semantic):** Every stored `(binder, target, pmid)` triple satisfies §4 (requires literature review).
 
-18. **Refuse forbidden writes:** No stored ranks, grades, or non-`pmid:` citations (structural absence).
+18. **[pure] Refuse forbidden writes:** No stored ranks, grades, or non-`pmid:` citations (structural absence).
 
-19. **Empty catalogue:** `{"pair":{},"status":{}}` satisfies conditions 1–16 and 18 when serialised with one trailing newline.
+19. **[pure] Empty catalogue:** `{"pair":{},"status":{}}` satisfies conditions 1–16 and 18 when serialised with one trailing newline.
 
-20. **Add-only (two-file):** Given a predecessor file `P` and successor file `S`, every binder, target, and `pmid:` edge present in `P` is present unchanged in `S` (same binder keys, same target keys per binder, same citation sets unless only superseded by human-directed process outside this spec). **A single-file validator cannot implement condition 20**; it requires comparing two revisions.
-
-Mechanical single-file validation: **1–16, 18–19**. Semantic: **17**. Two-file: **20**.
+20. **[relational] Add-only (two-file):** Given a predecessor file `P` and successor file `S`, every binder, target, and `pmid:` edge present in `P` is present unchanged in `S` (same binder keys, same target keys per binder, same citation sets unless only superseded by human-directed process outside this spec). **A single-file validator cannot implement condition 20**; it requires comparing two revisions.
 
 ## 9. Background update contract
 
