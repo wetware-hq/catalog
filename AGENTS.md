@@ -172,3 +172,16 @@ The reader-facing warning is therefore not carried by a path either. It is carri
 - `design-binder` is `special` and writes nothing (§4, §9.4): a de novo design has no qualifying paper, so no element of `graph.json` or `proposals.json` can hold it. There is no designs file either — its oracle is a measured Kd, which makes its output an experimental worklist rather than a database. A designed molecule enters only once a paper exists, by `propose-pairs` and a reader.
 - A skill does not widen §0. One needing to write anything else requires a change to this file first.
 - Three skills, named here exactly — two catalogue procedures and one `special`. A procedure not listed in this section is not part of this contract.
+
+## 11. Systems
+
+`systems/*.md` are specifications of machinery a skill may run, not procedures a skill follows: §10 governs what a skill may do to claims, this section governs what a system is. A system is subordinate to this file on the same terms as a skill (§0), and holds no element of `graph.json` or `proposals.json`.
+
+| system | what it holds | write scope |
+|---|---|---|
+| [`systems/bench.md`](systems/bench.md) | a run-scoped append-only commons where a swarm's agents read and write partial work concurrently | its own `.bench` store only; never `graph.json`, never `proposals.json` |
+
+- A system is not a skill and is not listed in §10. It originates nothing and admits nothing: §4 is untouched by anything written to a scratchpad, and a record in a `.bench` store is not a claim this file recognises.
+- `bench` is scoped to a single run and is discarded with it. It is not a second catalogue, and it is not a cache of `graph.json`.
+- Every `.bench` record declares an evidence tier, and no query pools across tiers — the same refusal §2 makes between clinical and preclinical, one layer down. A tier that is declared is not thereby honest; the grammar can only require the declaration.
+- One system, named here exactly. A specification not listed in this section is not part of this contract.
