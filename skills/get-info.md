@@ -1,4 +1,4 @@
-# get_info
+# get-info
 
 Resolve a database key to labels. Read-only. Never writes.
 
