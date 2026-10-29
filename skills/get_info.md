@@ -2,6 +2,9 @@
 
 Resolve a database key to labels. Read-only. Never writes.
 
+Scope: protein only. The catalogue holds protein binders and protein targets.
+Nucleic-acid rows are out of scope and are refused at the door, never classified.
+
 ## Folder contract (all skills here)
 
 Notation: one per folder. Blocks below are formal algorithms, not sample programs.
@@ -24,30 +27,40 @@ Failure   = unresolved        -- record answered, says nothing. final. cacheable
 
 `unresolved` and `unavailable` are never merged. One value for both writes outages into the catalogue as findings.
 
+No tier is computed and none is stored. A key is an admissible protein or it is refused.
+
 ## Stage 0 - intrinsic
 
 ```
-intrinsic : Key -> { tier, length, composition, shape }
-total. no network. never fails.
+admit : Key -> { length, composition, shape } | refused
+total. no network. never fails. intrinsic: reads the bytes, needs no library and no date.
 
-tier <- namespace, sole source:
-    aa:      -> PROTEIN
-    helm:    -> first polymer block TYPE:
-                   PEPTIDE        -> PROTEIN
-                   RNA, R(..)     -> RNA
-                   RNA, [dR](..)  -> DNA
-                   CHEM           -> no tier
-    chimera  -> the SET of tiers. never a precedence.
+ns, body = split(Key, ':', 1)
+    ns == "aa"                      -> assert body subset_of PROTEIN_MONOMERS ; admit
+    ns == "helm", all blocks PEPTIDE-> assert monomers(body) subset_of PROTEIN_MONOMERS ; admit
+    ns == "uniprot"                 -> admit
+    otherwise                       -> refuse (out of scope)
+
+refuse is not a classification. an RNA or DNA block is refused unexamined;
+nothing downstream ever sees a non-protein key. the refusal is recorded.
+
+PROTEIN_MONOMERS is one flat set. one block type, one alphabet, no per-block scoping.
+    d-prefixed tokens are D-stereoisomers, never deoxy: dA is D-alanine, dR is D-arginine.
+    with nucleic acids out of scope there is no second reading of d left to disambiguate.
 
 alphabet : refuse-if-illegal. never classify.
-    no residue letter distinguishes a tier: A/C/G/T/U are also Ala/Cys/Gly/Thr/Sec,
-    and O is Pyl. a letter test cannot decide tier; it can only reject a payload
-    whose characters fall outside the declared tier's monomer set.
+    a letter test decides nothing about what a molecule is; it can only reject a
+    payload whose characters fall outside PROTEIN_MONOMERS.
 
 ascii : every byte of every Key <= 0x7F, no BOM.
     assertion over existing bytes, never a re-serialization.
     a non-ASCII byte in a key is a wrong row, not lint: return it to verification.
     closes homoglyph duplication (Cyrillic A != Latin A, identical on screen, two keys).
+
+vectors:
+    admit  : helm:PEPTIDE1{A.dR.G}$$$$          -> admitted
+    refuse : helm:RNA1{R(A)P}$$$$               -> refused, out of scope
+    refuse : helm:PEPTIDE1{[CCO]}$$$$           -> refused, monomer outside PROTEIN_MONOMERS
 ```
 
 ## Stage 1 - resolve
@@ -61,10 +74,20 @@ uniprot: / discovered sequence
     GET https://rest.uniprot.org/uniparc/search?query=checksum:<crc64>
     GET https://rest.uniprot.org/uniprotkb/<accession>
     exact lookup. no alignment. no search engine.
-    verified 2026-10-29: 41/41 keys -> exactly one UniParc entry.
-    check case: P04626 canonical 1255 aa -> 39E9DFDA04DCF962 -> UPI000003F55F
-                mature chain 23-1255 1233 aa -> 8AC3B9634520796F -> UPI0003E74441
+    verified 2026-10-29: 41/41 canonical keys -> exactly one UniParc entry.
+    hit  : P04626 canonical 1255 aa -> 39E9DFDA04DCF962 -> UPI000003F55F
+    miss : P04626 canonical, residue 100 R->A -> 08E37566D061ED3B -> zero hits -> unresolved
+           (one letter from a real protein: proves the lookup is exact, not approximate)
+    |hit| > 1 -> unresolved. more than one answer is not an answer.
+    5xx / 429 -> unavailable. cache nothing. retry.
     MD5 is published in the record and is NOT searchable. use CRC64.
+
+    canonical is the stored string. a mature chain is a different string with its own
+    UPI: measured 2026-10-29, 27 of 33 mature chains resolve and 6 do not
+    (P08069 P25092 P31358 P40238 P41180 Q02643), and no property of the key tells you
+    which. cross-references collapse under maturation (canonical 54-1426, mature 1-336,
+    16 of 27 under 50), so a mature UPI keeps resolution and loses corroboration.
+    store canonical; any future sequence commit declares its boundary explicitly.
 
 aa: / helm: invented molecule (therapeutic antibody, de novo binder)
     UNMEASURED. no route specified. return unresolved.
@@ -96,3 +119,5 @@ unavailable, never unresolved.
 ## Not derivable
 
 A citation is not recoverable from residues. Names are derivable; evidence is not. `pmid:` stays stored in the database.
+
+A test vector proves a step is specified, not that it is right.
