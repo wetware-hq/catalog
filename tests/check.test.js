@@ -85,11 +85,11 @@ test("merge picks weaker status and grade on conflict", () => {
   left.ref[C1] = GRADE_ORDER[0];
   const right = validPair(B1, T1, [C2]);
   right.status[B1] = STATUS_ORDER[2];
-  right.ref[C1] = GRADE_ORDER[4];
+  right.ref[C1] = GRADE_ORDER[7];
   right.ref[C2] = GRADE_ORDER[3];
   const merged = mergeGraphs(left, right);
   assert.equal(merged.status[B1], STATUS_ORDER[2]);
-  assert.equal(merged.ref[C1], GRADE_ORDER[4]);
+  assert.equal(merged.ref[C1], GRADE_ORDER[7]);
   assert.equal(graphBytes(mergeGraphs(left, right)), graphBytes(mergeGraphs(right, left)));
 });
 
@@ -98,7 +98,7 @@ test("merge is commutative, associative, and idempotent on non-identical graphs"
   const g2 = validPair(B2, T2, [C2]);
   g2.ref[C2] = "rct";
   const g3 = validPair(B1, T2, [C3]);
-  g3.ref[C3] = "cohort";
+  g3.ref[C3] = "trial";
 
   const ab = mergeGraphs(g1, g2);
   const ba = mergeGraphs(g2, g1);
