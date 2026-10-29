@@ -85,7 +85,7 @@ For a consumer reading the catalogue at runtime:
 - **Refuse an unknown `version`** outright (§8.4). Never read the recognised part of a newer file.
 - **The reverse index belongs to the reader.** `pair` is keyed binder → target; the runtime question, target → binders, is derivable from those bytes and is the consumer's to build at read time. It is never stored: a second copy of the same facts has no merge law.
 - **Absence is not a negative.** A missing pair means no qualifying paper has been entered. At present coverage that is not evidence that no such binder exists.
-- **Absence is not a resolve failure.** Key resolution (`skills/get-info.md`) has exactly two failure verdicts: `unresolved`, the record answered and matched zero or more than one entry — final, cacheable — and `unavailable`, the service did not answer — retry, cache nothing. Catalogue absence is neither. It is a read-layer fact about these bytes, reported by the reader's reverse index and never by the resolver: a binder can resolve perfectly and still not be entered. Mapping absence onto `unresolved` reads not-yet-entered as resolve-failed.
+- **Absence is not a resolve failure.** Key resolution (`skills/resolve-key.md`) has exactly two failure verdicts: `unresolved`, the record answered and matched zero or more than one entry — final, cacheable — and `unavailable`, the service did not answer — retry, cache nothing. Catalogue absence is neither. It is a read-layer fact about these bytes, reported by the reader's reverse index and never by the resolver: a binder can resolve perfectly and still not be entered. Mapping absence onto `unresolved` reads not-yet-entered as resolve-failed.
 
 ### Ranking
 
@@ -132,7 +132,7 @@ Implement from this section alone. Tags: **pure** = decidable from one file's by
 2. Re-serialise to §5 before persisting.
 3. **File boundary.** Autonomous intake writes `proposals.json` only, and never writes `graph.json` on any branch. Admission is the act of reading the paper, and that act is what moves bytes from `proposals.json` into `graph.json`, choosing the dictionary per §4. **Trust is carried by the file, not by a branch:** a branch name is mutable and has no merge law, so a fence of the form "unverified rows live on branch X" dissolves at the first merge and relaunders those rows as verified, while `proposals.json` merges into `proposals.json` on every branch. Condition 16 is therefore discharged at the file move, by a reader, and never by the run that proposed the row.
 4. **`proposals.json`.** Root: a non-array object with exactly `version` (the number `2`) and `proposal` (an array). Each element has exactly `binder`, `target`, `pmid`, each satisfying §3. A proposal carries **no dictionary assignment**: `pair` versus `preclinical` is part of the oracle and is chosen when the paper is read. Serialise per §5; add-only per §8.19. It is not catalogue-shaped and must not be read as one.
-5. Intake procedure: `skills/fill-db.md`. It enumerates structured authorities; it does not crawl prose, and its own acceptance test is rediscovery of the rows already committed.
+5. Intake procedure: `skills/propose-pairs.md`. It enumerates structured authorities; it does not crawl prose, and its own acceptance test is rediscovery of the rows already committed.
 6. This repository ships no updater, cron or CI. Compliance is your behaviour against this contract.
 
 A proposed row failing any rule above is **refused**, naming the condition that failed.
@@ -143,10 +143,10 @@ A proposed row failing any rule above is **refused**, naming the condition that 
 
 | skill | signature | write scope |
 |---|---|---|
-| `skills/get-info.md` | `Key -> Identity \| unresolved \| unavailable`; keys per §3, verdicts per §7 | none; read-only |
-| `skills/fill-db.md` | candidate pairs -> `proposals.json` per §9.4 | `proposals.json` only, never `graph.json` |
+| `skills/resolve-key.md` | `Key -> Identity \| unresolved \| unavailable`; keys per §3, verdicts per §7 | none; read-only |
+| `skills/propose-pairs.md` | candidate pairs -> `proposals.json` per §9.4 | `proposals.json` only, never `graph.json` |
 
 - A skill may refuse more than this file requires, never less: it never admits a key §3 rejects.
-- No skill discharges §8.16. `fill-db` proposes; a reader admits (§9.3).
+- No skill discharges §8.16. `propose-pairs` proposes; a reader admits (§9.3).
 - A skill does not widen §0. One needing to write anything else requires a change to this file first.
 - Two skills, named here exactly. A procedure not listed in this section is not part of this contract.

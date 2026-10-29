@@ -1,4 +1,4 @@
-# `fill-db` — catalogue intake
+# `propose-pairs` — catalogue intake
 
 `type: resource.procedure` · `spec: agent.fleet` · subordinate to `AGENTS.md`, which governs on any conflict.
 

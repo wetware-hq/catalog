@@ -1,4 +1,4 @@
-# get-info
+# resolve-key
 
 Resolve a database key to labels. Read-only. Never writes.
 
