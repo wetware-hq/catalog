@@ -1,62 +1,55 @@
 # Graph catalog
 
-A minimal KGX-style graph catalog: nodes and edges as JSON Lines, vocabulary in JSON, and a small validator.
+A minimal **bigraph** catalog: binders and targets linked by evidence-backed edges, stored as one canonical JSON object.
 
 ## Layout
 
 ```mermaid
-flowchart TB
-  subgraph graph["graph/"]
-    N[nodes.jsonl]
-    E[edges.jsonl]
-    R[relations.json]
-    C[categories.json]
+flowchart LR
+  subgraph graph["graph/graph.json"]
+    B[binders]
+    T[targets]
+    E[edges]
   end
-  V[validate] --> N
-  V --> E
-  V --> R
-  V --> C
-  R -->|predicate domain/range| E
-  C -->|category is_a| N
+  B -->|binder id| E
+  T -->|target id| E
+  E -->|citation arrays| C["ref + level"]
 ```
 
-| File | Role |
-|------|------|
-| `nodes.jsonl` | `{ id, category[], sources[] }` |
-| `edges.jsonl` | `{ subject, predicate, object, qualifiers{}, sources[] }` |
-| `relations.json` | Predicates with `domain_range` pairs and `transitive` flag |
-| `categories.json` | Category `is_a` hierarchy (parent lists), acyclic |
+| Key | Shape |
+|-----|--------|
+| `binders` | `{ "<binder-id>": { "status": "approved" \| "investigational" \| "unapproved" } }` |
+| `targets` | `{ "<uniprot-accession>": {} }` |
+| `edges` | `{ "<binder-id>": { "<target-id>": [ citations… ] } }` |
 
-Each `sources` entry is `{ source, date, licence }`. Set arrays (`category`, every `sources` list) are sorted and deduplicated in canonical files.
+Binder ids are ChEMBL ids (`CHEMBL…`) or `seq:<UPPERCASE sequence>`. Target ids are UniProt accessions. Each citation is `{ "ref": "<pubmed id or DOI>", "level": "human" \| "animal" \| "in_vitro" \| "claim" }`.
 
-**Attributes** are edges, not node fields. The `object` is either another node id or a literal `{"value": ...}`. Literal endpoints use the `literal` category for domain/range checks. Conflicting values become separate edges and merge by set union.
+Pairs appear in `edges` only with at least one citation (empty arrays are invalid). Unconfirmed candidates are omitted.
 
-## Canonical JSON lines
+## Canonical JSON
 
-One line = `JSON.stringify` on recursively key-sorted objects: no extra whitespace, UTF-8, no ASCII escaping. Python equivalent:
+The whole file is one line: `JSON.stringify` on recursively key-sorted objects — no extra whitespace, UTF-8, no ASCII escaping. Python equivalent:
 
 `json.dumps(obj, sort_keys=True, separators=(",", ":"), ensure_ascii=False)`
 
-Nodes sort by `id`; edges by `(subject, predicate, object, qualifiers)` with plain code-unit string order (literals included in `object`).
-
-In literal `{"value": ...}` payloads, every JSON number must be a safe integer (`Number.isSafeInteger` / no float form in any language). Write decimals as strings (e.g. `"10.5"`, not `10.5`).
+JSON numbers must be safe integers; write decimals as strings. Citation arrays are sorted, deduplicated sets (by `ref` and `level`).
 
 ## Checks
 
-- Edge endpoints exist (node ids) or are literal objects; predicates declared; domain/range via category ancestry
-- Node categories appear in `categories.json`; no `properties` on nodes
-- Acyclic `categories.json`; sources present; lines match the canonical serializer
+- Every `edges` binder/target exists in `binders` / `targets`
+- Valid id formats, status/level enums, non-empty citation lists
+- On-disk bytes match the canonical serializer
 
-`mergeGraphs` unions node ids (categories + sources) and edge identity (sources).
+`mergeGraphs` recursively unions dictionaries; citation lists union as sets. Same binder id merges status by lexicographic minimum (commutative).
 
 ## Commands
 
 ```bash
 npm test
-node src/check.js graph/
+npm run check
 ```
 
-The CLI prints validation errors to stderr and exits `1` on failure.
+`node src/check.js graph/graph.json` validates a file and exits `1` on error.
 
 ## License
 

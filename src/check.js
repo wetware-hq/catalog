@@ -1,10 +1,16 @@
 import { readFileSync } from "node:fs";
-import { join } from "node:path";
 import { fileURLToPath } from "node:url";
 
-/** @typedef {{ source: string, date: string, licence: string }} Source */
-/** @typedef {{ id: string, category: string[], sources: Source[] }} Node */
-/** @typedef {{ subject: string, predicate: string, object: string | { value: unknown }, qualifiers?: Record<string, unknown>, sources: Source[] }} Edge */
+/** @typedef {{ ref: string, level: "human"|"animal"|"in_vitro"|"claim" }} Citation */
+/** @typedef {{ binders: Record<string, { status: string }>, targets: Record<string, Record<string, never>>, edges: Record<string, Record<string, Citation[]>> }} Graph */
+
+const BINDER_STATUSES = ["approved", "investigational", "unapproved"];
+const LEVELS = ["animal", "claim", "human", "in_vitro"];
+const CHEMBL_ID = /^CHEMBL\d+$/;
+const BINDER_SEQ = /^seq:[A-Z*]+$/;
+const UNIPROT_ID = /^[A-NR-Z][0-9]([A-Z][A-Z0-9]{2}[0-9]){1,2}$/;
+const PUBMED_REF = /^\d+$/;
+const DOI_REF = /^10\.\S+$/;
 
 export function cmp(a, b) {
   if (a < b) return -1;
@@ -13,6 +19,7 @@ export function cmp(a, b) {
 }
 
 export function sortKeys(value) {
+  if (typeof value === "number") return value;
   if (value === null || typeof value !== "object") return value;
   if (Array.isArray(value)) return value.map(sortKeys);
   const out = {};
@@ -20,323 +27,181 @@ export function sortKeys(value) {
   return out;
 }
 
-function sourceKey(s) {
-  return `${s.source}\0${s.date}\0${s.licence}`;
-}
-
-export function canonicalizeSources(sources) {
-  const byKey = new Map();
-  for (const raw of sources ?? []) {
-    const s = sortKeys(raw);
-    byKey.set(sourceKey(s), s);
-  }
-  return [...byKey.values()].sort((a, b) => cmp(sourceKey(a), sourceKey(b)));
-}
-
-export function canonicalizeCategories(cats) {
-  return [...new Set(cats ?? [])].sort(cmp);
-}
-
-export function isLiteralObject(object) {
-  return (
-    object !== null &&
-    typeof object === "object" &&
-    !Array.isArray(object) &&
-    Object.keys(object).length === 1 &&
-    "value" in object
-  );
-}
-
-/** @param {unknown} value @param {string} path @param {string[]} issues */
-function validateLiteralNumbers(value, path, issues) {
+function validateNumbers(value, path, issues) {
   if (typeof value === "number") {
-    if (!Number.isSafeInteger(value)) {
-      issues.push(`${path}: numbers must be safe integers (write decimals as strings)`);
-    }
+    if (!Number.isSafeInteger(value)) issues.push(`${path}: numbers must be safe integers (use strings for decimals)`);
     return;
   }
   if (Array.isArray(value)) {
-    for (let i = 0; i < value.length; i++) validateLiteralNumbers(value[i], `${path}[${i}]`, issues);
+    for (let i = 0; i < value.length; i++) validateNumbers(value[i], `${path}[${i}]`, issues);
   } else if (value !== null && typeof value === "object") {
-    for (const [k, v] of Object.entries(value)) validateLiteralNumbers(v, `${path}.${k}`, issues);
+    for (const [k, v] of Object.entries(value)) validateNumbers(v, `${path}.${k}`, issues);
   }
 }
 
-export function canonicalizeObject(object) {
-  if (typeof object === "string") return object;
-  if (isLiteralObject(object)) return sortKeys(object);
-  return object;
+function isBinderId(id) {
+  return CHEMBL_ID.test(id) || BINDER_SEQ.test(id);
 }
 
-export function canonicalizeNode(node) {
-  return sortKeys({
-    id: node.id,
-    category: canonicalizeCategories(node.category),
-    sources: canonicalizeSources(node.sources),
-  });
+function isTargetId(id) {
+  return UNIPROT_ID.test(id);
 }
 
-export function canonicalizeEdge(edge) {
-  return sortKeys({
-    subject: edge.subject,
-    predicate: edge.predicate,
-    object: canonicalizeObject(edge.object),
-    qualifiers: sortKeys(edge.qualifiers ?? {}),
-    sources: canonicalizeSources(edge.sources),
-  });
+function isRef(ref) {
+  return PUBMED_REF.test(ref) || DOI_REF.test(ref);
 }
 
-export function canonicalLine(record, kind) {
-  const body = kind === "node" ? canonicalizeNode(record) : canonicalizeEdge(record);
-  return JSON.stringify(body);
+function citationKey(c) {
+  return `${c.ref}\0${c.level}`;
 }
 
-export function parseJsonl(text) {
-  const trimmed = text.replace(/\n$/, "");
-  if (trimmed === "") return [];
-  return trimmed.split("\n").map((line, i) => {
-    try {
-      return JSON.parse(line);
-    } catch (e) {
-      throw new Error(`jsonl line ${i + 1}: ${e.message}`);
+export function canonicalizeCitation(c) {
+  return sortKeys(c);
+}
+
+export function canonicalizeCitations(list) {
+  const byKey = new Map();
+  for (const raw of list ?? []) byKey.set(citationKey(raw), canonicalizeCitation(raw));
+  return [...byKey.values()].sort((a, b) => cmp(citationKey(a), citationKey(b)));
+}
+
+function mergeStatus(a, b) {
+  return cmp(a, b) <= 0 ? a : b;
+}
+
+/** @param {Graph} graph */
+export function canonicalizeGraph(graph) {
+  const binders = {};
+  for (const id of Object.keys(graph.binders ?? {}).sort()) {
+    binders[id] = sortKeys({ status: graph.binders[id].status });
+  }
+  const targets = {};
+  for (const id of Object.keys(graph.targets ?? {}).sort()) {
+    targets[id] = {};
+  }
+  const edges = {};
+  for (const binder of Object.keys(graph.edges ?? {}).sort()) {
+    const row = {};
+    for (const target of Object.keys(graph.edges[binder] ?? {}).sort()) {
+      row[target] = canonicalizeCitations(graph.edges[binder][target]);
     }
-  });
+    edges[binder] = row;
+  }
+  return sortKeys({ binders, targets, edges });
 }
 
-export function edgeObjectKey(object) {
-  if (typeof object === "string") return `\0id\0${object}`;
-  return `\0lit\0${JSON.stringify(sortKeys(object))}`;
+export function canonicalText(graph) {
+  return JSON.stringify(canonicalizeGraph(graph));
 }
 
-export function edgeSortKey(edge) {
-  const q = JSON.stringify(sortKeys(edge.qualifiers ?? {}));
-  return `${edge.subject}\0${edge.predicate}\0${edgeObjectKey(edge.object)}\0${q}`;
+function checkCitationArray(list, path, issues) {
+  if (!Array.isArray(list) || list.length === 0) {
+    issues.push(`${path}: at least one citation required`);
+    return;
+  }
+  for (let i = 0; i < list.length; i++) {
+    const c = list[i];
+    const p = `${path}[${i}]`;
+    if (typeof c?.ref !== "string" || !isRef(c.ref)) issues.push(`${p}.ref: PubMed id or DOI required`);
+    if (!LEVELS.includes(c?.level)) issues.push(`${p}.level: must be human|animal|in_vitro|claim`);
+  }
+  const canon = canonicalizeCitations(list);
+  if (JSON.stringify(canon) !== JSON.stringify(sortKeys(list))) {
+    issues.push(`${path}: citations must be sorted and deduplicated`);
+  }
 }
 
-export function checkSources(sources, path) {
+/** @param {Graph} graph @returns {string[]} */
+export function validateGraph(graph) {
   const issues = [];
-  if (!Array.isArray(sources) || sources.length === 0) {
-    issues.push(`${path}: at least one source required`);
+  validateNumbers(graph, "graph", issues);
+  if (!graph || typeof graph !== "object" || Array.isArray(graph)) {
+    issues.push("graph: must be an object");
     return issues;
   }
-  for (let i = 0; i < sources.length; i++) {
-    const s = sources[i];
-    for (const field of ["source", "date", "licence"]) {
-      if (typeof s?.[field] !== "string" || s[field] === "") {
-        issues.push(`${path}.sources[${i}].${field}: required non-empty string`);
-      }
+  for (const key of ["binders", "targets", "edges"]) {
+    if (graph[key] == null || typeof graph[key] !== "object" || Array.isArray(graph[key])) {
+      issues.push(`graph.${key}: must be an object`);
     }
   }
-  return issues;
-}
+  if (issues.length) return issues;
 
-export function validateCategoryVocabulary(categories) {
-  const issues = [];
-  for (const [cat, parents] of Object.entries(categories)) {
-    if (!Array.isArray(parents)) issues.push(`categories.json: "${cat}" must map to a parent array`);
-    else for (const p of parents) {
-      if (!(p in categories)) issues.push(`categories.json: "${cat}" references unknown parent "${p}"`);
-    }
-  }
-  const visiting = new Set();
-  const done = new Set();
-  function dfs(cat) {
-    if (done.has(cat)) return false;
-    if (visiting.has(cat)) return true;
-    visiting.add(cat);
-    for (const p of categories[cat] ?? []) {
-      if (dfs(p)) return true;
-    }
-    visiting.delete(cat);
-    done.add(cat);
-    return false;
-  }
-  for (const cat of Object.keys(categories)) {
-    if (dfs(cat)) {
-      issues.push("categories.json: cycle in category hierarchy");
-      break;
-    }
-  }
-  return issues;
-}
-
-function categoryClosure(categories) {
-  const memo = new Map();
-  function ancestors(cat) {
-    if (memo.has(cat)) return memo.get(cat);
-    const set = new Set([cat]);
-    for (const p of categories[cat] ?? []) {
-      for (const a of ancestors(p)) set.add(a);
-    }
-    memo.set(cat, set);
-    return set;
-  }
-  return ancestors;
-}
-
-function subsumes(ancestors, nodeCats, target) {
-  for (const c of nodeCats) {
-    if (ancestors(c).has(target)) return true;
-  }
-  return false;
-}
-
-function checkCanonicalLines(text, records, kind) {
-  const issues = [];
-  const file = kind === "node" ? "nodes.jsonl" : "edges.jsonl";
-  const lines = text.replace(/\n$/, "") === "" ? [] : text.replace(/\n$/, "").split("\n");
-  if (lines.length !== records.length) issues.push(`${file}: line count does not match parsed records`);
-  for (let i = 0; i < records.length; i++) {
-    const canonical = canonicalLine(records[i], kind);
-    if (lines[i] !== canonical) issues.push(`${file}: line ${i + 1} is not canonical`);
-  }
-  for (let i = 1; i < records.length; i++) {
-    const prev = kind === "node" ? records[i - 1].id : edgeSortKey(records[i - 1]);
-    const cur = kind === "node" ? records[i].id : edgeSortKey(records[i]);
-    if (cmp(cur, prev) <= 0) issues.push(`${file}: lines not sorted at index ${i}`);
-  }
-  return issues;
-}
-
-function mergeNodes(a, b) {
-  return canonicalizeNode({
-    id: a.id,
-    category: [...(a.category ?? []), ...(b.category ?? [])],
-    sources: [...(a.sources ?? []), ...(b.sources ?? [])],
-  });
-}
-
-function mergeEdges(a, b) {
-  return canonicalizeEdge({ ...a, sources: [...(a.sources ?? []), ...(b.sources ?? [])] });
-}
-
-function endpointCategories(object, byId) {
-  if (isLiteralObject(object)) return ["literal"];
-  const node = byId.get(object);
-  return node?.category ?? [];
-}
-
-/**
- * @param {{ nodesText: string, edgesText: string, relations: Record<string, unknown>, categories: Record<string, string[]> }} input
- * @returns {string[]}
- */
-export function validateGraph(input) {
-  const { nodesText, edgesText, relations, categories } = input;
-  const issues = validateCategoryVocabulary(categories);
-  const nodes = parseJsonl(nodesText);
-  const edges = parseJsonl(edgesText);
-  const byId = new Map(nodes.map((n) => [n.id, n]));
-  const ancestors = issues.length ? () => new Set() : categoryClosure(categories);
-
-  issues.push(...checkCanonicalLines(nodesText, nodes, "node"));
-  issues.push(...checkCanonicalLines(edgesText, edges, "edge"));
-
-  for (let i = 0; i < nodes.length; i++) {
-    const n = nodes[i];
-    const p = `nodes[${i}]`;
-    if (typeof n.id !== "string" || n.id === "") issues.push(`${p}.id: required non-empty string`);
-    if ("properties" in n) issues.push(`${p}: node properties are not supported; use literal-object edges`);
-    if (!Array.isArray(n.category) || n.category.length === 0) issues.push(`${p}.category: required non-empty array`);
-    else {
-      for (const c of n.category) {
-        if (!(c in categories)) issues.push(`${p}.category: unknown category "${c}"`);
-      }
-      const canonCats = canonicalizeCategories(n.category);
-      if (canonCats.length !== n.category.length || canonCats.some((c, j) => c !== n.category[j])) {
-        issues.push(`${p}.category: must be sorted unique strings`);
-      }
-    }
-    issues.push(...checkSources(n.sources, p));
-    const canonSrc = canonicalizeSources(n.sources);
-    if (JSON.stringify(canonSrc) !== JSON.stringify(sortKeys(n.sources))) {
-      issues.push(`${p}.sources: must be sorted and deduplicated`);
+  for (const [id, body] of Object.entries(graph.binders)) {
+    const p = `binders.${id}`;
+    if (!isBinderId(id)) issues.push(`${p}: invalid binder id (CHEMBL… or seq:SEQUENCE)`);
+    if (!BINDER_STATUSES.includes(body?.status)) issues.push(`${p}.status: must be approved|investigational|unapproved`);
+    if (body && typeof body === "object" && Object.keys(body).length !== 1) {
+      issues.push(`${p}: only status field allowed`);
     }
   }
 
-  for (let i = 0; i < edges.length; i++) {
-    const e = edges[i];
-    const p = `edges[${i}]`;
-    if (typeof e.subject !== "string" || e.subject === "") issues.push(`${p}.subject: required non-empty string`);
-    if (typeof e.predicate !== "string" || e.predicate === "") issues.push(`${p}.predicate: required non-empty string`);
-    if (typeof e.object === "string") {
-      if (e.object === "") issues.push(`${p}.object: required non-empty string`);
-      else if (!byId.has(e.object)) issues.push(`${p}: object node "${e.object}" missing`);
-    } else if (isLiteralObject(e.object)) {
-      validateLiteralNumbers(e.object.value, `${p}.object.value`, issues);
-      const litCanon = JSON.stringify(sortKeys(e.object));
-      if (JSON.stringify(e.object) !== litCanon) issues.push(`${p}.object: literal must be canonical {"value":...}`);
-    } else {
-      issues.push(`${p}.object: must be a node id string or {"value":...} literal`);
+  for (const [id, body] of Object.entries(graph.targets)) {
+    const p = `targets.${id}`;
+    if (!isTargetId(id)) issues.push(`${p}: invalid UniProt accession`);
+    if (body && typeof body === "object" && Object.keys(body).length !== 0) {
+      issues.push(`${p}: must be {}`);
     }
-    if (e.qualifiers != null && (typeof e.qualifiers !== "object" || Array.isArray(e.qualifiers))) {
-      issues.push(`${p}.qualifiers: must be an object when present`);
-    }
-    issues.push(...checkSources(e.sources, p));
-    const canonSrc = canonicalizeSources(e.sources);
-    if (JSON.stringify(canonSrc) !== JSON.stringify(sortKeys(e.sources))) {
-      issues.push(`${p}.sources: must be sorted and deduplicated`);
-    }
-    if (!byId.has(e.subject)) issues.push(`${p}: subject node "${e.subject}" missing`);
-    const def = relations[e.predicate];
-    if (!def) {
-      issues.push(`${p}: unknown predicate "${e.predicate}"`);
+  }
+
+  for (const [binder, row] of Object.entries(graph.edges)) {
+    const bp = `edges.${binder}`;
+    if (!isBinderId(binder)) issues.push(`${bp}: invalid binder id`);
+    if (!(binder in graph.binders)) issues.push(`${bp}: binder missing from binders`);
+    if (row == null || typeof row !== "object" || Array.isArray(row)) {
+      issues.push(`${bp}: must be an object`);
       continue;
     }
-    const subj = byId.get(e.subject);
-    const objCats = endpointCategories(e.object, byId);
-    if (subj && objCats.length && Array.isArray(def.domain_range)) {
-      const ok = def.domain_range.some(
-        ({ domain, range }) => subsumes(ancestors, subj.category, domain) && subsumes(ancestors, objCats, range),
-      );
-      if (!ok) issues.push(`${p}: categories violate domain/range for "${e.predicate}"`);
+    for (const [target, citations] of Object.entries(row)) {
+      const tp = `${bp}.${target}`;
+      if (!isTargetId(target)) issues.push(`${tp}: invalid target id`);
+      if (!(target in graph.targets)) issues.push(`${tp}: target missing from targets`);
+      checkCitationArray(citations, tp, issues);
     }
   }
 
   return issues;
 }
 
-/** @param {{ nodes: Node[], edges: Edge[] }} a @param {{ nodes: Node[], edges: Edge[] }} b */
+/** @param {Graph} a @param {Graph} b */
 export function mergeGraphs(a, b) {
-  const nodeMap = new Map();
-  for (const n of a.nodes) nodeMap.set(n.id, canonicalizeNode(n));
-  for (const n of b.nodes) {
-    const prev = nodeMap.get(n.id);
-    nodeMap.set(n.id, prev ? mergeNodes(prev, n) : canonicalizeNode(n));
+  const binders = { ...a.binders };
+  for (const [id, body] of Object.entries(b.binders ?? {})) {
+    binders[id] = id in binders ? { status: mergeStatus(binders[id].status, body.status) } : { ...body };
   }
-  const edgeMap = new Map();
-  for (const e of a.edges) edgeMap.set(edgeSortKey(e), canonicalizeEdge(e));
-  for (const e of b.edges) {
-    const k = edgeSortKey(e);
-    const prev = edgeMap.get(k);
-    edgeMap.set(k, prev ? mergeEdges(prev, e) : canonicalizeEdge(e));
+  const targets = { ...a.targets, ...b.targets };
+  const edges = structuredClone(a.edges);
+  for (const [binder, row] of Object.entries(b.edges ?? {})) {
+    if (!edges[binder]) edges[binder] = {};
+    for (const [target, citations] of Object.entries(row)) {
+      edges[binder][target] = edges[binder][target]
+        ? canonicalizeCitations([...edges[binder][target], ...citations])
+        : canonicalizeCitations(citations);
+    }
   }
-  const nodes = [...nodeMap.values()].sort((x, y) => cmp(x.id, y.id));
-  const edges = [...edgeMap.values()].sort((x, y) => cmp(edgeSortKey(x), edgeSortKey(y)));
-  return { nodes, edges };
+  return canonicalizeGraph({ binders, targets, edges });
 }
 
-/** @param {{ nodes: Node[], edges: Edge[] }} graph */
-export function serializeGraph(graph) {
-  const nodesText = graph.nodes.map((n) => canonicalLine(n, "node")).join("\n");
-  const edgesText = graph.edges.map((e) => canonicalLine(e, "edge")).join("\n");
-  return { nodesText, edgesText };
-}
-
-export function validateGraphDir(dir) {
-  const relations = JSON.parse(readFileSync(join(dir, "relations.json"), "utf8"));
-  const categories = JSON.parse(readFileSync(join(dir, "categories.json"), "utf8"));
-  const nodesText = readFileSync(join(dir, "nodes.jsonl"), "utf8");
-  const edgesText = readFileSync(join(dir, "edges.jsonl"), "utf8");
-  return validateGraph({ nodesText, edgesText, relations, categories });
+export function validateGraphFile(path) {
+  const text = readFileSync(path, "utf8");
+  let graph;
+  try {
+    graph = JSON.parse(text);
+  } catch (e) {
+    return [`${path}: invalid JSON (${e.message})`];
+  }
+  const issues = validateGraph(graph);
+  const canon = canonicalText(graph);
+  if (text.replace(/\n$/, "") !== canon) issues.push(`${path}: file is not canonical`);
+  return issues;
 }
 
 if (process.argv[1] && fileURLToPath(import.meta.url) === process.argv[1]) {
-  const dir = process.argv[2];
-  if (!dir) {
-    console.error("usage: node src/check.js <graph-dir>");
+  const file = process.argv[2];
+  if (!file) {
+    console.error("usage: node src/check.js <graph.json>");
     process.exit(2);
   }
-  const issues = validateGraphDir(dir);
+  const issues = validateGraphFile(file);
   if (issues.length) {
     for (const line of issues) console.error(line);
     process.exit(1);
