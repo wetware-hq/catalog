@@ -80,11 +80,12 @@ export function canonicalizeGraph(graph) {
   for (const k of Object.keys(graph.status ?? {}).sort()) status[k] = graph.status[k];
   const ref = {};
   for (const k of Object.keys(graph.ref ?? {}).sort()) ref[k] = graph.ref[k];
-  return sortKeys({ pair, ref, status });
+  return { pair, status, ref };
 }
 
 export function canonicalText(graph) {
-  return JSON.stringify(canonicalizeGraph(graph));
+  const { pair, status, ref } = canonicalizeGraph(graph);
+  return JSON.stringify({ pair, status, ref });
 }
 
 function checkCitationList(list, path, issues) {

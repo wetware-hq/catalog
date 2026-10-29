@@ -73,7 +73,7 @@ test("target-prefixed key as binder is rejected", () => {
 
 test("non-canonical key order in file is rejected", () => {
   const path = join(root, "graph/.tmp-order.json");
-  writeFileSync(path, '{"status":{},"ref":{},"pair":{}}');
+  writeFileSync(path, '{"ref":{},"status":{},"pair":{}}');
   const issues = validateGraphFile(path);
   unlinkSync(path);
   assert.ok(issues.some((m) => m.includes("not canonical")));
