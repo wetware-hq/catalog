@@ -1,16 +1,23 @@
 import { readFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 
-/** @typedef {{ ref: string, level: "human"|"animal"|"in_vitro"|"claim" }} Citation */
-/** @typedef {{ binders: Record<string, { status: string }>, targets: Record<string, Record<string, never>>, edges: Record<string, Record<string, Citation[]>> }} Graph */
+export const STATUS_ORDER = ["approved", "investigational", "unapproved"];
+export const GRADE_ORDER = [
+  "meta",
+  "rct",
+  "trial",
+  "observational",
+  "case",
+  "animal",
+  "in_vitro",
+  "claim",
+];
 
-const BINDER_STATUSES = ["approved", "investigational", "unapproved"];
-const LEVELS = ["animal", "claim", "human", "in_vitro"];
-const CHEMBL_ID = /^CHEMBL\d+$/;
-const BINDER_SEQ = /^seq:[A-Z*]+$/;
-const UNIPROT_ID = /^[A-NR-Z][0-9]([A-Z][A-Z0-9]{2}[0-9]){1,2}$/;
-const PUBMED_REF = /^\d+$/;
-const DOI_REF = /^10\.\S+$/;
+const BINDER_KEY = /^(chembl:CHEMBL\d+|seq:[A-Z*]+)$/;
+const TARGET_KEY = /^uniprot:[A-Z][A-Z0-9]{5,9}$/;
+const CITATION_KEY = /^(pmid:\d+|doi:.+)$/;
+
+/** @typedef {{ pair: Record<string, Record<string, string[]>>, status: Record<string, string>, ref: Record<string, string> }} Graph */
 
 export function cmp(a, b) {
   if (a < b) return -1;
@@ -39,74 +46,59 @@ function validateNumbers(value, path, issues) {
   }
 }
 
-function isBinderId(id) {
-  return CHEMBL_ID.test(id) || BINDER_SEQ.test(id);
+function isBinderKey(key) {
+  return BINDER_KEY.test(key);
 }
 
-function isTargetId(id) {
-  return UNIPROT_ID.test(id);
+function isTargetKey(key) {
+  return TARGET_KEY.test(key);
 }
 
-function isRef(ref) {
-  return PUBMED_REF.test(ref) || DOI_REF.test(ref);
+function isCitationKey(key) {
+  return CITATION_KEY.test(key);
 }
 
-function citationKey(c) {
-  return `${c.ref}\0${c.level}`;
+export function canonicalizeCitationList(list) {
+  return [...new Set(list ?? [])].sort(cmp);
 }
 
-export function canonicalizeCitation(c) {
-  return sortKeys(c);
-}
-
-export function canonicalizeCitations(list) {
-  const byKey = new Map();
-  for (const raw of list ?? []) byKey.set(citationKey(raw), canonicalizeCitation(raw));
-  return [...byKey.values()].sort((a, b) => cmp(citationKey(a), citationKey(b)));
-}
-
-function mergeStatus(a, b) {
-  return cmp(a, b) <= 0 ? a : b;
+function weaker(order, a, b) {
+  return order[Math.max(order.indexOf(a), order.indexOf(b))];
 }
 
 /** @param {Graph} graph */
 export function canonicalizeGraph(graph) {
-  const binders = {};
-  for (const id of Object.keys(graph.binders ?? {}).sort()) {
-    binders[id] = sortKeys({ status: graph.binders[id].status });
-  }
-  const targets = {};
-  for (const id of Object.keys(graph.targets ?? {}).sort()) {
-    targets[id] = {};
-  }
-  const edges = {};
-  for (const binder of Object.keys(graph.edges ?? {}).sort()) {
+  const pair = {};
+  for (const binder of Object.keys(graph.pair ?? {}).sort()) {
     const row = {};
-    for (const target of Object.keys(graph.edges[binder] ?? {}).sort()) {
-      row[target] = canonicalizeCitations(graph.edges[binder][target]);
+    for (const target of Object.keys(graph.pair[binder] ?? {}).sort()) {
+      row[target] = canonicalizeCitationList(graph.pair[binder][target]);
     }
-    edges[binder] = row;
+    pair[binder] = row;
   }
-  return sortKeys({ binders, targets, edges });
+  const status = {};
+  for (const k of Object.keys(graph.status ?? {}).sort()) status[k] = graph.status[k];
+  const ref = {};
+  for (const k of Object.keys(graph.ref ?? {}).sort()) ref[k] = graph.ref[k];
+  return sortKeys({ pair, ref, status });
 }
 
 export function canonicalText(graph) {
   return JSON.stringify(canonicalizeGraph(graph));
 }
 
-function checkCitationArray(list, path, issues) {
+function checkCitationList(list, path, issues) {
   if (!Array.isArray(list) || list.length === 0) {
     issues.push(`${path}: at least one citation required`);
     return;
   }
   for (let i = 0; i < list.length; i++) {
-    const c = list[i];
-    const p = `${path}[${i}]`;
-    if (typeof c?.ref !== "string" || !isRef(c.ref)) issues.push(`${p}.ref: PubMed id or DOI required`);
-    if (!LEVELS.includes(c?.level)) issues.push(`${p}.level: must be human|animal|in_vitro|claim`);
+    if (typeof list[i] !== "string" || !isCitationKey(list[i])) {
+      issues.push(`${path}[${i}]: must be pmid:… or doi:…`);
+    }
   }
-  const canon = canonicalizeCitations(list);
-  if (JSON.stringify(canon) !== JSON.stringify(sortKeys(list))) {
+  const canon = canonicalizeCitationList(list);
+  if (canon.length !== list.length || canon.some((c, i) => c !== list[i])) {
     issues.push(`${path}: citations must be sorted and deduplicated`);
   }
 }
@@ -119,66 +111,83 @@ export function validateGraph(graph) {
     issues.push("graph: must be an object");
     return issues;
   }
-  for (const key of ["binders", "targets", "edges"]) {
+  for (const key of ["pair", "status", "ref"]) {
     if (graph[key] == null || typeof graph[key] !== "object" || Array.isArray(graph[key])) {
       issues.push(`graph.${key}: must be an object`);
     }
   }
   if (issues.length) return issues;
 
-  for (const [id, body] of Object.entries(graph.binders)) {
-    const p = `binders.${id}`;
-    if (!isBinderId(id)) issues.push(`${p}: invalid binder id (CHEMBL… or seq:SEQUENCE)`);
-    if (!BINDER_STATUSES.includes(body?.status)) issues.push(`${p}.status: must be approved|investigational|unapproved`);
-    if (body && typeof body === "object" && Object.keys(body).length !== 1) {
-      issues.push(`${p}: only status field allowed`);
+  for (const [binder, status] of Object.entries(graph.status)) {
+    const p = `status.${binder}`;
+    if (!isBinderKey(binder)) {
+      if (isTargetKey(binder)) issues.push(`${p}: target key cannot be a binder`);
+      else issues.push(`${p}: invalid binder key`);
     }
+    if (!STATUS_ORDER.includes(status)) issues.push(`${p}: invalid status`);
   }
 
-  for (const [id, body] of Object.entries(graph.targets)) {
-    const p = `targets.${id}`;
-    if (!isTargetId(id)) issues.push(`${p}: invalid UniProt accession`);
-    if (body && typeof body === "object" && Object.keys(body).length !== 0) {
-      issues.push(`${p}: must be {}`);
-    }
+  for (const [cite, grade] of Object.entries(graph.ref)) {
+    const p = `ref.${cite}`;
+    if (!isCitationKey(cite)) issues.push(`${p}: invalid citation key`);
+    if (!GRADE_ORDER.includes(grade)) issues.push(`${p}: invalid grade`);
   }
 
-  for (const [binder, row] of Object.entries(graph.edges)) {
-    const bp = `edges.${binder}`;
-    if (!isBinderId(binder)) issues.push(`${bp}: invalid binder id`);
-    if (!(binder in graph.binders)) issues.push(`${bp}: binder missing from binders`);
+  for (const [binder, row] of Object.entries(graph.pair)) {
+    const bp = `pair.${binder}`;
+    if (!isBinderKey(binder)) {
+      if (isTargetKey(binder)) issues.push(`${bp}: target key cannot be a binder (outer pair key)`);
+      else issues.push(`${bp}: invalid binder key`);
+    }
+    if (!(binder in graph.status)) issues.push(`${bp}: binder missing from status`);
     if (row == null || typeof row !== "object" || Array.isArray(row)) {
       issues.push(`${bp}: must be an object`);
       continue;
     }
     for (const [target, citations] of Object.entries(row)) {
       const tp = `${bp}.${target}`;
-      if (!isTargetId(target)) issues.push(`${tp}: invalid target id`);
-      if (!(target in graph.targets)) issues.push(`${tp}: target missing from targets`);
-      checkCitationArray(citations, tp, issues);
+      if (!isTargetKey(target)) {
+        if (isBinderKey(target)) issues.push(`${tp}: binder key cannot be a target (inner pair key)`);
+        else issues.push(`${tp}: invalid target key`);
+      }
+      checkCitationList(citations, tp, issues);
+      for (const c of citations ?? []) {
+        if (!(c in graph.ref)) issues.push(`${tp}: citation "${c}" missing from ref`);
+      }
     }
   }
 
   return issues;
 }
 
-/** @param {Graph} a @param {Graph} b */
-export function mergeGraphs(a, b) {
-  const binders = { ...a.binders };
-  for (const [id, body] of Object.entries(b.binders ?? {})) {
-    binders[id] = id in binders ? { status: mergeStatus(binders[id].status, body.status) } : { ...body };
-  }
-  const targets = { ...a.targets, ...b.targets };
-  const edges = structuredClone(a.edges);
-  for (const [binder, row] of Object.entries(b.edges ?? {})) {
-    if (!edges[binder]) edges[binder] = {};
+function mergePair(a, b) {
+  const pair = structuredClone(a);
+  for (const [binder, row] of Object.entries(b)) {
+    if (!pair[binder]) pair[binder] = {};
     for (const [target, citations] of Object.entries(row)) {
-      edges[binder][target] = edges[binder][target]
-        ? canonicalizeCitations([...edges[binder][target], ...citations])
-        : canonicalizeCitations(citations);
+      pair[binder][target] = pair[binder][target]
+        ? canonicalizeCitationList([...pair[binder][target], ...citations])
+        : canonicalizeCitationList(citations);
     }
   }
-  return canonicalizeGraph({ binders, targets, edges });
+  return pair;
+}
+
+function mergeScalars(a, b, order) {
+  const out = { ...a };
+  for (const [k, v] of Object.entries(b)) {
+    out[k] = k in out ? weaker(order, out[k], v) : v;
+  }
+  return out;
+}
+
+/** @param {Graph} a @param {Graph} b */
+export function mergeGraphs(a, b) {
+  return canonicalizeGraph({
+    pair: mergePair(a.pair ?? {}, b.pair ?? {}),
+    status: mergeScalars(a.status ?? {}, b.status ?? {}, STATUS_ORDER),
+    ref: mergeScalars(a.ref ?? {}, b.ref ?? {}, GRADE_ORDER),
+  });
 }
 
 export function validateGraphFile(path) {
@@ -190,8 +199,7 @@ export function validateGraphFile(path) {
     return [`${path}: invalid JSON (${e.message})`];
   }
   const issues = validateGraph(graph);
-  const canon = canonicalText(graph);
-  if (text.replace(/\n$/, "") !== canon) issues.push(`${path}: file is not canonical`);
+  if (text.replace(/\n$/, "") !== canonicalText(graph)) issues.push(`${path}: file is not canonical`);
   return issues;
 }
 

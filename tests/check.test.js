@@ -1,4 +1,4 @@
-import { readFileSync, writeFileSync, unlinkSync } from "node:fs";
+import { writeFileSync, unlinkSync } from "node:fs";
 import { join, dirname } from "node:path";
 import { fileURLToPath } from "node:url";
 import { spawnSync } from "node:child_process";
@@ -9,32 +9,38 @@ import {
   validateGraphFile,
   mergeGraphs,
   canonicalText,
+  STATUS_ORDER,
+  GRADE_ORDER,
 } from "../src/check.js";
 
 const root = join(dirname(fileURLToPath(import.meta.url)), "..");
 const graphFile = join(root, "graph/graph.json");
 const checkScript = join(root, "src/check.js");
 
-const B1 = "CHEMBL123";
+const B1 = "chembl:CHEMBL123";
 const B2 = "seq:ACDEF";
-const T1 = "P04637";
-const T2 = "Q9Y6K9";
-
-function cite(ref, level) {
-  return { ref, level };
-}
+const T1 = "uniprot:P04637";
+const T2 = "uniprot:Q9Y6K9";
+const C1 = "pmid:12345";
+const C2 = "pmid:67890";
+const C3 = "doi:10.1000/example";
 
 function graph(partial) {
-  return {
-    binders: {},
-    targets: {},
-    edges: {},
-    ...partial,
-  };
+  return { pair: {}, status: {}, ref: {}, ...partial };
 }
 
 function graphBytes(g) {
   return canonicalText(g);
+}
+
+function validPair(binder, target, citations) {
+  const ref = {};
+  for (const c of citations) ref[c] = "claim";
+  return graph({
+    status: { [binder]: "approved" },
+    ref,
+    pair: { [binder]: { [target]: citations } },
+  });
 }
 
 test("empty graph file passes", () => {
@@ -46,72 +52,53 @@ test("CLI validates graph file", () => {
   assert.equal(ok.status, 0, ok.stderr);
 });
 
-test("empty citation array is rejected", () => {
+test("empty citation list is rejected", () => {
   const g = graph({
-    binders: { [B1]: { status: "approved" } },
-    targets: { [T1]: {} },
-    edges: { [B1]: { [T1]: [] } },
+    status: { [B1]: "approved" },
+    ref: { [C1]: "claim" },
+    pair: { [B1]: { [T1]: [] } },
   });
-  const issues = validateGraph(g);
-  assert.ok(issues.some((m) => m.includes("at least one citation required")));
+  assert.ok(validateGraph(g).some((m) => m.includes("at least one citation required")));
 });
 
-test("edge endpoints must exist in binders and targets", () => {
-  const g = graph({ edges: { [B1]: { [T1]: [cite("12345", "human")] } } });
+test("target-prefixed key as binder is rejected", () => {
+  const g = graph({
+    status: { [B1]: "approved" },
+    ref: { [C1]: "claim" },
+    pair: { [T1]: { [T2]: [C1] } },
+  });
   const issues = validateGraph(g);
-  assert.ok(issues.some((m) => m.includes("missing from binders")));
-  assert.ok(issues.some((m) => m.includes("missing from targets")));
+  assert.ok(issues.some((m) => m.includes("target key cannot be a binder")));
 });
 
 test("non-canonical key order in file is rejected", () => {
   const path = join(root, "graph/.tmp-order.json");
-  writeFileSync(path, '{"targets":{},"binders":{},"edges":{}}');
+  writeFileSync(path, '{"status":{},"ref":{},"pair":{}}');
   const issues = validateGraphFile(path);
   unlinkSync(path);
   assert.ok(issues.some((m) => m.includes("not canonical")));
 });
 
-test("merge unions citations and is byte-identical both orders", () => {
-  const left = graph({
-    binders: { [B1]: { status: "approved" } },
-    targets: { [T1]: {}, [T2]: {} },
-    edges: {
-      [B1]: {
-        [T1]: [cite("12345", "human")],
-        [T2]: [cite("10.1000/example", "in_vitro")],
-      },
-    },
-  });
-  const right = graph({
-    binders: { [B1]: { status: "investigational" }, [B2]: { status: "unapproved" } },
-    targets: { [T1]: {}, [T2]: {} },
-    edges: {
-      [B1]: { [T1]: [cite("67890", "animal")] },
-      [B2]: { [T2]: [cite("11111", "claim")] },
-    },
-  });
-  const ab = graphBytes(mergeGraphs(left, right));
-  const ba = graphBytes(mergeGraphs(right, left));
-  assert.equal(ab, ba);
-  assert.ok(ab.includes("12345") && ab.includes("67890"));
+test("merge picks weaker status and grade on conflict", () => {
+  const left = validPair(B1, T1, [C1]);
+  left.status[B1] = STATUS_ORDER[0];
+  left.ref[C1] = GRADE_ORDER[0];
+  const right = validPair(B1, T1, [C2]);
+  right.status[B1] = STATUS_ORDER[2];
+  right.ref[C1] = GRADE_ORDER[7];
+  right.ref[C2] = GRADE_ORDER[3];
+  const merged = mergeGraphs(left, right);
+  assert.equal(merged.status[B1], STATUS_ORDER[2]);
+  assert.equal(merged.ref[C1], GRADE_ORDER[7]);
+  assert.equal(graphBytes(mergeGraphs(left, right)), graphBytes(mergeGraphs(right, left)));
 });
 
 test("merge is commutative, associative, and idempotent on non-identical graphs", () => {
-  const g1 = graph({
-    binders: { [B1]: { status: "approved" } },
-    targets: { [T1]: {} },
-    edges: { [B1]: { [T1]: [cite("12345", "human")] } },
-  });
-  const g2 = graph({
-    binders: { [B2]: { status: "investigational" } },
-    targets: { [T2]: {} },
-    edges: { [B2]: { [T2]: [cite("22222", "claim")] } },
-  });
-  const g3 = graph({
-    binders: { [B1]: { status: "approved" } },
-    targets: { [T1]: {}, [T2]: {} },
-    edges: { [B1]: { [T2]: [cite("33333", "in_vitro")] } },
-  });
+  const g1 = validPair(B1, T1, [C1]);
+  const g2 = validPair(B2, T2, [C2]);
+  g2.ref[C2] = "rct";
+  const g3 = validPair(B1, T2, [C3]);
+  g3.ref[C3] = "trial";
 
   const ab = mergeGraphs(g1, g2);
   const ba = mergeGraphs(g2, g1);

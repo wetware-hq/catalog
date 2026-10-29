@@ -1,46 +1,50 @@
 # Graph catalog
 
-A minimal **bigraph** catalog: binders and targets linked by evidence-backed edges, stored as one canonical JSON object.
+A minimal **bigraph** catalog stored as one canonical JSON object: binder→target pairs, binder status, and citation grades.
 
 ## Layout
 
 ```mermaid
 flowchart LR
-  subgraph graph["graph/graph.json"]
-    B[binders]
-    T[targets]
-    E[edges]
+  subgraph file["graph/graph.json"]
+    P[pair]
+    S[status]
+    R[ref]
   end
-  B -->|binder id| E
-  T -->|target id| E
-  E -->|citation arrays| C["ref + level"]
+  P -->|outer binder keys| B["chembl:… / seq:…"]
+  P -->|inner target keys| T["uniprot:…"]
+  P -->|values| C["citation keys"]
+  S --> B
+  R --> C
 ```
 
 | Key | Shape |
 |-----|--------|
-| `binders` | `{ "<binder-id>": { "status": "approved" \| "investigational" \| "unapproved" } }` |
-| `targets` | `{ "<uniprot-accession>": {} }` |
-| `edges` | `{ "<binder-id>": { "<target-id>": [ citations… ] } }` |
+| `pair` | `{ "<binderKey>": { "<targetKey>": [ "<citationKey>", … ] } }` |
+| `status` | `{ "<binderKey>": "<status>" }` |
+| `ref` | `{ "<citationKey>": "<grade>" }` |
 
-Binder ids are ChEMBL ids (`CHEMBL…`) or `seq:<UPPERCASE sequence>`. Target ids are UniProt accessions. Each citation is `{ "ref": "<pubmed id or DOI>", "level": "human" \| "animal" \| "in_vitro" \| "claim" }`.
+Binder keys: `chembl:CHEMBL…` or `seq:<UPPERCASE sequence>`. Target keys: `uniprot:<accession>`. Citation keys: `pmid:<id>` or `doi:<id>`. No unprefixed ids.
 
-Pairs appear in `edges` only with at least one citation (empty arrays are invalid). Unconfirmed candidates are omitted.
+Each inner citation list is non-empty, sorted, and deduplicated. Every binder in `pair` appears in `status`; every citation in `pair` appears in `ref`.
+
+**Matchmaking** (strongest grade per pair, then citation count) is computed at read time and is not stored.
 
 ## Canonical JSON
 
-The whole file is one line: `JSON.stringify` on recursively key-sorted objects — no extra whitespace, UTF-8, no ASCII escaping. Python equivalent:
+One line: `JSON.stringify` on recursively key-sorted objects — no extra whitespace, UTF-8, no ASCII escaping. Python:
 
 `json.dumps(obj, sort_keys=True, separators=(",", ":"), ensure_ascii=False)`
 
-JSON numbers must be safe integers; write decimals as strings. Citation arrays are sorted, deduplicated sets (by `ref` and `level`).
+JSON numbers must be safe integers; write decimals as strings.
 
 ## Checks
 
-- Every `edges` binder/target exists in `binders` / `targets`
-- Valid id formats, status/level enums, non-empty citation lists
+- Prefix rules and bipartite structure (no binder keys under targets, no target keys as binders)
+- Status and grade enums (`STATUS_ORDER` / `GRADE_ORDER` in `src/check.js`)
 - On-disk bytes match the canonical serializer
 
-`mergeGraphs` recursively unions dictionaries; citation lists union as sets. Same binder id merges status by lexicographic minimum (commutative).
+`mergeGraphs` deep-unions `pair` (citation set union) and merges `status` / `ref` by taking the **weaker** value (later in the order arrays), independent of merge order.
 
 ## Commands
 
@@ -49,7 +53,7 @@ npm test
 npm run check
 ```
 
-`node src/check.js graph/graph.json` validates a file and exits `1` on error.
+`node src/check.js graph/graph.json` exits `1` on validation failure.
 
 ## License
 
