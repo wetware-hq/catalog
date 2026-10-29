@@ -2,16 +2,7 @@ import { readFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 
 export const STATUS_ORDER = ["approved", "investigational", "unapproved"];
-export const GRADE_ORDER = [
-  "meta",
-  "rct",
-  "trial",
-  "observational",
-  "case",
-  "animal",
-  "in_vitro",
-  "claim",
-];
+export const GRADE_ORDER = ["rct", "cohort", "case", "preclinical", "claim"];
 
 const BINDER_KEY = /^(chembl:CHEMBL\d+|seq:[A-Z*]+)$/;
 const TARGET_KEY = /^uniprot:[A-Z][A-Z0-9]{5,9}$/;

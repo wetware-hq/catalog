@@ -41,7 +41,7 @@ JSON numbers must be safe integers; write decimals as strings.
 ## Checks
 
 - Prefix rules and bipartite structure (no binder keys under targets, no target keys as binders)
-- Status and grade enums (`STATUS_ORDER` / `GRADE_ORDER` in `src/check.js`)
+- Status enum and five benefit grades (`STATUS_ORDER`, `GRADE_ORDER`: rct → cohort → case → preclinical → claim)
 - On-disk bytes match the canonical serializer
 
 `mergeGraphs` deep-unions `pair` (citation set union) and merges `status` / `ref` by taking the **weaker** value (later in the order arrays), independent of merge order.
