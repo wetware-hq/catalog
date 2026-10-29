@@ -2,6 +2,8 @@
 
 # resolve-key
 
+`type: resource.procedure` · `spec: agent.fleet` · subordinate to `AGENTS.md`, which governs on any conflict.
+
 Resolve a database key to labels. Read-only. Never writes.
 
 Scope: protein only. The catalogue holds protein binders and protein targets.

@@ -6,9 +6,9 @@
 
 ## 0. Scope
 
-- **Read:** `graph.json`, `AGENTS.md`, `skills/*.md`, `LICENSE`.
+- **Read:** `graph.json`, `AGENTS.md`, `skills/*.md`, `systems/*.md` (§11), `references.md`, `README.md` (non-normative), `validator/`, `LICENSE`.
 - **Write:** `graph.json` and `proposals.json` only, under §9.
-- **Refuse:** scripts, workflows, CI, package manifests or secondary data files in this repo, `proposals.json` (§9) being the single named exception; stored ranks, scores or grades; citations other than bare `pmid:<digits>`; empty citation arrays; pairs without qualifying evidence (§4); removal or rewriting of existing rows absent explicit human supersession.
+- **Refuse:** writing scripts, workflows, CI, package manifests or secondary data files in this repo, `proposals.json` (§9) being the single named exception — the validator under `validator/` and the workflow under `.github/workflows/` are human-directed additions that check this contract and are outside every agent's write scope, so an agent reads them and does not edit them; stored ranks, scores or grades; citations other than bare `pmid:<digits>`; empty citation arrays; pairs without qualifying evidence (§4); removal or rewriting of existing rows absent explicit human supersession.
 
 ## 0b. Documentation banner
 
@@ -16,7 +16,7 @@ Every Markdown file in this repository opens, as its **first non-blank line**, w
 
 `⚠️ ACADEMIC RESEARCH PURPOSES ONLY; NOT FOR MEDICAL USE WITHOUT LICENSED OVERSIGHT`
 
-— one fixed, repeated string, byte-identical in every file, never paraphrased, abbreviated or replaced by a cross-reference. It states **who may act on this repository**, and is deliberately distinct from the README's *What it is not* paragraph, which states what the catalogue records; the two are not merged. This is a normative documentation invariant. It is **not** one of the nineteen §8 predicates and does not renumber them; it is checked as a validator extension (see `catalog-validator`).
+— one fixed, repeated string, byte-identical in every file, never paraphrased, abbreviated or replaced by a cross-reference. It states **who may act on this repository**, and is deliberately distinct from the README's *What it is not* paragraph, which states what the catalogue records; the two are not merged. This is a normative documentation invariant. It is **not** one of the nineteen §8 predicates and does not renumber them; it is checked as a validator extension, predicate E1 (see `validator/`).
 
 ## 1. Purpose
 
@@ -143,7 +143,7 @@ Implement from this section alone. Tags: **pure** = decidable from one file's by
 3. **File boundary.** Autonomous intake writes `proposals.json` only, and never writes `graph.json` on any branch. Admission is the act of reading the paper, and that act is what moves bytes from `proposals.json` into `graph.json`, choosing the dictionary per §4. **Trust is carried by the file, not by a branch:** a branch name is mutable and has no merge law, so a fence of the form "unverified rows live on branch X" dissolves at the first merge and relaunders those rows as verified, while `proposals.json` merges into `proposals.json` on every branch. Condition 16 is therefore discharged at the file move, by a reader, and never by the run that proposed the row.
 4. **`proposals.json`.** Root: a non-array object with exactly `version` (the number `2`) and `proposal` (an array). Each element has exactly `binder`, `target`, `pmid`, each satisfying §3. A proposal carries **no dictionary assignment**: `pair` versus `preclinical` is part of the oracle and is chosen when the paper is read. Serialise per §5; add-only per §8.19. It is not catalogue-shaped and must not be read as one.
 5. Intake procedure: [`skills/propose-pairs.md`](skills/propose-pairs.md). It enumerates structured authorities; it does not crawl prose, and its own acceptance test is rediscovery of the rows already committed.
-6. This repository ships no updater, cron or CI. Compliance is your behaviour against this contract.
+6. This repository ships no updater and no cron. It does ship a validator (`validator/`) and a workflow that runs it, and neither writes `graph.json` or `proposals.json`: a passing run proves only the pure conditions (§8), never §8.16. Compliance is your behaviour against this contract, not a green check.
 
 A proposed row failing any rule above is **refused**, naming the condition that failed.
 

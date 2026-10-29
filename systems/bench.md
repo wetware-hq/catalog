@@ -129,7 +129,7 @@ Per worker, local, derived, rebuildable, never shared: an inverted index over `k
 at <head>                                every query is evaluated at a head
 where tier=T and <key> <op> <value>      op ∈ { =, !=, <, <=, >, >=, ~ }
 ancestors(<id>) / descendants(<id>)
-near(pose, M(...), <radius>)             linear scan only, §9
+near(pose, M(...), <radius>)             linear scan only, §8
 count | mean | sd | top-k  BY tier       aggregates are per tier, always
 ```
 

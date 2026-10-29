@@ -14,15 +14,15 @@ A binder this procedure returns is a hypothesis, not a therapy, and carries no e
 
 ## 0. Objective
 
-Given a **native human protein target** and a **clinical or research indication**, design candidate synthetic binders, rank them, and return the **single best candidate**.
+Given a **native human protein target** and a **clinical or research indication**, design candidate synthetic binders, screen them, and return the survivors **ordered by a named scorer** — or, where only prediction separates them, as **unranked candidates**.
 
-Input: `(uniprot:<accession>, indication)`. Output: one binder key — `aa:` or `helm:`, canonical per §3 — with the design rationale that produced it.
+Input: `(uniprot:<accession>, indication)`. Output: the surviving binder keys — `aa:` or `helm:`, canonical per `AGENTS.md` §3 — each labelled **by the criterion that selected it**, with the design rationale that produced it. A specification admitting no candidate returns none and names the constraint that emptied the space (§7).
 
 ## 1. Write scope: none
 
 **This procedure writes nothing in this repository.** Not `graph.json`, not `proposals.json`, on any branch.
 
-The reason is structural, not a restriction to be relaxed later. `graph.json` admits a pair only when a paper reports benefit for that pair (§4), and `proposals.json` requires a `pmid` on every element (§9.4). A de novo design has **no paper**, so there is no element of either file it could legally occupy. A designed binder becomes catalogue-eligible only by the ordinary route: someone runs the experiment, someone publishes it, and a reader admits the row. Design is upstream of intake, and `propose-pairs` — not this procedure — is the entry point when that paper exists.
+The reason is structural, not a restriction to be relaxed later. `graph.json` admits a pair only when a paper reports benefit for that pair (`AGENTS.md` §4), and `proposals.json` requires a `pmid` on every element (`AGENTS.md` §9.4). A de novo design has **no paper**, so there is no element of either file it could legally occupy. A designed binder becomes catalogue-eligible only by the ordinary route: someone runs the experiment, someone publishes it, and a reader admits the row. Design is upstream of intake, and `propose-pairs` — not this procedure — is the entry point when that paper exists.
 
 Returning the candidate to the requester is the whole output. A run that wrote a row would be asserting evidence it does not have.
 
@@ -45,27 +45,27 @@ These are conventions from developability and selectivity practice, **not cutoff
 
 Refuse before designing, naming the condition that failed:
 
-- Target key fails §3 → refuse (grammar).
+- Target key fails `AGENTS.md` §3 → refuse (grammar).
 - Accession is **not the human protein** → refuse (scope). `AGENTS.md` §8.9 accepts any valid accession, including an ortholog; this procedure does not. A mouse surrogate is a different key and fragments coverage of the human target it stands in for. One accession, one species, and here it is *Homo sapiens*.
-- Target is not a protein → refuse (§3, §8.8). Nucleic acids and small molecules are out of scope by design.
-- Indication absent → refuse. It is not stored anywhere, and it is not decoration: it sets the required modality, route, residence time and off-target tolerance, which select the scaffold in §4.
+- Target is not a protein → refuse (`AGENTS.md` §3, §8.8). Nucleic acids and small molecules are out of scope by design.
+- Indication absent → refuse. It is not stored anywhere, and it is not decoration: it sets the required modality, route, residence time and off-target tolerance, which select the scaffold in §5.
 
 ## 4. Look it up before designing it
 
 **Design does not fire until the catalogue has been asked and has come back empty for this target in this indication.** A swarm invented to find a molecule for a target that already has one sitting in the file is pure waste.
 
-Build the reverse index for the target per §7 — pin the read to a commit SHA or tag, never a branch name.
+Build the reverse index for the target per `AGENTS.md` §7 — pin the read to a commit SHA or tag, never a branch name.
 
 - **Any hit, and the gate is indication-aware.** The reverse index answers *some binder helped patients against this target*, not *against this target in this indication*. An evidenced anti-HER2 binder says nothing about anti-HER2 in a different disease or population. The indication is not in the file, so read the pair's PMID and take it from the paper — the same oracle step this skill needs anyway. Hit in this indication: **report the evidenced binder and stop.** That is the answer, and it is a better one than any design.
 - **Hit in a different indication:** design may fire, and the report must name the evidenced binder, its indication, and why it does not transfer.
-- **No hit:** design fires, but a target with no evidenced binder is **not** open ground. **Absence is not a negative** (§7): it means no qualifying paper has been entered. At present coverage it says nothing about whether a binder exists.
+- **No hit:** design fires, but a target with no evidenced binder is **not** open ground. **Absence is not a negative** (`AGENTS.md` §7): it means no qualifying paper has been entered. At present coverage it says nothing about whether a binder exists.
 - `uniprot:` cannot express an epitope. Two binders against distinct sites on one protein collapse to one target key, so the catalogue cannot tell you which site is taken. Resolve the epitope from structure, not from this file.
 
 ## 5. Design
 
-Fan out a swarm of scientist agents over the design space in parallel, each carrying the same specification — target, epitope, indication-derived constraints — and reporting candidates in a common schema. Breadth is the point: independent scaffolds and independent methods, so the ranking in §5 compares genuinely different hypotheses rather than variations of one.
+Fan out a swarm of scientist agents over the design space in parallel, each carrying the same specification — target, epitope, indication-derived constraints — and reporting candidates in a common schema. Breadth is the point: independent scaffolds and independent methods, so the ordering in §6 compares genuinely different hypotheses rather than variations of one.
 
-Scaffold follows the indication, never the other way round. Minibinders and designed miniproteins, nanobodies and single-domain formats, constrained peptides and macrocycles, designed ankyrin and other repeat proteins, and conventional Fv-derived formats are all admissible; a molecule needing non-standard residues, terminal caps or an explicit disulfide pattern must be written `helm:` (§3, §8.8), and one expressible as plain L-chains must be written `aa:` (§8.13c).
+Scaffold follows the indication, never the other way round. Minibinders and designed miniproteins, nanobodies and single-domain formats, constrained peptides and macrocycles, designed ankyrin and other repeat proteins, and conventional Fv-derived formats are all admissible; a molecule needing non-standard residues, terminal caps or an explicit disulfide pattern must be written `helm:` (`AGENTS.md` §3, §8.8), and one expressible as plain L-chains must be written `aa:` (`AGENTS.md` §8.13c).
 
 Every candidate is carried as its **sequence**. A design has no name to drift, which is why the catalogue's sequence-keying costs this procedure nothing.
 
@@ -85,7 +85,7 @@ The design methods are not fixed in this file, because they move faster than it 
 
 ## 6. Screen, then order
 
-Two stages, and they are different operations. The ordering is **computed per run and never stored** (§7), and it is **not** the catalogue's ordering: §7 ranks evidenced binders by citation count within one dictionary, and a designed candidate and a `pair` row are no more comparable than a `preclinical` row and a `pair` row.
+Two stages, and they are different operations. The ordering is **computed per run and never stored** (`AGENTS.md` §7), and it is **not** the catalogue's ordering: `AGENTS.md` §7 ranks evidenced binders by citation count within one dictionary, and a designed candidate and a `pair` row are no more comparable than a `preclinical` row and a `pair` row.
 
 **Stage one — hard screens. They exclude; they never penalise.** A candidate failing one is out, and the report names the screen.
 
@@ -95,7 +95,7 @@ Two stages, and they are different operations. The ordering is **computed per ru
 
 A weighted sum cannot do this job: a total can be high for the wrong reason, and a liability that kills a molecule does not trade off against affinity.
 
-**Stage two — order the survivors, and name the scorer.** No candidate is called best without the computable quantity that chose it stated outright, with its value and its uncertainty: predicted binding free energy or interface score, structural confidence, agreement between independent predictors. Every signal is labelled **prediction** or **measurement**.
+**Stage two — order the survivors, and name the scorer.** No candidate is ordered above another without the computable quantity that chose it stated outright, with its value and its uncertainty: predicted binding free energy or interface score, structural confidence, agreement between independent predictors. Every signal is labelled **prediction** or **measurement**.
 
 **There is no computable score for clinical utility.** Affinity, developability and epitope content are computable, and not one of them predicts patient benefit. That is the oracle, and no swarm closes it. Where the top two are separated only by prediction, the honest output is **unranked candidates**, not a confident first place; a run returning a #1 with no stated scorer is manufacturing the oracle step.
 
@@ -107,10 +107,10 @@ Report, and write nothing. A single binder is emitted only when §6 earns it, an
 
 | field | content |
 |---|---|
-| binder | one `aa:` or `helm:` key, canonical per §3 |
-| target | the `uniprot:` key as admitted in §2 |
+| binder | one `aa:` or `helm:` key, canonical per `AGENTS.md` §3 |
+| target | the `uniprot:` key as admitted in §3 |
 | scaffold | the format chosen, and the indication constraint that chose it |
-| rationale | epitope, design method, and why this candidate beat the runner-up |
+| rationale | epitope, design method, and what separates this candidate from the runner-up — or the statement that nothing computable does |
 | evidence | each ranking signal, labelled prediction or measurement |
 | screens | each stage-one screen and its result, including for excluded candidates |
 | scorer | the quantity that produced the order, with values and uncertainty |
@@ -119,10 +119,10 @@ Report, and write nothing. A single binder is emitted only when §6 earns it, an
 | generator | what produced the sequence, standing in for the citation it does not have: the run, the design and scoring models with versions, the inputs, the date, and the catalogue PMIDs that justified choosing this target |
 | catalogue context | evidenced binders against this target at the pinned SHA with the indication read from each paper, or the explicit statement that none are entered and that this is not a negative |
 
-Two refusals, two verdicts, as §7 requires them kept apart: a source that does not answer yields `unavailable` — retry, cache nothing; a specification admitting no candidate yields no binder and names the constraint that emptied the space. Neither is catalogue absence, and neither is reported as a resolve failure.
+Two refusals, two verdicts, as `AGENTS.md` §7 requires them kept apart: a source that does not answer yields `unavailable` — retry, cache nothing; a specification admitting no candidate yields no binder and names the constraint that emptied the space. Neither is catalogue absence, and neither is reported as a resolve failure.
 
 Nobody in this room can run a binding assay. So the output is a **worklist for an experiment**, not a database, and a candidate without both named assays, their thresholds, and somebody who could run them is not emitted at all — a hypothesis accumulated at zero cost is the cheapest way to look productive. That obligation is what makes the output falsifiable, and it is why nothing persists here: a worklist belongs where the experiment is run.
 
 ## 8. Acceptance
 
-This procedure asserts nothing about patients and is therefore not acceptance-tested by rediscovery, as `propose-pairs` is. It passes when, for a target whose evidenced binders are already in `graph.json`, a run that is **blind to those rows** returns a candidate engaging the same epitope by an independent route. That is a test of the design process, not of the catalogue, and failing it bars no row — it tells you the ranking in §5 is not yet measuring what it claims to.
+This procedure asserts nothing about patients and is therefore not acceptance-tested by rediscovery, as `propose-pairs` is. It passes when, for a target whose evidenced binders are already in `graph.json`, a run that is **blind to those rows** returns a candidate engaging the same epitope by an independent route. That is a test of the design process, not of the catalogue, and failing it bars no row — it tells you the ordering in §6 is not yet measuring what it claims to.
