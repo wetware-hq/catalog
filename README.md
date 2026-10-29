@@ -1,24 +1,17 @@
 # catalog
 
-A **bipartite graph** of biological **binders** and protein **targets**, with PubMed citations that support **clinical benefit** for each binder–target pair.
+**Background.** Deciding which biological therapy is worth using against a given protein target means reading the trial literature pair by pair. There is no compact, machine-readable record of which binder has been shown to help patients when directed at which target.
 
-## `graph.json`
+**Contents.** One file, `graph.json`. Each entry pairs a **binder** — an antibody, peptide or other protein therapeutic, identified by its amino-acid sequence — with the single **protein target** it is directed against, and lists the PubMed identifier of a paper reporting utility for that specific pairing. Entries are separated by study type: those reporting **clinical benefit in humans** and those reporting **preclinical** utility, which are kept in different sections and never pooled. The catalogue currently holds 55 clinical pairs across 41 targets, each resting on a single reference, and no preclinical entries yet.
 
-One UTF-8 JSON object at the repo root:
+**How a row is identified.** There are no drug names in the file. A binder is identified by its amino-acid sequence itself — for antibodies, the heavy and light chains written out and separated by `/`. Drug names move: the same molecule carries a code name, an international non-proprietary name and a different trade name in each market, and names are reassigned, while the sequence is the molecule and does not change. The cost of that choice is real and worth stating plainly: you cannot look up trastuzumab here by name. You need the sequence, or a tool that maps a name to one.
 
-- **`version`** — schema version, currently `1`
-- **`pair`** — binder → target → sorted, de-duplicated list of `pmid:<digits>` citations
+**Inclusion.** A paper is listed only if it reports a benefit for that binder against that target — in the clinical section, benefit to patients; in the preclinical section, utility in a non-human or laboratory system. Null results and harm-only results are excluded, a paper whose study type cannot be determined is excluded, and a pair with no qualifying paper is not recorded at all. Inclusion is judged by reading the paper; no automated rule can stand in for that.
 
-Keys use `aa:` (canonical L-chain sequences), `helm:` (HELM copied from the source record), and `uniprot:` targets. Only pairs with at least one qualifying PMID are stored.
+**What it is not.** Not a formulary, not dosing or prescribing guidance, and not a recommendation. It records no regulatory or approval status, no evidence grade, and no ranking — a binder's sequence and its citations are the entire record. Anything comparative is computed when the file is read, never stored in it.
 
-The catalogue is **protein-only**. Nucleic-acid and small-molecule blocks are not admissible: a key that is not a protein is refused on admission rather than classified.
+**Limitations.** Protein binders and protein targets only; small molecules and nucleic acids are out of scope by design. Every pair currently rests on exactly one citation — minimum, median and maximum are all one — so citation count is not yet a measure of weight of evidence. The clinical and preclinical split records what kind of study a paper was, not how strong it was. Absence of a pair means no qualifying paper has been entered, which is not evidence that none exists.
 
-Nothing else is stored. There is no regulatory-status field, no evidence grades, and no ranks or scores — a binder's sequence and its citations are the whole record, and anything derivable from them is computed at read time.
+**Skills.** [skills/get_info.md](./skills/get_info.md) goes the other way: from a stored key back to names, labels and linked records, by exact lookup rather than search. Read-only. [skills/fill-db.md](./skills/fill-db.md) is the intake procedure for adding entries — it enumerates structured sequence and activity databases rather than searching the open web, and new entries land on a working branch for review rather than directly in the published file.
 
-## Skills
-
-**[skills/get_info.md](./skills/get_info.md)** is the agent skill for going the other way: from a stored key back to names, labels, and linked data, by exact lookup rather than search. It is read-only and never writes to the database.
-
-## Agents
-
-**[AGENTS.md](./AGENTS.md)** is the full contract: schema, key grammar, inclusion rules, canonical serialisation, merge laws, read-time ranking, validation predicates, and the background-update contract. Implement validators and extensions from that file alone.
+**Specification.** [AGENTS.md](./AGENTS.md) is the normative contract — schema, key grammar, inclusion rules, serialisation, merge laws and validation predicates.

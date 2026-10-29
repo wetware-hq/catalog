@@ -1,143 +1,125 @@
-# Agent contract — `graph.json`
+# `graph.json` — agent contract
 
-You may have no other context about this repository. Follow this document for every read, write, merge, or validation action.
+`type: resource.reference` · **normative**. `README.md` is non-normative; on conflict this file governs. Implement validators, mergers and updaters from this file alone.
 
-## Normative documents
+## 0. Scope
 
-**`AGENTS.md` is normative.** A validator, merge implementation, or autonomous updater must follow this file only.
-
-**`README.md` is non-normative.** It orients humans; if README and AGENTS disagree, AGENTS wins.
-
-## Scope
-
-**Read:** `graph.json`, this file, `LICENSE`.
-
-**Write:** only `graph.json` (when authorised by the background-update contract below).
-
-**Refuse:** adding scripts, workflows, CI, package manifests, or secondary data files to this repo; storing computed ranks or scores in `graph.json`; citations other than bare `pmid:<digits>`; empty citation lists; pairs without clinical-benefit evidence; removing or rewriting existing rows without explicit human supersession instruction outside this file.
+- **Read:** `graph.json`, `AGENTS.md`, `LICENSE`.
+- **Write:** `graph.json` only, under §9.
+- **Refuse:** scripts, workflows, CI, package manifests or secondary data files in this repo; stored ranks, scores or grades; citations other than bare `pmid:<digits>`; empty citation arrays; pairs without qualifying evidence (§4); removal or rewriting of existing rows absent explicit human supersession.
 
 ## 1. Purpose
 
-Single-file bipartite database: binders linked to protein targets. Each stored `(binder, target)` edge lists PubMed identifiers for papers that report **clinical benefit** for that pair. Representation: a schema version and one JSON object dictionary in one root object. The catalogue is **protein-only** (see §3, §8 condition 8).
+Single-file bipartite database: biological binders → protein targets. An edge lists PubMed identifiers for that pair, in one of two dictionaries separated by **study type**: `pair` for clinical benefit in humans, `preclinical` for non-human or in-vitro utility. Protein-only (§3, §8.8). The two are never merged and never ranked against each other (§7).
 
 ## 2. Schema
 
-Root object keys (fixed order on disk): `version`, then `pair`.
+Root: a non-array object with **exactly** `version`, `pair`, `preclinical`, in that order.
 
-| Key | Type | Meaning |
-|-----|------|---------|
-| `version` | `number` | Schema version. Currently `1`. |
-| `pair` | `Record<binder, Record<target, string[]>>` | Binder → target → citation list. |
+| key | type | meaning |
+|---|---|---|
+| `version` | `number` | schema version; currently `2` |
+| `pair` | `Record<binder, Record<target, string[]>>` | binder → target → citations reporting **clinical benefit in humans** |
+| `preclinical` | same shape as `pair` | citations reporting **non-human or in-vitro utility** |
 
-- Citation list elements: bare strings `pmid:` + decimal digits only (see §3).
-- Lists: sorted lexicographically ascending, no duplicates.
-- Every binder key in `pair` **must** map to a non-empty object with at least one target key.
-- **One molecule, one key:** the same biological molecule must not appear under two different binder keys in one file (see §8).
-
-There is no `status` map, no `ref` map, and no evidence grades. Regulatory status was removed on 2026-10-29: every binder carried the same value, so the field distinguished nothing. Status is not a property of a binder–target edge and is not recorded here.
+- Both dictionaries obey every rule in this file identically; where a rule names `pair`, it binds `preclinical` too unless stated otherwise.
+- Either dictionary may be empty (`{}`). A binder may appear in both; the same `(binder, target, pmid)` triple must not.
+- Every binder key maps to a non-empty object; every target key to a non-empty array.
+- Citations: bare `pmid:<digits>`, sorted ascending, deduplicated.
+- One molecule, one key (§8.13), across both dictionaries.
+- Absent by design: `status`, `ref`, evidence grades, ranks, scores. The `pair`/`preclinical` split is **study type, not strength**: it orders nothing and asserts nothing about weight of evidence.
 
 ## 3. Key grammar
 
-**Binder** (biological keys only):
+**Binder** — biological only.
 
-- `aa:` + one or more canonical L-chain segments. Residues: `ACDEFGHIKLMNPQRSTVWY`. Multi-chain: the `/`-separated segments must be in **non-decreasing** order by **byte order** (UTF-8 code unit order)—a **sorted multiset of chains** (equal segments allowed, e.g. `aa:ACD/ACD`). If reordering segments would change the multiset or the on-disk segment order is not non-decreasing → **invalid**. Pattern: `^aa:[ACDEFGHIKLMNPQRSTVWY]+(/[ACDEFGHIKLMNPQRSTVWY]+)*$` with that order constraint.
-- `helm:` + HELM notation copied verbatim from the source record (no leading/trailing whitespace in the payload). The payload **must** be well-formed HELM (see §8). A SMILES or other non-HELM linear notation (e.g. `CC(=O)Oc1ccccc1C(=O)O`) **must** be rejected.
+- `aa:` + one or more canonical L-chain segments over `ACDEFGHIKLMNPQRSTVWY`, `/`-separated. Segments **non-decreasing** by UTF-8 byte order — a sorted multiset, repeats allowed (`aa:ACD/ACD`). Non-decreasing violated → **invalid**, not merely non-canonical.
+  `^aa:[ACDEFGHIKLMNPQRSTVWY]+(/[ACDEFGHIKLMNPQRSTVWY]+)*$` plus that order constraint.
+- `helm:` + HELM copied verbatim from the source record, no surrounding whitespace, well-formed per §8.8. SMILES or other non-HELM linear notation → **invalid**.
 
-**Target** (single protein):
+**Target** — one protein.
 
-- `uniprot:` + UniProt accession. Official accession body: either `[OPQ][0-9][A-Z0-9]{3}[0-9]` or `[A-NR-Z][0-9]([A-Z][A-Z0-9]{2}[0-9]){1,2}`. Optional isoform suffix: `-` plus a **positive integer with no leading zeros** (`-1`, `-2`, …). `-0`, `-01`, etc. → **invalid**. `uniprot:P12345` and `uniprot:P12345-1` are **distinct keys**; a producer must pick one form per target and must not treat them as interchangeable. Pattern: `^uniprot:((?:[OPQ][0-9][A-Z0-9]{3}[0-9])|(?:[A-NR-Z][0-9](?:[A-Z][A-Z0-9]{2}[0-9]){1,2}))(?:-[1-9]\d*)?$`
+- `uniprot:` + accession, optional isoform suffix `-` + positive integer, no leading zeros. `uniprot:P12345` and `uniprot:P12345-1` are **distinct keys**; pick one form per target and do not treat them as interchangeable.
+  `^uniprot:((?:[OPQ][0-9][A-Z0-9]{3}[0-9])|(?:[A-NR-Z][0-9](?:[A-Z][A-Z0-9]{2}[0-9]){1,2}))(?:-[1-9]\d*)?$`
 
-**Citation**:
+**Citation**
 
-- `pmid:` + decimal digits with **no leading zeros** (first digit must be `1`–`9`, or the sole digit `0` for PMID `0` if ever used). Pattern: `^pmid:(?:0|[1-9]\d*)$`
-- No `doi:`, URLs, or other citation forms.
+- `^pmid:(?:0|[1-9]\d*)$`. No `doi:`, URLs or other forms.
 
-Do not use binder prefixes on targets or citations; do not use target/citation prefixes on binders.
+Prefixes do not cross roles: no target or citation prefix on a binder key, and none of the reverse.
 
-## 4. Inclusion rule (citation admission)
+## 4. Citation admission
 
-- List `pmid:…` under `pair[binder][target]` only if that paper reports **clinical benefit** for that binder–target pair.
-- Exclude null results, harm-only results, and reports that do not establish clinical benefit for the pair.
-- Every `pair[binder][target]` array is **non-empty**.
-- If no paper qualifies, **do not** write that pair (no empty arrays).
+- `pair[binder][target]` **iff** the paper reports **clinical benefit in humans** for that binder against that target.
+- `preclinical[binder][target]` **iff** the paper reports utility in a non-human or in-vitro system for that pair, and makes no human-benefit claim.
+- A paper reporting both belongs in `pair` only. If the study type cannot be determined from the paper, **refuse the row**; do not default to either dictionary.
+- Exclude null results, harm-only results and anything short of utility for the pair.
+- No qualifying paper → do not write the pair. Empty arrays are never valid.
 
-Admission is semantic: you must verify against the paper; mechanical checks cannot replace this.
+Admission is **semantic** and is an **oracle** step (§8.16): verify against the paper. No grammar check, record lookup, or crawl substitutes for it, and no automated run discharges it — see §9.
 
 ## 5. Canonical serialisation
 
-- Encoding: **valid UTF-8** only; invalid byte sequences are invalid and must not be lossily repaired (no replacement characters).
-- Root key order in file: `version`, `pair`.
-- Every object: keys sorted lexicographically ascending.
-- Every citation array: deduplicated, sorted lexicographically ascending.
-- No trailing whitespace anywhere in the file after the JSON value except the mandatory final newline (see §8).
-- The file **must** end with **exactly one** newline character (`0x0A`). No `\r\n` unless the entire file convention is explicitly UTF-8 with CRLF—default is single `\n` only. A missing final newline is **invalid**.
-- Indentation: **two spaces per level**, one key or element per line, `": "` between key and value, `,` with no trailing space. On-disk text equals `JSON.stringify(obj, null, 2)` of the logically canonical object after applying the rules above (given already-valid binder keys, including pre-sorted `aa:` chains), plus the mandatory final newline. Verified 2026-10-29 against the committed `graph.json`: this form reproduces the file byte for byte.
+- Encoding: valid UTF-8. Invalid byte sequences are invalid and must not be repaired lossily (no U+FFFD, no stripping).
+- Root key order: `version`, `pair`, `preclinical`. Every object: keys sorted ascending. Every citation array: sorted ascending, deduplicated.
+- Indentation two spaces per level, one key or element per line, `": "` between key and value, `,` with no trailing space.
+- Exactly one terminating `\n` (`0x0A`); no other trailing whitespace; missing final newline → **invalid**. `\r\n` only if the whole file convention is explicitly CRLF; default is `\n`.
+- On-disk text = `JSON.stringify(obj, null, 2)` of the canonical object + that newline.
 
-## 6. Merge semantics
+## 6. Merge
 
-Merge valid graphs `A` and `B` into `M`:
+Merge valid `A`, `B` → `M`:
 
-- **`version`**: both files **must** declare the same `version`. Merging files of different versions is **invalid** — refuse rather than coerce; the key exists so that a pre-change and a post-change file cannot both validate and merge into one graph.
-- **`pair`**: For each binder and target, citation lists are the sorted deduplicated union of lists from `A` and `B`.
+- `version`: must be equal in both. Different versions → **refuse**, never coerce.
+- `pair` and `preclinical`: per dictionary, per binder and target, citations are the sorted deduplicated union. Never union across dictionaries.
 
-Re-serialise per §5. Merge is commutative, associative, and idempotent.
+Re-serialise per §5. Commutative, associative, idempotent.
 
-## 7. Read-time matching (never stored)
+## 7. Read-time matching
 
-Do not write ranks, scores, or aggregates into `graph.json`.
+Never stored. Rank **within one dictionary only**; a `preclinical` row and a `pair` row are not comparable and must not appear in one ordering. For target `t` in dictionary `D`:
 
-For each target `t`:
-
-1. Consider binders `b` with non-empty `pair[b][t]`.
-2. Rank by citation count `|pair[b][t]|` descending.
-3. Tie-break: binder key ascending lexicographic.
+1. Binders `b` where `D[b][t]` is non-empty.
+2. Rank by `|D[b][t]|` descending.
+3. Tie-break: binder key ascending.
 
 ## 8. Validation predicates
 
-Implement a validator from this section alone. Each condition is tagged **pure** (decidable from one file’s bytes alone), **relational** (needs a predecessor file), or **oracle** (needs an external source). **Passing a validator run proves only that the pure conditions hold**; relational and oracle conditions require separate checks.
+Implement from this section alone. Tags: **pure** = decidable from one file's bytes; **relational** = needs a predecessor file; **oracle** = needs an external source. A passing validator run proves **only the pure conditions**.
 
-1. **[pure] UTF-8:** Raw bytes decode as valid UTF-8. Any invalid sequence → **invalid** (do not substitute U+FFFD or strip bytes).
-
-2. **[pure] Final newline:** The file ends with exactly one `\n` and no other trailing whitespace (no spaces, tabs, or extra newlines after that byte). Missing final newline → **invalid**.
-
-3. **[pure] JSON root:** Content parses as JSON; root is a non-array object with **exactly** keys `version` and `pair` (no extra top-level keys, and neither key absent).
-
-4. **[pure] `version` value:** `version` is the number `1`. Any other value, or a string, → **invalid**. A file whose `version` this validator does not know must be **refused**, never partially read.
-
-5. **[pure] `pair` shape:** The value of `pair` is a non-null object (not an array).
-
-6. **[pure] Canonical bytes:** After parsing, re-serialising per §5 yields the same byte sequence as on disk (for a file that already passes binder-key rules).
-
-7. **[pure] `aa:` chain order:** For every `aa:` binder key, the `/`-separated chain segments form a **non-decreasing** sequence by byte order (a **sorted multiset of chains**; repeats allowed). If the segment order is not non-decreasing → **invalid** (not merely non-canonical).
-
-8. **[pure] `helm:` well-formedness:** For every `helm:` key, the payload after `helm:` is either bare HELM1/HELM2 text or HELM2 with an optional version suffix such as `V2.0` appended after the `$…$` sections. Structure: one or more **polymer blocks** separated by `|` (not `$`), each block `<TYPE><index>{<monomers>}` where `TYPE` is `PEPTIDE` — the only admissible block type — and `index` is a positive integer with no leading zeros; `{<monomers>}` is a **non-empty** dot-separated list of monomer symbols, each either one uppercase letter from the 20 standard residues or a bracketed symbol `[...]`; empty `{}`, SMILES or other non-monomer strings inside a `PEPTIDE{…}` block, and ASCII control characters or NUL bytes anywhere in the payload → **invalid**. After the polymer section comes `$<connections>$<groupings>$<ext>$` (`$` begins the connections section; it is **not** a polymer separator). At least one `PEPTIDE` polymer block is **required**, and **every** block must be `PEPTIDE`: the condition is per block, not per molecule, so a multi-block antibody such as `PEPTIDE1|PEPTIDE2|PEPTIDE3|PEPTIDE4` is **valid**. Payloads that are wholly non-HELM (e.g. a bare SMILES string such as `CC(=O)Oc1ccccc1C(=O)O` with no HELM polymer grammar) → **invalid**. **Scope (settled 2026-10-30):** the catalogue is protein-only. `RNA`, `CHEM` and `BLOB` are **not** admissible block types; a key containing any of them is **invalid** and is refused on admission, never classified. This closes the former open ADC / multi-polymer question: a conjugate carrying a `CHEM` warhead and a nucleic-acid binder are both out of scope by block type, independently of block count. Two negative cases must be distinguished because they fail different predicates: a non-`PEPTIDE` block fails **scope**, while a non-monomer payload such as `[CCO]` inside `PEPTIDE1{…}` fails the **monomer** test above.
-
-9. **[pure] `uniprot:` accessions:** Every target key matches §3, including isoform suffix `-` + positive integer without leading zeros when present.
-
-10. **[pure] `pmid:` digits:** Every citation matches `^pmid:(?:0|[1-9]\d*)$` (no leading zeros on multi-digit PMIDs).
-
-11. **[pure] `pair` targets present:** Every binder in `pair` maps to a non-empty object with at least one target key.
-
-12. **[pure] Target rows:** Each inner key satisfies §3 target grammar; each value is a non-empty array; elements satisfy condition 9; arrays are strictly sorted and duplicate-free.
-
-13. **[pure] One molecule, one key:** Each biological molecule has **exactly one canonical key form** in this catalogue. Identity rules (decidable): (a) two `aa:` keys denote the same molecule iff their **sorted multisets** of `/`-separated chain segments are equal; (b) two `helm:` keys denote the same molecule iff their payloads are equal after normalising polymer **index** digits only (same `TYPE`, `{monomers}`, and `$…$` sections; indices may differ); (c) an `aa:` key and a `helm:` key that denote the same plain L-chain sequence denote the **same molecule**, and only the **`aa:` form is valid**—the `helm:` duplicate is **invalid**. No two distinct binder keys in `pair` may share a molecule under these rules.
-
-14. **[pure] Cross-prefix hygiene:** No target or citation prefix on binder keys; no binder/citation prefix on target keys; citations only under `pair` lists.
-
-15. **[oracle] Inclusion (semantic):** Every stored `(binder, target, pmid)` triple satisfies §4 (requires literature review).
-
-16. **[pure] Refuse forbidden writes:** No stored ranks, grades, or non-`pmid:` citations (structural absence).
-
-17. **[pure] Empty catalogue:** `{"version":1,"pair":{}}` satisfies conditions 1–14 and 16 when serialised with one trailing newline.
-
-18. **[relational] Add-only (two-file):** Given a predecessor file `P` and successor file `S`, every binder, target, and `pmid:` edge present in `P` is present unchanged in `S` (same binder keys, same target keys per binder, same citation sets unless only superseded by human-directed process outside this spec). **A single-file validator cannot implement condition 18**; it requires comparing two revisions.
+1. **[pure] UTF-8.** Bytes decode as valid UTF-8.
+2. **[pure] Final newline.** Exactly one `\n`, nothing after it.
+3. **[pure] Root.** Parses as JSON; root is a non-array object with exactly `version`, `pair` and `preclinical`.
+4. **[pure] `version`.** The number `2`. Any other value, or a string → **invalid**. An unknown version is **refused**, never partially read.
+5. **[pure] Dictionary shape.** `pair` and `preclinical` are each a non-null object, not an array; either may be empty.
+6. **[pure] Canonical bytes.** Re-serialising the parsed object per §5 reproduces the file byte for byte.
+7. **[pure] `aa:` order.** Chain segments non-decreasing by byte order.
+8. **[pure] `helm:` well-formedness.** Payload is bare HELM1/HELM2, optionally with a version suffix such as `V2.0` after the `$…$` sections.
+   - Polymer blocks separated by `|`, each `<TYPE><index>{<monomers>}`; `index` a positive integer without leading zeros.
+   - `TYPE` is `PEPTIDE`, the only admissible block type. **Per block, not per molecule:** `PEPTIDE1|PEPTIDE2|PEPTIDE3|PEPTIDE4` is valid; one non-`PEPTIDE` block invalidates the key.
+   - `{<monomers>}` non-empty, dot-separated; each monomer one uppercase standard residue or a bracketed symbol `[...]`.
+   - After the polymer section: `$<connections>$<groupings>$<ext>$`. `$` opens connections; it is not a polymer separator.
+   - **Invalid:** `{}`; SMILES or other non-monomer text inside `PEPTIDE{…}`; ASCII control characters or NUL anywhere; a wholly non-HELM payload.
+   - Two refusals, two predicates: a non-`PEPTIDE` block fails **scope**; `[CCO]` inside `PEPTIDE1{…}` fails **monomer**. Do not collapse them.
+   - Protein-only is settled. `RNA`, `CHEM`, `BLOB` are out of scope by block type, which closes the ADC and multi-polymer question independently of block count.
+9. **[pure] `uniprot:`.** Every target key matches §3.
+10. **[pure] `pmid:`.** Every citation matches §3.
+11. **[pure] Binder rows.** In each dictionary, every binder maps to a non-empty object with ≥1 target key.
+12. **[pure] Target rows.** Inner keys satisfy §3; values are non-empty arrays, sorted, duplicate-free, elements satisfying condition 10.
+13. **[pure] One molecule, one key.** Across both dictionaries. Decidable identity: (a) two `aa:` keys are the same molecule iff their sorted chain multisets are equal; (b) two `helm:` keys iff their payloads are equal after normalising polymer index digits only; (c) an `aa:` and a `helm:` key denoting the same plain L-chain sequence are the same molecule and only the `aa:` form is valid. No two distinct binder keys in `pair` or `preclinical` may share a molecule.
+14. **[pure] Cross-prefix hygiene.** No role's prefix on another role's key; citations only inside citation arrays.
+15. **[pure] No duplicate triple.** No `(binder, target, pmid)` triple appears in both `pair` and `preclinical`.
+16. **[oracle] Inclusion and study type.** Every `(binder, target, pmid)` triple satisfies §4, in the dictionary it occupies. Requires reading the paper. **No validator run and no automated intake discharges this condition.**
+17. **[pure] Forbidden writes.** No stored ranks, grades or non-`pmid:` citations.
+18. **[pure] Empty catalogue.** The empty catalogue is `{`, `  "version": 2,`, `  "pair": {},`, `  "preclinical": {}`, `}` on five lines with one trailing newline, and satisfies conditions 1–15 and 17. Any compact one-line form **fails** condition 6 and is invalid.
+19. **[relational] Add-only.** Given predecessor `P` and successor `S`, every binder, target and citation in `P` is present unchanged in `S`, in the same dictionary, except under human-directed supersession outside this spec. **A single-file validator cannot implement this.**
 
 ## 9. Background update contract
 
-When extending the catalogue autonomously:
+1. Satisfy §8.19 against the prior committed `graph.json`; add only rows satisfying §2–§4 and §8.1–§8.18.
+2. Re-serialise to §5 before persisting.
+3. **Branch boundary.** Autonomous intake writes to branch `data` only. `main` changes only by a human-reviewed merge. The merge is the admission gate for condition 16, which no run can discharge for itself.
+4. Intake procedure: `skills/fill-db.md`. It enumerates structured authorities; it does not crawl prose, and its own acceptance test is rediscovery of the rows already committed.
+5. This repository ships no updater, cron or CI. Compliance is your behaviour against this contract.
 
-1. **Append-only growth:** satisfy §8 condition **18** against the prior committed `graph.json`, and add only rows that satisfy §2–§4 and §8 conditions **1–17**.
-2. **Re-serialise:** after any edit, rewrite `graph.json` to §5 before persisting.
-3. **No implementation in repo:** this repository does not ship updaters, cron, or CI. Compliance is your behavior against this contract only.
-
-If a proposed row fails any rule above, **refuse** the write and report which condition failed.
+A proposed row failing any rule above is **refused**, naming the condition that failed.

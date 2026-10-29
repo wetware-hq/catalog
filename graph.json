@@ -1,5 +1,5 @@
 {
-  "version": 1,
+  "version": 2,
   "pair": {
     "aa:CKGKGAKCSRLMYDCCTGSCRSGKC": {
       "uniprot:Q00975": [
@@ -276,5 +276,6 @@
         "pmid:26556097"
       ]
     }
-  }
+  },
+  "preclinical": {}
 }
