@@ -224,6 +224,83 @@ def test_E2_registry_passes_on_bijection_with_none_scope():
     assert res["E2"].ok is True, res["E2"].rows
 
 
+# --- E1's exclusion allowlist: every entry pinned, and the remaining blind spot pinned too ------------------
+#
+# validate.E1_ALLOWLIST is the only thing E1 skips. The rule the three tests below enforce: an exclusion in a
+# checker is only safe if the excluded thing is pinned by a test that fails when the exclusion is abused.
+
+REPO_ROOT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+
+
+def _tmp_repo(name, files):
+    """Write {relpath: text} under /tmp/<name> and return the directory. Fresh every call."""
+    import shutil
+    root = os.path.join("/tmp", name)
+    shutil.rmtree(root, ignore_errors=True)
+    for rel, text in files.items():
+        full = os.path.join(root, rel)
+        os.makedirs(os.path.dirname(full), exist_ok=True)
+        open(full, "w", encoding="utf-8").write(text)
+    return root
+
+
+def test_E1_every_allowlisted_path_fails_the_banner_check():
+    """Each allowlisted path must exist and must FAIL the banner check it is excluded from.
+
+    This is what stops the allowlist becoming a blind spot: a listed file that quietly acquires the banner, or
+    is deleted, no longer needs excluding, and this test fails until the entry is removed.
+    """
+    assert V.E1_ALLOWLIST, "an empty allowlist means check_disclaimer skips nothing; drop the mechanism instead"
+    for rel in V.E1_ALLOWLIST:
+        path = os.path.join(REPO_ROOT, rel)
+        assert os.path.exists(path), f"{rel}: allowlisted but no such file; remove the entry"
+        why = V.banner_violation(path)
+        assert why is not None, (
+            f"{rel}: allowlisted from E1 but it PASSES the banner check. Either it no longer needs the "
+            f"exclusion, or the fixture it serves has been broken.")
+
+
+def test_E1_fixture_named_file_outside_the_fixtures_tree_still_fails():
+    """The exclusion is by exact path, never by name or by directory.
+
+    A file called notes.md sitting in a directory called ext_disclaimer_fail/ - the fixture's own name - still
+    fails E1 when it lives anywhere other than the allowlisted path.
+    """
+    repo = _tmp_repo("e1_lookalike", {
+        "AGENTS.md": V.BANNER + "\n\n# agents\n",
+        "docs/ext_disclaimer_fail/notes.md": "# notes\n\nNo banner, and not at the allowlisted path.\n",
+        "tests/fixtures/ext_disclaimer_fail/notes.md": "# notes\n\nNot the allowlisted path either.\n",
+    })
+    rep = V.Report(); V.check_disclaimer(repo, rep)
+    f = rep.findings[0]
+    assert f.ok is False, f.rows
+    assert any("docs/ext_disclaimer_fail/notes.md" in r for r in f.rows), f.rows
+    assert any("tests/fixtures/ext_disclaimer_fail/notes.md" in r for r in f.rows), f.rows
+
+
+def test_E1_real_file_at_an_allowlisted_path_is_skipped():
+    """The blind spot the allowlist still has, written down as a passing test rather than as prose.
+
+    A real, unbannered document placed at exactly an allowlisted path is NOT reported. That is the whole
+    residual cost of the exclusion, it is one path wide, and this test is what makes it visible: delete the
+    exclusion and this test fails, which is the point.
+    """
+    rel = V.E1_ALLOWLIST[0]
+    repo = _tmp_repo("e1_blindspot", {
+        "AGENTS.md": V.BANNER + "\n\n# agents\n",
+        rel: "# a real document, no banner, parked at an allowlisted path\n",
+    })
+    assert V.banner_violation(os.path.join(repo, rel)) is not None   # it does violate E1 ...
+    rep = V.Report(); V.check_disclaimer(repo, rep)
+    assert rep.findings[0].ok is True, rep.findings[0].rows          # ... and E1 still passes: the blind spot
+
+
+def test_E1_repo_root_passes_with_the_fixtures_scanned():
+    """The repository itself passes E1 with every fixture scanned except the allowlist - no directory skipped."""
+    rep = V.Report(); V.check_disclaimer(REPO_ROOT, rep)
+    assert rep.findings[0].ok is True, rep.findings[0].rows
+
+
 def test_E3_online_no_pmids_is_noop_without_network():
     # Deterministic, offline: empty catalogue -> nothing to resolve, no HTTP call.
     path = "/tmp/_empty_online.json"

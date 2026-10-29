@@ -5,7 +5,7 @@
 A dependency-light validator for [`wetware-hq/catalog`](https://github.com/wetware-hq/catalog)'s `graph.json`
 (binder → protein-target evidence graph). It implements the validation predicates in `AGENTS.md` **§8**, using the
 §2 schema, §3 key grammar, §5 canonical serialisation and §6 merge. Standard library only, Python ≥ 3.9.
-It does not modify the catalog repo.
+It reads; it writes nothing in this repository, and it is outside every agent's write scope (`AGENTS.md` §0).
 
 > A passing run proves **only the pure conditions** (and, with `--prev`, the one relational condition). The oracle
 > predicate §8.16 is never discharged — it requires reading each paper (§4, §9.3).
@@ -18,7 +18,7 @@ None. Copy `validate.py` (and `tests/` if you want the suite). No third-party pa
 python3 validate.py graph.json                 # pure predicates §8.1–§8.15, §8.17, §8.18
 python3 validate.py --prev OLD.json graph.json  # + relational §8.19 (add-only)
 python3 validate.py --merge A.json B.json       # §6 merge -> canonical bytes on stdout
-python3 validate.py graph.json --repo .         # + extension predicates E1 (banner), E2 (skill registry)
+python3 validate.py graph.json --repo ..        # + extension predicates E1 (banner), E2 (skill registry)
 python3 validate.py graph.json --online         # + E3 pmid resolution via NCBI E-utilities (NON-BLOCKING)
 python3 validate.py --json graph.json           # machine-readable report
 ```
@@ -57,17 +57,41 @@ repository/documentation invariants agreed for the `system.fleet` and are ids-pr
 
 | id | tag | mode | what it checks |
 |---|---|---|---|
-| E1 Disclaimer banner | pure-ext | `--repo DIR` | the **first non-blank line** of every `.md` under `DIR` is byte-identical to `⚠️ ACADEMIC RESEARCH PURPOSES ONLY; NOT FOR MEDICAL USE WITHOUT LICENSED OVERSIGHT` — one fixed repeated string, no paraphrase or cross-reference (distinct from the README's *What it is not* scope paragraph). |
+| E1 Disclaimer banner | pure-ext | `--repo DIR` | the **first non-blank line** of every `.md` under `DIR` is byte-identical to `⚠️ ACADEMIC RESEARCH PURPOSES ONLY; NOT FOR MEDICAL USE WITHOUT LICENSED OVERSIGHT` — one fixed repeated string, no paraphrase or cross-reference (distinct from the README's *What it is not* scope paragraph). Exclusions: the exact paths in `E1_ALLOWLIST`, see below. |
 | E2 Skill registry | pure-ext | `--repo DIR` | `skills/*.md` on disk and the rows of AGENTS.md **§10** are in bijection (no orphan file, no dangling row); a skill whose header declares it a `special` / `agent.skill` must declare write scope **`none`**. |
 | E3 pmid resolution | online-ext | `--online` | every `pmid:` in `graph.json` resolves via NCBI E-utilities (`esummary`). **NON-BLOCKING**: it needs network + a live third-party service, is reported separately, and **never** changes the exit code. A service outage reports *UNAVAILABLE*, not a failure. |
 
 E1/E2 are pure and **do** gate (exit `1` on violation) when `--repo` is supplied. E3 never gates.
+
+### E1's exclusion allowlist
+
+E1 has to skip exactly one file: `validator/tests/fixtures/ext_disclaimer_fail/notes.md` is a deliberately
+unbannered fixture and is how E1 itself is tested, so scanning it would make the validator fail by doing its job.
+
+**The rule: an exclusion in a checker is only safe if the excluded thing is pinned by a test that fails when the
+exclusion is abused.** Skipping the whole `tests/fixtures/` *directory* broke that rule — nothing failed if a
+fixture quietly gained the banner, nothing failed if a real document was parked under `tests/fixtures/`, and the
+blind spot grew with every file added. The exclusion is therefore `E1_ALLOWLIST`, a tuple of **exact
+repo-relative paths**, one entry long; the other eight `.md` files under `fixtures/` carry the banner and are
+scanned like any other file. Three tests hold it shut:
+
+- `test_E1_every_allowlisted_path_fails_the_banner_check` — every listed path exists and **fails** the banner
+  check. Add the banner to it, or delete it, and this test breaks.
+- `test_E1_fixture_named_file_outside_the_fixtures_tree_still_fails` — a file named like the fixture, in a
+  directory named like the fixture, anywhere but the allowlisted path, still fails E1. The exclusion is by exact
+  path, never by name.
+- `test_E1_real_file_at_an_allowlisted_path_is_skipped` — the one blind spot that remains, as a passing test
+  rather than a paragraph someone can delete.
+
+Version-control internals and generated tool caches (`.git`, `.pytest_cache`, `__pycache__`, …) are not walked at
+all: they are not repository content, are absent from a fresh clone, and are not exclusions of anything.
 A skill is "special" iff its header block (text before the first `## `) contains the token `agent.skill`, or a
 `class`/`type`/`spec` declaration whose value is `special`.
 
-## Current result (graph.json @ commit 9e2f1d9, 55 `pair` rows, 0 `preclinical`)
-All pure predicates **PASS**. Add-only **PASSES** against the first row-bearing commit (`b5fd668`). §8.16 is reported
-as not discharged. No violations found.
+## Current result (graph.json on branch `design-binder`: 55 `pair` rows, 41 targets, 0 `preclinical`)
+All pure predicates **PASS**, and E1/E2 pass with `--repo`. Add-only **PASSES** against `graph.json` at `a5a768c`,
+the base commit this branch grew from — the file is byte-identical to it there, since nothing on this branch
+touches the catalogue. §8.16 is reported as not discharged. No violations found.
 
 ## Spec ambiguities encountered
 1. **§8.8 monomer vs SMILES is not fully specified as a byte-decidable rule.** The spec tags §8.8 *pure* and gives
@@ -88,8 +112,8 @@ as not discharged. No violations found.
 4. **§8.18 scope.** Reported only when both dictionaries are empty (otherwise N/A).
 
 ## Tests & CI
-- `python3 tests/test_validate.py` — 25 tests: one minimal failing fixture per pure predicate plus §8.19 and merge,
-  and failing + passing fixtures for the E1/E2 extension predicates (and an offline no-op test for E3),
-  including the HELM scope-vs-monomer distinction. (pytest optional; a stdlib runner is built in.)
+- `python3 tests/test_validate.py` — 29 tests: one minimal failing fixture per pure predicate plus §8.19 and merge,
+  failing + passing fixtures for the E1/E2 extension predicates (and an offline no-op test for E3), the four tests
+  that pin E1's exclusion allowlist, and the HELM scope-vs-monomer distinction. (pytest optional; a stdlib runner is built in.)
 - `.github/workflows/validate.yml` — ready-to-use GitHub Actions workflow (runs tests, pure predicates, and the
   add-only check against the previous commit). Not pushed anywhere.
