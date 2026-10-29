@@ -1,3 +1,5 @@
+⚠️ ACADEMIC RESEARCH PURPOSES ONLY; NOT FOR MEDICAL USE WITHOUT LICENSED OVERSIGHT
+
 # resolve-key
 
 Resolve a database key to labels. Read-only. Never writes.

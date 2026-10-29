@@ -1,3 +1,5 @@
+⚠️ ACADEMIC RESEARCH PURPOSES ONLY; NOT FOR MEDICAL USE WITHOUT LICENSED OVERSIGHT
+
 # catalog
 
 **Background.** Deciding which biological therapy is worth using against a given protein target means reading the trial literature pair by pair. There is no compact, machine-readable record of which binder has been shown to help patients when directed at which target.

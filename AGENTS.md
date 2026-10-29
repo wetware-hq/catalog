@@ -1,3 +1,5 @@
+⚠️ ACADEMIC RESEARCH PURPOSES ONLY; NOT FOR MEDICAL USE WITHOUT LICENSED OVERSIGHT
+
 # `graph.json` — agent contract
 
 `type: resource.reference` · **normative**. `README.md` is non-normative; on conflict this file governs. Implement validators, mergers and updaters from this file alone.
@@ -7,6 +9,14 @@
 - **Read:** `graph.json`, `AGENTS.md`, `skills/*.md`, `LICENSE`.
 - **Write:** `graph.json` and `proposals.json` only, under §9.
 - **Refuse:** scripts, workflows, CI, package manifests or secondary data files in this repo, `proposals.json` (§9) being the single named exception; stored ranks, scores or grades; citations other than bare `pmid:<digits>`; empty citation arrays; pairs without qualifying evidence (§4); removal or rewriting of existing rows absent explicit human supersession.
+
+## 0b. Documentation banner
+
+Every Markdown file in this repository opens, as its **first non-blank line**, with the exact byte string
+
+`⚠️ ACADEMIC RESEARCH PURPOSES ONLY; NOT FOR MEDICAL USE WITHOUT LICENSED OVERSIGHT`
+
+— one fixed, repeated string, byte-identical in every file, never paraphrased, abbreviated or replaced by a cross-reference. It states **who may act on this repository**, and is deliberately distinct from the README's *What it is not* paragraph, which states what the catalogue records; the two are not merged. This is a normative documentation invariant. It is **not** one of the nineteen §8 predicates and does not renumber them; it is checked as a validator extension (see `catalog-validator`).
 
 ## 1. Purpose
 
