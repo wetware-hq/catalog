@@ -99,6 +99,22 @@ A weighted sum cannot do this job: a total can be high for the wrong reason, and
 
 **There is no computable score for clinical utility.** Affinity, developability and epitope content are computable, and not one of them predicts patient benefit. That is the oracle, and no swarm closes it. Where the top two are separated only by prediction, the honest output is **unranked candidates**, not a confident first place; a run returning a #1 with no stated scorer is manufacturing the oracle step.
 
+### Screen performance, as the source reports it
+
+The screen above has a published success rate, and the report carries it (§7). Source: Figure 3, panel E of the ipSAE preprint, read off the rendered panel at 600 dpi — row 9 of [`references.md`](../references.md), which is where the pin and the read status live. The x-axis groups are **`Recall = 0.2`**, **`Recall = 0.4`** and **`Max F1`**; the Figure 3 legend's "0.6" is an error in the source and the Results prose is the correct one. The rows below are in the panel's legend order, which is also the bar order in all three groups.
+
+| discriminator | legend AP | Recall = 0.2 | Recall = 0.4 | Max F1 |
+|---|---|---|---|---|
+| LIS × input_interface_sc | 0.58 | 54% | 50% | 44% |
+| ipSAE_min × interface_ΔG/ΔSASA | 0.56 | 61% | 53% | 36% |
+| ipSAE_min | 0.54 | 29% | 48% | 47% |
+| ipTM | 0.51 | 60% | 38% | 31% |
+| AF2 pAE interaction | 0.38 | 12% | 20% | 29% |
+
+Each cell is a **median experimental success rate across 15 targets**, and the error bars are the **inter-quartile range**, which is enormous: roughly **9% to 90%** at recall 0.2. A median drawn from a spread that wide is a weak summary of any single target, including yours.
+
+**Average precision and median success rate disagree, and the disagreement is the finding.** ipSAE_min is the best *single* feature on AP — 0.54 against ipTM's 0.51 and the AF2 pAE interaction baseline's 0.38, which is the comparison the 1.4-fold claim is made against, and the gap to ipTM is small — yet it returns **29% at recall 0.2**, below ipTM's 60% at the same stringency, and below every feature in the panel there except the AF2 baseline. The two measures answer different questions: AP scores the **whole ranking**, median success rate scores only **what you actually order at a stated stringency**. A run that quotes AP and then orders at low recall has quoted the wrong number. Report both, name the operating point, and carry the inter-quartile range beside the median.
+
 ## 7. Output
 
 Report, and write nothing. A single binder is emitted only when §6 earns it, and then it is labelled **by the criterion that chose it**, never as *best*.
@@ -114,7 +130,7 @@ Report, and write nothing. A single binder is emitted only when §6 earns it, an
 | evidence | each ranking signal, labelled prediction or measurement |
 | screens | each stage-one screen and its result, including for excluded candidates |
 | scorer | the quantity that produced the order, with values and uncertainty |
-| expected success rate | the median expected success rate for the scorer used, at the thresholds **as the source labels them**, with any internal inconsistency in the source flagged rather than resolved, and the pre-selection bias of the benchmark targets noted beside it. This replaces a bare confidence score: "what fraction of what I order will bind" is the question a bench campaign actually asks, and every discriminator number is a proxy for it. |
+| expected success rate | the median expected success rate for the scorer used, at the thresholds **as the source labels them** — the table in §6, with the operating point named, the inter-quartile range carried beside the median, and the pre-selection bias of the benchmark targets noted. Where the source is internally inconsistent, the discrepancy is resolved by reading the panel and the resolution recorded in `references.md`, never carried silently; and the ranking the number came from is stated, because average precision and median success rate do not agree (§6). This replaces a bare confidence score: "what fraction of what I order will bind" is the question a bench campaign actually asks, and every discriminator number is a proxy for it. |
 | killing assays | **two**, with thresholds and who could run each. A binding assay kills the affinity claim with a measured Kd. A counter-screen against the pre-registered paralogue panel and the healthy-tissue expression bar kills the safety claim even when the Kd is perfect — a binder that binds beautifully and also binds something in the myocardium is the failure mode that reaches patients. |
 | generator | what produced the sequence, standing in for the citation it does not have: the run, the design and scoring models with versions, the inputs, the date, and the catalogue PMIDs that justified choosing this target |
 | catalogue context | evidenced binders against this target at the pinned SHA with the indication read from each paper, or the explicit statement that none are entered and that this is not a negative |
