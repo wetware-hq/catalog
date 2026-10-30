@@ -4,9 +4,9 @@
 
 The `verifier/` namespace of [`wetware-hq/catalog`](https://github.com/wetware-hq/catalog): a dependency-light
 checker for this repository's `graph.json` (binder → protein-target evidence graph). It implements the validation
-predicates in `AGENTS.md` **§8**, using the §2 schema, §3 key grammar, §5 canonical serialisation and §6 merge.
+predicates in `follow-agent-contract.md` **§8**, using the §2 schema, §3 key grammar, §5 canonical serialisation and §6 merge.
 Standard library only, Python ≥ 3.9.
-It reads; it writes nothing in this repository, and it is outside every agent's write scope (`AGENTS.md` §0).
+It reads; it writes nothing in this repository, and it is outside every agent's write scope (`follow-agent-contract.md` §0).
 
 > A passing run proves **only the pure conditions** (and, with `--prev`, the one relational condition). The oracle
 > predicate §8.16 is never discharged — it requires reading each paper (§4, §9.3).
@@ -22,7 +22,7 @@ python3 verifier/verify.py --prev OLD.json graph.json # + relational §8.19 (add
 python3 verifier/verify.py --merge A.json B.json      # §6 merge -> canonical bytes on stdout
 python3 verifier/verify.py graph.json --repo .        # + extension predicates E1 (banner), E2 (skill registry), E4 (system registry)
 python3 verifier/verify.py graph.json --online        # + E3 pmid resolution via NCBI E-utilities (NON-BLOCKING)
-python3 verifier/verify.py --trace core.trace a1.trace # TRACES judgements (traces/traces.md); carrier sets are literals
+python3 verifier/verify.py --trace core.trace a1.trace # TRACES judgements (traces/record-fleet-traces.md); carrier sets are literals
 python3 verifier/verify.py --json graph.json          # machine-readable report
 ```
 Exit status: `0` all evaluated predicates passed · `1` a violation/refusal · `2` usage/IO error.
@@ -55,25 +55,25 @@ Each failing predicate prints its id (e.g. `8.13`) and the offending row.
 
 ## Extension predicates (beyond §8)
 
-These are **not** part of AGENTS.md §8's nineteen normative predicates and do not renumber them. They enforce
+These are **not** part of follow-agent-contract.md §8's nineteen normative predicates and do not renumber them. They enforce
 repository/documentation invariants agreed for the `agent.fleet` and are ids-prefixed `E`:
 
 | id | tag | mode | what it checks |
 |---|---|---|---|
 | E1 Disclaimer banner | pure-ext | `--repo DIR` | the **first non-blank line** of every `.md` under `DIR` is byte-identical to `⚠️ ACADEMIC RESEARCH PURPOSES ONLY; NOT FOR MEDICAL USE WITHOUT LICENSED OVERSIGHT` — one fixed repeated string, no paraphrase or cross-reference (distinct from the README's *What it is not* scope paragraph). Exclusions: the exact paths in `E1_ALLOWLIST`, see below. |
-| E2 Skill registry | pure-ext | `--repo DIR` | `skills/*.md` on disk and the rows of AGENTS.md **§10** are in bijection (no orphan file, no dangling row); a skill whose header declares it a `special` / `agent.skill` must declare write scope **`none`**. |
+| E2 Skill registry | pure-ext | `--repo DIR` | `skills/*.md` on disk and the rows of follow-agent-contract.md **§10** are in bijection (no orphan file, no dangling row); a skill whose header declares it a `special` / `agent.skill` must declare write scope **`none`**. |
 | E3 pmid resolution | online-ext | `--online` | every `pmid:` in `graph.json` resolves via NCBI E-utilities (`esummary`). **NON-BLOCKING**: it needs network + a live third-party service, is reported separately, and **never** changes the exit code. A service outage reports *UNAVAILABLE*, not a failure. |
-| E4 System registry | pure-ext | `--repo DIR` | `systems/*.md` and `traces/*.md` on disk and the paths named in AGENTS.md **§11** are in bijection. The two directories are hard-coded; a markdown file anywhere else is not a system row. |
+| E4 System registry | pure-ext | `--repo DIR` | `systems/*.md` and `traces/*.md` on disk and the paths named in follow-agent-contract.md **§11** are in bijection. The two directories are hard-coded; a markdown file anywhere else is not a system row. |
 
 E1, E2, and E4 are pure and **do** gate (exit `1` on violation) when `--repo` is supplied. E3 never gates.
 
 ### Trace judgements
 
-`--trace CORE.trace WORKER.trace …` decides `traces/traces.md`. The carrier sets (`Skill`, `Act`, `Gate`, `Step`, `Fields`, `Context`) are literals in `verify.py`. They are not loaded from the markdown. Exit `0` is the judgement `result`. Any other exit is `partial` and names the first code in the spec's order: `R1`, `R3`, `admit`, then `R2`, `R4`–`R10`. `admit` reports the line code (`syntax`, `hash`, `run`, `skill`, `act`, `fields`, `value`, `parent`). A `result` does not discharge `AGENTS.md` §8.16, and it does not decide that a logged act occurred.
+`--trace CORE.trace WORKER.trace …` decides `traces/record-fleet-traces.md`. The carrier sets (`Skill`, `Act`, `Gate`, `Step`, `Fields`, `Context`) are literals in `verify.py`. They are not loaded from the markdown. Exit `0` is the judgement `result`. Any other exit is `partial` and names the first code in the spec's order: `R1`, `R3`, `admit`, then `R2`, `R4`–`R10`. `admit` reports the line code (`syntax`, `hash`, `run`, `skill`, `act`, `fields`, `value`, `parent`). A `result` does not discharge `follow-agent-contract.md` §8.16, and it does not decide that a logged act occurred.
 
 ### E1's exclusion allowlist
 
-E1 has to skip exactly one file: `verifier/tests/fixtures/ext_disclaimer_fail/notes.md` is a deliberately
+E1 has to skip exactly one file: `verifier/tests/fixtures/ext_disclaimer_fail/skip-disclaimer-banner.md` is a deliberately
 unbannered fixture and is how E1 itself is tested, so scanning it would make the verifier fail by doing its job.
 
 **The rule: an exclusion in a checker is only safe if the excluded thing is pinned by a test that fails when the
@@ -131,4 +131,4 @@ catalogue. §8.16 is reported as not discharged. No violations found.
   predicates, with E3 in a separate non-blocking job. The workflow file keeps its `validate.yml` name so the
   check name GitHub reports does not move. A green run proves the pure conditions and the **gating** extension
   predicates E1, E2, and E4, and nothing else: E3 is non-blocking (`continue-on-error: true`), so a green run says
-  nothing about it, and §8.16 is never discharged by a machine (`AGENTS.md` §9.6). The trace witness is in the unit tests, not in that workflow command.
+  nothing about it, and §8.16 is never discharged by a machine (`follow-agent-contract.md` §9.6). The trace witness is in the unit tests, not in that workflow command.

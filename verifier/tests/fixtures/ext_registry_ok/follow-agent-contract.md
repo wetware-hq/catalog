@@ -4,4 +4,4 @@
 
 | skill | namespaces | signature | write scope |
 |---|---|---|---|
-| [`skills/special-one.md`](skills/special-one.md) | `aa:` | `x -> y` | `proposals.json` only |
+| [`skills/exercise-special-scope.md`](skills/exercise-special-scope.md) | `aa:` | `x -> y` | none; read-only |

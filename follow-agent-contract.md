@@ -2,11 +2,11 @@
 
 # `graph.json` — agent contract
 
-`type: resource.reference` · **normative**. `README.md` is non-normative; on conflict this file governs. Implement verifiers, mergers and updaters from this file alone.
+`type: resource.reference` · **normative**. `read-repository.md` is non-normative; on conflict this file governs. Implement verifiers, mergers and updaters from this file alone.
 
 ## 0. Scope
 
-- **Read:** `graph.json`, `AGENTS.md`, `skills/*.md`, `systems/*.md` (§11), `traces/*.md` (§11), `references.md`, `README.md` (non-normative), `verifier/`, `.github/workflows/`, `LICENSE`.
+- **Read:** `graph.json`, `follow-agent-contract.md`, `skills/*.md`, `systems/*.md` (§11), `traces/*.md` (§11), `pin-pin-references.md`, `read-repository.md` (non-normative), `verifier/`, `.github/workflows/`, `LICENSE`.
 - **Write:** `graph.json` and `proposals.json` only, under §9.
 - **Refuse:** writing scripts, workflows, CI, package manifests or secondary data files in this repo, `proposals.json` (§9) being the single named exception — the verifier under `verifier/` and the workflow under `.github/workflows/` are human-directed additions that check this contract and are outside every agent's write scope, so an agent reads them and does not edit them; stored ranks, scores or grades; citations other than bare `pmid:<digits>`; empty citation arrays; pairs without qualifying evidence (§4); removal or rewriting of existing rows absent explicit human supersession.
 
@@ -179,8 +179,8 @@ The reader-facing warning is therefore not carried by a path either. It is carri
 
 | system | what it holds | write scope |
 |---|---|---|
-| [`systems/bench.md`](systems/bench.md) | a run-scoped append-only commons where a swarm's agents read and write partial work concurrently | its own `.bench` store only; never `graph.json`, never `proposals.json` |
-| [`traces/traces.md`](traces/traces.md) | the act log of one `agent.fleet` run: pin, call, refusal, proposal, emission, halt | its own `.trace` store only, outside this repository; never `graph.json`, never `proposals.json`, never `.bench` |
+| [`systems/use-bench.md`](systems/use-bench.md) | a run-scoped append-only commons where a swarm's agents read and write partial work concurrently | its own `.bench` store only; never `graph.json`, never `proposals.json` |
+| [`traces/record-fleet-traces.md`](traces/record-fleet-traces.md) | the act log of one `agent.fleet` run: pin, call, refusal, proposal, emission, halt | its own `.trace` store only, outside this repository; never `graph.json`, never `proposals.json`, never `.bench` |
 
 - A system is not a skill and is not listed in §10. It originates nothing and admits nothing: §4 is untouched by anything written to a scratchpad or an act log, and a record in a `.bench` or `.trace` store is not a claim this file recognises.
 - `bench` is scoped to a single run and is discarded with it. It is not a second catalogue, and it is not a cache of `graph.json`.

@@ -1,6 +1,6 @@
 ⚠️ ACADEMIC RESEARCH PURPOSES ONLY; NOT FOR MEDICAL USE WITHOUT LICENSED OVERSIGHT
 
-# references.md — pinned reference table
+# pin-references — pinned reference table
 
 Repo: `wetware-hq/catalog` · Compiled 30 Oct 2026 (Australia/Sydney) · Every PDF below was downloaded on the box on that date.
 

@@ -4,9 +4,9 @@
 
 # `TRACES` — formal system
 
-`type: resource.system` · `spec: agent.fleet` · subordinate to `AGENTS.md`, which governs on any conflict (`AGENTS.md` §0).
+`type: resource.system` · `spec: agent.fleet` · subordinate to `follow-agent-contract.md`, which governs on any conflict (`follow-agent-contract.md` §0).
 
-A trace is an act log of one `agent.fleet` run. This file is a formal system: a language, carrier sets written out as literals, total functions, and judgements. The checker `verifier/verify.py --trace` is the transcription of those judgements. It decides them from bytes. It does not discharge `AGENTS.md` §8.16.
+A trace is an act log of one `agent.fleet` run. This file is a formal system: a language, carrier sets written out as literals, total functions, and judgements. The checker `verifier/verify.py --trace` is the transcription of those judgements. It decides them from bytes. It does not discharge `follow-agent-contract.md` §8.16.
 
 ```
 Freedom  = 1
@@ -95,7 +95,7 @@ Context(absent)               = gloss not-a-negative
 
 Field tuples are the sorted key order. `gloss` and `verdict` are members of the row they are written on and of no other row.
 
-`binder` holds iff the value satisfies `AGENTS.md` §8.7 and §8.8. `target` holds iff it satisfies §8.9. `pmid` holds iff it satisfies §8.10. The checker calls those predicates. It does not restate them. `subject` is not sent through them.
+`binder` holds iff the value satisfies `follow-agent-contract.md` §8.7 and §8.8. `target` holds iff it satisfies §8.9. `pmid` holds iff it satisfies §8.10. The checker calls those predicates. It does not restate them. `subject` is not sent through them.
 
 ```
 key(propose-pairs, 3)          = binder
@@ -124,7 +124,7 @@ parent(C, ℓ, H) =
     otherwise                                              → ⊥
 ```
 
-`sameMolecule` is `AGENTS.md` §8.13 on the binder strings of `propose` lines: equal `aa:` multisets, equal `helm:` payloads after polymer-index normalisation, or an `aa:` key and a plain-L-chain `helm:` key with that sequence. One string used twice is one key.
+`sameMolecule` is `follow-agent-contract.md` §8.13 on the binder strings of `propose` lines: equal `aa:` multisets, equal `helm:` payloads after polymer-index normalisation, or an `aa:` key and a plain-L-chain `helm:` key with that sequence. One string used twice is one key.
 
 ## 3. Judgements
 
@@ -203,7 +203,7 @@ The following are not judgements. A checker that returns `result` has not decide
 
 - A line's act is an event that occurred. `Admit` decides shape.
 - The catalogue blob named by `rev` was fetched. `decide` does not open `graph.json`.
-- `AGENTS.md` §8.16. The only derived oracle string is `not-discharged`.
+- `follow-agent-contract.md` §8.16. The only derived oracle string is `not-discharged`.
 - Patient benefit. `Result` on a design head is a hypothesis carrying `Disclaimer`, or a named refusal. `Disclaimer` sits inside the preimage, so a line with the disclaimer removed has a different `Id` and fails `hash`.
 - Any area under a curve. `Coverage` is the judgement `Result`, not a number.
 
@@ -240,4 +240,4 @@ halt 9d2001abc00391ea2c66714740c2ba9ec5c279405495498f51a72db31be4d6a3 ^2f3f73356
 
 ## 6. Status
 
-`decide` is implemented by `verifier/verify.py --trace`. Extension predicate E4 decides the bijection between `AGENTS.md` §11 and the files `systems/*.md` and `traces/*.md`. Neither judgement is §8.16.
+`decide` is implemented by `verifier/verify.py --trace`. Extension predicate E4 decides the bijection between `follow-agent-contract.md` §11 and the files `systems/*.md` and `traces/*.md`. Neither judgement is §8.16.

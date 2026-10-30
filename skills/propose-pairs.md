@@ -2,13 +2,13 @@
 
 # `propose-pairs` — catalogue intake
 
-`type: resource.procedure` · `spec: agent.fleet` · subordinate to `AGENTS.md`, which governs on any conflict.
+`type: resource.procedure` · `spec: agent.fleet` · subordinate to `follow-agent-contract.md`, which governs on any conflict.
 
 ## 0. Objective
 
-Propose `(binder, target)` pairs for `graph.json` by writing them to `proposals.json`. **This procedure never writes `graph.json`**, on any branch (`AGENTS.md` §9). A candidate qualifies when **all** hold:
+Propose `(binder, target)` pairs for `graph.json` by writing them to `proposals.json`. **This procedure never writes `graph.json`**, on any branch (`follow-agent-contract.md` §9). A candidate qualifies when **all** hold:
 
-- binder and target are both **biological** and both **protein** (`AGENTS.md` §3, §8.8);
+- binder and target are both **biological** and both **protein** (`follow-agent-contract.md` §3, §8.8);
 - the binder resolves to a canonical amino-acid sequence;
 - the target resolves to a UniProt accession;
 - at least one PubMed identifier reports utility for **that pair**.
@@ -39,7 +39,7 @@ A candidate is emitted only with all three fields present; a missing field is a 
 
 | field | content |
 |---|---|
-| `binder` | `aa:` or `helm:` key, canonical per `AGENTS.md` §3, admission-gated per `AGENTS.md` §8.8 |
+| `binder` | `aa:` or `helm:` key, canonical per `follow-agent-contract.md` §3, admission-gated per `follow-agent-contract.md` §8.8 |
 | `target` | `uniprot:` accession |
 | `pmid` | one `pmid:<digits>` |
 
@@ -53,15 +53,15 @@ Per candidate, in order. Stop at the first refusal and record which step refused
 2. **Payload.** Monomers are standard residues or bracketed symbols from the 32-token protein monomer set. A SMILES fragment such as `[CCO]` inside `PEPTIDE1{…}` → **refuse: illegal payload**. This is a different refusal from step 1 and must stay distinguishable; a `d`-prefixed token is a **D-stereoisomer**, never a deoxy sugar.
 3. **Resolve binder.** Sequence → CRC64 → UniParc. Batch accessions: in one timing run on 2026-10-29 (catalog-systems, one network path, not reproducible from this checkout) 307 lookups in one call took 35 s against 103 s for 41 single lookups. Batch because the ratio is large, not because of those seconds.
 4. **Resolve target.** Accession must exist and be a protein.
-5. **Duplicate check.** The triple must not already exist in either dictionary of `graph.json`, nor in `proposals.json`; the molecule must not already exist under a different binder key (`AGENTS.md` §8.13).
+5. **Duplicate check.** The triple must not already exist in either dictionary of `graph.json`, nor in `proposals.json`; the molecule must not already exist under a different binder key (`follow-agent-contract.md` §8.13).
 
 ## 5. Write protocol
 
 - **`proposals.json` only.** Never write `graph.json`, on any branch. A branch is a mutable name with no merge law for trust: fencing unverified rows behind a branch dissolves at the first merge and relaunders them as read-verified. A file boundary survives every merge, because `proposals.json` merges into `proposals.json`.
 - **One serialiser.** Workers emit candidates; a single writer applies them. A file is one path and a path is not a merge law — concurrent writers to the same path lose rows silently.
-- Apply candidates with the `AGENTS.md` §6 merge law, which is commutative, associative and idempotent, so a re-run of an overlapping batch is safe.
-- Re-serialise per `AGENTS.md` §5 before committing. Never hand-edit the serialised file.
-- Add-only (`AGENTS.md` §8.19): no existing proposal is removed or rewritten; removal happens only when a reader admits the row into `graph.json`.
+- Apply candidates with the `follow-agent-contract.md` §6 merge law, which is commutative, associative and idempotent, so a re-run of an overlapping batch is safe.
+- Re-serialise per `follow-agent-contract.md` §5 before committing. Never hand-edit the serialised file.
+- Add-only (`follow-agent-contract.md` §8.19): no existing proposal is removed or rewritten; removal happens only when a reader admits the row into `graph.json`.
 - Verify the committed bytes by reading them back **through the API pinned to the commit SHA**. CDN mirrors serve stale content and will show you your own intent instead of the file.
 
 ## 6. Acceptance

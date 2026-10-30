@@ -2,7 +2,7 @@
 
 # resolve-key
 
-`type: resource.procedure` · `spec: agent.fleet` · subordinate to `AGENTS.md`, which governs on any conflict.
+`type: resource.procedure` · `spec: agent.fleet` · subordinate to `follow-agent-contract.md`, which governs on any conflict.
 
 Resolve a database key to labels. Read-only. Never writes.
 

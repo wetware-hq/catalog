@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Verifier for wetware-hq/catalog `graph.json`, implemented from AGENTS.md (sections 2, 3, 5, 6, 8) only.
+"""Verifier for wetware-hq/catalog `graph.json`, implemented from follow-agent-contract.md (sections 2, 3, 5, 6, 8) only.
 
 Usage:
     verify.py GRAPH.json                 # pure predicates (8.1-8.15, 8.17, 8.18)
@@ -7,7 +7,7 @@ Usage:
     verify.py --merge A.json B.json      # section 6 merge; writes canonical bytes to stdout
     verify.py GRAPH.json --repo DIR      # + extension predicates E1 (banner), E2 (skill registry), E4 (system registry); these gate
     verify.py GRAPH.json --online        # + E3 pmid resolution via NCBI E-utilities; NON-BLOCKING, never gates
-    verify.py --trace CORE.trace W.trace # TRACES judgements (traces/traces.md); hard-coded carrier sets
+    verify.py --trace CORE.trace W.trace # TRACES judgements (traces/record-fleet-traces.md); hard-coded carrier sets
     verify.py --json ...                 # machine-readable report on stdout
 
 Exit status: 0 = every evaluated pure/relational predicate passed; 1 = a violation/refusal; 2 = usage/IO error.
@@ -29,7 +29,7 @@ DICTS = ("pair", "preclinical")
 ROOT_KEYS = ("version", "pair", "preclinical")
 EMPTY_CATALOGUE = b'{\n  "version": 2,\n  "pair": {},\n  "preclinical": {}\n}\n'
 
-# Predicate registry (AGENTS.md section 8). The two HELM refusals are kept as distinct sub-predicates (8.8).
+# Predicate registry (follow-agent-contract.md section 8). The two HELM refusals are kept as distinct sub-predicates (8.8).
 PREDICATES = {
     "1": ("pure", "UTF-8"),
     "2": ("pure", "Final newline"),
@@ -54,13 +54,13 @@ PREDICATES = {
     "19": ("relational", "Add-only"),
 }
 
-# Extension predicates: documentation/repository invariants BEYOND AGENTS.md section 8's nineteen.
+# Extension predicates: documentation/repository invariants BEYOND follow-agent-contract.md section 8's nineteen.
 # They are NOT part of the normative predicate list and never renumber it; ids are prefixed "E".
 EXTENSIONS = {
     "E1": ("pure-ext", "Disclaimer banner (every .md first non-blank line)"),
-    "E2": ("pure-ext", "Skill registry (skills <-> AGENTS.md section 10)"),
+    "E2": ("pure-ext", "Skill registry (skills <-> follow-agent-contract.md section 10)"),
     "E3": ("online-ext", "pmid: resolves via NCBI E-utilities (non-blocking)"),
-    "E4": ("pure-ext", "System registry (systems/*.md and traces/*.md <-> AGENTS.md section 11)"),
+    "E4": ("pure-ext", "System registry (systems/*.md and traces/*.md <-> follow-agent-contract.md section 11)"),
 }
 BANNER = "\u26a0\ufe0f ACADEMIC RESEARCH PURPOSES ONLY; NOT FOR MEDICAL USE WITHOUT LICENSED OVERSIGHT"
 
@@ -515,7 +515,7 @@ def do_merge(a_path: str, b_path: str):
 
 
 # ---------------------------------------------------------------------------------------------------------------
-# TRACES judgements (traces/traces.md). Carrier sets are literals. They are not read from the markdown.
+# TRACES judgements (traces/record-fleet-traces.md). Carrier sets are literals. They are not read from the markdown.
 # decide() is total: the first failure in the order R1, R3, admit, R2, R4..R10, else result.
 # ---------------------------------------------------------------------------------------------------------------
 TRACE_SKILLS = ("resolve-key", "propose-pairs", "design-binder")
@@ -835,7 +835,7 @@ def _trace_fail(code, rows):
 
 
 def check_trace(core_path, worker_paths):
-    """Decide traces/traces.md over one core file and zero or more worker files.
+    """Decide traces/record-fleet-traces.md over one core file and zero or more worker files.
 
     Returns (ok, code, rows). ok is True only for Result. code is 'result', 'R1'..'R10', or 'admit'.
     On result, rows is [run].
@@ -982,14 +982,14 @@ def check_trace(core_path, worker_paths):
 
 
 # ---------------------------------------------------------------------------------------------------------------
-# Extension predicates (documentation / repository invariants beyond AGENTS.md section 8)
+# Extension predicates (documentation / repository invariants beyond follow-agent-contract.md section 8)
 # ---------------------------------------------------------------------------------------------------------------
 
 # --- E1 exclusions ---------------------------------------------------------------------------------------------
 # THE RULE: an exclusion in a checker is only safe if the excluded thing is pinned by a test that fails when
 # the exclusion is abused.
 #
-# E1 must skip something. `verifier/tests/fixtures/ext_disclaimer_fail/notes.md` is a deliberately unbannered
+# E1 must skip something. `verifier/tests/fixtures/ext_disclaimer_fail/skip-disclaimer-banner.md` is a deliberately unbannered
 # file and is how E1 itself is tested, so scanning it would make the verifier fail by doing its job. The first
 # fix skipped the whole `tests/fixtures/` *directory*, which is the wrong shape of exclusion: nothing failed if a
 # fixture quietly acquired the banner, nothing failed if a real document was parked under `tests/fixtures/`, and
@@ -1003,7 +1003,7 @@ def check_trace(core_path, worker_paths):
 # path is skipped - is itself pinned, by `test_E1_real_file_at_an_allowlisted_path_is_skipped`, so the hole is a
 # passing test rather than a paragraph in a comment that someone can delete.
 E1_ALLOWLIST = (
-    "verifier/tests/fixtures/ext_disclaimer_fail/notes.md",
+    "verifier/tests/fixtures/ext_disclaimer_fail/skip-disclaimer-banner.md",
 )
 
 
@@ -1104,20 +1104,20 @@ def _parse_section10(agents_text: str):
 
 
 def check_skill_registry(repo_dir: str, rep: "Report"):
-    """E2 [pure-ext]: skills/*.md <-> AGENTS.md section 10 are in bijection; `special` skills declare write scope `none`."""
+    """E2 [pure-ext]: skills/*.md <-> follow-agent-contract.md section 10 are in bijection; `special` skills declare write scope `none`."""
     import os
     problems = []
     disk = {os.path.relpath(p0, repo_dir).replace(os.sep, "/") for p0 in _md_files(repo_dir)
             if os.path.relpath(p0, repo_dir).replace(os.sep, "/").startswith("skills/")}
-    agents_path = os.path.join(repo_dir, "AGENTS.md")
+    agents_path = os.path.join(repo_dir, "follow-agent-contract.md")
     if not os.path.exists(agents_path):
-        rep.add("E2", False, ["AGENTS.md not found; cannot check the registry"]); return
+        rep.add("E2", False, ["follow-agent-contract.md not found; cannot check the registry"]); return
     rows = _parse_section10(open(agents_path, encoding="utf-8").read())
     listed = {r[0] for r in rows}
 
     for f in sorted(disk):                         # every skill file must be registered
         if f not in listed:
-            problems.append(f"{f}: skill file present but not listed in AGENTS.md section 10")
+            problems.append(f"{f}: skill file present but not listed in follow-agent-contract.md section 10")
     for path, scope in rows:                       # every row must point to a real file
         abspath = os.path.join(repo_dir, path)
         if not os.path.exists(abspath):
@@ -1131,7 +1131,7 @@ def check_skill_registry(repo_dir: str, rep: "Report"):
 
 
 def parse_section11(agents_text):
-    """Paths in AGENTS.md section 11 that point at systems/*.md or traces/*.md, in order."""
+    """Paths in follow-agent-contract.md section 11 that point at systems/*.md or traces/*.md, in order."""
     found = []
     in11 = False
     for ln in agents_text.splitlines():
@@ -1145,15 +1145,15 @@ def parse_section11(agents_text):
 
 
 def check_system_registry(repo_dir, rep):
-    """E4 [pure-ext]: systems/*.md and traces/*.md <-> AGENTS.md section 11 are in bijection.
+    """E4 [pure-ext]: systems/*.md and traces/*.md <-> follow-agent-contract.md section 11 are in bijection.
 
     Directories are hard-coded. A file anywhere else is not a system, and a system path that is not one of
     those two directories is not a row this check accepts.
     """
     problems = []
-    agents_path = os.path.join(repo_dir, "AGENTS.md")
+    agents_path = os.path.join(repo_dir, "follow-agent-contract.md")
     if not os.path.exists(agents_path):
-        rep.add("E4", False, ["AGENTS.md not found; cannot check the system registry"])
+        rep.add("E4", False, ["follow-agent-contract.md not found; cannot check the system registry"])
         return
     found = parse_section11(open(agents_path, encoding="utf-8").read())
     if len(found) != len(set(found)):
@@ -1169,7 +1169,7 @@ def check_system_registry(repo_dir, rep):
             if fn.endswith(".md") and os.path.isfile(full):
                 disk.add(folder + "/" + fn)
     for path in sorted(disk - listed):
-        problems.append(f"{path}: system file present but not listed in AGENTS.md section 11")
+        problems.append(f"{path}: system file present but not listed in follow-agent-contract.md section 11")
     for path in sorted(listed - disk):
         problems.append(f"{path}: listed in section 11 but no such file")
     rep.add("E4", not problems, problems)
@@ -1222,14 +1222,14 @@ def _label_of(pid):
 
 
 def main(argv=None):
-    ap = argparse.ArgumentParser(description="Validate catalog graph.json against AGENTS.md section 8, "
+    ap = argparse.ArgumentParser(description="Validate catalog graph.json against follow-agent-contract.md section 8, "
                                              "plus repository extension predicates.")
     ap.add_argument("graph", nargs="?", help="graph.json to validate")
     ap.add_argument("--prev", metavar="OLD", help="predecessor graph.json for relational 8.19 (add-only)")
     ap.add_argument("--merge", nargs=2, metavar=("A", "B"), help="merge two files per section 6 to stdout")
     ap.add_argument("--repo", metavar="DIR", help="run repository extension predicates (E1 banner, E2 skill registry, E4 system registry) over DIR")
     ap.add_argument("--trace", nargs="+", metavar="FILE",
-                    help="decide traces/traces.md: CORE.trace followed by worker .trace files")
+                    help="decide traces/record-fleet-traces.md: CORE.trace followed by worker .trace files")
     ap.add_argument("--online", action="store_true",
                     help="also resolve every pmid via NCBI E-utilities (E3). NON-BLOCKING: network, never changes exit code")
     ap.add_argument("--json", action="store_true", help="machine-readable report")
