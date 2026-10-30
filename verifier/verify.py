@@ -5,8 +5,9 @@ Usage:
     verify.py GRAPH.json                 # pure predicates (8.1-8.15, 8.17, 8.18)
     verify.py --prev OLD.json NEW.json   # the above on NEW, plus relational 8.19 (add-only)
     verify.py --merge A.json B.json      # section 6 merge; writes canonical bytes to stdout
-    verify.py GRAPH.json --repo DIR      # + extension predicates E1 (banner) and E2 (skill registry); these gate
+    verify.py GRAPH.json --repo DIR      # + extension predicates E1 (banner), E2 (skill registry), E4 (system registry); these gate
     verify.py GRAPH.json --online        # + E3 pmid resolution via NCBI E-utilities; NON-BLOCKING, never gates
+    verify.py --trace CORE.trace W.trace # TRACES judgements (traces/record-fleet-traces.md); hard-coded carrier sets
     verify.py --json ...                 # machine-readable report on stdout
 
 Exit status: 0 = every evaluated pure/relational predicate passed; 1 = a violation/refusal; 2 = usage/IO error.
@@ -16,10 +17,13 @@ Standard library only; Python >= 3.9.
 from __future__ import annotations
 
 import argparse
+import hashlib
 import json
+import os
 import re
 import sys
 from dataclasses import dataclass, field
+from datetime import date
 
 DICTS = ("pair", "preclinical")
 ROOT_KEYS = ("version", "pair", "preclinical")
@@ -56,6 +60,7 @@ EXTENSIONS = {
     "E1": ("pure-ext", "Disclaimer banner (every .md first non-blank line)"),
     "E2": ("pure-ext", "Skill registry (skills <-> follow-agent-contract.md section 10)"),
     "E3": ("online-ext", "pmid: resolves via NCBI E-utilities (non-blocking)"),
+    "E4": ("pure-ext", "System registry (systems/*.md and traces/*.md <-> follow-agent-contract.md section 11)"),
 }
 BANNER = "\u26a0\ufe0f ACADEMIC RESEARCH PURPOSES ONLY; NOT FOR MEDICAL USE WITHOUT LICENSED OVERSIGHT"
 
@@ -510,6 +515,473 @@ def do_merge(a_path: str, b_path: str):
 
 
 # ---------------------------------------------------------------------------------------------------------------
+# TRACES judgements (traces/record-fleet-traces.md). Carrier sets are literals. They are not read from the markdown.
+# decide() is total: the first failure in the order R1, R3, admit, R2, R4..R10, else result.
+# ---------------------------------------------------------------------------------------------------------------
+TRACE_SKILLS = ("resolve-key", "propose-pairs", "design-binder")
+TRACE_ACTS = {
+    "resolve-key": frozenset({"call", "refuse", "unresolved", "unavailable", "halt"}),
+    "propose-pairs": frozenset({"call", "pin", "refuse", "unresolved", "unavailable", "propose", "halt"}),
+    "design-binder": frozenset({"call", "pin", "context", "refuse", "unresolved", "unavailable", "emit", "halt"}),
+}
+TRACE_GATES = {
+    "resolve-key": frozenset({"grammar", "scope", "ascii"}),
+    "propose-pairs": frozenset({"out-of-scope", "illegal-payload", "duplicate-triple", "duplicate-molecule"}),
+    "design-binder": frozenset({
+        "grammar", "species", "not-protein", "indication-absent",
+        "selectivity", "immunogenicity", "developability", "no-assay",
+    }),
+}
+TRACE_PRE_PIN = frozenset({"grammar", "species", "not-protein", "indication-absent"})
+TRACE_STEPS = {
+    "resolve-key": frozenset({"resolve"}),
+    "propose-pairs": frozenset({"3", "4"}),
+    "design-binder": frozenset({"catalogue", "model"}),
+}
+# Sorted key order. context is TRACE_CONTEXT, not this table.
+TRACE_FIELDS = {
+    "call": (),
+    "pin": ("path", "rev"),
+    "refuse": ("gate", "subject"),
+    "unresolved": ("key", "release", "retrieved", "source", "step"),
+    "unavailable": ("key", "release", "retrieved", "source", "step"),
+    "propose": ("binder", "pmid", "target"),
+    "emit": ("binder", "disclaimer", "kind", "target"),
+    "halt": ("bound-n", "bound-tok", "oracle"),
+}
+TRACE_CONTEXT = {
+    "hit-same-indication": ("stop", ("binder", "gloss", "pmid", "target", "verdict")),
+    "hit-other-indication": ("transfers-not", ("binder", "gloss", "pmid", "target", "verdict")),
+    "absent": ("not-a-negative", ("gloss", "target", "verdict")),
+}
+TRACE_VALUE_MAX = 4096
+TRACE_SUBJECT_MAX = 1024
+# Field names with no production. Pinned by test_trace_carrier_sets_exclude_scores.
+TRACE_FORBIDDEN_FIELDS = frozenset({
+    "auc", "auroc", "dict", "dictionary", "grade", "kd", "pair", "pose",
+    "preclinical", "rank", "score", "scores", "tier", "utility",
+})
+_TRACE_CORE_RE = re.compile(
+    r"%trace-core/1\n"
+    r'bound-n:"([1-9][0-9]*)"\n'
+    r'bound-tok:"([1-9][0-9]*)"\n'
+    r'skill:"(resolve-key|propose-pairs|design-binder)"\n'
+    r'spec:"([0-9a-f]{40})"\n\Z')
+_TRACE_HEADER_RE = re.compile(r"%trace/1 core=([0-9a-f]{64}) spec=([0-9a-f]{40})\Z")
+_TRACE_WORKER_RE = re.compile(r"^[a-z][a-z0-9-]{0,31}\.trace\Z")
+_TRACE_HEX64 = re.compile(r"^[0-9a-f]{64}\Z")
+_TRACE_TOKEN64 = re.compile(r"^[A-Za-z0-9._:/-]{1,64}\Z")
+_TRACE_DAY = re.compile(r"^[0-9]{4}-[0-9]{2}-[0-9]{2}\Z")
+_TRACE_PARENT = re.compile(r"^\^[0-9a-f]{64}\Z")
+
+
+def trace_emit(act, run, skill, parent, fields):
+    """Wire line. fields maps key -> raw value. Key order is sorted. Id is H(preimage)."""
+    body = " ".join(f'{k}:"{v}"' for k, v in sorted(fields.items()))
+    tail = f"run={run} skill={skill}" if not body else f"run={run} skill={skill} {body}"
+    pre = f"{act} {parent} {tail}"
+    ident = hashlib.sha256(pre.encode("utf-8")).hexdigest()
+    return f"{act} {ident} {parent} {tail}"
+
+
+def trace_call_id(run, skill):
+    return hashlib.sha256(f"call ^0 run={run} skill={skill}".encode("utf-8")).hexdigest()
+
+
+def _trace_binder_ok(value):
+    if value.startswith("aa:"):
+        if not AA_RE.match(value):
+            return False
+        segs = value[len("aa:"):].split("/")
+        return segs == sorted(segs)
+    if value.startswith("helm:"):
+        ok, scope, mono, _msg = parse_helm(value[len("helm:"):])
+        return bool(ok and scope and mono)
+    return False
+
+
+def _trace_target_ok(value):
+    return UNIPROT_RE.match(value) is not None
+
+
+def _trace_pmid_ok(value):
+    return PMID_RE.match(value) is not None
+
+
+def _trace_day_ok(value):
+    if not _TRACE_DAY.match(value):
+        return False
+    year, month, day = (int(part) for part in value.split("-"))
+    try:
+        date(year, month, day)
+    except ValueError:
+        return False
+    return True
+
+
+def _trace_parse_fields(text):
+    """Return ('ok', keys, dict) or ('syntax', None, None). Unsorted keys are syntax."""
+    if text == "":
+        return "ok", [], {}
+    fields = {}
+    order = []
+    i, n = 0, len(text)
+    while i < n:
+        if order:
+            if text[i] != " ":
+                return "syntax", None, None
+            i += 1
+            if i >= n:
+                return "syntax", None, None
+        j = i
+        if j >= n or not text[j].islower():
+            return "syntax", None, None
+        j += 1
+        while j < n and (text[j].islower() or text[j].isdigit() or text[j] == "-"):
+            j += 1
+        if j >= n or text[j] != ":":
+            return "syntax", None, None
+        key = text[i:j]
+        j += 1
+        if j >= n or text[j] != '"':
+            return "syntax", None, None
+        j += 1
+        end = text.find('"', j)
+        if end < 0:
+            return "syntax", None, None
+        value = text[j:end]
+        if value == "" or key in fields or len(value.encode("utf-8")) > TRACE_VALUE_MAX:
+            return "syntax", None, None
+        fields[key] = value
+        order.append(key)
+        i = end + 1
+    if order != sorted(order):
+        return "syntax", None, None
+    return "ok", order, fields
+
+
+def _trace_value_code(skill, act, fields, bound_n, bound_tok):
+    if act == "pin":
+        if fields.get("path") != "graph.json":
+            return "value:path"
+        if not re.fullmatch(r"[0-9a-f]{40}", fields.get("rev", "")):
+            return "value:rev"
+        return None
+    if act == "refuse":
+        if fields.get("gate") not in TRACE_GATES[skill]:
+            return "value:gate"
+        subject = fields.get("subject", "")
+        if subject in ("unencodable", "unquotable"):
+            return None
+        raw = subject.encode("utf-8")
+        if not raw or len(raw) > TRACE_SUBJECT_MAX or any(c < 32 or c == 127 for c in raw):
+            return "value:subject"
+        return None
+    if act in ("unresolved", "unavailable"):
+        step = fields.get("step")
+        if step not in TRACE_STEPS[skill]:
+            return "value:step"
+        if not _TRACE_TOKEN64.match(fields.get("source", "")):
+            return "value:source"
+        if not _TRACE_TOKEN64.match(fields.get("release", "")):
+            return "value:release"
+        if not _trace_day_ok(fields.get("retrieved", "")):
+            return "value:retrieved"
+        key = fields.get("key", "")
+        if skill == "propose-pairs" and step == "3" and not _trace_binder_ok(key):
+            return "value:key"
+        if skill == "propose-pairs" and step == "4" and not _trace_target_ok(key):
+            return "value:key"
+        if skill == "design-binder" and step == "catalogue" and not _trace_target_ok(key):
+            return "value:key"
+        if skill == "design-binder" and step == "model" and not _trace_binder_ok(key):
+            return "value:key"
+        if skill == "resolve-key" and not (_trace_binder_ok(key) or _trace_target_ok(key)):
+            return "value:key"
+        return None
+    if act == "propose":
+        if not _trace_binder_ok(fields["binder"]):
+            return "value:binder"
+        if not _trace_target_ok(fields["target"]):
+            return "value:target"
+        if not _trace_pmid_ok(fields["pmid"]):
+            return "value:pmid"
+        return None
+    if act == "emit":
+        if not _trace_binder_ok(fields["binder"]):
+            return "value:binder"
+        if not _trace_target_ok(fields["target"]):
+            return "value:target"
+        if fields.get("kind") != "hypothesis":
+            return "value:kind"
+        if fields.get("disclaimer") != BANNER:
+            return "value:disclaimer"
+        return None
+    if act == "context":
+        row = TRACE_CONTEXT.get(fields.get("verdict"))
+        if row is None:
+            return "value:verdict"
+        if fields.get("gloss") != row[0]:
+            return "value:gloss"
+        if "target" in fields and not _trace_target_ok(fields["target"]):
+            return "value:target"
+        if "binder" in fields and not _trace_binder_ok(fields["binder"]):
+            return "value:binder"
+        if "pmid" in fields and not _trace_pmid_ok(fields["pmid"]):
+            return "value:pmid"
+        return None
+    if act == "halt":
+        if not re.fullmatch(r"[1-9][0-9]*", fields.get("bound-n", "")):
+            return "value:bound-n"
+        if not re.fullmatch(r"[1-9][0-9]*", fields.get("bound-tok", "")):
+            return "value:bound-tok"
+        if fields["bound-n"] != bound_n or fields["bound-tok"] != bound_tok:
+            return "value:bound"
+        if fields.get("oracle") != "not-discharged":
+            return "value:oracle"
+        return None
+    if act == "call":
+        return None
+    return "value"
+
+
+def _trace_parent_local(skill, act, fields, parent, call_id):
+    if parent != "^0" and not _TRACE_PARENT.match(parent):
+        return False
+    call_parent = "^" + call_id
+    if act == "call":
+        return parent == "^0"
+    if act == "pin":
+        return parent == call_parent
+    if skill == "resolve-key":
+        return parent == call_parent
+    if skill == "design-binder" and act == "refuse" and fields.get("gate") in TRACE_PRE_PIN:
+        return parent == call_parent
+    if skill == "design-binder" and act == "halt":
+        return parent == call_parent or (parent != call_parent and _TRACE_PARENT.match(parent) is not None)
+    return parent != "^0" and parent != call_parent and _TRACE_PARENT.match(parent) is not None
+
+
+def _trace_parent_full(skill, node, call_id, pin_id):
+    act = node["act"]
+    call_parent = "^" + call_id
+    if act == "call":
+        return "^0"
+    if act == "pin":
+        return call_parent
+    if skill == "resolve-key":
+        return call_parent
+    if skill == "design-binder" and act == "refuse" and node["fields"].get("gate") in TRACE_PRE_PIN:
+        return call_parent
+    if skill == "design-binder" and act == "halt" and pin_id is None:
+        return call_parent
+    if pin_id is None:
+        return None
+    return "^" + pin_id
+
+
+def _trace_admit(line, core, call_id):
+    parts = line.split(" ", 3)
+    if len(parts) < 4:
+        return "syntax", None
+    act, ident, parent, rest = parts
+    if not _TRACE_HEX64.match(ident):
+        return "syntax", None
+    matched = re.fullmatch(
+        r"run=([0-9a-f]{64}) skill=(resolve-key|propose-pairs|design-binder)(?: (.*))?", rest)
+    if not matched:
+        return "syntax", None
+    run, skill, field_text = matched.group(1), matched.group(2), matched.group(3) or ""
+    kind, order, fields = _trace_parse_fields(field_text)
+    if kind != "ok":
+        return "syntax", None
+    preimage = f"{act} {parent} {rest}"
+    if hashlib.sha256(preimage.encode("utf-8")).hexdigest() != ident:
+        return "hash", None
+    if run != core["run"]:
+        return "run", None
+    if skill != core["skill"]:
+        return "skill", None
+    if act not in TRACE_ACTS[skill]:
+        return "act", None
+    if act == "context":
+        row = TRACE_CONTEXT.get(fields.get("verdict"))
+        if row is None or tuple(order) != row[1]:
+            return "fields", None
+    elif tuple(order) != TRACE_FIELDS[act]:
+        return "fields", None
+    value = _trace_value_code(skill, act, fields, core["bound_n"], core["bound_tok"])
+    if value:
+        return value, None
+    if not _trace_parent_local(skill, act, fields, parent, call_id):
+        return "parent", None
+    return None, {"act": act, "id": ident, "parent": parent, "run": run, "skill": skill,
+                  "fields": fields, "text": line}
+
+
+def _trace_molecule(binder):
+    if binder.startswith("aa:") and _trace_binder_ok(binder):
+        return ("aa", aa_multiset(binder))
+    if binder.startswith("helm:"):
+        plain = is_plain_lchain_helm(binder[len("helm:"):])
+        if plain is not None:
+            return ("aa", (plain,))
+        return ("helm", helm_identity(binder))
+    return ("other", binder)
+
+
+def _trace_fail(code, rows):
+    return False, code, rows
+
+
+def check_trace(core_path, worker_paths):
+    """Decide traces/record-fleet-traces.md over one core file and zero or more worker files.
+
+    Returns (ok, code, rows). ok is True only for Result. code is 'result', 'R1'..'R10', or 'admit'.
+    On result, rows is [run].
+    """
+    if os.path.basename(core_path) != "core.trace":
+        return _trace_fail("R3", [f"core basename {os.path.basename(core_path)!r}"])
+    try:
+        raw = open(core_path, "rb").read()
+    except OSError as exc:
+        return _trace_fail("R1", [str(exc)])
+    if b"\r" in raw or b"\x00" in raw or not raw.endswith(b"\n") or raw.endswith(b"\n\n"):
+        return _trace_fail("R1", ["core bytes have no derivation"])
+    try:
+        text = raw.decode("utf-8")
+    except UnicodeDecodeError:
+        return _trace_fail("R1", ["core is not utf-8"])
+    matched = _TRACE_CORE_RE.fullmatch(text)
+    if not matched:
+        return _trace_fail("R1", ["core syntax"])
+    bound_n, bound_tok, skill, spec = matched.group(1), matched.group(2), matched.group(3), matched.group(4)
+    run = hashlib.sha256(raw).hexdigest()
+    core = {"run": run, "skill": skill, "spec": spec, "bound_n": bound_n, "bound_tok": bound_tok}
+    call_id = trace_call_id(run, skill)
+    nodes = {}
+    for path in worker_paths:
+        base = os.path.basename(path)
+        if not _TRACE_WORKER_RE.match(base):
+            return _trace_fail("R3", [f"worker basename {base!r}"])
+        try:
+            wraw = open(path, "rb").read()
+        except OSError as exc:
+            return _trace_fail("R3", [str(exc)])
+        if b"\r" in wraw or b"\x00" in wraw or not wraw.endswith(b"\n") or wraw.endswith(b"\n\n"):
+            return _trace_fail("R3", [f"{base}: newline"])
+        try:
+            wtext = wraw.decode("utf-8")
+        except UnicodeDecodeError:
+            return _trace_fail("R3", [f"{base}: utf-8"])
+        lines = wtext[:-1].split("\n")
+        header = _TRACE_HEADER_RE.fullmatch(lines[0] if lines else "")
+        if header is None or header.group(1) != run or header.group(2) != spec:
+            return _trace_fail("R3", [f"{base}: header"])
+        for line in lines[1:]:
+            code, node = _trace_admit(line, core, call_id)
+            if code:
+                return _trace_fail("admit", [f"{code}: {line[:160]}"])
+            nodes[node["id"]] = node
+    for node in nodes.values():
+        if node["run"] != run or node["skill"] != skill:
+            return _trace_fail("R2", [node["act"]])
+    calls = [node for node in nodes.values() if node["act"] == "call"]
+    canon = trace_emit("call", run, skill, "^0", {})
+    if len(calls) != 1 or calls[0]["text"] != canon:
+        return _trace_fail("R4", ["call"])
+    halts = [node for node in nodes.values() if node["act"] == "halt"]
+    pins = [node for node in nodes.values() if node["act"] == "pin"]
+    if len(halts) != 1:
+        return _trace_fail("R5", [f"halt count {len(halts)}"])
+    halt = halts[0]
+    if halt["fields"]["bound-n"] != bound_n or halt["fields"]["bound-tok"] != bound_tok:
+        return _trace_fail("R5", ["bounds"])
+    if halt["fields"]["oracle"] != "not-discharged":
+        return _trace_fail("R5", ["oracle"])
+    if len(pins) > 1:
+        return _trace_fail("R5", [f"pin count {len(pins)}"])
+    expect_halt = "^" + call_id if not pins else "^" + pins[0]["id"]
+    if halt["parent"] != expect_halt:
+        return _trace_fail("R5", ["halt parent"])
+    ids = set(nodes)
+    for node in nodes.values():
+        if node["parent"] == "^0":
+            if node["act"] != "call":
+                return _trace_fail("R6", [node["act"]])
+            continue
+        if node["parent"][1:] not in ids:
+            return _trace_fail("R6", [node["act"]])
+    pin_id = pins[0]["id"] if pins else None
+    for node in nodes.values():
+        if node["act"] not in TRACE_ACTS[skill]:
+            return _trace_fail("R7", [node["act"]])
+        expected = _trace_parent_full(skill, node, call_id, pin_id)
+        if expected is None or node["parent"] != expected:
+            return _trace_fail("R7", [f"{node['act']} parent"])
+    for node in nodes.values():
+        value = _trace_value_code(skill, node["act"], node["fields"], bound_n, bound_tok)
+        if value:
+            return _trace_fail("R8", [f"{node['act']} {value}"])
+    seen = {}
+    for node in nodes.values():
+        if node["act"] != "propose":
+            continue
+        binder = node["fields"]["binder"]
+        key = _trace_molecule(binder)
+        if key in seen and seen[key] != binder:
+            return _trace_fail("R9", [f"{seen[key]} ~ {binder}"])
+        seen[key] = binder
+    by_act = {}
+    for node in nodes.values():
+        by_act.setdefault(node["act"], []).append(node)
+    if skill == "propose-pairs":
+        if len(pins) != 1 or pins[0]["parent"] != "^" + call_id:
+            return _trace_fail("R10", ["pin"])
+        pin_parent = "^" + pins[0]["id"]
+        for node in nodes.values():
+            if node["act"] not in ("call", "pin") and node["parent"] != pin_parent:
+                return _trace_fail("R10", [node["act"]])
+        if by_act.get("context") or by_act.get("emit"):
+            return _trace_fail("R10", ["foreign act"])
+    elif skill == "resolve-key":
+        if pins or by_act.get("propose") or by_act.get("context") or by_act.get("emit"):
+            return _trace_fail("R10", ["foreign act"])
+        for node in nodes.values():
+            if node["act"] != "call" and node["parent"] != "^" + call_id:
+                return _trace_fail("R10", [node["act"]])
+    else:
+        if len(pins) == 0:
+            refuses = by_act.get("refuse", [])
+            if not any(item["fields"]["gate"] in TRACE_PRE_PIN for item in refuses):
+                return _trace_fail("R10", ["pre-pin refuse"])
+            if by_act.get("context") or by_act.get("emit"):
+                return _trace_fail("R10", ["emit"])
+            for node in nodes.values():
+                if node["act"] != "call" and node["parent"] != "^" + call_id:
+                    return _trace_fail("R10", [node["act"]])
+        elif len(pins) == 1:
+            contexts = by_act.get("context", [])
+            if len(contexts) != 1 or contexts[0]["parent"] != "^" + pins[0]["id"]:
+                return _trace_fail("R10", ["context"])
+            if halt["parent"] != "^" + pins[0]["id"]:
+                return _trace_fail("R10", ["halt"])
+            for node in by_act.get("emit", []):
+                if node["parent"] != "^" + pins[0]["id"]:
+                    return _trace_fail("R10", ["emit parent"])
+                if node["fields"].get("kind") != "hypothesis" or node["fields"].get("disclaimer") != BANNER:
+                    return _trace_fail("R10", ["disclaimer"])
+            for node in by_act.get("refuse", []):
+                if node["fields"]["gate"] not in TRACE_PRE_PIN and node["parent"] != "^" + pins[0]["id"]:
+                    return _trace_fail("R10", ["refuse parent"])
+            if contexts[0]["fields"]["verdict"] == "hit-same-indication" and by_act.get("emit"):
+                return _trace_fail("R10", ["emit on hit"])
+        else:
+            return _trace_fail("R10", ["pins"])
+    return True, "result", [run]
+
+
+# ---------------------------------------------------------------------------------------------------------------
 # Extension predicates (documentation / repository invariants beyond follow-agent-contract.md section 8)
 # ---------------------------------------------------------------------------------------------------------------
 
@@ -658,6 +1130,51 @@ def check_skill_registry(repo_dir: str, rep: "Report"):
     rep.add("E2", not problems, problems)
 
 
+def parse_section11(agents_text):
+    """Paths in follow-agent-contract.md section 11 that point at systems/*.md or traces/*.md, in order."""
+    found = []
+    in11 = False
+    for ln in agents_text.splitlines():
+        if ln.startswith("## "):
+            in11 = ln.startswith("## 11.")
+            continue
+        if not in11:
+            continue
+        found.extend(re.findall(r"\(((?:systems|traces)/[A-Za-z0-9._-]+\.md)\)", ln))
+    return found
+
+
+def check_system_registry(repo_dir, rep):
+    """E4 [pure-ext]: systems/*.md and traces/*.md <-> follow-agent-contract.md section 11 are in bijection.
+
+    Directories are hard-coded. A file anywhere else is not a system, and a system path that is not one of
+    those two directories is not a row this check accepts.
+    """
+    problems = []
+    agents_path = os.path.join(repo_dir, "follow-agent-contract.md")
+    if not os.path.exists(agents_path):
+        rep.add("E4", False, ["follow-agent-contract.md not found; cannot check the system registry"])
+        return
+    found = parse_section11(open(agents_path, encoding="utf-8").read())
+    if len(found) != len(set(found)):
+        problems.append("section 11 lists a system path more than once")
+    listed = set(found)
+    disk = set()
+    for folder in ("systems", "traces"):
+        directory = os.path.join(repo_dir, folder)
+        if not os.path.isdir(directory):
+            continue
+        for fn in sorted(os.listdir(directory)):
+            full = os.path.join(directory, fn)
+            if fn.endswith(".md") and os.path.isfile(full):
+                disk.add(folder + "/" + fn)
+    for path in sorted(disk - listed):
+        problems.append(f"{path}: system file present but not listed in follow-agent-contract.md section 11")
+    for path in sorted(listed - disk):
+        problems.append(f"{path}: listed in section 11 but no such file")
+    rep.add("E4", not problems, problems)
+
+
 def check_online_pmids(graph_path: str):
     """E3 [online-ext]: every pmid in graph.json resolves via NCBI E-utilities. NON-BLOCKING: never affects exit code.
     Returns (checked, resolved, unresolved_list, unavailable_bool)."""
@@ -710,7 +1227,9 @@ def main(argv=None):
     ap.add_argument("graph", nargs="?", help="graph.json to validate")
     ap.add_argument("--prev", metavar="OLD", help="predecessor graph.json for relational 8.19 (add-only)")
     ap.add_argument("--merge", nargs=2, metavar=("A", "B"), help="merge two files per section 6 to stdout")
-    ap.add_argument("--repo", metavar="DIR", help="run repository extension predicates (E1 banner, E2 skill registry) over DIR")
+    ap.add_argument("--repo", metavar="DIR", help="run repository extension predicates (E1 banner, E2 skill registry, E4 system registry) over DIR")
+    ap.add_argument("--trace", nargs="+", metavar="FILE",
+                    help="decide traces/record-fleet-traces.md: CORE.trace followed by worker .trace files")
     ap.add_argument("--online", action="store_true",
                     help="also resolve every pmid via NCBI E-utilities (E3). NON-BLOCKING: network, never changes exit code")
     ap.add_argument("--json", action="store_true", help="machine-readable report")
@@ -719,8 +1238,30 @@ def main(argv=None):
     if a.merge:
         do_merge(*a.merge)
         return 0
-    if not a.graph and not a.repo:
-        ap.error("GRAPH.json or --repo DIR required")
+    if not a.graph and not a.repo and not a.trace:
+        ap.error("GRAPH.json, --repo DIR, or --trace CORE required")
+
+    trace_fail = False
+    trace_payload = None
+    if a.trace:
+        ok, code, rows = check_trace(a.trace[0], a.trace[1:])
+        trace_fail = not ok
+        trace_payload = {"ok": ok, "code": code, "rows": rows}
+        if not a.json:
+            if ok:
+                print(f"[PASS] trace result {rows[0]}")
+            else:
+                print(f"[FAIL] trace {code}")
+                for row in rows:
+                    print(f"      - {row}")
+        if not a.graph and not a.repo:
+            if a.json:
+                print(json.dumps({"trace": trace_payload}, indent=2))
+            elif not ok:
+                print("\nRESULT: FAIL")
+            else:
+                print("\nRESULT: PASS (trace judgements only)")
+            return 0 if ok else 1
 
     rep = Report()
     if a.graph:
@@ -730,6 +1271,7 @@ def main(argv=None):
     if a.repo:
         check_disclaimer(a.repo, rep)       # E1
         check_skill_registry(a.repo, rep)   # E2
+        check_system_registry(a.repo, rep)  # E4
 
     # 16 oracle: always reported as not discharged (only meaningful when a graph was checked)
     oracle_note = "8.16 (oracle) Inclusion and study type: NOT DISCHARGED - requires reading each paper (section 4, 9.3)."
@@ -740,11 +1282,13 @@ def main(argv=None):
         online = check_online_pmids(a.graph)
 
     if a.json:
-        out = {"file": a.graph, "repo": a.repo, "ok": rep.ok(),
+        out = {"file": a.graph, "repo": a.repo, "ok": rep.ok() and not trace_fail,
                "predicates": [{"id": f.predicate, "tag": _label_of(f.predicate)[0],
                                "name": _label_of(f.predicate)[1], "ok": f.ok, "rows": f.rows}
                               for f in rep.findings],
                "oracle_not_discharged": (["16"] if a.graph else [])}
+        if trace_payload is not None:
+            out["trace"] = trace_payload
         if online is not None:
             checked, resolved, unresolved, unavail = online
             out["online_pmids"] = {"non_blocking": True, "checked": checked, "resolved": resolved,
@@ -773,8 +1317,8 @@ def main(argv=None):
             scope.append("pure" + ("/relational" if a.prev else ""))
         if a.repo:
             scope.append("extension")
-        print("RESULT:", f"PASS ({'+'.join(scope)} conditions only)" if rep.ok() else "FAIL")
-    return 0 if rep.ok() else 1
+        print("RESULT:", f"PASS ({'+'.join(scope)} conditions only)" if rep.ok() and not trace_fail else "FAIL")
+    return 0 if rep.ok() and not trace_fail else 1
 
 
 if __name__ == "__main__":
