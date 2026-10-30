@@ -48,14 +48,14 @@ Each failing predicate prints its id (e.g. `8.13`) and the offending row.
 | 14 Cross-prefix hygiene | pure | yes | prefixes do not cross roles |
 | 15 No duplicate triple | pure | yes | `(binder,target,pmid)` not in both dictionaries |
 | 16 Inclusion/study type | **oracle** | **NOT discharged** | reported, never checked (needs the paper) |
-| 17 Forbidden writes | pure | yes | no stored rank/score/grade/status/ref keys |
+| 17 Forbidden writes | pure | partly | checks only forbidden **root** keys, which cannot fail unless 3 already has; the non-`pmid:` citation half of the predicate is what 10 enforces |
 | 18 Empty catalogue | pure | yes | exact 5-line canonical form |
 | 19 Add-only | relational | yes (`--prev`) | needs a predecessor file |
 
 ## Extension predicates (beyond §8)
 
 These are **not** part of AGENTS.md §8's nineteen normative predicates and do not renumber them. They enforce
-repository/documentation invariants agreed for the `system.fleet` and are ids-prefixed `E`:
+repository/documentation invariants agreed for the `agent.fleet` and are ids-prefixed `E`:
 
 | id | tag | mode | what it checks |
 |---|---|---|---|
@@ -75,7 +75,7 @@ exclusion is abused.** Skipping the whole `tests/fixtures/` *directory* broke th
 fixture quietly gained the banner, nothing failed if a real document was parked under `tests/fixtures/`, and the
 blind spot grew with every file added. The exclusion is therefore `E1_ALLOWLIST`, a tuple of **exact
 repo-relative paths**, one entry long; the other eight `.md` files under `fixtures/` carry the banner and are
-scanned like any other file. Three tests hold it shut:
+scanned like any other file. Four tests hold it shut:
 
 - `test_E1_every_allowlisted_path_fails_the_banner_check` — every listed path exists and **fails** the banner
   check. Add the banner to it, or delete it, and this test breaks.
@@ -84,6 +84,8 @@ scanned like any other file. Three tests hold it shut:
   path, never by name.
 - `test_E1_real_file_at_an_allowlisted_path_is_skipped` — the one blind spot that remains, as a passing test
   rather than a paragraph someone can delete.
+- `test_E1_repo_root_passes_with_the_fixtures_scanned` — E1 passes over the real repository with the eight
+  bannered fixtures scanned, so widening the allowlist to hide a fixture would not go unnoticed here.
 
 Version-control internals and generated tool caches (`.git`, `.pytest_cache`, `__pycache__`, …) are not walked at
 all: they are not repository content, are absent from a fresh clone, and are not exclusions of anything.
@@ -114,11 +116,13 @@ catalogue. §8.16 is reported as not discharged. No violations found.
 4. **§8.18 scope.** Reported only when both dictionaries are empty (otherwise N/A).
 
 ## Tests & CI
-- `python3 verifier/tests/test_verify.py` — 29 tests: one minimal failing fixture per pure predicate plus §8.19 and merge,
+- `python3 verifier/tests/test_verify.py` — 29 tests: one minimal failing fixture per pure predicate plus §8.19,
   failing + passing fixtures for the E1/E2 extension predicates (and an offline no-op test for E3), the four tests
   that pin E1's exclusion allowlist, and the HELM scope-vs-monomer distinction. (pytest optional; a stdlib runner is built in.)
+  **`--merge` (§6) is not covered by the suite**: no test exercises it, so the merge path is implemented and unverified.
 - `.github/workflows/validate.yml` — the GitHub Actions workflow that runs this verifier on `wetware-hq/catalog`:
   the unit tests, the pure predicates, the add-only check against the previous commit, and the E1/E2 extension
   predicates, with E3 in a separate non-blocking job. The workflow file keeps its `validate.yml` name so the
-  check name GitHub reports does not move. A green run proves the pure and extension conditions only, never
-  §8.16 (`AGENTS.md` §9.6).
+  check name GitHub reports does not move. A green run proves the pure conditions and the two **gating** extension
+  predicates E1 and E2, and nothing else: E3 is non-blocking (`continue-on-error: true`), so a green run says
+  nothing about it, and §8.16 is never discharged by a machine (`AGENTS.md` §9.6).

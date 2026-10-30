@@ -6,7 +6,7 @@
 
 ## 0. Scope
 
-- **Read:** `graph.json`, `AGENTS.md`, `skills/*.md`, `systems/*.md` (§11), `references.md`, `README.md` (non-normative), `verifier/`, `LICENSE`.
+- **Read:** `graph.json`, `AGENTS.md`, `skills/*.md`, `systems/*.md` (§11), `references.md`, `README.md` (non-normative), `verifier/`, `.github/workflows/`, `LICENSE`.
 - **Write:** `graph.json` and `proposals.json` only, under §9.
 - **Refuse:** writing scripts, workflows, CI, package manifests or secondary data files in this repo, `proposals.json` (§9) being the single named exception — the verifier under `verifier/` and the workflow under `.github/workflows/` are human-directed additions that check this contract and are outside every agent's write scope, so an agent reads them and does not edit them; stored ranks, scores or grades; citations other than bare `pmid:<digits>`; empty citation arrays; pairs without qualifying evidence (§4); removal or rewriting of existing rows absent explicit human supersession.
 

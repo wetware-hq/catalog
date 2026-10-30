@@ -116,7 +116,7 @@ Hash naming is what makes this work without identity metadata: "same node" is de
 
 1. **The run id is the core's hash.** `run = H(core bytes)`. One changed byte is a different hash, hence a different run. The core cannot be modified, only replaced by a core that is not this run's.
 2. **Every node names the run**, inside the bytes its own name covers, so a node cannot be moved between runs or have its run rewritten without changing its own name.
-3. **The receiver validates, not the sender.** On merge, a node whose run is not this run's core hash is refused, as is a node without a tier. This rule is load-bearing rather than decorative (§8).
+3. **The receiver validates, not the sender.** On merge, a node whose run is not this run's core hash is refused, as is a node without a tier. This rule is load-bearing rather than decorative (§9).
 4. **There is no write path.** `append` requires at least one parent; the core is the only parentless node and is written once by the initialiser, before any agent starts. No agent interface can produce a parentless node.
 
 A run whose core changed is not a tainted run to be discarded by policy; it is arithmetically a different run, and anyone can recompute the hashes and see so. The report states the core hash.

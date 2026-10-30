@@ -24,6 +24,8 @@ jobs:
       - name: Pure predicates on graph.json
         run: python3 verifier/verify.py graph.json
       - name: Relational add-only vs previous commit
+        # Checks the last hop only: HEAD against HEAD~1. A push of several commits is not checked
+        # pairwise, so add-only can be violated and repaired inside one push without this failing.
         run: |
           if git cat-file -e HEAD~1:graph.json 2>/dev/null; then
             git show HEAD~1:graph.json > /tmp/prev_graph.json

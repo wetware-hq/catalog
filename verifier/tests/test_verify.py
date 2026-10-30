@@ -1,4 +1,5 @@
-"""Unit tests: one minimal failing fixture per pure predicate, plus relational 8.19 and merge.
+"""Unit tests: one minimal failing fixture per pure predicate, plus relational 8.19.
+NOT covered: the --merge path (AGENTS.md section 6). No test exercises it.
 Run: python3 -m pytest tests/ -q   (or: python3 tests/test_verify.py)
 Stdlib-only fallback runner at the bottom, so pytest is optional."""
 import json
@@ -173,7 +174,7 @@ def test_18_empty_catalogue():
     assert run_pure(raw=b'{"version":2,"pair":{},"preclinical":{}}\n').get("18") is False
 
 
-# ---- relational 8.19 and merge ----------------------------------------------
+# ---- relational 8.19 (the --merge path has no test; see the module docstring) -----------------
 def test_19_add_only():
     prev = "/tmp/_prev.json"; nxt = "/tmp/_next.json"
     open(prev, "wb").write(V.canonical_bytes(VALID))

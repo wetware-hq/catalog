@@ -5,6 +5,8 @@ Usage:
     verify.py GRAPH.json                 # pure predicates (8.1-8.15, 8.17, 8.18)
     verify.py --prev OLD.json NEW.json   # the above on NEW, plus relational 8.19 (add-only)
     verify.py --merge A.json B.json      # section 6 merge; writes canonical bytes to stdout
+    verify.py GRAPH.json --repo DIR      # + extension predicates E1 (banner) and E2 (skill registry); these gate
+    verify.py GRAPH.json --online        # + E3 pmid resolution via NCBI E-utilities; NON-BLOCKING, never gates
     verify.py --json ...                 # machine-readable report on stdout
 
 Exit status: 0 = every evaluated pure/relational predicate passed; 1 = a violation/refusal; 2 = usage/IO error.
