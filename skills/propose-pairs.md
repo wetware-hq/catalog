@@ -17,8 +17,8 @@ The study-type classification — `pair` versus `preclinical` — is **not yours
 
 ## 1. Non-goals
 
-- **Do not crawl prose.** Free-text web search does not resolve binders: it returns the name without the sequence and silently substitutes near-matches (a non-human Fab for the human one). Enumerate records; a page that asserts a pair without a resolvable sequence is not a candidate.
-- **Do not use DrugBank.** Non-commercial licence; it is not an admissible source for this repository at any scale.
+- **Do not crawl prose.** Free-text web search does not resolve binders: it returns the name without the sequence and silently substitutes near-matches (observed once, 2026-10-29: a search on a real human 40-mer returned a non-human Fab). Enumerate records; a page that asserts a pair without a resolvable sequence is not a candidate.
+- **Do not use DrugBank.** Its licence was non-commercial when checked on 2026-10-29, which makes it inadmissible for this repository at any scale. That is an external fact with a date on it: re-check the licence before treating the refusal as permanent, and do not relax it without re-checking.
 - Do not write ranks, scores, grades, names, labels, indications, doses or regulatory status. They are not in the schema.
 - Do not widen the key grammar to admit a molecule you could not resolve. An unresolvable candidate is **dropped**, not approximated.
 
@@ -43,7 +43,7 @@ A candidate is emitted only with all three fields present; a missing field is a 
 | `target` | `uniprot:` accession |
 | `pmid` | one `pmid:<digits>` |
 
-Store the **canonical** sequence, not the mature chain. Measured 2026-10-29: of 33 mature chains, 6 did not resolve at all, and cross-reference collapse put 16 of 27 under 50 residues against canonical ranges — a mature-chain key is both less resolvable and silently different from the molecule the record describes.
+Store the **canonical** sequence, not the mature chain. Snapshot 2026-10-29 by catalog-systems against the live UniParc service, not reproducible from this checkout: of 33 mature chains, 6 did not resolve at all, and cross-reference collapse put 16 of 27 under 50 residues against canonical ranges — on that evidence a mature-chain key is both less resolvable and silently different from the molecule the record describes.
 
 ## 4. Decision procedure
 
@@ -51,7 +51,7 @@ Per candidate, in order. Stop at the first refusal and record which step refused
 
 1. **Admit gate.** `aa:` / `uniprot:` / HELM in which **every** block is `PEPTIDE` and at least one exists → continue. Anything else → **refuse: out of scope**, unexamined. Do not classify what you can refuse by namespace.
 2. **Payload.** Monomers are standard residues or bracketed symbols from the 32-token protein monomer set. A SMILES fragment such as `[CCO]` inside `PEPTIDE1{…}` → **refuse: illegal payload**. This is a different refusal from step 1 and must stay distinguishable; a `d`-prefixed token is a **D-stereoisomer**, never a deoxy sugar.
-3. **Resolve binder.** Sequence → CRC64 → UniParc. Batch accessions: 307 lookups in one call took 35 s against 103 s for 41 single lookups.
+3. **Resolve binder.** Sequence → CRC64 → UniParc. Batch accessions: in one timing run on 2026-10-29 (catalog-systems, one network path, not reproducible from this checkout) 307 lookups in one call took 35 s against 103 s for 41 single lookups. Batch because the ratio is large, not because of those seconds.
 4. **Resolve target.** Accession must exist and be a protein.
 5. **Duplicate check.** The triple must not already exist in either dictionary of `graph.json`, nor in `proposals.json`; the molecule must not already exist under a different binder key (`AGENTS.md` §8.13).
 

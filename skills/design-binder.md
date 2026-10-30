@@ -90,7 +90,7 @@ Two stages, and they are different operations. The ordering is **computed per ru
 **Stage one — hard screens. They exclude; they never penalise.** A candidate failing one is out, and the report names the screen.
 
 - **Selectivity.** Exclude unless predicted or measured affinity for every panel member is at least two logs weaker than for the target. A 10-fold window is not a window.
-- **Immunogenicity.** Count promiscuous predicted MHC-II binders — peptides in the top 2% against a common DRB1 allele panel that hit three or more alleles — over non-germline regions only, and exclude above the count seen in marketed therapeutic antibodies. **This is the weakest screen and is reported as such:** prediction here is poor, and the real readout is an anti-drug antibody assay.
+- **Immunogenicity.** Count promiscuous predicted MHC-II binders — peptides in the top 2% against a common DRB1 allele panel that hit three or more alleles — over non-germline regions only, and exclude above a locally agreed bar. **That bar is local convention, not a figure derived from a published set of marketed therapeutic antibodies**: no such analysis is cited here because none was performed for this repository, and a number with no source behind it would read as evidence it is not. **This is the weakest screen and is reported as such:** prediction here is poor, and the real readout is an anti-drug antibody assay.
 - **Developability.** Exclude on any of: an unpaired cysteine, an N-glycosylation sequon in a CDR, Asn-Gly or Asp-Pro in a CDR, or a hydrophobic patch score above the approved-antibody range.
 
 A weighted sum cannot do this job: a total can be high for the wrong reason, and a liability that kills a molecule does not trade off against affinity.

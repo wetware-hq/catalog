@@ -12,7 +12,7 @@ BENCH is working space, not a record. It is where several agents in one run put 
 
 - **Read:** this file, `AGENTS.md`, the run's own `.bench` files.
 - **Write:** `.bench` files inside a run directory, which lives outside this repository.
-- **Refuse:** `graph.json`, `proposals.json`, and every other file in this repository. BENCH ships no code, no workflow and no data file here; this specification is the whole of its presence in the repository.
+- **Refuse:** `graph.json`, `proposals.json`, and every other file in this repository. BENCH ships no implementation, no workflow and no data file here. Its presence in the repository is this specification plus `systems/checks/`, which holds standard-library scripts that regenerate numbers this file quotes and implement no part of the system.
 
 **`systems/` and `skills/`.** `skills/*.md` are *procedures*: a named thing an agent does, registered in `AGENTS.md` §10, each with a signature and a write scope. `systems/*.md` are *substrates*: a named thing agents run on, with a format, a merge law and an invariant list. A system is not a skill, declares no signature over catalogue keys, and is not registered in §10; it is registered in `AGENTS.md` §11. A skill may use a system; a system never discharges a skill's obligations, and neither widens `AGENTS.md` §0.
 
@@ -148,19 +148,19 @@ This is the only use of geometric algebra in BENCH. It contributes nothing to th
 
 ## 9. Verification status
 
-The concurrency model is checked with TLC (TLA+). Two agents, byte-level staging, a derived index, tier-pure aggregation, the immutable core, an untiered record and a record from a foreign run.
+The concurrency model was checked with TLC (TLA+) in an off-repo run on 2026-10-29 by catalog-systems. **The model is not in this repository** — there is no `.tla` or `.cfg` here — so nothing below is reproducible from this checkout, and the table records what that run reported rather than a property this repository can demonstrate. The configuration was: two agents, byte-level staging, a derived index, tier-pure aggregation, the immutable core, an untiered record and a record from a foreign run.
 
 | rule | result |
 |---|---|
 | no write is lost | holds |
-| merge converges regardless of order | holds, with the four §5 laws checked over the full powerset |
+| merge converges regardless of order | holds, with the three §5 laws — associativity, commutativity, idempotence — checked over the full powerset |
 | no agent reads a torn or partial write | holds |
 | no untiered record is ever appended | holds |
 | no aggregation pools tiers | holds |
 | the immutable core is never written | holds |
 | the index never returns what the store lacks | holds |
 
-198 states, 887 steps, every rule holding. The same model with receiver-side validation switched off breaks "no untiered record" and "no foreign record" in **one step each**, which is the evidence that §6.3 is load-bearing rather than decorative. A check that cannot fail proves nothing.
+That run reported 198 distinct states and 887 steps with every rule above holding, and the same model with receiver-side validation switched off broke "no untiered record" and "no foreign record" in **one step each** — which is why §6.3 is called load-bearing rather than decorative, and a check that cannot fail proves nothing. Until the model is committed here, that reasoning rests on a run nobody else can repeat.
 
 ## 10. Known weaknesses
 
@@ -176,4 +176,4 @@ Stated here rather than in a design note, because a reader of this file is the p
 
 ## 11. Status
 
-Design, verified in model, **not implemented**. No code in this repository implements it, and none is proposed here (§0).
+Design, reported as checked in an off-repo TLA+ model on 2026-10-29 (§9, not reproducible here), **not implemented**. No code in this repository implements the store — the only code BENCH ships is `systems/checks/`, which checks claims this file makes and implements none of the system — and no implementation is proposed here (§0).

@@ -83,18 +83,22 @@ uniprot: / discovered sequence
     GET https://rest.uniprot.org/uniparc/search?query=checksum:<crc64>
     GET https://rest.uniprot.org/uniprotkb/<accession>
     exact lookup. no alignment. no search engine.
-    verified 2026-10-29: 41/41 canonical keys -> exactly one UniParc entry.
-    hit  : P04626 canonical 1255 aa -> 39E9DFDA04DCF962 -> UPI000003F55F
-    miss : P04626 canonical, residue 100 R->A -> 08E37566D061ED3B -> zero hits -> unresolved
-           (one letter from a real protein: proves the lookup is exact, not approximate)
+    snapshot 2026-10-29, catalog-systems, against the live UniParc service. not reproducible
+    from this checkout and not re-run since; treat as a record of one run, not a standing fact:
+      41/41 canonical keys -> exactly one UniParc entry.
+      hit  : P04626 canonical 1255 aa -> 39E9DFDA04DCF962 -> UPI000003F55F
+      miss : P04626 canonical, residue 100 R->A -> 08E37566D061ED3B -> zero hits -> unresolved
+             (one letter from a real protein: the lookup was exact, not approximate, on that date)
     |hit| > 1 -> unresolved. more than one answer is not an answer.
     5xx / 429 -> unavailable. cache nothing. retry.
-    MD5 is published in the record and is NOT searchable. use CRC64.
+    MD5 is published in the record and was NOT searchable when checked on 2026-10-29.
+    a service can change this; re-check before relying on it. use CRC64.
 
     canonical is the stored string. a mature chain is a different string with its own
-    UPI: measured 2026-10-29, 27 of 33 mature chains resolve and 6 do not
+    UPI. snapshot 2026-10-29, catalog-systems, live service, not reproducible from this
+    checkout: 27 of 33 mature chains resolved and 6 did not
     (P08069 P25092 P31358 P40238 P41180 Q02643), and no property of the key tells you
-    which. cross-references collapse under maturation (canonical 54-1426, mature 1-336,
+    which. cross-references collapsed under maturation (canonical 54-1426, mature 1-336,
     16 of 27 under 50), so a mature UPI keeps resolution and loses corroboration.
     store canonical; any future sequence commit declares its boundary explicitly.
 
@@ -104,7 +108,9 @@ aa: / helm: invented molecule (therapeutic antibody, de novo binder)
     do not substitute an endpoint.
 
 shard unit: a BATCH of keys, never one key per worker.
-    measured 2026-10-29: 41 single lookups = 103 s; 307 accessions batched = 35 s.
+    timing snapshot 2026-10-29, catalog-systems, one run on one network path, not
+    reproducible from this checkout: 41 single lookups = 103 s; 307 accessions batched = 35 s.
+    the ratio is the point; the seconds are not a benchmark.
 ```
 
 ## Stage 2 - enrich
@@ -114,8 +120,9 @@ enrich : Identity -> Findings        -- note the domain: Identity, NOT Key
 fleet / swarm. open. parallel. no coordinator. no shared mutable state.
 
 stage 1 returning unresolved HALTS enrichment for that key. fail-closed.
-no worker may put residues into a search. a real 40-mer of P04626 returned an
-unrelated mouse Fab (PDB 1RIV), engine verdict "not identified".
+no worker may put residues into a search. observed once, 2026-10-29, catalog-systems:
+a real 40-mer of P04626 returned an unrelated mouse Fab (PDB 1RIV), engine verdict
+"not identified". one dated observation against a live engine, not a reproducible test.
 
 merge law: UNION with per-worker attribution. never a vote, never a collapse to
 one value. N workers reading one page are not N confirmations.
