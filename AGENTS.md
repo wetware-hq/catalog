@@ -6,7 +6,7 @@
 
 ## 0. Scope
 
-- **Read:** `graph.json`, `AGENTS.md`, `skills/*.md`, `systems/*.md` (§11), `references.md`, `README.md` (non-normative), `verifier/`, `.github/workflows/`, `LICENSE`.
+- **Read:** `graph.json`, `AGENTS.md`, `skills/*.md`, `systems/*.md` (§11), `traces/*.md` (§11), `references.md`, `README.md` (non-normative), `verifier/`, `.github/workflows/`, `LICENSE`.
 - **Write:** `graph.json` and `proposals.json` only, under §9.
 - **Refuse:** writing scripts, workflows, CI, package manifests or secondary data files in this repo, `proposals.json` (§9) being the single named exception — the verifier under `verifier/` and the workflow under `.github/workflows/` are human-directed additions that check this contract and are outside every agent's write scope, so an agent reads them and does not edit them; stored ranks, scores or grades; citations other than bare `pmid:<digits>`; empty citation arrays; pairs without qualifying evidence (§4); removal or rewriting of existing rows absent explicit human supersession.
 
@@ -143,7 +143,7 @@ Implement from this section alone. Tags: **pure** = decidable from one file's by
 3. **File boundary.** Autonomous intake writes `proposals.json` only, and never writes `graph.json` on any branch. Admission is the act of reading the paper, and that act is what moves bytes from `proposals.json` into `graph.json`, choosing the dictionary per §4. **Trust is carried by the file, not by a branch:** a branch name is mutable and has no merge law, so a fence of the form "unverified rows live on branch X" dissolves at the first merge and relaunders those rows as verified, while `proposals.json` merges into `proposals.json` on every branch. Condition 16 is therefore discharged at the file move, by a reader, and never by the run that proposed the row.
 4. **`proposals.json`.** Root: a non-array object with exactly `version` (the number `2`) and `proposal` (an array). Each element has exactly `binder`, `target`, `pmid`, each satisfying §3. A proposal carries **no dictionary assignment**: `pair` versus `preclinical` is part of the oracle and is chosen when the paper is read. Serialise per §5; add-only per §8.19. It is not catalogue-shaped and must not be read as one.
 5. Intake procedure: [`skills/propose-pairs.md`](skills/propose-pairs.md). It enumerates structured authorities; it does not crawl prose, and its own acceptance test is rediscovery of the rows already committed.
-6. This repository ships no updater and no cron. It does ship a verifier (`verifier/`) and a workflow (`.github/workflows/validate.yml`) that runs it, and neither writes `graph.json` or `proposals.json`: a passing run proves only the pure conditions (§8) and the repository extension predicates E1 and E2, which are not §8 predicates and do not renumber them (E3, pmid resolution, is non-blocking and gates nothing). It never proves §8.16. Compliance is your behaviour against this contract, not a green check.
+6. This repository ships no updater and no cron. It does ship a verifier (`verifier/`) and a workflow (`.github/workflows/validate.yml`) that runs it, and neither writes `graph.json` or `proposals.json`: a passing run proves only the pure conditions (§8) and the repository extension predicates E1, E2, and E4, which are not §8 predicates and do not renumber them (E3, pmid resolution, is non-blocking and gates nothing). It never proves §8.16. Compliance is your behaviour against this contract, not a green check.
 
 A proposed row failing any rule above is **refused**, naming the condition that failed.
 
@@ -175,13 +175,16 @@ The reader-facing warning is therefore not carried by a path either. It is carri
 
 ## 11. Systems
 
-`systems/*.md` are specifications of machinery a skill may run, not procedures a skill follows: §10 governs what a skill may do to claims, this section governs what a system is. A system is subordinate to this file on the same terms as a skill (§0), and holds no element of `graph.json` or `proposals.json`.
+`systems/*.md` and `traces/*.md` are specifications of machinery a skill may run, not procedures a skill follows: §10 governs what a skill may do to claims, this section governs what a system is. A system is subordinate to this file on the same terms as a skill (§0), and holds no element of `graph.json` or `proposals.json`. `systems/` is the shared working substrate. `traces/` is the execution record of a run. They do not share a header, an extension, or a query.
 
 | system | what it holds | write scope |
 |---|---|---|
 | [`systems/bench.md`](systems/bench.md) | a run-scoped append-only commons where a swarm's agents read and write partial work concurrently | its own `.bench` store only; never `graph.json`, never `proposals.json` |
+| [`traces/traces.md`](traces/traces.md) | the act log of one `agent.fleet` run: pin, call, refusal, proposal, emission, halt | its own `.trace` store only, outside this repository; never `graph.json`, never `proposals.json`, never `.bench` |
 
-- A system is not a skill and is not listed in §10. It originates nothing and admits nothing: §4 is untouched by anything written to a scratchpad, and a record in a `.bench` store is not a claim this file recognises.
+- A system is not a skill and is not listed in §10. It originates nothing and admits nothing: §4 is untouched by anything written to a scratchpad or an act log, and a record in a `.bench` or `.trace` store is not a claim this file recognises.
 - `bench` is scoped to a single run and is discarded with it. It is not a second catalogue, and it is not a cache of `graph.json`.
 - Every `.bench` record declares an evidence tier, and no query pools across tiers — the same refusal §2 makes between clinical and preclinical, one layer down. A tier that is declared is not thereby honest; the grammar can only require the declaration.
-- One system, named here exactly. A specification not listed in this section is not part of this contract.
+- `traces` records acts, not evidence. Its grammar has no tier, no study type, and no score. A `.trace` file is not a proposal and is not a bench. It is discarded with the run. The directory `traces/` in this repository is the specification only. Its judgements are decided by `verifier/verify.py --trace`. That decision is pure and does not discharge §8.16.
+- The rows of this table and the files `systems/*.md` and `traces/*.md` are in bijection. That bijection is extension predicate E4. It is not a §8 predicate and it does not renumber them.
+- Two systems, named here exactly. A specification not listed in this section is not part of this contract.
