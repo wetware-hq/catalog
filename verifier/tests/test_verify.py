@@ -1,5 +1,5 @@
 """Unit tests: one minimal failing fixture per pure predicate, plus relational 8.19.
-NOT covered: the --merge path (AGENTS.md section 6). No test exercises it.
+NOT covered: the --merge path (follow-agent-contract.md section 6). No test exercises it.
 Run: python3 -m pytest tests/ -q   (or: python3 tests/test_verify.py)
 Stdlib-only fallback runner at the bottom, so pytest is optional."""
 import json
@@ -189,7 +189,7 @@ def test_19_add_only():
     assert rep.findings[0].ok is True
 
 
-# --- Extension predicates (beyond AGENTS.md section 8): one failing fixture + test each -------------------------
+# --- Extension predicates (beyond follow-agent-contract.md section 8): one failing fixture + test each -------------------------
 
 FIX = os.path.join(os.path.dirname(os.path.abspath(__file__)), "fixtures")
 
@@ -204,7 +204,7 @@ def _ext(repo):
 def test_E1_disclaimer_fails_on_missing_banner():
     res = _ext(os.path.join(FIX, "ext_disclaimer_fail"))
     assert res["E1"].ok is False
-    assert any("notes.md" in r for r in res["E1"].rows)
+    assert any("skip-disclaimer-banner.md" in r for r in res["E1"].rows)
 
 
 def test_E1_disclaimer_passes_when_every_md_is_bannered():
@@ -216,8 +216,8 @@ def test_E2_registry_fails_on_orphan_and_bad_special_scope():
     res = _ext(os.path.join(FIX, "ext_registry_fail"))
     rows = res["E2"].rows
     assert res["E2"].ok is False
-    assert any("orphan-two.md" in r for r in rows)          # on disk, not in section 10
-    assert any("special-one.md" in r and "none" in r for r in rows)  # special must declare write scope none
+    assert any("leave-unregistered.md" in r for r in rows)          # on disk, not in section 10
+    assert any("exercise-special-scope.md" in r and "none" in r for r in rows)  # special must declare write scope none
 
 
 def test_E2_registry_passes_on_bijection_with_none_scope():
@@ -268,7 +268,7 @@ def test_E1_fixture_named_file_outside_the_fixtures_tree_still_fails():
     fails E1 when it lives anywhere other than the allowlisted path.
     """
     repo = _tmp_repo("e1_lookalike", {
-        "AGENTS.md": V.BANNER + "\n\n# agents\n",
+        "follow-agent-contract.md": V.BANNER + "\n\n# agents\n",
         "docs/ext_disclaimer_fail/notes.md": "# notes\n\nNo banner, and not at the allowlisted path.\n",
         "tests/fixtures/ext_disclaimer_fail/notes.md": "# notes\n\nNot the allowlisted path either.\n",
     })
@@ -288,7 +288,7 @@ def test_E1_real_file_at_an_allowlisted_path_is_skipped():
     """
     rel = V.E1_ALLOWLIST[0]
     repo = _tmp_repo("e1_blindspot", {
-        "AGENTS.md": V.BANNER + "\n\n# agents\n",
+        "follow-agent-contract.md": V.BANNER + "\n\n# agents\n",
         rel: "# a real document, no banner, parked at an allowlisted path\n",
     })
     assert V.banner_violation(os.path.join(repo, rel)) is not None   # it does violate E1 ...

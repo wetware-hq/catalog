@@ -1,5 +1,5 @@
 ⚠️ ACADEMIC RESEARCH PURPOSES ONLY; NOT FOR MEDICAL USE WITHOUT LICENSED OVERSIGHT
 
-# special-one
+# exercise-special-scope
 
 `spec: agent.skill`

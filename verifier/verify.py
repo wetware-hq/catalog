@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Verifier for wetware-hq/catalog `graph.json`, implemented from AGENTS.md (sections 2, 3, 5, 6, 8) only.
+"""Verifier for wetware-hq/catalog `graph.json`, implemented from follow-agent-contract.md (sections 2, 3, 5, 6, 8) only.
 
 Usage:
     verify.py GRAPH.json                 # pure predicates (8.1-8.15, 8.17, 8.18)
@@ -25,7 +25,7 @@ DICTS = ("pair", "preclinical")
 ROOT_KEYS = ("version", "pair", "preclinical")
 EMPTY_CATALOGUE = b'{\n  "version": 2,\n  "pair": {},\n  "preclinical": {}\n}\n'
 
-# Predicate registry (AGENTS.md section 8). The two HELM refusals are kept as distinct sub-predicates (8.8).
+# Predicate registry (follow-agent-contract.md section 8). The two HELM refusals are kept as distinct sub-predicates (8.8).
 PREDICATES = {
     "1": ("pure", "UTF-8"),
     "2": ("pure", "Final newline"),
@@ -50,11 +50,11 @@ PREDICATES = {
     "19": ("relational", "Add-only"),
 }
 
-# Extension predicates: documentation/repository invariants BEYOND AGENTS.md section 8's nineteen.
+# Extension predicates: documentation/repository invariants BEYOND follow-agent-contract.md section 8's nineteen.
 # They are NOT part of the normative predicate list and never renumber it; ids are prefixed "E".
 EXTENSIONS = {
     "E1": ("pure-ext", "Disclaimer banner (every .md first non-blank line)"),
-    "E2": ("pure-ext", "Skill registry (skills <-> AGENTS.md section 10)"),
+    "E2": ("pure-ext", "Skill registry (skills <-> follow-agent-contract.md section 10)"),
     "E3": ("online-ext", "pmid: resolves via NCBI E-utilities (non-blocking)"),
 }
 BANNER = "\u26a0\ufe0f ACADEMIC RESEARCH PURPOSES ONLY; NOT FOR MEDICAL USE WITHOUT LICENSED OVERSIGHT"
@@ -510,14 +510,14 @@ def do_merge(a_path: str, b_path: str):
 
 
 # ---------------------------------------------------------------------------------------------------------------
-# Extension predicates (documentation / repository invariants beyond AGENTS.md section 8)
+# Extension predicates (documentation / repository invariants beyond follow-agent-contract.md section 8)
 # ---------------------------------------------------------------------------------------------------------------
 
 # --- E1 exclusions ---------------------------------------------------------------------------------------------
 # THE RULE: an exclusion in a checker is only safe if the excluded thing is pinned by a test that fails when
 # the exclusion is abused.
 #
-# E1 must skip something. `verifier/tests/fixtures/ext_disclaimer_fail/notes.md` is a deliberately unbannered
+# E1 must skip something. `verifier/tests/fixtures/ext_disclaimer_fail/skip-disclaimer-banner.md` is a deliberately unbannered
 # file and is how E1 itself is tested, so scanning it would make the verifier fail by doing its job. The first
 # fix skipped the whole `tests/fixtures/` *directory*, which is the wrong shape of exclusion: nothing failed if a
 # fixture quietly acquired the banner, nothing failed if a real document was parked under `tests/fixtures/`, and
@@ -531,7 +531,7 @@ def do_merge(a_path: str, b_path: str):
 # path is skipped - is itself pinned, by `test_E1_real_file_at_an_allowlisted_path_is_skipped`, so the hole is a
 # passing test rather than a paragraph in a comment that someone can delete.
 E1_ALLOWLIST = (
-    "verifier/tests/fixtures/ext_disclaimer_fail/notes.md",
+    "verifier/tests/fixtures/ext_disclaimer_fail/skip-disclaimer-banner.md",
 )
 
 
@@ -632,20 +632,20 @@ def _parse_section10(agents_text: str):
 
 
 def check_skill_registry(repo_dir: str, rep: "Report"):
-    """E2 [pure-ext]: skills/*.md <-> AGENTS.md section 10 are in bijection; `special` skills declare write scope `none`."""
+    """E2 [pure-ext]: skills/*.md <-> follow-agent-contract.md section 10 are in bijection; `special` skills declare write scope `none`."""
     import os
     problems = []
     disk = {os.path.relpath(p0, repo_dir).replace(os.sep, "/") for p0 in _md_files(repo_dir)
             if os.path.relpath(p0, repo_dir).replace(os.sep, "/").startswith("skills/")}
-    agents_path = os.path.join(repo_dir, "AGENTS.md")
+    agents_path = os.path.join(repo_dir, "follow-agent-contract.md")
     if not os.path.exists(agents_path):
-        rep.add("E2", False, ["AGENTS.md not found; cannot check the registry"]); return
+        rep.add("E2", False, ["follow-agent-contract.md not found; cannot check the registry"]); return
     rows = _parse_section10(open(agents_path, encoding="utf-8").read())
     listed = {r[0] for r in rows}
 
     for f in sorted(disk):                         # every skill file must be registered
         if f not in listed:
-            problems.append(f"{f}: skill file present but not listed in AGENTS.md section 10")
+            problems.append(f"{f}: skill file present but not listed in follow-agent-contract.md section 10")
     for path, scope in rows:                       # every row must point to a real file
         abspath = os.path.join(repo_dir, path)
         if not os.path.exists(abspath):
@@ -705,7 +705,7 @@ def _label_of(pid):
 
 
 def main(argv=None):
-    ap = argparse.ArgumentParser(description="Validate catalog graph.json against AGENTS.md section 8, "
+    ap = argparse.ArgumentParser(description="Validate catalog graph.json against follow-agent-contract.md section 8, "
                                              "plus repository extension predicates.")
     ap.add_argument("graph", nargs="?", help="graph.json to validate")
     ap.add_argument("--prev", metavar="OLD", help="predecessor graph.json for relational 8.19 (add-only)")
