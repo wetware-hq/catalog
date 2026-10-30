@@ -310,6 +310,206 @@ def test_E3_online_no_pmids_is_noop_without_network():
     assert (checked, resolved, unresolved, unavail) == (0, 0, [], None)
 
 
+# --- E4 system registry and the TRACES judgements -------------------------------------------------------------
+
+_E4_AGENTS = V.BANNER + """
+
+## 11. Systems
+
+| [`systems/bench.md`](systems/bench.md) | substrate | .bench only |
+| [`traces/traces.md`](traces/traces.md) | act log | .trace only |
+"""
+
+
+def test_E4_repo_lists_exactly_bench_and_traces():
+    text = open(os.path.join(REPO_ROOT, "AGENTS.md"), encoding="utf-8").read()
+    assert V.parse_section11(text) == ["systems/bench.md", "traces/traces.md"]
+    rep = V.Report(); V.check_system_registry(REPO_ROOT, rep)
+    assert rep.findings[0].ok is True, rep.findings[0].rows
+
+
+def test_E4_orphan_file_fails():
+    repo = _tmp_repo("e4_orphan", {
+        "AGENTS.md": _E4_AGENTS,
+        "systems/bench.md": V.BANNER + "\n",
+        "systems/extra.md": V.BANNER + "\n",
+        "traces/traces.md": V.BANNER + "\n",
+    })
+    rep = V.Report(); V.check_system_registry(repo, rep)
+    assert rep.findings[0].ok is False
+    assert any("systems/extra.md" in row for row in rep.findings[0].rows), rep.findings[0].rows
+
+
+def test_E4_dangling_row_fails():
+    repo = _tmp_repo("e4_dangling", {
+        "AGENTS.md": _E4_AGENTS,
+        "systems/bench.md": V.BANNER + "\n",
+    })
+    rep = V.Report(); V.check_system_registry(repo, rep)
+    assert rep.findings[0].ok is False
+    assert any("traces/traces.md" in row for row in rep.findings[0].rows), rep.findings[0].rows
+
+
+def _fence_after(label):
+    text = open(os.path.join(REPO_ROOT, "traces", "traces.md"), encoding="utf-8").read()
+    start = text.index("```\n", text.index(label)) + 4
+    end = text.index("\n```", start)
+    return text[start:end] + "\n"
+
+
+def _write_trace(name, core, workers):
+    root = _tmp_repo(name, {"core.trace": core})
+    paths = []
+    for base, body in workers:
+        path = os.path.join(root, base)
+        open(path, "w", encoding="utf-8").write(body)
+        paths.append(path)
+    return os.path.join(root, "core.trace"), paths
+
+
+def test_trace_carrier_sets_exclude_scores():
+    names = set()
+    for keys in V.TRACE_FIELDS.values():
+        names.update(keys)
+    for _gloss, keys in V.TRACE_CONTEXT.values():
+        names.update(keys)
+    assert not (names & V.TRACE_FORBIDDEN_FIELDS)
+    assert set(V.TRACE_SKILLS) == {"resolve-key", "propose-pairs", "design-binder"}
+    assert V.TRACE_FIELDS["halt"] == ("bound-n", "bound-tok", "oracle")
+    assert "pair" not in V.TRACE_ACTS["propose-pairs"]
+    assert "preclinical" not in V.TRACE_ACTS["propose-pairs"]
+
+
+def test_trace_witness_is_result_and_matches_emit():
+    import hashlib
+    core = _fence_after("`core.trace`:")
+    worker = _fence_after("`a1.trace`:")
+    run = hashlib.sha256(core.encode("utf-8")).hexdigest()
+    skill = "propose-pairs"
+    call_id = V.trace_call_id(run, skill)
+    pin_parent = "^" + call_id
+    call = V.trace_emit("call", run, skill, "^0", {})
+    pin = V.trace_emit("pin", run, skill, pin_parent, {"path": "graph.json", "rev": "b" * 40})
+    pin_id = pin.split(" ", 2)[1]
+    refuse = V.trace_emit("refuse", run, skill, "^" + pin_id, {
+        "gate": "illegal-payload", "subject": "helm:PEPTIDE1{[CCO]}$$$$",
+    })
+    propose = V.trace_emit("propose", run, skill, "^" + pin_id, {
+        "binder": "aa:ACD", "pmid": "pmid:1", "target": "uniprot:P12345",
+    })
+    halt = V.trace_emit("halt", run, skill, "^" + pin_id, {
+        "bound-n": "1", "bound-tok": "8000", "oracle": "not-discharged",
+    })
+    body = worker[:-1].split("\n")
+    assert body[0].startswith("%trace/1 core=" + run)
+    assert body[1:] == [call, pin, refuse, propose, halt]
+    header = body[0] + "\n"
+    core_path, paths = _write_trace("trace_witness", core, [("a1.trace", worker), ("b2.trace", header + "\n".join(body[1:]) + "\n")])
+    ok, code, rows = V.check_trace(core_path, paths)
+    assert ok and code == "result" and rows == [run], (ok, code, rows)
+
+
+def test_trace_bad_oracle_and_extra_field_are_admit():
+    import hashlib
+    core = (
+        "%trace-core/1\n"
+        'bound-n:"1"\n'
+        'bound-tok:"8000"\n'
+        'skill:"propose-pairs"\n'
+        'spec:"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"\n'
+    )
+    run = hashlib.sha256(core.encode("utf-8")).hexdigest()
+    skill = "propose-pairs"
+    call = V.trace_emit("call", run, skill, "^0", {})
+    pin = V.trace_emit("pin", run, skill, "^" + V.trace_call_id(run, skill),
+                       {"path": "graph.json", "rev": "b" * 40})
+    pin_id = pin.split(" ", 2)[1]
+    parent = "^" + pin_id
+    halt = V.trace_emit("halt", run, skill, parent, {
+        "bound-n": "1", "bound-tok": "8000", "oracle": "discharged",
+    })
+    header = f"%trace/1 core={run} spec={'a' * 40}\n"
+    core_path, paths = _write_trace("trace_oracle", core, [("a1.trace", header + "\n".join([call, pin, halt]) + "\n")])
+    ok, code, rows = V.check_trace(core_path, paths)
+    assert ok is False and code == "admit" and any(row.startswith("value:oracle") for row in rows), (code, rows)
+
+    scored = V.trace_emit("propose", run, skill, parent, {
+        "binder": "aa:ACD", "pmid": "pmid:1", "score": "0.9", "target": "uniprot:P12345",
+    })
+    core_path, paths = _write_trace("trace_score", core, [("a1.trace", header + "\n".join([call, pin, scored]) + "\n")])
+    ok, code, rows = V.check_trace(core_path, paths)
+    assert ok is False and code == "admit" and any(row.startswith("fields") for row in rows), (code, rows)
+
+
+def test_trace_same_molecule_is_R9_and_hit_emit_is_R10():
+    import hashlib
+    core = (
+        "%trace-core/1\n"
+        'bound-n:"1"\n'
+        'bound-tok:"8000"\n'
+        'skill:"propose-pairs"\n'
+        'spec:"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"\n'
+    )
+    run = hashlib.sha256(core.encode("utf-8")).hexdigest()
+    skill = "propose-pairs"
+    call = V.trace_emit("call", run, skill, "^0", {})
+    pin = V.trace_emit("pin", run, skill, "^" + V.trace_call_id(run, skill),
+                       {"path": "graph.json", "rev": "c" * 40})
+    parent = "^" + pin.split(" ", 2)[1]
+    first = V.trace_emit("propose", run, skill, parent, {
+        "binder": "aa:ACD", "pmid": "pmid:1", "target": "uniprot:P12345",
+    })
+    second = V.trace_emit("propose", run, skill, parent, {
+        "binder": "helm:PEPTIDE1{A.C.D}$$$$", "pmid": "pmid:2", "target": "uniprot:P12345",
+    })
+    halt = V.trace_emit("halt", run, skill, parent, {
+        "bound-n": "1", "bound-tok": "8000", "oracle": "not-discharged",
+    })
+    header = f"%trace/1 core={run} spec={'a' * 40}\n"
+    body = header + "\n".join([call, pin, first, second, halt]) + "\n"
+    core_path, paths = _write_trace("trace_r9", core, [("a1.trace", body)])
+    ok, code, rows = V.check_trace(core_path, paths)
+    assert ok is False and code == "R9", (code, rows)
+
+    dcore = core.replace('skill:"propose-pairs"', 'skill:"design-binder"')
+    drun = hashlib.sha256(dcore.encode("utf-8")).hexdigest()
+    dskill = "design-binder"
+    dcall = V.trace_emit("call", drun, dskill, "^0", {})
+    dpin = V.trace_emit("pin", drun, dskill, "^" + V.trace_call_id(drun, dskill),
+                        {"path": "graph.json", "rev": "d" * 40})
+    dparent = "^" + dpin.split(" ", 2)[1]
+    ctx = V.trace_emit("context", drun, dskill, dparent, {
+        "binder": "aa:ACD", "gloss": "stop", "pmid": "pmid:1",
+        "target": "uniprot:P12345", "verdict": "hit-same-indication",
+    })
+    emitted = V.trace_emit("emit", drun, dskill, dparent, {
+        "binder": "aa:ACDE", "disclaimer": V.BANNER, "kind": "hypothesis", "target": "uniprot:P12345",
+    })
+    dhalt = V.trace_emit("halt", drun, dskill, dparent, {
+        "bound-n": "1", "bound-tok": "8000", "oracle": "not-discharged",
+    })
+    dheader = f"%trace/1 core={drun} spec={'a' * 40}\n"
+    dbody = dheader + "\n".join([dcall, dpin, ctx, emitted, dhalt]) + "\n"
+    core_path, paths = _write_trace("trace_r10", dcore, [("a1.trace", dbody)])
+    ok, code, rows = V.check_trace(core_path, paths)
+    assert ok is False and code == "R10", (code, rows)
+    # the same head without the emit is a result: the catalogue hit stops the design
+    dbody = dheader + "\n".join([dcall, dpin, ctx, dhalt]) + "\n"
+    core_path, paths = _write_trace("trace_hit", dcore, [("a1.trace", dbody)])
+    ok, code, rows = V.check_trace(core_path, paths)
+    assert ok and code == "result", (code, rows)
+    # admission refuse, no catalogue pin: halt parents the call
+    call_parent = "^" + V.trace_call_id(drun, dskill)
+    refused = V.trace_emit("refuse", drun, dskill, call_parent, {"gate": "species", "subject": "Mus"})
+    stopped = V.trace_emit("halt", drun, dskill, call_parent, {
+        "bound-n": "1", "bound-tok": "8000", "oracle": "not-discharged",
+    })
+    nobody = dheader + "\n".join([dcall, refused, stopped]) + "\n"
+    core_path, paths = _write_trace("trace_nopin", dcore, [("a1.trace", nobody)])
+    ok, code, rows = V.check_trace(core_path, paths)
+    assert ok and code == "result", (code, rows)
+
+
 
 if __name__ == "__main__":
     fns = [v for k, v in sorted(globals().items()) if k.startswith("test_")]
