@@ -1,11 +1,11 @@
 #!/usr/bin/env python3
-"""Validator for wetware-hq/catalog `graph.json`, implemented from AGENTS.md (sections 2, 3, 5, 6, 8) only.
+"""Verifier for wetware-hq/catalog `graph.json`, implemented from AGENTS.md (sections 2, 3, 5, 6, 8) only.
 
 Usage:
-    validate.py GRAPH.json                 # pure predicates (8.1-8.15, 8.17, 8.18)
-    validate.py --prev OLD.json NEW.json   # the above on NEW, plus relational 8.19 (add-only)
-    validate.py --merge A.json B.json      # section 6 merge; writes canonical bytes to stdout
-    validate.py --json ...                 # machine-readable report on stdout
+    verify.py GRAPH.json                 # pure predicates (8.1-8.15, 8.17, 8.18)
+    verify.py --prev OLD.json NEW.json   # the above on NEW, plus relational 8.19 (add-only)
+    verify.py --merge A.json B.json      # section 6 merge; writes canonical bytes to stdout
+    verify.py --json ...                 # machine-readable report on stdout
 
 Exit status: 0 = every evaluated pure/relational predicate passed; 1 = a violation/refusal; 2 = usage/IO error.
 A passing run proves ONLY the pure (and, with --prev, relational) conditions. 8.16 (oracle) is never discharged.
@@ -515,8 +515,8 @@ def do_merge(a_path: str, b_path: str):
 # THE RULE: an exclusion in a checker is only safe if the excluded thing is pinned by a test that fails when
 # the exclusion is abused.
 #
-# E1 must skip something. `validator/tests/fixtures/ext_disclaimer_fail/notes.md` is a deliberately unbannered
-# file and is how E1 itself is tested, so scanning it would make the validator fail by doing its job. The first
+# E1 must skip something. `verifier/tests/fixtures/ext_disclaimer_fail/notes.md` is a deliberately unbannered
+# file and is how E1 itself is tested, so scanning it would make the verifier fail by doing its job. The first
 # fix skipped the whole `tests/fixtures/` *directory*, which is the wrong shape of exclusion: nothing failed if a
 # fixture quietly acquired the banner, nothing failed if a real document was parked under `tests/fixtures/`, and
 # the blind spot grew with every file added. An exclusion nothing can falsify is not a fix, it is a hole.
@@ -529,7 +529,7 @@ def do_merge(a_path: str, b_path: str):
 # path is skipped - is itself pinned, by `test_E1_real_file_at_an_allowlisted_path_is_skipped`, so the hole is a
 # passing test rather than a paragraph in a comment that someone can delete.
 E1_ALLOWLIST = (
-    "validator/tests/fixtures/ext_disclaimer_fail/notes.md",
+    "verifier/tests/fixtures/ext_disclaimer_fail/notes.md",
 )
 
 
@@ -679,7 +679,7 @@ def check_online_pmids(graph_path: str):
     for i in range(0, len(ids), 200):
         batch = ids[i:i + 200]
         url = f"{base}?db=pubmed&retmode=json&id=" + ",".join(batch)
-        req = urllib.request.Request(url, headers={"User-Agent": "catalog-validator/1.0 (academic)"})
+        req = urllib.request.Request(url, headers={"User-Agent": "catalog-verifier/1.0 (academic)"})
         try:
             with urllib.request.urlopen(req, timeout=30) as resp:
                 data = _json.loads(resp.read().decode("utf-8"))

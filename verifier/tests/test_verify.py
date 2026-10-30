@@ -1,12 +1,12 @@
 """Unit tests: one minimal failing fixture per pure predicate, plus relational 8.19 and merge.
-Run: python3 -m pytest tests/ -q   (or: python3 tests/test_validate.py)
+Run: python3 -m pytest tests/ -q   (or: python3 tests/test_verify.py)
 Stdlib-only fallback runner at the bottom, so pytest is optional."""
 import json
 import os
 import sys
 
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-import validate as V
+import verify as V
 
 VALID = {
     "version": 2,

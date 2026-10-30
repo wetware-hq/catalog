@@ -2,13 +2,13 @@
 
 # `graph.json` — agent contract
 
-`type: resource.reference` · **normative**. `README.md` is non-normative; on conflict this file governs. Implement validators, mergers and updaters from this file alone.
+`type: resource.reference` · **normative**. `README.md` is non-normative; on conflict this file governs. Implement verifiers, mergers and updaters from this file alone.
 
 ## 0. Scope
 
-- **Read:** `graph.json`, `AGENTS.md`, `skills/*.md`, `systems/*.md` (§11), `references.md`, `README.md` (non-normative), `validator/`, `LICENSE`.
+- **Read:** `graph.json`, `AGENTS.md`, `skills/*.md`, `systems/*.md` (§11), `references.md`, `README.md` (non-normative), `verifier/`, `LICENSE`.
 - **Write:** `graph.json` and `proposals.json` only, under §9.
-- **Refuse:** writing scripts, workflows, CI, package manifests or secondary data files in this repo, `proposals.json` (§9) being the single named exception — the validator under `validator/` and the workflow under `.github/workflows/` are human-directed additions that check this contract and are outside every agent's write scope, so an agent reads them and does not edit them; stored ranks, scores or grades; citations other than bare `pmid:<digits>`; empty citation arrays; pairs without qualifying evidence (§4); removal or rewriting of existing rows absent explicit human supersession.
+- **Refuse:** writing scripts, workflows, CI, package manifests or secondary data files in this repo, `proposals.json` (§9) being the single named exception — the verifier under `verifier/` and the workflow under `.github/workflows/` are human-directed additions that check this contract and are outside every agent's write scope, so an agent reads them and does not edit them; stored ranks, scores or grades; citations other than bare `pmid:<digits>`; empty citation arrays; pairs without qualifying evidence (§4); removal or rewriting of existing rows absent explicit human supersession.
 
 ## 0b. Documentation banner
 
@@ -16,7 +16,7 @@ Every Markdown file in this repository opens, as its **first non-blank line**, w
 
 `⚠️ ACADEMIC RESEARCH PURPOSES ONLY; NOT FOR MEDICAL USE WITHOUT LICENSED OVERSIGHT`
 
-— one fixed, repeated string, byte-identical in every file, never paraphrased, abbreviated or replaced by a cross-reference. It states **who may act on this repository**, and is deliberately distinct from the README's *What it is not* paragraph, which states what the catalogue records; the two are not merged. This is a normative documentation invariant. It is **not** one of the nineteen §8 predicates and does not renumber them; it is checked as a validator extension, predicate E1 (see `validator/`).
+— one fixed, repeated string, byte-identical in every file, never paraphrased, abbreviated or replaced by a cross-reference. It states **who may act on this repository**, and is deliberately distinct from the README's *What it is not* paragraph, which states what the catalogue records; the two are not merged. This is a normative documentation invariant. It is **not** one of the nineteen §8 predicates and does not renumber them; it is checked as a verifier extension, predicate E1 (see `verifier/`).
 
 ## 1. Purpose
 
@@ -107,7 +107,7 @@ Never stored. Rank **within one dictionary only**; a `preclinical` row and a `pa
 
 ## 8. Validation predicates
 
-Implement from this section alone. Tags: **pure** = decidable from one file's bytes; **relational** = needs a predecessor file; **oracle** = needs an external source. A passing validator run proves **only the pure conditions**.
+Implement from this section alone. Tags: **pure** = decidable from one file's bytes; **relational** = needs a predecessor file; **oracle** = needs an external source. A passing verifier run proves **only the pure conditions**.
 
 1. **[pure] UTF-8.** Bytes decode as valid UTF-8.
 2. **[pure] Final newline.** Exactly one `\n`, nothing after it.
@@ -131,10 +131,10 @@ Implement from this section alone. Tags: **pure** = decidable from one file's by
 13. **[pure] One molecule, one key.** Across both dictionaries. Decidable identity: (a) two `aa:` keys are the same molecule iff their sorted chain multisets are equal; (b) two `helm:` keys iff their payloads are equal after normalising polymer index digits only; (c) an `aa:` and a `helm:` key denoting the same plain L-chain sequence are the same molecule and only the `aa:` form is valid. No two distinct binder keys in `pair` or `preclinical` may share a molecule.
 14. **[pure] Cross-prefix hygiene.** No role's prefix on another role's key; citations only inside citation arrays.
 15. **[pure] No duplicate triple.** No `(binder, target, pmid)` triple appears in both `pair` and `preclinical`.
-16. **[oracle] Inclusion and study type.** Every `(binder, target, pmid)` triple satisfies §4, in the dictionary it occupies. Requires reading the paper. **No validator run and no automated intake discharges this condition.**
+16. **[oracle] Inclusion and study type.** Every `(binder, target, pmid)` triple satisfies §4, in the dictionary it occupies. Requires reading the paper. **No verifier run and no automated intake discharges this condition.**
 17. **[pure] Forbidden writes.** No stored ranks, grades or non-`pmid:` citations.
 18. **[pure] Empty catalogue.** The empty catalogue is `{`, `  "version": 2,`, `  "pair": {},`, `  "preclinical": {}`, `}` on five lines with one trailing newline, and satisfies conditions 1–15 and 17. Any compact one-line form **fails** condition 6 and is invalid.
-19. **[relational] Add-only.** Given predecessor `P` and successor `S`, every binder, target and citation in `P` is present unchanged in `S`, in the same dictionary, except under human-directed supersession outside this spec. **A single-file validator cannot implement this.**
+19. **[relational] Add-only.** Given predecessor `P` and successor `S`, every binder, target and citation in `P` is present unchanged in `S`, in the same dictionary, except under human-directed supersession outside this spec. **A single-file verifier cannot implement this.**
 
 ## 9. Background update contract
 
@@ -143,7 +143,7 @@ Implement from this section alone. Tags: **pure** = decidable from one file's by
 3. **File boundary.** Autonomous intake writes `proposals.json` only, and never writes `graph.json` on any branch. Admission is the act of reading the paper, and that act is what moves bytes from `proposals.json` into `graph.json`, choosing the dictionary per §4. **Trust is carried by the file, not by a branch:** a branch name is mutable and has no merge law, so a fence of the form "unverified rows live on branch X" dissolves at the first merge and relaunders those rows as verified, while `proposals.json` merges into `proposals.json` on every branch. Condition 16 is therefore discharged at the file move, by a reader, and never by the run that proposed the row.
 4. **`proposals.json`.** Root: a non-array object with exactly `version` (the number `2`) and `proposal` (an array). Each element has exactly `binder`, `target`, `pmid`, each satisfying §3. A proposal carries **no dictionary assignment**: `pair` versus `preclinical` is part of the oracle and is chosen when the paper is read. Serialise per §5; add-only per §8.19. It is not catalogue-shaped and must not be read as one.
 5. Intake procedure: [`skills/propose-pairs.md`](skills/propose-pairs.md). It enumerates structured authorities; it does not crawl prose, and its own acceptance test is rediscovery of the rows already committed.
-6. This repository ships no updater and no cron. It does ship a validator (`validator/`) and a workflow that runs it, and neither writes `graph.json` or `proposals.json`: a passing run proves only the pure conditions (§8), never §8.16. Compliance is your behaviour against this contract, not a green check.
+6. This repository ships no updater and no cron. It does ship a verifier (`verifier/`) and a workflow (`.github/workflows/validate.yml`) that runs it, and neither writes `graph.json` or `proposals.json`: a passing run proves only the pure conditions (§8) and the repository extension predicates E1 and E2, which are not §8 predicates and do not renumber them (E3, pmid resolution, is non-blocking and gates nothing). It never proves §8.16. Compliance is your behaviour against this contract, not a green check.
 
 A proposed row failing any rule above is **refused**, naming the condition that failed.
 

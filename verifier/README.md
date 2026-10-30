@@ -1,26 +1,28 @@
 ⚠️ ACADEMIC RESEARCH PURPOSES ONLY; NOT FOR MEDICAL USE WITHOUT LICENSED OVERSIGHT
 
-# catalog-validator
+# verifier
 
-A dependency-light validator for [`wetware-hq/catalog`](https://github.com/wetware-hq/catalog)'s `graph.json`
-(binder → protein-target evidence graph). It implements the validation predicates in `AGENTS.md` **§8**, using the
-§2 schema, §3 key grammar, §5 canonical serialisation and §6 merge. Standard library only, Python ≥ 3.9.
+The `verifier/` namespace of [`wetware-hq/catalog`](https://github.com/wetware-hq/catalog): a dependency-light
+checker for this repository's `graph.json` (binder → protein-target evidence graph). It implements the validation
+predicates in `AGENTS.md` **§8**, using the §2 schema, §3 key grammar, §5 canonical serialisation and §6 merge.
+Standard library only, Python ≥ 3.9.
 It reads; it writes nothing in this repository, and it is outside every agent's write scope (`AGENTS.md` §0).
 
 > A passing run proves **only the pure conditions** (and, with `--prev`, the one relational condition). The oracle
 > predicate §8.16 is never discharged — it requires reading each paper (§4, §9.3).
 
 ## Install
-None. Copy `validate.py` (and `tests/` if you want the suite). No third-party packages.
+Nothing to install: one file, `verify.py`, standard library only. The suite is `tests/`.
 
 ## Use
+From the repository root:
 ```bash
-python3 validate.py graph.json                 # pure predicates §8.1–§8.15, §8.17, §8.18
-python3 validate.py --prev OLD.json graph.json  # + relational §8.19 (add-only)
-python3 validate.py --merge A.json B.json       # §6 merge -> canonical bytes on stdout
-python3 validate.py graph.json --repo ..        # + extension predicates E1 (banner), E2 (skill registry)
-python3 validate.py graph.json --online         # + E3 pmid resolution via NCBI E-utilities (NON-BLOCKING)
-python3 validate.py --json graph.json           # machine-readable report
+python3 verifier/verify.py graph.json                 # pure predicates §8.1–§8.15, §8.17, §8.18
+python3 verifier/verify.py --prev OLD.json graph.json # + relational §8.19 (add-only)
+python3 verifier/verify.py --merge A.json B.json      # §6 merge -> canonical bytes on stdout
+python3 verifier/verify.py graph.json --repo .        # + extension predicates E1 (banner), E2 (skill registry)
+python3 verifier/verify.py graph.json --online        # + E3 pmid resolution via NCBI E-utilities (NON-BLOCKING)
+python3 verifier/verify.py --json graph.json          # machine-readable report
 ```
 Exit status: `0` all evaluated predicates passed · `1` a violation/refusal · `2` usage/IO error.
 Each failing predicate prints its id (e.g. `8.13`) and the offending row.
@@ -65,8 +67,8 @@ E1/E2 are pure and **do** gate (exit `1` on violation) when `--repo` is supplied
 
 ### E1's exclusion allowlist
 
-E1 has to skip exactly one file: `validator/tests/fixtures/ext_disclaimer_fail/notes.md` is a deliberately
-unbannered fixture and is how E1 itself is tested, so scanning it would make the validator fail by doing its job.
+E1 has to skip exactly one file: `verifier/tests/fixtures/ext_disclaimer_fail/notes.md` is a deliberately
+unbannered fixture and is how E1 itself is tested, so scanning it would make the verifier fail by doing its job.
 
 **The rule: an exclusion in a checker is only safe if the excluded thing is pinned by a test that fails when the
 exclusion is abused.** Skipping the whole `tests/fixtures/` *directory* broke that rule — nothing failed if a
@@ -88,15 +90,15 @@ all: they are not repository content, are absent from a fresh clone, and are not
 A skill is "special" iff its header block (text before the first `## `) contains the token `agent.skill`, or a
 `class`/`type`/`spec` declaration whose value is `special`.
 
-## Current result (graph.json on branch `design-binder`: 55 `pair` rows, 41 targets, 0 `preclinical`)
-All pure predicates **PASS**, and E1/E2 pass with `--repo`. Add-only **PASSES** against `graph.json` at `a5a768c`,
-the base commit this branch grew from — the file is byte-identical to it there, since nothing on this branch
-touches the catalogue. §8.16 is reported as not discharged. No violations found.
+## Current result (`graph.json`: 55 `pair` rows, 41 targets, 0 `preclinical`)
+All pure predicates **PASS**, and E1/E2 pass with `--repo .`. Add-only **PASSES** against `graph.json` at
+`a5a768c` — the blob is unchanged (`05e317b`) since that commit, because no commit since then has touched the
+catalogue. §8.16 is reported as not discharged. No violations found.
 
 ## Spec ambiguities encountered
 1. **§8.8 monomer vs SMILES is not fully specified as a byte-decidable rule.** The spec tags §8.8 *pure* and gives
    `[CCO]` (SMILES) as a monomer failure while `[dF]`, `[Nle]`, `[ac]`, `[am]`, `[Thi]`, `[Hyp]`, `[dTic]`, `[Phi]`
-   are valid, but gives no general predicate. This validator uses a heuristic (`valid_monomer_symbol`): a bracketed
+   are valid, but gives no general predicate. This verifier uses a heuristic (`valid_monomer_symbol`): a bracketed
    token is a monomer iff it is alphanumeric and **not** an all-uppercase multi-letter run (which it reads as
    SMILES, matching the `[CCO]` example). This classifies every bracketed monomer in the current data correctly,
    but a real monomer code that is all-uppercase and >1 char would be a false negative. A registered-monomer-list
@@ -106,14 +108,17 @@ touches the catalogue. §8.16 is reported as not discharged. No violations found
    enumerate exactly which digits are "polymer index" vs. connection coordinates; the current data has no collision
    either way.
 3. **§8.13(c) plain-L-chain HELM.** The spec says a HELM that denotes a plain L-chain is the same molecule as the
-   `aa:` form and "only the `aa:` form is valid". This validator flags it under §8.13 when it collides with an
+   `aa:` form and "only the `aa:` form is valid". This verifier flags it under §8.13 when it collides with an
    `aa:` molecule. A standalone plain-L-chain HELM with no `aa:` counterpart is arguably invalid on its own; the
-   spec frames it as an identity rule, so this validator reports only collisions. No such case exists in the data.
+   spec frames it as an identity rule, so this verifier reports only collisions. No such case exists in the data.
 4. **§8.18 scope.** Reported only when both dictionaries are empty (otherwise N/A).
 
 ## Tests & CI
-- `python3 tests/test_validate.py` — 29 tests: one minimal failing fixture per pure predicate plus §8.19 and merge,
+- `python3 verifier/tests/test_verify.py` — 29 tests: one minimal failing fixture per pure predicate plus §8.19 and merge,
   failing + passing fixtures for the E1/E2 extension predicates (and an offline no-op test for E3), the four tests
   that pin E1's exclusion allowlist, and the HELM scope-vs-monomer distinction. (pytest optional; a stdlib runner is built in.)
-- `.github/workflows/validate.yml` — ready-to-use GitHub Actions workflow (runs tests, pure predicates, and the
-  add-only check against the previous commit). Not pushed anywhere.
+- `.github/workflows/validate.yml` — the GitHub Actions workflow that runs this verifier on `wetware-hq/catalog`:
+  the unit tests, the pure predicates, the add-only check against the previous commit, and the E1/E2 extension
+  predicates, with E3 in a separate non-blocking job. The workflow file keeps its `validate.yml` name so the
+  check name GitHub reports does not move. A green run proves the pure and extension conditions only, never
+  §8.16 (`AGENTS.md` §9.6).
