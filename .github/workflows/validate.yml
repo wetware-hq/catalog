@@ -4,9 +4,9 @@ name: validate graph.json
 # graph.json. The file name is kept as validate.yml so the check name GitHub reports does not move.
 on:
   push:
-    paths: ["graph.json", "verifier/verify.py", "verifier/tests/**", "skills/**", "systems/**", "**.md", ".github/workflows/validate.yml"]
+    paths: ["graph.json", "verifier/**", "skills/**", "systems/**", "**.md", ".github/workflows/validate.yml"]
   pull_request:
-    paths: ["graph.json", "verifier/verify.py", "verifier/tests/**", "skills/**", "systems/**", "**.md", ".github/workflows/validate.yml"]
+    paths: ["graph.json", "verifier/**", "skills/**", "systems/**", "**.md", ".github/workflows/validate.yml"]
   workflow_dispatch:
 
 jobs:
