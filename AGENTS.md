@@ -6,7 +6,7 @@
 
 ## 0. Scope
 
-- **Read:** `graph.json`, `AGENTS.md`, `skills/*.md`, `systems/*.md` (§11), `references.md`, `README.md` (non-normative), `verifier/`, `.github/workflows/`, `LICENSE`.
+- **Read:** `graph.json`, `AGENTS.md`, `skills/*.md`, `systems/*.md` (§11), `traces/*.md` (§11), `references.md`, `README.md` (non-normative), `verifier/`, `.github/workflows/`, `LICENSE`.
 - **Write:** `graph.json` and `proposals.json` only, under §9.
 - **Refuse:** writing scripts, workflows, CI, package manifests or secondary data files in this repo, `proposals.json` (§9) being the single named exception — the verifier under `verifier/` and the workflow under `.github/workflows/` are human-directed additions that check this contract and are outside every agent's write scope, so an agent reads them and does not edit them; stored ranks, scores or grades; citations other than bare `pmid:<digits>`; empty citation arrays; pairs without qualifying evidence (§4); removal or rewriting of existing rows absent explicit human supersession.
 
@@ -175,13 +175,15 @@ The reader-facing warning is therefore not carried by a path either. It is carri
 
 ## 11. Systems
 
-`systems/*.md` are specifications of machinery a skill may run, not procedures a skill follows: §10 governs what a skill may do to claims, this section governs what a system is. A system is subordinate to this file on the same terms as a skill (§0), and holds no element of `graph.json` or `proposals.json`.
+`systems/*.md` and `traces/*.md` are specifications of machinery a skill may run, not procedures a skill follows: §10 governs what a skill may do to claims, this section governs what a system is. A system is subordinate to this file on the same terms as a skill (§0), and holds no element of `graph.json` or `proposals.json`. `systems/` is the shared working substrate. `traces/` is the execution record of a run. They do not share a header, an extension, or a query.
 
 | system | what it holds | write scope |
 |---|---|---|
 | [`systems/bench.md`](systems/bench.md) | a run-scoped append-only commons where a swarm's agents read and write partial work concurrently | its own `.bench` store only; never `graph.json`, never `proposals.json` |
+| [`traces/traces.md`](traces/traces.md) | the act log of one `agent.fleet` run: pin, call, refusal, proposal, emission, halt | its own `.trace` store only, outside this repository; never `graph.json`, never `proposals.json`, never `.bench` |
 
-- A system is not a skill and is not listed in §10. It originates nothing and admits nothing: §4 is untouched by anything written to a scratchpad, and a record in a `.bench` store is not a claim this file recognises.
+- A system is not a skill and is not listed in §10. It originates nothing and admits nothing: §4 is untouched by anything written to a scratchpad or an act log, and a record in a `.bench` or `.trace` store is not a claim this file recognises.
 - `bench` is scoped to a single run and is discarded with it. It is not a second catalogue, and it is not a cache of `graph.json`.
 - Every `.bench` record declares an evidence tier, and no query pools across tiers — the same refusal §2 makes between clinical and preclinical, one layer down. A tier that is declared is not thereby honest; the grammar can only require the declaration.
-- One system, named here exactly. A specification not listed in this section is not part of this contract.
+- `traces` records acts, not evidence. Its grammar has no tier, no study type, and no score. A `.trace` file is not a proposal and is not a bench. It is discarded with the run. The directory `traces/` in this repository is the specification only.
+- Two systems, named here exactly. A specification not listed in this section is not part of this contract.
