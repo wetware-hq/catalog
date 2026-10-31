@@ -179,7 +179,7 @@ The reader-facing warning is therefore not carried by a path either. It is carri
 
 | system | what it holds | write scope |
 |---|---|---|
-| [`systems/use-bench.md`](systems/use-bench.md) | a run-scoped append-only commons where a swarm's agents read and write partial work concurrently | its own `.bench` store only; never `graph.json`, never `proposals.json` |
+| [`systems/use-bench.md`](systems/use-bench.md) | a run-scoped append-only commons where a fleet's agents read and write partial work concurrently | its own `.bench` store only; never `graph.json`, never `proposals.json` |
 | [`traces/record-fleet-traces.md`](traces/record-fleet-traces.md) | the act log of one `agent.fleet` run: pin, call, refusal, proposal, emission, halt | its own `.trace` store only, outside this repository; never `graph.json`, never `proposals.json`, never `.bench` |
 
 - A system is not a skill and is not listed in §10. It originates nothing and admits nothing: §4 is untouched by anything written to a scratchpad or an act log, and a record in a `.bench` or `.trace` store is not a claim this file recognises.

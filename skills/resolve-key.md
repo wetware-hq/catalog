@@ -117,7 +117,7 @@ shard unit: a BATCH of keys, never one key per worker.
 
 ```
 enrich : Identity -> Findings        -- note the domain: Identity, NOT Key
-fleet / swarm. open. parallel. no coordinator. no shared mutable state.
+fleet. open. parallel. no coordinator. no shared mutable state.
 
 stage 1 returning unresolved HALTS enrichment for that key. fail-closed.
 no worker may put residues into a search. observed once, 2026-10-29, catalog-systems:
@@ -128,7 +128,7 @@ merge law: UNION with per-worker attribution. never a vote, never a collapse to
 one value. N workers reading one page are not N confirmations.
 
 every finding carries source + release + retrieved. nothing a page merely said.
-rate limit: honour the service's published limit; a throttled swarm returns
+rate limit: honour the service's published limit; a throttled fleet returns
 unavailable, never unresolved.
 ```
 
