@@ -20,14 +20,14 @@ Every Markdown file in this repository opens, as its **first non-blank line**, w
 
 ## 0c. Identity line
 
-Every file in `skills/`, `systems/` and `traces/` carries one identity line in its header block, the text before the first `## `. The tokens are grammar. Extension predicate E5 decides them. E5 is not a §8 predicate and does not renumber them.
+Every file in `skills/`, `systems/` and `traces/` names itself once, in the header, before the first section heading. Extension predicate E5 checks that line. E5 is not a §8 predicate and does not renumber them.
 
-| directory | `type` | `spec` | `class` |
-|---|---|---|---|
-| `skills/` | `resource.procedure` | `agent.fleet` | `special` on the one skill §10 marks `special`; absent on the others |
-| `systems/`, `traces/` | `agent.system` | `agent.fleet` | absent |
+| directory | what the line says |
+|---|---|
+| `skills/` | a `resource.procedure`, spec `agent.fleet`. The one skill §10 marks `special` also says so. The others do not. |
+| `systems/`, `traces/` | an `agent.system`, spec `agent.fleet`. No class. |
 
-`agent.fleet` is the only run-unit spec. A second name for that unit has no production. The harness under `fleet/` is not a row of this table; it carries the same run-unit spec and no `type`.
+`agent.fleet` is the only name for a run. The harness under `fleet/` is not one of these files. It names that same run and does not name a type.
 
 ## 1. Purpose
 
@@ -195,7 +195,7 @@ The reader-facing warning is therefore not carried by a path either. It is carri
 
 - A system is not a skill and is not listed in §10. It originates nothing and admits nothing: §4 is untouched by anything written to a scratchpad or an act log, and a record in a `.bench` or `.trace` store is not a claim this file recognises.
 - `bench` is scoped to a single run and is discarded with it. It is not a second catalogue, and it is not a cache of `graph.json`.
-- Every `.bench` record declares an evidence tier, and no query pools across tiers — the same refusal §2 makes between clinical and preclinical, one layer down. A tier that is declared is not thereby honest; the grammar can only require the declaration.
-- `traces` records acts, not evidence. Its grammar has no tier, no study type, and no score. A `.trace` file is not a proposal and is not a bench. It is discarded with the run. The directory `traces/` in this repository is the specification only. Its judgements are decided by `verifier/verify.py --trace`. That decision is pure and does not discharge §8.16.
+- Every `.bench` record declares an evidence tier, and no query pools across tiers — the same refusal §2 makes between clinical and preclinical, one layer down. A tier that is declared is not thereby honest; the line can only require the declaration.
+- `traces` records acts, not evidence. The record has no tier, no study type, and no score. A `.trace` file is not a proposal and is not a bench. It is discarded with the run. The directory `traces/` in this repository is the specification only. `verifier/verify.py --trace` decides it. That decision is pure and does not discharge §8.16.
 - The rows of this table and the files `systems/*.md` and `traces/*.md` are in bijection. That bijection is extension predicate E4. It is not a §8 predicate and it does not renumber them.
 - Two systems, named here exactly. A specification not listed in this section is not part of this contract.

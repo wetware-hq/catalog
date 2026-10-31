@@ -1180,8 +1180,8 @@ def check_system_registry(repo_dir, rep):
     rep.add("E4", not problems, problems)
 
 
-# Identity-line tokens (follow-agent-contract.md section 0c). The rejected run-unit token is a carrier
-# literal: it has no production, and naming it belongs in this checker, not in the spec files.
+# Header lines named in follow-agent-contract.md section 0c. The rejected run-unit spelling is a
+# literal in this checker. The markdown does not have to carry the word.
 _IDENTITY_TYPE_RE = re.compile(r"`type:\s*([^`]+?)`")
 _IDENTITY_SPEC_RE = re.compile(r"`spec:\s*([^`]+?)`")
 _IDENTITY_CLASS_RE = re.compile(r"`class:\s*([^`]+?)`")
@@ -1193,10 +1193,10 @@ def _identity_header(text):
 
 
 def check_identity(repo_dir, rep):
-    """E5 [pure-ext]: header identity lines match follow-agent-contract.md section 0c.
+    """E5 [pure-ext]: header lines match follow-agent-contract.md section 0c.
 
     skills/ are resource.procedure. systems/ and traces/ are agent.system. spec is agent.fleet.
-    fleet/*.md carries that spec and no type. The rejected run-unit token has no production.
+    fleet/*.md carries that spec and no type. The rejected run-unit spelling is not used.
     """
     problems = []
 
@@ -1210,7 +1210,7 @@ def check_identity(repo_dir, rep):
 
     def reject_run_unit(rel, text):
         if re.search(r"\b" + _REJECTED_RUN_UNIT + r"\b", text):
-            problems.append(f"{rel}: run-unit token {_REJECTED_RUN_UNIT!r} has no production")
+            problems.append(f"{rel}: {_REJECTED_RUN_UNIT!r} is not a name used here")
 
     for folder, expect_type in (("skills", "resource.procedure"),
                                 ("systems", "agent.system"),

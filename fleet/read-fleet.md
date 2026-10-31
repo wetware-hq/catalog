@@ -42,7 +42,7 @@ python3 fleet/fleet.py verify /tmp/catalog-fleet
 
 `--min-aa` and `--max-aa` are sent only on the Boltz design request. They are not a grammar gate: `follow-agent-contract.md` §3 bounds the alphabet, not the length. The harness admits the target when UniProt names the organism *Homo sapiens*, pins `graph.json` to the checkout SHA, builds the target reverse index, authenticates and estimates the Boltz request, then fans out the advisory panel. A failed Boltz authentication records `unavailable` with `step:"generator"` and halts before that panel. Candidate sequences are hypotheses; nothing writes `graph.json` or `proposals.json`.
 
-A `grammar` refusal parents the call. That gate is in `PrePin` (`traces/record-fleet-traces.md`), including when the candidate was produced after the pin.
+A `grammar` refusal parents the call. For `design-binder`, grammar, species, not-protein, and indication-absent parent the call even when the candidate was produced after the pin (`traces/record-fleet-traces.md`).
 
 A service failure records the source and the status. It does not record a response body.
 

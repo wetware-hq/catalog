@@ -363,7 +363,7 @@ def test_E5_rejects_the_run_unit_token_with_no_production():
     })
     rep = V.Report(); V.check_identity(repo, rep)
     assert rep.findings[0].ok is False
-    assert any("no production" in row for row in rep.findings[0].rows), rep.findings[0].rows
+    assert any("is not a name used here" in row for row in rep.findings[0].rows), rep.findings[0].rows
 
 
 def test_E5_rejects_a_system_that_is_not_agent_system():

@@ -35,45 +35,29 @@ Every record declares a tier.
 | `2` | a model's prediction |
 | `3` | an experimental result |
 
-The tier is the **first token of the line** (§3). A line that does not begin with `1`, `2` or `3` has no production in the grammar: it does not parse, it is never hashed, and the append never happens. An untiered record is not an invalid record; it is not a record.
+The tier is the **first token of the line** (§3). A line that does not begin with `1`, `2` or `3` is not a line of this format: it is never hashed, and the append never happens. An untiered record is not an invalid record; it is not a record.
 
 **No query or aggregation pools tiers.** Every aggregate takes a tier and returns a per-tier result; a summary across tiers is three results printed as three, never one. The reason is the failure this field exists to prevent: an append-only commons is exactly the structure that quietly turns predictions into evidence, because a model output carries a number, a unit, a provenance and a timestamp and reads like data at a glance. The tier makes averaging across kinds a parse-level refusal rather than a judgement call.
 
 The same separation `follow-agent-contract.md` §1 holds between `pair` and `preclinical` is held here between tiers, and for the same reason: the two are never merged and never ranked against each other.
 
-## 3. Key grammar and the `.bench` line
+## 3. The `.bench` line
 
-Extension **`.bench`**. One node per line, newline-terminated, UTF-8. A run directory holds `core.bench` and one `<worker>.bench` per worker, each append-only.
+Extension **`.bench`**. One node per line, newline-terminated, UTF-8. A run directory holds `core.bench` and one `<worker>.bench` per worker, each append-only. The version is `1`.
 
-`core.bench` is not a `file`. Its hash is the run id (§6.1), so that hash cannot occur inside it. It is a `core`. A worker file is a `file`, and the `core=` hash in its header is `H` of the core file's exact bytes.
+`core.bench` does not contain its own hash, because that hash is the run id (§6.1). It is a header line `%bench-core/1` and then one parameter per line, keys sorted ascending, each `key:"value"`. A worker file is different. Its first line is `%bench/1 core=<hash>`, and that hash is `H` of the core file's exact bytes. The records follow.
 
-```ebnf
-version     = "1" ;
-core        = "%bench-core/" , version , NL , { param , NL } ;
-param       = key , ":" , '"' , { character - '"' } , '"' ;
+A record line is the tier, then the id, then the parents, then zero or more `key:value` fields, separated by single spaces.
 
-file        = header , { line } ;
-header      = "%bench/" , version , " core=" , hash , NL ;
-line        = tier , SP , id , SP , parents , { SP , field } , NL ;
+| piece | what it is |
+|---|---|
+| tier | `1`, `2`, or `3`. Required. First token. |
+| id | at least four lowercase hex digits. A prefix of `H` of the canonical line. |
+| parents | `^0` for the core alone, or `^` plus ids separated by commas. |
+| key | a lowercase letter, then lowercase letters, digits, or hyphens. |
+| value | a number, a token, a quoted string, a list, or a pose. |
 
-tier        = "1" | "2" | "3" ;                          (* REQUIRED, first token *)
-id          = hex , hex , hex , hex , { hex } ;          (* prefix of H(content) *)
-parents     = "^" , ( "0" | id , { "," , id } ) ;        (* "^0" = the core alone *)
-
-field       = key , ":" , value ;
-key         = lower , { lower | digit | "-" } ;
-value       = number | token | string | pose | list ;
-number      = [ "-" ] , digit , { digit } , [ "." , digit , { digit } ]
-            , [ ( "e" | "E" ) , [ "-" | "+" ] , digit , { digit } ] ;
-token       = ( lower | upper | digit ) , { lower | upper | digit | "-" | "_" | "." | "/" | ":" } ;
-string      = '"' , { character - '"' } , '"' ;          (* only when a space is needed *)
-list        = "[" , [ value , { "," , value } ] , "]" ;
-pose        = "M(" , number , 7 * ( "," , number ) , ")" ;
-
-hash        = hex , { hex } ;
-hex         = digit | "a" | "b" | "c" | "d" | "e" | "f" ;
-SP          = " " ;  NL = "\n" ;
-```
+A number is an optional minus, digits, an optional decimal fraction, and an optional exponent (`e` or `E`, optional sign, digits). A token starts with a letter or a digit and then uses letters, digits, or `-_./:`. A string is written in double quotes, and only when the value needs a space. A list is `[` values separated by commas `]`. A pose is `M(` and eight comma-separated numbers `)`, a rigid-body transform (§8). Hex digits are `0`–`9` and `a`–`f`.
 
 Canonical bytes, which `H` is taken over: the line with fields sorted by key, single spaces, numbers in shortest round-trip form, no trailing space, the `id` elided. The name is therefore a function of the content alone, and a tampered line fails to verify instead of being accepted.
 
@@ -91,7 +75,7 @@ Worked example:
 
 A tier-1 measurement rooted at the core; two tier-2 predictions derived from it by workers running concurrently, which disagree and both stay; a tier-3 result whose parents are both predictions.
 
-**Measured token cost.** The same ten records encoded in `.bench` and in JSON, counted with `tiktoken` (`o200k_base`): 602 tokens against 739 for compact one-object-per-line JSON, a ratio of **1.23×**. Stated honestly, because the other available figure is not: against *pretty-printed* JSON the ratio is 2.00×, and that mostly measures indentation. The saving also shrinks toward 1.0 as string payloads lengthen, because the win is per-field punctuation. 1.23× is the number; the format's other justifications are the grammar-enforced tier and line-oriented diffs.
+**Measured token cost.** The same ten records encoded in `.bench` and in JSON, counted with `tiktoken` (`o200k_base`): 602 tokens against 739 for compact one-object-per-line JSON, a ratio of **1.23×**. Stated honestly, because the other available figure is not: against *pretty-printed* JSON the ratio is 2.00×, and that mostly measures indentation. The saving also shrinks toward 1.0 as string payloads lengthen, because the win is per-field punctuation. 1.23× is the number; the format's other justifications are the tier the line requires and line-oriented diffs.
 
 ## 4. Admissibility: nothing here reaches `graph.json`
 
@@ -148,7 +132,7 @@ Two findings that must travel with it:
 - **It is not a metric.** It is bi-invariant, symmetric and zero on the diagonal, and it **violates the triangle inequality** — `22` of 20,000 random triples at seed `20261030`, worst excess `3.894e-01`, from the same 2026-10-30 run. (An earlier draft said 434; that number is not reproduced. Three other seeds give 24, 30 and 34, so the rate is tens per 20,000, not hundreds, for this sampling — uniform rotations and translations in [-1,1]^3. The rate depends on the sampling; that violations exist at all is the finding, and it does not depend on the count.) That is not a defect to fix: there is no bi-invariant metric on SE(3), so invariance and the triangle inequality cannot both be had. Therefore `near(pose, …)` is a **linear scan**, and poses must **never** enter a VP-tree, a ball tree, or any index that assumes a metric space. This is precisely the assumption an implementer makes without examining it.
 - **The algebra buys concepts, not arithmetic.** The even subalgebra of `Cl(3,0,1)` is isomorphic to the dual quaternions; the implementation is dual-quaternion arithmetic. Calling it geometric algebra makes nothing faster.
 
-This is the only use of geometric algebra in BENCH. It contributes nothing to the merge, the lattice, the index, the grammar or the tier rules, and nothing elsewhere is expressed in it.
+This is the only use of geometric algebra in BENCH. It contributes nothing to the merge, the lattice, the index, the line format or the tier rules, and nothing elsewhere is expressed in it.
 
 ## 9. Verification status
 
@@ -172,7 +156,7 @@ Stated here rather than in a design note, because a reader of this file is the p
 
 1. **No garbage collection.** A grow-only set has no inverse, so the commons grows without bound within a run, and there is no compaction that does not violate "nothing is lost".
 2. **Quiescence is not termination.** Convergence is checked at quiescence, which is a predicate over the whole system that no single agent can evaluate. In practice a run must be ended by an iteration bound, not by detecting that it is done.
-3. **The grammar guarantees a tier is declared, never that it is honest.** Mislabelling a prediction as a measurement is a parse-level success. There is no mechanism here for truthfulness and none is claimed.
+3. **The line format guarantees a tier is declared, never that it is honest.** Mislabelling a prediction as a measurement is a successful line. There is no mechanism here for truthfulness and none is claimed.
 4. **The model has two agents.** N-agent behaviour is argued from the merge being a set union, not checked. For the index and aggregation rules the TLC result is evidence, not proof.
 5. **`CoreNeverWritten` is near-trivially true in the model**, because no action assigns the core. That is the design claim — there is no write path — but as a check it confirms the model matches the claim, not that an implementation would.
 6. **The token saving is 1.23×**, not transformational, and smaller still on prose-heavy records.

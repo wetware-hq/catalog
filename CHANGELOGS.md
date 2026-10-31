@@ -7,7 +7,7 @@
 ### changed
 
 - Unified all run terminology on `fleet`. `agent.fleet` is the only run unit in the contract; the
-  removed alternate label had no production.
+  removed alternate label is not used.
 - Added `fleet/fleet.py`, a standard-library runner for `design-binder` with budget preflight,
   catalogue and UniProt gates, a required Boltz design gate, a multi-model OpenRouter advisory
   panel, BENCH worker heads, TRACES act logs and final trace verification.
@@ -57,6 +57,8 @@
   traces are `agent.system`, and the only run-unit spec is `agent.fleet`. Extension predicate E5 decides
   that from the header bytes. The rejected run-unit token is a carrier literal in the verifier.
 - `pin-references.md` is the pinned-reference path. The doubled name did not point at a file.
+- The bench line and the trace act log are written as markdown. The checker still hard-codes the
+  trace lists. It does not read a grammar out of the file.
 - BENCH's core file is `%bench-core/1`. Its hash is the run id, so the hash cannot occur inside the file.
   `version` is the production `"1"`.
 - The harness no longer carries a standing model panel, length window, taxon integer, branch-tip read,
