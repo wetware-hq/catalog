@@ -1,10 +1,8 @@
 ⚠️ ACADEMIC RESEARCH PURPOSES ONLY; NOT FOR MEDICAL USE WITHOUT LICENSED OVERSIGHT
 
-**Licensed oversight is required for any use of this system; none has been performed to date.**
-
 # `TRACES` — formal system
 
-`type: resource.system` · `spec: agent.fleet` · subordinate to `follow-agent-contract.md`, which governs on any conflict (`follow-agent-contract.md` §0).
+`type: agent.system` · `spec: agent.fleet` · subordinate to `follow-agent-contract.md`, which governs on any conflict.
 
 A trace is an act log of one `agent.fleet` run. This file is a formal system: a language, carrier sets written out as literals, total functions, and judgements. The checker `verifier/verify.py --trace` is the transcription of those judgements. It decides them from bytes. It does not discharge `follow-agent-contract.md` §8.16.
 
@@ -241,7 +239,10 @@ halt 9d2001abc00391ea2c66714740c2ba9ec5c279405495498f51a72db31be4d6a3 ^2f3f73356
 
 ## 6. Status
 
+Licensed oversight is required for any use of this system; none has been performed to date.
+
 `decide` is implemented by `verifier/verify.py --trace`; `fleet/fleet.py` emits the language through
 the verifier's own `trace_emit`, then hands every completed run back to that checker. Extension
 predicate E4 decides the bijection between `follow-agent-contract.md` §11 and the files
-`systems/*.md` and `traces/*.md`. Neither judgement is §8.16.
+`systems/*.md` and `traces/*.md`. The identity line above is extension predicate E5
+(`follow-agent-contract.md` §0c). Neither judgement is §8.16.

@@ -20,7 +20,7 @@ From the repository root:
 python3 verifier/verify.py graph.json                 # pure predicates §8.1–§8.15, §8.17, §8.18
 python3 verifier/verify.py --prev OLD.json graph.json # + relational §8.19 (add-only)
 python3 verifier/verify.py --merge A.json B.json      # §6 merge -> canonical bytes on stdout
-python3 verifier/verify.py graph.json --repo .        # + extension predicates E1 (banner), E2 (skill registry), E4 (system registry)
+python3 verifier/verify.py graph.json --repo .        # + extension predicates E1 (banner), E2 (skill registry), E4 (system registry), E5 (identity line)
 python3 verifier/verify.py graph.json --online        # + E3 pmid resolution via NCBI E-utilities (NON-BLOCKING)
 python3 verifier/verify.py --trace core.trace a1.trace # TRACES judgements (traces/record-fleet-traces.md); carrier sets are literals
 python3 verifier/verify.py --json graph.json          # machine-readable report
@@ -56,7 +56,7 @@ Each failing predicate prints its id (e.g. `8.13`) and the offending row.
 ## Extension predicates (beyond §8)
 
 These are **not** part of follow-agent-contract.md §8's nineteen normative predicates and do not renumber them. They enforce
-repository/documentation invariants agreed for the `agent.fleet` and are ids-prefixed `E`:
+repository/documentation invariants agreed for `agent.fleet` and are ids-prefixed `E`:
 
 | id | tag | mode | what it checks |
 |---|---|---|---|
@@ -64,8 +64,9 @@ repository/documentation invariants agreed for the `agent.fleet` and are ids-pre
 | E2 Skill registry | pure-ext | `--repo DIR` | `skills/*.md` on disk and the rows of follow-agent-contract.md **§10** are in bijection (no orphan file, no dangling row); a skill whose header declares it a `special` / `agent.skill` must declare write scope **`none`**. |
 | E3 pmid resolution | online-ext | `--online` | every `pmid:` in `graph.json` resolves via NCBI E-utilities (`esummary`). **NON-BLOCKING**: it needs network + a live third-party service, is reported separately, and **never** changes the exit code. A service outage reports *UNAVAILABLE*, not a failure. |
 | E4 System registry | pure-ext | `--repo DIR` | `systems/*.md` and `traces/*.md` on disk and the paths named in follow-agent-contract.md **§11** are in bijection. The two directories are hard-coded; a markdown file anywhere else is not a system row. |
+| E5 Identity line | pure-ext | `--repo DIR` | the header of every `skills/*.md`, `systems/*.md` and `traces/*.md` matches follow-agent-contract.md **§0c**: skills are `type: resource.procedure`, systems and traces are `type: agent.system`, and `spec` is `agent.fleet`. `fleet/*.md` carries that spec and declares no `type`. The rejected run-unit token `swarm` is a carrier literal in this checker and has no production in those files or in the contract. |
 
-E1, E2, and E4 are pure and **do** gate (exit `1` on violation) when `--repo` is supplied. E3 never gates.
+E1, E2, E4, and E5 are pure and **do** gate (exit `1` on violation) when `--repo` is supplied. E3 never gates.
 
 ### Trace judgements
 
@@ -99,7 +100,7 @@ A skill is "special" iff its header block (text before the first `## `) contains
 `class`/`type`/`spec` declaration whose value is `special`.
 
 ## Current result (`graph.json`: 55 `pair` rows, 41 targets, 0 `preclinical`)
-All pure predicates **PASS**, and E1/E2/E4 pass with `--repo .`. Add-only **PASSES** against `graph.json` at
+All pure predicates **PASS**, and E1/E2/E4/E5 pass with `--repo .`. Add-only **PASSES** against `graph.json` at
 `a5a768c` — the blob is unchanged (`05e317b`) since that commit, because no commit since then has touched the
 catalogue. §8.16 is reported as not discharged. No violations found.
 
@@ -122,14 +123,14 @@ catalogue. §8.16 is reported as not discharged. No violations found.
 4. **§8.18 scope.** Reported only when both dictionaries are empty (otherwise N/A).
 
 ## Tests & CI
-- `python3 verifier/tests/test_verify.py` — 36 verifier tests: one minimal failing fixture per pure predicate plus §8.19,
-  failing + passing fixtures for the E1/E2/E4 extension predicates (and an offline no-op test for E3), the four tests
+- `python3 verifier/tests/test_verify.py` — 39 verifier tests: one minimal failing fixture per pure predicate plus §8.19,
+  failing + passing fixtures for the E1/E2/E4/E5 extension predicates (and an offline no-op test for E3), the four tests
   that pin E1's exclusion allowlist, the trace witness plus the admit / R9 / R10 refusals, and the HELM scope-vs-monomer distinction. (pytest optional; a stdlib runner is built in.)
   **`--merge` (§6) is not covered by the suite**: no test exercises it, so the merge path is implemented and unverified.
-- `python3 fleet/tests/test_fleet.py` — 11 hermetic tests for the fleet emitter and its fail-closed live-service gates.
+- `python3 fleet/tests/test_fleet.py` — 13 hermetic tests for the fleet emitter and its fail-closed live-service gates.
 - `.github/workflows/validate.yml` — the GitHub Actions workflow that runs both suites on `wetware-hq/catalog`:
-  the verifier and fleet tests, the pure predicates, the add-only check against the previous commit, and the E1/E2/E4 extension
+  the verifier and fleet tests, the pure predicates, the add-only check against the previous commit, and the E1/E2/E4/E5 extension
   predicates, with E3 in a separate non-blocking job. The workflow file keeps its `validate.yml` name so the
   check name GitHub reports does not move. A green run proves the pure conditions and the **gating** extension
-  predicates E1, E2, and E4, and nothing else: E3 is non-blocking (`continue-on-error: true`), so a green run says
+  predicates E1, E2, E4, and E5, and nothing else: E3 is non-blocking (`continue-on-error: true`), so a green run says
   nothing about it, and §8.16 is never discharged by a machine (`follow-agent-contract.md` §9.6). The trace witness is in the unit tests, not in that workflow command.

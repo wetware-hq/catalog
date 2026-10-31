@@ -350,6 +350,33 @@ def test_E4_dangling_row_fails():
     assert any("traces/record-fleet-traces.md" in row for row in rep.findings[0].rows), rep.findings[0].rows
 
 
+def test_E5_repo_identity_lines_match():
+    rep = V.Report(); V.check_identity(REPO_ROOT, rep)
+    assert rep.findings[0].ok is True, rep.findings[0].rows
+
+
+def test_E5_rejects_the_run_unit_token_with_no_production():
+    line = "`type: resource.procedure` · `spec: agent.fleet` · subordinate.\n"
+    repo = _tmp_repo("e5_run_unit", {
+        "follow-agent-contract.md": V.BANNER + "\n\nagent.fleet is the only run-unit spec.\n",
+        "skills/propose-pairs.md": V.BANNER + "\n\n# `propose-pairs`\n\n" + line + "\n## 0\n\nswarm\n",
+    })
+    rep = V.Report(); V.check_identity(repo, rep)
+    assert rep.findings[0].ok is False
+    assert any("no production" in row for row in rep.findings[0].rows), rep.findings[0].rows
+
+
+def test_E5_rejects_a_system_that_is_not_agent_system():
+    line = "`type: resource.system` · `spec: agent.fleet` · subordinate.\n"
+    repo = _tmp_repo("e5_type", {
+        "follow-agent-contract.md": V.BANNER + "\n\nagent.fleet is the only run-unit spec.\n",
+        "systems/use-bench.md": V.BANNER + "\n\n# `BENCH`\n\n" + line + "\n## 0\n\n",
+    })
+    rep = V.Report(); V.check_identity(repo, rep)
+    assert rep.findings[0].ok is False
+    assert any("agent.system" in row for row in rep.findings[0].rows), rep.findings[0].rows
+
+
 def _fence_after(label):
     text = open(os.path.join(REPO_ROOT, "traces", "record-fleet-traces.md"), encoding="utf-8").read()
     start = text.index("```\n", text.index(label)) + 4

@@ -1,10 +1,8 @@
 ⚠️ ACADEMIC RESEARCH PURPOSES ONLY; NOT FOR MEDICAL USE WITHOUT LICENSED OVERSIGHT
 
-**Licensed oversight is required for any use of this system; none has been performed to date.**
-
 # `BENCH` — a shared append-only commons for a fleet
 
-`type: resource.system` · `spec: agent.fleet` · subordinate to `follow-agent-contract.md`, which governs on any conflict (`follow-agent-contract.md` §0).
+`type: agent.system` · `spec: agent.fleet` · subordinate to `follow-agent-contract.md`, which governs on any conflict.
 
 BENCH is working space, not a record. It is where several agents in one run put partial work while they are still working, and where any of them can search what the others have put there so far. **Nothing written here is admissible to `graph.json`** (§4 below).
 
@@ -12,7 +10,7 @@ BENCH is working space, not a record. It is where several agents in one run put 
 
 - **Read:** this file, `follow-agent-contract.md`, the run's own `.bench` files.
 - **Write:** `.bench` files inside a run directory, which lives outside this repository.
-- **Refuse:** `graph.json`, `proposals.json`, and every other file in this repository. BENCH ships no code, no workflow and no data file here. Its presence in the repository is this specification only.
+- **Refuse:** `graph.json`, `proposals.json`, and every other file in this repository. This directory holds this specification only. The harness that writes `.bench` files lives under `fleet/` and is outside this system's write scope (§11).
 
 **`systems/` and `skills/`.** `skills/*.md` are *procedures*: a named thing an agent does, registered in `follow-agent-contract.md` §10, each with a signature and a write scope. `systems/*.md` are *substrates*: a named thing agents run on, with a format, a merge law and an invariant list. A system is not a skill, declares no signature over catalogue keys, and is not registered in §10; it is registered in `follow-agent-contract.md` §11. A skill may use a system; a system never discharges a skill's obligations, and neither widens `follow-agent-contract.md` §0.
 
@@ -47,7 +45,13 @@ The same separation `follow-agent-contract.md` §1 holds between `pair` and `pre
 
 Extension **`.bench`**. One node per line, newline-terminated, UTF-8. A run directory holds `core.bench` and one `<worker>.bench` per worker, each append-only.
 
+`core.bench` is not a `file`. Its hash is the run id (§6.1), so that hash cannot occur inside it. It is a `core`. A worker file is a `file`, and the `core=` hash in its header is `H` of the core file's exact bytes.
+
 ```ebnf
+version     = "1" ;
+core        = "%bench-core/" , version , NL , { param , NL } ;
+param       = key , ":" , '"' , { character - '"' } , '"' ;
+
 file        = header , { line } ;
 header      = "%bench/" , version , " core=" , hash , NL ;
 line        = tier , SP , id , SP , parents , { SP , field } , NL ;
@@ -176,8 +180,10 @@ Stated here rather than in a design note, because a reader of this file is the p
 
 ## 11. Status
 
+Licensed oversight is required for any use of this system; none has been performed to date.
+
 Implemented by [`fleet/fleet.py`](../fleet/fleet.py) as a run-directory writer: immutable core, one
 worker file per configured worker, tier-first records, content-derived ids, parent edges and the run
-hash on every node. Its eleven hermetic tests include canonical field ordering and refusal of an
+hash on every node. Its hermetic tests include canonical field ordering and refusal of an
 untiered line. The query index, replication protocol, pose distance and garbage collection remain
 unimplemented. The off-repo TLA+ report from 2026-10-29 (§9) remains unreproducible here.

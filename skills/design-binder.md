@@ -2,7 +2,7 @@
 
 # `design-binder` — de novo binder design
 
-`type: agent.skill` · `class: special` · `spec: agent.fleet` · subordinate to `follow-agent-contract.md`, which governs on any conflict.
+`type: resource.procedure` · `class: special` · `spec: agent.fleet` · subordinate to `follow-agent-contract.md`, which governs on any conflict.
 
 **This is not a catalogue procedure.** It needs no directory of its own: it writes nothing (§1), so there is no output boundary left to erode — the same contract `resolve-key` already has.
 
@@ -46,7 +46,7 @@ These are conventions from developability and selectivity practice, **not cutoff
 Refuse before designing, naming the condition that failed:
 
 - Target key fails `follow-agent-contract.md` §3 → refuse (grammar).
-- Accession is **not the human protein** → refuse (scope). `follow-agent-contract.md` §8.9 accepts any valid accession, including an ortholog; this procedure does not. A mouse surrogate is a different key and fragments coverage of the human target it stands in for. One accession, one species, and here it is *Homo sapiens*.
+- Accession is **not the human protein** → refuse (scope). `follow-agent-contract.md` §8.9 accepts any valid accession, including an orthologue; this procedure does not. A mouse surrogate is a different key and fragments coverage of the human target it stands in for. One accession, one species, and here it is *Homo sapiens*.
 - Target is not a protein → refuse (`follow-agent-contract.md` §3, §8.8). Nucleic acids and small molecules are out of scope by design.
 - Indication absent → refuse. It is not stored anywhere, and it is not decoration: it sets the required modality, route, residence time and off-target tolerance, which select the scaffold in §5.
 
@@ -101,7 +101,7 @@ A weighted sum cannot do this job: a total can be high for the wrong reason, and
 
 ### Screen performance, as the source reports it
 
-The screen above has a published success rate, and the report carries it (§7). Source: Figure 3, panel E of the ipSAE preprint, read off the rendered panel at 600 dpi — row 9 of [`pin-pin-references.md`](../pin-pin-references.md), which is where the pin and the read status live. The x-axis groups are **`Recall = 0.2`**, **`Recall = 0.4`** and **`Max F1`**; the Figure 3 legend's "0.6" is an error in the source and the Results prose is the correct one. The rows below are in the panel's legend order, which is also the bar order in all three groups.
+The screen above has a published success rate, and the report carries it (§7). Source: Figure 3, panel E of the ipSAE preprint, read off the rendered panel at 600 dpi — row 9 of [`pin-references.md`](../pin-references.md), which is where the pin and the read status live. The x-axis groups are **`Recall = 0.2`**, **`Recall = 0.4`** and **`Max F1`**; the Figure 3 legend's "0.6" is an error in the source and the Results prose is the correct one. The rows below are in the panel's legend order, which is also the bar order in all three groups.
 
 | discriminator | legend AP | Recall = 0.2 | Recall = 0.4 | Max F1 |
 |---|---|---|---|---|
@@ -132,7 +132,7 @@ Report, and write nothing. A single binder is emitted only when §6 earns it, an
 | evidence | each ranking signal, labelled prediction or measurement |
 | screens | each stage-one screen and its result, including for excluded candidates |
 | scorer | the quantity that produced the order, with values and uncertainty |
-| expected success rate | the median expected success rate for the scorer used, at the thresholds **as the source labels them** — the table in §6, with the operating point named, the inter-quartile range carried beside the median, and the pre-selection bias of the benchmark targets noted. Where the source is internally inconsistent, the discrepancy is resolved by reading the panel and the resolution recorded in `pin-pin-references.md`, never carried silently; and the ranking the number came from is stated, because average precision and median success rate do not agree (§6). This replaces a bare confidence score: "what fraction of what I order will bind" is the question a bench campaign actually asks, and every discriminator number is a proxy for it. |
+| expected success rate | the median expected success rate for the scorer used, at the thresholds **as the source labels them** — the table in §6, with the operating point named, the inter-quartile range carried beside the median, and the pre-selection bias of the benchmark targets noted. Where the source is internally inconsistent, the discrepancy is resolved by reading the panel and the resolution recorded in `pin-references.md`, never carried silently; and the ranking the number came from is stated, because average precision and median success rate do not agree (§6). This replaces a bare confidence score: "what fraction of what I order will bind" is the question a bench campaign actually asks, and every discriminator number is a proxy for it. |
 | killing assays | **two**, with thresholds and who could run each. A binding assay kills the affinity claim with a measured Kd. A counter-screen against the pre-registered paralogue panel and the healthy-tissue expression bar kills the safety claim even when the Kd is perfect — a binder that binds beautifully and also binds something in the myocardium is the failure mode that reaches patients. |
 | generator | what produced the sequence, standing in for the citation it does not have: the run, the design and scoring models with versions, the inputs, the date, and the catalogue PMIDs that justified choosing this target |
 | catalogue context | evidenced binders against this target at the pinned SHA with the indication read from each paper, or the explicit statement that none are entered and that this is not a negative |

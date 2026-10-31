@@ -1,10 +1,7 @@
 #!/usr/bin/env python3
 """Harness that runs one `agent.fleet` fleet and records it as BENCH and TRACES artifacts.
 
-Usage:
-    fleet.py preflight --budget-usd 2.00            # price and probe every live service; spend nothing
-    fleet.py run --target uniprot:P01111 --indication "..." --out DIR [--live]
-    fleet.py verify DIR                             # hand the run directory to verifier/verify.py --trace
+Usage is `fleet/read-fleet.md`. Bounds are arguments: this file gives none of them a default.
 
 `fleet.py run` executes `skills/design-binder.md` over a fleet of workers and writes, per worker, a
 `.bench` scratchpad line set (systems/use-bench.md) and a `.trace` act log (traces/record-fleet-traces.md).
@@ -30,6 +27,7 @@ import time
 import urllib.error
 import urllib.parse
 import urllib.request
+from string import Template
 from concurrent.futures import ThreadPoolExecutor
 from datetime import datetime, timezone
 from pathlib import Path
@@ -53,24 +51,11 @@ SKILL = "design-binder"
 
 # ---- live services ---------------------------------------------------------------------------------
 
+# Named authorities from the contract and the skills. Vendor deployments are not among them:
+# their bases and app names come from the environment, and an unset one is `unavailable`.
 GITHUB_API = "https://api.github.com"
-CATALOGUE_REPO = "wetware-hq/catalog"
 UNIPROT_API = "https://rest.uniprot.org/uniprotkb"
-BOLTZ_BASE = os.environ.get("BOLTZ_API_BASE", "https://api.boltz.bio/compute/v1")
-OPENROUTER_API = "https://openrouter.ai/api/v1"
-MODAL_APP = "wetware-bindi-fleet"
-HUMAN_TAXON = 9606
-
-#: One worker per model. Breadth over independent methods is the point (design-binder section 5), so the
-#: panel spans vendors rather than sizes of one family.
-DEFAULT_MODELS = (
-    "anthropic/claude-haiku-4.5",
-    "openai/gpt-4.1-mini",
-    "google/gemini-2.5-flash",
-    "deepseek/deepseek-v3.2",
-    "qwen/qwen3-14b",
-    "meta-llama/llama-3.3-70b-instruct",
-)
+_REPO_IN_REMOTE = re.compile(r"github\.com[:/]([\w.-]+/[\w.-]+?)(?:\.git)?$")
 
 #: Worker basenames are the one free parameter of a trace file (traces/record-fleet-traces.md, Freedom = 1).
 _WORKER_RE = re.compile(r"^[a-z][a-z0-9-]{0,31}$")
@@ -96,10 +81,10 @@ def _http(method, url, *, headers=None, body=None, timeout=60, source="http"):
         with urllib.request.urlopen(request, timeout=timeout, context=ssl.create_default_context()) as response:
             raw = response.read().decode("utf-8")
     except urllib.error.HTTPError as exc:
-        detail = exc.read().decode("utf-8", errors="replace")[:400]
-        raise Unavailable(source, f"HTTP {exc.code}: {detail}") from None
+        # Status only. A response body can echo a credential, and a trace stores this string.
+        raise Unavailable(source, f"HTTP {exc.code}") from None
     except (urllib.error.URLError, OSError, TimeoutError) as exc:
-        raise Unavailable(source, f"{type(exc).__name__}: {exc}") from None
+        raise Unavailable(source, type(exc).__name__) from None
     return json.loads(raw) if raw.strip() else {}
 
 
@@ -112,7 +97,6 @@ def utc_day() -> str:
 # the id elided. Every node names the run inside the bytes its own name covers (section 6.2), so `run`
 # is written as a field on every line.
 
-BENCH_ID_LEN = 12
 _BENCH_TOKEN_RE = re.compile(r"^[A-Za-z0-9][A-Za-z0-9._:/-]*$")
 
 
@@ -137,7 +121,7 @@ def bench_line(tier: int, parents, fields: dict) -> str:
         raise ValueError("a line that does not begin with 1, 2 or 3 is not a record")
     body = " ".join(f"{k}:{bench_value(v)}" for k, v in sorted(fields.items()))
     preimage = f"{tier} {parents}" + (f" {body}" if body else "")
-    ident = hashlib.sha256(preimage.encode("utf-8")).hexdigest()[:BENCH_ID_LEN]
+    ident = hashlib.sha256(preimage.encode("utf-8")).hexdigest()
     return f"{tier} {ident} {parents}" + (f" {body}" if body else "")
 
 
@@ -155,18 +139,30 @@ def bench_core_bytes(params: dict) -> bytes:
 # ---- live adapters -------------------------------------------------------------------------------
 
 
-def pin_catalogue(ref="main"):
-    """Pin the read to a commit SHA and return (sha, graph). Never a branch tip (section 7)."""
-    head = _http("GET", f"{GITHUB_API}/repos/{CATALOGUE_REPO}/commits/{ref}",
-                 headers=_gh_headers(), source="github")
-    sha = head.get("sha")
-    if not re.fullmatch(r"[0-9a-f]{40}", sha or ""):
-        raise Unavailable("github", "no commit sha for the catalogue read")
-    blob = _http("GET", f"{GITHUB_API}/repos/{CATALOGUE_REPO}/contents/graph.json?ref={sha}",
+def catalogue_repo():
+    """owner/name. The environment wins; otherwise the origin path, never the whole URL."""
+    env = os.environ.get("CATALOGUE_REPO", "").strip()
+    if re.fullmatch(r"[\w.-]+/[\w.-]+", env):
+        return env
+    config = REPO / ".git" / "config"
+    if config.exists():
+        for line in config.read_text(encoding="utf-8", errors="replace").splitlines():
+            match = _REPO_IN_REMOTE.search(line.strip())
+            if match:
+                return match.group(1)
+    raise Unavailable("github", "catalogue repo is not set")
+
+
+def pin_catalogue(rev):
+    """Pin the read to a commit SHA and return (sha, graph). A branch name is refused (section 7)."""
+    if not re.fullmatch(r"[0-9a-f]{40}", rev or ""):
+        raise Unavailable("github", "catalogue read is not a commit sha")
+    repo = catalogue_repo()
+    blob = _http("GET", f"{GITHUB_API}/repos/{repo}/contents/graph.json?ref={rev}",
                  headers=_gh_headers(), source="github")
     import base64
     raw = base64.b64decode(blob["content"])
-    return sha, json.loads(raw)
+    return rev, json.loads(raw)
 
 
 def _gh_headers():
@@ -203,43 +199,53 @@ def uniprot_record(accession: str):
     }
 
 
+def _secret(env_name, source):
+    key = os.environ.get(env_name, "").strip()
+    if not key:
+        raise Unavailable(source, f"{env_name} is not set")
+    return key
+
+
+def _service_base(env_name, source):
+    value = os.environ.get(env_name, "").strip().rstrip("/")
+    if not value:
+        raise Unavailable(source, f"{env_name} is not set")
+    return value
+
+
 def boltz_auth():
     """GET /auth/me. Free and read-only; proves the key resolves to a workspace before anything is spent."""
-    key = os.environ.get("BOLTZ_API_KEY") or os.environ.get("boltz_api_key") or ""
-    if not key.strip():
-        raise Unavailable("boltz", "BOLTZ_API_KEY is not set")
-    return _http("GET", f"{BOLTZ_BASE}/auth/me", headers={"x-api-key": key.strip()}, source="boltz")
+    key = _secret("BOLTZ_API_KEY", "boltz")
+    base = _service_base("BOLTZ_API_BASE", "boltz")
+    return _http("GET", f"{base}/auth/me", headers={"x-api-key": key}, source="boltz")
 
 
 def boltz_estimate(body: dict):
     """POST /protein/design/estimate-cost. Free, read-only, submits nothing."""
-    key = os.environ.get("BOLTZ_API_KEY") or os.environ.get("boltz_api_key") or ""
-    if not key.strip():
-        raise Unavailable("boltz", "BOLTZ_API_KEY is not set")
-    return _http("POST", f"{BOLTZ_BASE}/protein/design/estimate-cost",
-                 headers={"x-api-key": key.strip()}, body=body, source="boltz")
+    key = _secret("BOLTZ_API_KEY", "boltz")
+    base = _service_base("BOLTZ_API_BASE", "boltz")
+    return _http("POST", f"{base}/protein/design/estimate-cost",
+                 headers={"x-api-key": key}, body=body, source="boltz")
 
 
 def boltz_submit(body: dict, *, idempotency_key: str):
     """Submit one paid design run. Call only after estimate <= the pre-registered cap."""
-    key = os.environ.get("BOLTZ_API_KEY") or os.environ.get("boltz_api_key") or ""
-    if not key.strip():
-        raise Unavailable("boltz", "BOLTZ_API_KEY is not set")
+    key = _secret("BOLTZ_API_KEY", "boltz")
+    base = _service_base("BOLTZ_API_BASE", "boltz")
     payload = dict(body, idempotency_key=idempotency_key)
-    return _http("POST", f"{BOLTZ_BASE}/protein/design",
-                 headers={"x-api-key": key.strip()}, body=payload, timeout=120, source="boltz")
+    return _http("POST", f"{base}/protein/design",
+                 headers={"x-api-key": key}, body=payload, timeout=120, source="boltz")
 
 
 def boltz_status(job_id: str):
-    key = os.environ.get("BOLTZ_API_KEY") or os.environ.get("boltz_api_key") or ""
-    if not key.strip():
-        raise Unavailable("boltz", "BOLTZ_API_KEY is not set")
-    return _http("GET", f"{BOLTZ_BASE}/protein/design/{job_id}",
-                 headers={"x-api-key": key.strip()}, source="boltz")
+    key = _secret("BOLTZ_API_KEY", "boltz")
+    base = _service_base("BOLTZ_API_BASE", "boltz")
+    return _http("GET", f"{base}/protein/design/{job_id}",
+                 headers={"x-api-key": key}, source="boltz")
 
 
-def boltz_design_body(target_sequence: str, num_proteins: int):
-    """The legacy-compatible binder request accepted by the hosted design API."""
+def boltz_design_body(target_sequence: str, num_proteins: int, min_aa: int, max_aa: int):
+    """Binder request. The length window is the caller's; this file does not supply one."""
     return {
         "num_proteins": int(num_proteins),
         "target": {
@@ -251,27 +257,26 @@ def boltz_design_body(target_sequence: str, num_proteins: int):
             "modality": "custom_protein",
             "entities": [{
                 "type": "designed_protein", "chain_ids": ["B"],
-                "value": f"{BRIEF_MIN_AA}..{BRIEF_MAX_AA}",
+                "value": f"{int(min_aa)}..{int(max_aa)}",
             }],
         },
     }
 
 
 def openrouter_key():
-    key = os.environ.get("OPENROUTER_API_KEY") or os.environ.get("openrouter_api_key") or ""
-    if not key.strip():
-        raise Unavailable("openrouter", "OPENROUTER_API_KEY is not set")
-    return key.strip()
+    return _secret("OPENROUTER_API_KEY", "openrouter")
 
 
 def openrouter_budget():
-    data = _http("GET", f"{OPENROUTER_API}/key", headers={"authorization": f"Bearer {openrouter_key()}"},
+    base = _service_base("OPENROUTER_API_BASE", "openrouter")
+    data = _http("GET", f"{base}/key", headers={"authorization": f"Bearer {openrouter_key()}"},
                  source="openrouter")
     return data.get("data") or {}
 
 
 def openrouter_prices(models):
-    data = _http("GET", f"{OPENROUTER_API}/models", source="openrouter").get("data") or []
+    base = _service_base("OPENROUTER_API_BASE", "openrouter")
+    data = _http("GET", f"{base}/models", source="openrouter").get("data") or []
     by_id = {m["id"]: m for m in data}
     out = {}
     for model in models:
@@ -284,19 +289,19 @@ def openrouter_prices(models):
     return out
 
 
-def openrouter_chat(model, prompt, *, max_tokens=2600, timeout=240):
+def openrouter_chat(model, prompt, *, max_tokens, timeout):
+    base = _service_base("OPENROUTER_API_BASE", "openrouter")
     body = {
         "model": model,
         "messages": [{"role": "user", "content": prompt}],
         "max_tokens": max_tokens,
-        "temperature": 0.7,
     }
-    data = _http("POST", f"{OPENROUTER_API}/chat/completions",
+    data = _http("POST", f"{base}/chat/completions",
                  headers={"authorization": f"Bearer {openrouter_key()}"},
                  body=body, timeout=timeout, source=f"openrouter/{model}")
     choices = data.get("choices") or []
     if not choices:
-        raise Unavailable(f"openrouter/{model}", f"no choices: {json.dumps(data)[:200]}")
+        raise Unavailable(f"openrouter/{model}", "no choices")
     usage = data.get("usage") or {}
     finish = choices[0].get("finish_reason") or choices[0].get("native_finish_reason")
     if finish == "length":
@@ -319,46 +324,48 @@ def modal_call(function: str, payload, *, timeout=900):
         import modal  # noqa: PLC0415 - optional, live-only dependency
     except ImportError:
         raise Unavailable("modal", "the modal SDK is not installed") from None
-    os.environ.setdefault("MODAL_TOKEN_ID", os.environ.get("modal_token_id", ""))
-    os.environ.setdefault("MODAL_TOKEN_SECRET", os.environ.get("modal_token_secret", ""))
+    app = os.environ.get("MODAL_APP", "").strip()
+    if not app:
+        raise Unavailable("modal", "MODAL_APP is not set")
     try:
-        handle = modal.Function.from_name(MODAL_APP, function)
+        handle = modal.Function.from_name(app, function)
         return handle.remote(payload)
-    except Exception as exc:  # the SDK raises its own hierarchy; any failure is the source not answering
-        raise Unavailable(f"modal/{function}", f"{type(exc).__name__}: {exc}"[:300]) from None
+    except Exception as exc:  # the SDK raises its own hierarchy; the type name cannot carry a credential
+        raise Unavailable(f"modal/{function}", type(exc).__name__) from None
 
 
 # ---- stage-one screens (skills/design-binder.md section 6) ------------------------------------------
 # They exclude; they never penalise. A candidate failing one is out and the report names the screen.
-
-HYDROPHOBIC = set("AVILMFWYC")
-#: Approved-antibody range for the window-fraction patch score used below. Local convention, not a
-#: figure derived from a published set of marketed therapeutics.
-PATCH_WINDOW = 9
-PATCH_BAR = 0.78
+# The hydrophobic-patch screen has no threshold in the skill, so this file does not invent one.
 
 
-def developability(sequence: str):
-    """Return (ok, reason). Unpaired cysteine, N-glycosylation sequon, Asn-Gly, Asp-Pro, patch score.
+def _cdr_motifs(segment: str, origin: int):
+    for i in range(len(segment) - 2):
+        if segment[i] == "N" and segment[i + 1] != "P" and segment[i + 2] in "ST":
+            return f"N-glycosylation sequon at {origin + i + 1}"
+    if "NG" in segment:
+        return f"Asn-Gly at {origin + segment.index('NG') + 1}"
+    if "DP" in segment:
+        return f"Asp-Pro at {origin + segment.index('DP') + 1}"
+    return None
 
-    section 6 qualifies the sequon and motif screens with "in a CDR". A de novo miniprotein has no CDR,
-    so for a scaffold without one they are applied over the whole chain and the report says so.
+
+def developability(sequence: str, cdrs=()):
+    """Return (verdict, reason). Verdict is exclude, not-run, or pass.
+
+    Unpaired cysteine is a whole-chain screen. The sequon, Asn-Gly and Asp-Pro screens are
+    located in a CDR by the skill; without CDR bounds they are not decided. A pass is not
+    reported for a screen that did not run.
     """
     if sequence.count("C") % 2 == 1:
-        return False, "unpaired cysteine"
-    for i in range(len(sequence) - 2):
-        if sequence[i] == "N" and sequence[i + 1] != "P" and sequence[i + 2] in "ST":
-            return False, f"N-glycosylation sequon at {i + 1}"
-    if "NG" in sequence:
-        return False, f"Asn-Gly at {sequence.index('NG') + 1}"
-    if "DP" in sequence:
-        return False, f"Asp-Pro at {sequence.index('DP') + 1}"
-    for i in range(len(sequence) - PATCH_WINDOW + 1):
-        window = sequence[i:i + PATCH_WINDOW]
-        fraction = sum(1 for c in window if c in HYDROPHOBIC) / PATCH_WINDOW
-        if fraction > PATCH_BAR:
-            return False, f"hydrophobic patch {fraction:.2f} at {i + 1}"
-    return True, "no stage-one developability liability"
+        return "exclude", "unpaired cysteine"
+    if not cdrs:
+        return "not-run", "CDR bounds absent"
+    for start, end in cdrs:
+        reason = _cdr_motifs(sequence[start:end], start)
+        if reason is not None:
+            return "exclude", reason
+    return "pass", "no stage-one developability liability"
 
 
 def canonical_aa(chains):
@@ -371,48 +378,33 @@ def valid_binder(key: str) -> bool:
 
 
 def admit_candidate(sequence: str):
-    """Is this an admissible binder key for this brief? Returns (key, reason-or-None).
+    """Is this an admissible binder key? Returns (key, reason-or-None).
 
-    `follow-agent-contract.md` section 3 bounds the alphabet but not the length, so the length window
-    comes from the brief. Both failures land on the one gate the trace carrier set offers, `grammar`.
+    `follow-agent-contract.md` section 3 bounds the alphabet and not the length. A length window is
+    not a grammar gate.
     """
     if not sequence:
         return "", "empty sequence"
     key = canonical_aa([sequence])
     if not valid_binder(key):
         return key, "not a section 3 aa: key"
-    if not BRIEF_MIN_AA <= len(sequence) <= BRIEF_MAX_AA:
-        return key, f"{len(sequence)} aa outside the brief window {BRIEF_MIN_AA}-{BRIEF_MAX_AA}"
     return key, None
 
 
 # ---- the fleet -------------------------------------------------------------------------------------
 
-#: The brief's length window. Part of the specification every worker carries (design-binder section 5),
-#: so a candidate outside it has not met the brief and is refused rather than screened.
-BRIEF_MIN_AA = 45
-BRIEF_MAX_AA = 110
+WORKER_PROMPT = """$banner
 
-WORKER_PROMPT = """You are one scientist agent in a parallel fleet designing a de novo protein binder.
+You are one worker in an agent.fleet run of design-binder. A sequence you return is a hypothesis, not a therapy, and this run writes nothing to the catalogue.
 
-Target: {target} ({protein}, {organism}), length {length} aa.
-Indication: {indication}
-Target sequence (first 240 aa shown): {head}
+Target: $target ($organism), length $length aa.
+Indication: $indication
+Target sequence: $sequence
 
-Design {k} candidate binders. Breadth is the point: the fleet compares genuinely different hypotheses,
-so pick independent scaffolds (minibinder, designed miniprotein, nanobody/single-domain, constrained
-peptide, repeat protein) rather than variations of one.
+Return $k candidate binders. Breadth is the point: independent scaffolds (minibinder, designed miniprotein, nanobody or single-domain, constrained peptide, repeat protein, or an Fv-derived format), not variations of one. One chain of the 20 standard L-amino acids (ACDEFGHIKLMNPQRSTVWY). An even number of cysteines, or none.
 
-Hard constraints on every sequence you return. A sequence breaking any of them is discarded:
-- 20 standard L-amino acids only (ACDEFGHIKLMNPQRSTVWY), one chain, {lo} to {hi} residues. Count them.
-- An even number of cysteines, or none at all.
-- No N-X-S or N-X-T motif (X not P), no "NG", no "DP" anywhere.
-- No tandem repeat: never repeat any 4-residue motif more than twice. A low-complexity repeat is not a
-  design, and a run of one motif until the token limit is a failed answer.
-
-Keep each rationale under 200 characters so the whole reply fits. Return STRICT JSON only, no prose and
-no code fence:
-{{"candidates":[{{"sequence":"...","scaffold":"...","epitope":"...","rationale":"..."}}]}}
+Return JSON only:
+{"candidates":[{"sequence":"...","scaffold":"...","epitope":"...","rationale":"..."}]}
 """
 
 
@@ -527,7 +519,8 @@ class Run:
         return out
 
 
-def run_fleet(*, target, indication, models, out, live, bound_tok, bound_n=None, k=3, timeout=180):
+def run_fleet(*, target, indication, models, out, live, bound_tok, k, bound_n=None,
+              timeout=None, max_tokens=None, min_aa=None, max_aa=None):
     """Execute skills/design-binder.md over a fleet, and record it. Returns the report."""
     spec_sha = repo_head_sha()
     models = list(models)
@@ -556,9 +549,9 @@ def run_fleet(*, target, indication, models, out, live, bound_tok, bound_n=None,
         record = None
     if record is not None:
         report["target_record"] = {k2: v for k2, v in record.items() if k2 != "sequence"}
-        if record["taxon"] != HUMAN_TAXON:
+        if record.get("organism") != "Homo sapiens":
             run.trace_all("refuse", call_parent,
-                          {"gate": "species", "subject": f"{target} is {record['organism']}"})
+                          {"gate": "species", "subject": f"{target} is {record.get('organism')}"})
             return _halt_unpinned(run, report, out, "species")
         if not record["sequence"]:
             run.trace_all("refuse", call_parent, {"gate": "not-protein", "subject": target})
@@ -569,7 +562,7 @@ def run_fleet(*, target, indication, models, out, live, bound_tok, bound_n=None,
         return _halt_unpinned(run, report, out, "species-unverified")
 
     # -- section 4 look it up before designing it ------------------------------------------------
-    sha, graph = pin_catalogue()
+    sha, graph = pin_catalogue(repo_head_sha())
     pin = run.trace_all("pin", call_parent, {"path": "graph.json", "rev": sha})
     run.pin_id = pin.split(" ", 2)[1]
     pin_parent = "^" + run.pin_id
@@ -595,15 +588,17 @@ def run_fleet(*, target, indication, models, out, live, bound_tok, bound_n=None,
     # before the advisory panel runs; OpenRouter must never silently substitute for this step.
     if live:
         try:
+            if min_aa is None or max_aa is None or max_tokens is None or timeout is None:
+                raise Unavailable("fleet", "run bounds were not supplied")
             boltz_auth()
-            body = boltz_design_body(record["sequence"], bound_n)
+            body = boltz_design_body(record["sequence"], bound_n, min_aa, max_aa)
             report["boltz_estimate"] = boltz_estimate(body)
         except Unavailable as exc:
             run.trace_all("unavailable", pin_parent, _source_fields(target, exc, "generator"))
             run.trace_all("halt", pin_parent, {
                 "bound-n": str(run.bound_n), "bound-tok": str(run.bound_tok),
                 "oracle": "not-discharged"})
-            report["refused"] = "boltz-unavailable"
+            report["refused"] = exc.source + "-unavailable"
             report["boltz_issue"] = exc.detail
             report["workers"] = []
             report["emitted"] = []
@@ -614,7 +609,7 @@ def run_fleet(*, target, indication, models, out, live, bound_tok, bound_n=None,
             return report
 
     # -- section 5 fan out ------------------------------------------------------------------------
-    results = _fan_out(run, record, k=k, timeout=timeout) if live else []
+    results = _fan_out(run, record, k=k, timeout=timeout, max_tokens=max_tokens) if live else []
     report["workers"] = []
 
     survivors = []
@@ -637,8 +632,7 @@ def run_fleet(*, target, indication, models, out, live, bound_tok, bound_n=None,
             sequence = re.sub(r"[^A-Z]", "", (cand.get("sequence") or "").upper())
             key, bad = admit_candidate(sequence)
             if bad is not None:
-                # `grammar` is a PrePin gate, so this refusal parents the call even though the design
-                # that produced it happened after the pin. See fleet/read-fleet.md on that overload.
+                # `grammar` is a PrePin gate, so the refusal parents the call (traces/record-fleet-traces.md, P4).
                 run.trace(worker, "refuse", call_parent, {"gate": "grammar", "subject": bad})
                 entry["screened"].append({"key": key[:40], "screen": "grammar", "result": bad})
                 continue
@@ -646,11 +640,11 @@ def run_fleet(*, target, indication, models, out, live, bound_tok, bound_n=None,
                 "step": "design", "model": model, "binder": key,
                 "scaffold": str(cand.get("scaffold", "unstated"))[:60], "n": len(sequence)})
             design_ids.append(node)
-            ok, reason = developability(sequence)
+            verdict, reason = developability(sequence)
             run.bench(worker, 2, f"^{node}", {
                 "step": "screen", "screen": "developability",
-                "verdict": "pass" if ok else "exclude", "reason": reason})
-            if not ok:
+                "verdict": verdict, "reason": reason})
+            if verdict == "exclude":
                 run.trace(worker, "refuse", pin_parent, {"gate": "developability", "subject": reason})
                 entry["screened"].append({"key": key, "screen": "developability", "result": reason})
                 continue
@@ -691,19 +685,17 @@ def _halt_unpinned(run, report, out, reason):
     return report
 
 
-def _fan_out(run, record, *, k, timeout):
+def _fan_out(run, record, *, k, timeout, max_tokens):
     """One worker per model, in parallel, each carrying the same specification."""
-    head = record["sequence"][:240]
-    prompt = WORKER_PROMPT.format(
-        target=run.target, protein=record.get("type", "protein"), organism=record["organism"],
-        length=record["length"], head=head, indication=run.indication, k=k,
-        lo=BRIEF_MIN_AA, hi=BRIEF_MAX_AA)
+    prompt = Template(WORKER_PROMPT).safe_substitute(
+        banner=BANNER, target=run.target, organism=record["organism"],
+        length=record["length"], sequence=record["sequence"], indication=run.indication, k=k)
 
     def one(index_model):
         index, model = index_model
         worker = run.worker_name(index)
         try:
-            text, usage = openrouter_chat(model, prompt, timeout=timeout)
+            text, usage = openrouter_chat(model, prompt, max_tokens=max_tokens, timeout=timeout)
         except Unavailable as exc:
             return worker, model, exc
         candidates = parse_candidates(text)
@@ -764,7 +756,7 @@ def repo_head_sha():
 # ---- preflight -------------------------------------------------------------------------------------
 
 
-def preflight(*, models, budget_usd, target="uniprot:Q9NZQ7", k=3, workers=None):
+def preflight(*, models, budget_usd, target, k, prompt_tokens, completion_tokens, min_aa, max_aa, workers=None):
     """Price and probe every live service this fleet needs. Spends nothing.
 
     This is the cheapest-first stopping rule of skills/design-binder.md section 5, run as a gate:
@@ -786,10 +778,9 @@ def preflight(*, models, budget_usd, target="uniprot:Q9NZQ7", k=3, workers=None)
         except Unavailable as exc:
             checks.append({"service": name, "status": "unavailable", "ms": int((time.time() - started) * 1000),
                            "spends": spends, "required": required, "detail": exc.detail[:300]})
-        except Exception as exc:  # a probe must never abort the preflight
+        except Exception as exc:  # a probe must never abort the preflight; the type name cannot carry a credential
             checks.append({"service": name, "status": "error", "ms": int((time.time() - started) * 1000),
-                           "spends": spends, "required": required,
-                           "detail": f"{type(exc).__name__}: {exc}"[:300]})
+                           "spends": spends, "required": required, "detail": type(exc).__name__})
 
     def check_uniprot():
         state["target"] = uniprot_record(target)
@@ -800,8 +791,8 @@ def preflight(*, models, budget_usd, target="uniprot:Q9NZQ7", k=3, workers=None)
         record = state.get("target")
         if not record or not record.get("sequence"):
             raise Unavailable("boltz", "target sequence unavailable for cost estimate")
-        count = max(10, workers * k)  # live API minimum, verified by its 400 response
-        estimate = boltz_estimate(boltz_design_body(record["sequence"], count))
+        count = workers * k
+        estimate = boltz_estimate(boltz_design_body(record["sequence"], count, min_aa, max_aa))
         budget["boltz_usd"] = float(estimate["estimated_cost_usd"])
         budget["boltz_designs"] = count
         return {
@@ -809,9 +800,14 @@ def preflight(*, models, budget_usd, target="uniprot:Q9NZQ7", k=3, workers=None)
             "estimated_cost_usd": estimate.get("estimated_cost_usd"), "num_proteins": count,
         }
 
-    probe("github/catalogue-pin", lambda: {"rev": pin_catalogue()[0]})
+    def check_pin():
+        sha, graph = pin_catalogue(repo_head_sha())
+        state["graph"] = graph
+        return {"rev": sha}
+
+    probe("github/catalogue-pin", check_pin)
     probe("uniprot", check_uniprot)
-    probe("ncbi/eutils", _probe_ncbi, required=False)
+    probe("ncbi/eutils", lambda: _probe_ncbi(_first_pmid(state.get("graph") or {})), required=False)
     probe("boltz/estimate", check_boltz)
     probe("modal/run_gates", lambda: {"gates": sorted(modal_call("run_gates", {}).keys())})
 
@@ -821,8 +817,6 @@ def preflight(*, models, budget_usd, target="uniprot:Q9NZQ7", k=3, workers=None)
         budget["key_limit_usd"] = remaining.get("limit")
         budget["key_remaining_usd"] = remaining.get("limit_remaining")
         prices = openrouter_prices(models)
-        # One call per worker. The prompt is the target head plus the brief; the reply is k candidates.
-        prompt_tokens, completion_tokens = 700, 1400
         rows = []
         total = 0.0
         for model in models:
@@ -859,11 +853,28 @@ def preflight(*, models, budget_usd, target="uniprot:Q9NZQ7", k=3, workers=None)
             "degraded": [c["service"] for c in checks if c["status"] != "ok" and not c["required"]]}
 
 
-def _probe_ncbi():
+def _first_pmid(graph):
+    """A pmid from the pinned catalogue. The harness embeds none of its own."""
+    for dictionary in ("pair", "preclinical"):
+        for targets in (graph.get(dictionary) or {}).values():
+            if not isinstance(targets, dict):
+                continue
+            for cites in targets.values():
+                for cite in cites or []:
+                    if isinstance(cite, str) and cite.startswith("pmid:"):
+                        digits = cite.split(":", 1)[1]
+                        if re.fullmatch(r"(?:0|[1-9]\d*)", digits):
+                            return digits
+    return None
+
+
+def _probe_ncbi(pmid):
+    if not pmid:
+        raise Unavailable("ncbi", "no pmid on the pinned catalogue")
     url = ("https://eutils.ncbi.nlm.nih.gov/entrez/eutils/esummary.fcgi"
-           "?db=pubmed&id=11248153&retmode=json")
+           f"?db=pubmed&id={pmid}&retmode=json")
     data = _http("GET", url, source="ncbi")
-    return {"resolved": "11248153" in (data.get("result") or {})}
+    return {"resolved": pmid in (data.get("result") or {})}
 
 
 # ---- verify -----------------------------------------------------------------------------------------
@@ -888,19 +899,27 @@ def main(argv=None):
     sub = parser.add_subparsers(dest="cmd", required=True)
 
     pre = sub.add_parser("preflight", help="price and probe every live service; spend nothing")
-    pre.add_argument("--budget-usd", type=float, default=2.0)
-    pre.add_argument("--target", default="uniprot:Q9NZQ7")
-    pre.add_argument("--models", nargs="*", default=list(DEFAULT_MODELS))
-    pre.add_argument("--candidates", type=int, default=3)
+    pre.add_argument("--budget-usd", type=float, required=True)
+    pre.add_argument("--target", required=True)
+    pre.add_argument("--models", nargs="+", required=True)
+    pre.add_argument("--candidates", type=int, required=True)
+    pre.add_argument("--prompt-tokens", type=int, required=True)
+    pre.add_argument("--completion-tokens", type=int, required=True)
+    pre.add_argument("--min-aa", type=int, required=True)
+    pre.add_argument("--max-aa", type=int, required=True)
     pre.add_argument("--json", action="store_true")
 
     run = sub.add_parser("run", help="run one fleet and write its BENCH and TRACES artifacts")
     run.add_argument("--target", required=True)
     run.add_argument("--indication", required=True)
     run.add_argument("--out", required=True)
-    run.add_argument("--models", nargs="*", default=list(DEFAULT_MODELS))
-    run.add_argument("--candidates", type=int, default=3)
-    run.add_argument("--bound-tok", type=int, default=60000)
+    run.add_argument("--models", nargs="+", required=True)
+    run.add_argument("--candidates", type=int, required=True)
+    run.add_argument("--bound-tok", type=int, required=True)
+    run.add_argument("--max-tokens", type=int)
+    run.add_argument("--timeout", type=int)
+    run.add_argument("--min-aa", type=int)
+    run.add_argument("--max-aa", type=int)
     run.add_argument("--live", action="store_true", help="call the live services")
     run.add_argument("--json", action="store_true")
 
@@ -911,13 +930,17 @@ def main(argv=None):
 
     if args.cmd == "preflight":
         report = preflight(models=args.models, budget_usd=args.budget_usd,
-                           target=args.target, k=args.candidates)
+                           target=args.target, k=args.candidates,
+                           prompt_tokens=args.prompt_tokens, completion_tokens=args.completion_tokens,
+                           min_aa=args.min_aa, max_aa=args.max_aa)
         print(json.dumps(report, indent=2) if args.json else _format_preflight(report))
         return 0 if report["launch"] else 1
 
     if args.cmd == "run":
         report = run_fleet(target=args.target, indication=args.indication, models=args.models,
-                           out=args.out, live=args.live, bound_tok=args.bound_tok, k=args.candidates)
+                           out=args.out, live=args.live, bound_tok=args.bound_tok, k=args.candidates,
+                           max_tokens=args.max_tokens, timeout=args.timeout,
+                           min_aa=args.min_aa, max_aa=args.max_aa)
         ok, code, rows = verify_run(Path(args.out))
         report["trace_judgement"] = {"ok": ok, "code": code, "rows": rows}
         print(json.dumps(report, indent=2) if args.json else _format_run(report))

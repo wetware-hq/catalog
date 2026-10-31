@@ -22,28 +22,32 @@ class FleetTests(unittest.TestCase):
         left = fleet.bench_line(2, "^0", {"z": 1, "a": "x"})
         right = fleet.bench_line(2, "^0", {"a": "x", "z": 1})
         self.assertEqual(left, right)
-        self.assertRegex(left, r"^2 [0-9a-f]{12} \^0 a:x z:1$")
+        self.assertRegex(left, r"^2 [0-9a-f]{64} \^0 a:x z:1$")
 
     def test_bench_refuses_untiered_values(self):
         with self.assertRaisesRegex(ValueError, "not a record"):
             fleet.bench_line(0, "^0", {})
 
-    def test_candidate_admission_enforces_key_and_brief_length(self):
-        key, reason = fleet.admit_candidate("A" * 45)
-        self.assertEqual(key, "aa:" + "A" * 45)
+    def test_candidate_admission_enforces_the_section_3_key(self):
+        key, reason = fleet.admit_candidate("A" * 44)
+        self.assertEqual(key, "aa:" + "A" * 44)
         self.assertIsNone(reason)
-        _, reason = fleet.admit_candidate("A" * 44)
-        self.assertIn("outside the brief window", reason)
+        _, reason = fleet.admit_candidate("")
+        self.assertEqual(reason, "empty sequence")
         _, reason = fleet.admit_candidate("B" * 50)
         self.assertIn("section 3", reason)
 
-    def test_developability_kills_liabilities_without_weighting(self):
+    def test_developability_kills_named_liabilities_without_weighting(self):
         clean = "EKQ" * 15
-        self.assertEqual(fleet.developability(clean), (True, "no stage-one developability liability"))
-        self.assertEqual(fleet.developability("C" + "A" * 44)[0], False)
-        self.assertIn("N-glycosylation", fleet.developability("ANAS" + "A" * 41)[1])
-        self.assertIn("Asn-Gly", fleet.developability("ANG" + "A" * 42)[1])
-        self.assertIn("Asp-Pro", fleet.developability("ADP" + "A" * 42)[1])
+        self.assertEqual(fleet.developability(clean), ("not-run", "CDR bounds absent"))
+        self.assertEqual(fleet.developability("C" + "A" * 44)[0], "exclude")
+        whole = [(0, 45)]
+        self.assertEqual(fleet.developability(clean, cdrs=whole),
+                         ("pass", "no stage-one developability liability"))
+        self.assertIn("N-glycosylation", fleet.developability("ANAS" + "A" * 41, cdrs=whole)[1])
+        self.assertIn("Asn-Gly", fleet.developability("ANG" + "A" * 42, cdrs=whole)[1])
+        self.assertIn("Asp-Pro", fleet.developability("ADP" + "A" * 42, cdrs=whole)[1])
+        self.assertEqual(fleet.developability("ANG" + "A" * 42)[0], "not-run")
 
     def test_parse_candidates_accepts_fenced_json_and_refuses_truncation(self):
         raw = 'prefix ```json\n{"candidates":[{"sequence":"AAAA"}]}\n```'
@@ -64,7 +68,7 @@ class FleetTests(unittest.TestCase):
 
     def test_boltz_unavailable_halts_before_advisory_models(self):
         record = {
-            "accession": "P01111", "taxon": fleet.HUMAN_TAXON, "organism": "Homo sapiens",
+            "accession": "P01111", "organism": "Homo sapiens",
             "sequence": "A" * 100, "length": 100, "type": "protein",
         }
         graph = {"version": 2, "pair": {}, "preclinical": {}}
@@ -77,6 +81,7 @@ class FleetTests(unittest.TestCase):
             report = fleet.run_fleet(
                 target="uniprot:P01111", indication="research", models=["test/model"],
                 out=tmp, live=True, bound_tok=100, bound_n=1, k=1,
+                min_aa=45, max_aa=110, max_tokens=100, timeout=1,
             )
             self.assertEqual(report["refused"], "boltz-unavailable")
             fan_out.assert_not_called()
@@ -93,7 +98,10 @@ class FleetTests(unittest.TestCase):
                 patch.object(fleet, "modal_call", return_value={"config": {}}), \
                 patch.object(fleet, "openrouter_budget", return_value={"limit_remaining": 10}), \
                 patch.object(fleet, "openrouter_prices", return_value={"test/model": (0.0, 0.0)}):
-            result = fleet.preflight(models=["test/model"], budget_usd=1.0)
+            result = fleet.preflight(
+                models=["test/model"], budget_usd=1.0, target="uniprot:P01111", k=1,
+                prompt_tokens=700, completion_tokens=1400, min_aa=45, max_aa=110,
+            )
             self.assertFalse(result["launch"])
             self.assertEqual(result["blocking"], ["boltz/estimate"])
 
@@ -111,10 +119,13 @@ class FleetTests(unittest.TestCase):
             patch.object(fleet, "openrouter_prices", return_value={"test/model": (0.0001, 0.0)}),
         )
         with common[0], common[1], common[2], common[3], common[4], common[5], common[6], common[7]:
-            result = fleet.preflight(models=["test/model"], budget_usd=0.60, k=1)
+            result = fleet.preflight(
+                models=["test/model"], budget_usd=0.60, target="uniprot:P01111", k=1,
+                prompt_tokens=700, completion_tokens=1400, min_aa=45, max_aa=110,
+            )
         self.assertTrue(result["launch"])
         self.assertEqual(result["budget"]["projected_usd"], 0.57)
-        self.assertEqual(result["budget"]["boltz_designs"], 10)
+        self.assertEqual(result["budget"]["boltz_designs"], 1)
 
     def test_terminal_screen_never_emits_without_two_assays(self):
         run = fleet.Run(
@@ -134,7 +145,7 @@ class FleetTests(unittest.TestCase):
 
     def test_live_shape_with_fakes_writes_valid_trace_and_all_worker_heads(self):
         record = {
-            "accession": "P01111", "taxon": fleet.HUMAN_TAXON, "organism": "Homo sapiens",
+            "accession": "P01111", "organism": "Homo sapiens",
             "sequence": "A" * 100, "length": 100, "type": "protein",
         }
         graph = {"version": 2, "pair": {}, "preclinical": {}}
@@ -154,12 +165,28 @@ class FleetTests(unittest.TestCase):
                 target="uniprot:P01111", indication="research",
                 models=["test/one", "test/two"], out=tmp, live=True,
                 bound_tok=1000, bound_n=2, k=1,
+                min_aa=45, max_aa=110, max_tokens=100, timeout=1,
             )
             self.assertEqual(report["catalogue_context"]["verdict"], "absent")
             ok, code, rows = fleet.verify_run(Path(tmp))
             self.assertTrue(ok, (code, rows))
             self.assertEqual(sorted(p.name for p in Path(tmp).glob("w*.bench")),
                              ["w1.bench", "w2.bench"])
+
+
+    def test_cli_refuses_a_preflight_without_bounds(self):
+        from io import StringIO
+        with self.assertRaises(SystemExit) as caught, patch("sys.stderr", new=StringIO()):
+            fleet.main(["preflight"])
+        self.assertEqual(caught.exception.code, 2)
+
+    def test_harness_embeds_no_standing_policy(self):
+        text = Path(fleet.__file__).read_text(encoding="utf-8")
+        for token in ("DEFAULT_MODELS", "BRIEF_MIN_AA", "HUMAN_TAXON", "PATCH_BAR",
+                      "wetware-bindi", "11248153", "boltz_api_key", "Q9NZQ7",
+                      "commits/", "temperature"):
+            self.assertNotIn(token, text, token)
+        self.assertFalse(hasattr(fleet, "DEFAULT_MODELS"))
 
 
 if __name__ == "__main__":

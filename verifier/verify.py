@@ -5,7 +5,7 @@ Usage:
     verify.py GRAPH.json                 # pure predicates (8.1-8.15, 8.17, 8.18)
     verify.py --prev OLD.json NEW.json   # the above on NEW, plus relational 8.19 (add-only)
     verify.py --merge A.json B.json      # section 6 merge; writes canonical bytes to stdout
-    verify.py GRAPH.json --repo DIR      # + extension predicates E1 (banner), E2 (skill registry), E4 (system registry); these gate
+    verify.py GRAPH.json --repo DIR      # + extension predicates E1 (banner), E2 (skill registry), E4 (system registry), E5 (identity line); these gate
     verify.py GRAPH.json --online        # + E3 pmid resolution via NCBI E-utilities; NON-BLOCKING, never gates
     verify.py --trace CORE.trace W.trace # TRACES judgements (traces/record-fleet-traces.md); hard-coded carrier sets
     verify.py --json ...                 # machine-readable report on stdout
@@ -61,6 +61,7 @@ EXTENSIONS = {
     "E2": ("pure-ext", "Skill registry (skills <-> follow-agent-contract.md section 10)"),
     "E3": ("online-ext", "pmid: resolves via NCBI E-utilities (non-blocking)"),
     "E4": ("pure-ext", "System registry (systems/*.md and traces/*.md <-> follow-agent-contract.md section 11)"),
+    "E5": ("pure-ext", "Identity line (follow-agent-contract.md section 0c)"),
 }
 BANNER = "\u26a0\ufe0f ACADEMIC RESEARCH PURPOSES ONLY; NOT FOR MEDICAL USE WITHOUT LICENSED OVERSIGHT"
 
@@ -1179,6 +1180,91 @@ def check_system_registry(repo_dir, rep):
     rep.add("E4", not problems, problems)
 
 
+# Identity-line tokens (follow-agent-contract.md section 0c). The rejected run-unit token is a carrier
+# literal: it has no production, and naming it belongs in this checker, not in the spec files.
+_IDENTITY_TYPE_RE = re.compile(r"`type:\s*([^`]+?)`")
+_IDENTITY_SPEC_RE = re.compile(r"`spec:\s*([^`]+?)`")
+_IDENTITY_CLASS_RE = re.compile(r"`class:\s*([^`]+?)`")
+_REJECTED_RUN_UNIT = "swarm"
+
+
+def _identity_header(text):
+    return text.split("\n## ", 1)[0]
+
+
+def check_identity(repo_dir, rep):
+    """E5 [pure-ext]: header identity lines match follow-agent-contract.md section 0c.
+
+    skills/ are resource.procedure. systems/ and traces/ are agent.system. spec is agent.fleet.
+    fleet/*.md carries that spec and no type. The rejected run-unit token has no production.
+    """
+    problems = []
+
+    def read(rel):
+        path = os.path.join(repo_dir, rel)
+        try:
+            return open(path, encoding="utf-8").read()
+        except OSError as exc:
+            problems.append(f"{rel}: unreadable ({exc})")
+            return ""
+
+    def reject_run_unit(rel, text):
+        if re.search(r"\b" + _REJECTED_RUN_UNIT + r"\b", text):
+            problems.append(f"{rel}: run-unit token {_REJECTED_RUN_UNIT!r} has no production")
+
+    for folder, expect_type in (("skills", "resource.procedure"),
+                                ("systems", "agent.system"),
+                                ("traces", "agent.system")):
+        directory = os.path.join(repo_dir, folder)
+        if not os.path.isdir(directory):
+            continue
+        for fn in sorted(os.listdir(directory)):
+            if not fn.endswith(".md"):
+                continue
+            rel = folder + "/" + fn
+            text = read(rel)
+            if not text:
+                continue
+            reject_run_unit(rel, text)
+            header = _identity_header(text)
+            types = _IDENTITY_TYPE_RE.findall(header)
+            specs = _IDENTITY_SPEC_RE.findall(header)
+            classes = [c.strip() for c in _IDENTITY_CLASS_RE.findall(header)]
+            if types != [expect_type]:
+                problems.append(f"{rel}: type {types!r}, expected {[expect_type]!r}")
+            if specs != ["agent.fleet"]:
+                problems.append(f"{rel}: spec {specs!r}, expected ['agent.fleet']")
+            if folder == "skills":
+                declared = classes == ["special"]
+                if classes not in ([], ["special"]):
+                    problems.append(f"{rel}: class {classes!r}")
+                elif declared != _skill_is_special(os.path.join(repo_dir, rel)):
+                    problems.append(f"{rel}: class special and the special-skill marker disagree")
+            elif classes:
+                problems.append(f"{rel}: agent.system declares no class, found {classes!r}")
+
+    fleet_dir = os.path.join(repo_dir, "fleet")
+    if os.path.isdir(fleet_dir):
+        for fn in sorted(os.listdir(fleet_dir)):
+            if not fn.endswith(".md"):
+                continue
+            rel = "fleet/" + fn
+            text = read(rel)
+            if not text:
+                continue
+            reject_run_unit(rel, text)
+            header = _identity_header(text)
+            if _IDENTITY_TYPE_RE.search(header):
+                problems.append(f"{rel}: the harness declares no type")
+            if _IDENTITY_SPEC_RE.findall(header) != ["agent.fleet"]:
+                problems.append(f"{rel}: spec {_IDENTITY_SPEC_RE.findall(header)!r}, expected ['agent.fleet']")
+
+    contract = read("follow-agent-contract.md")
+    if contract:
+        reject_run_unit("follow-agent-contract.md", contract)
+    rep.add("E5", not problems, problems)
+
+
 def check_online_pmids(graph_path: str):
     """E3 [online-ext]: every pmid in graph.json resolves via NCBI E-utilities. NON-BLOCKING: never affects exit code.
     Returns (checked, resolved, unresolved_list, unavailable_bool)."""
@@ -1231,7 +1317,7 @@ def main(argv=None):
     ap.add_argument("graph", nargs="?", help="graph.json to validate")
     ap.add_argument("--prev", metavar="OLD", help="predecessor graph.json for relational 8.19 (add-only)")
     ap.add_argument("--merge", nargs=2, metavar=("A", "B"), help="merge two files per section 6 to stdout")
-    ap.add_argument("--repo", metavar="DIR", help="run repository extension predicates (E1 banner, E2 skill registry, E4 system registry) over DIR")
+    ap.add_argument("--repo", metavar="DIR", help="run repository extension predicates (E1 banner, E2 skill registry, E4 system registry, E5 identity line) over DIR")
     ap.add_argument("--trace", nargs="+", metavar="FILE",
                     help="decide traces/record-fleet-traces.md: CORE.trace followed by worker .trace files")
     ap.add_argument("--online", action="store_true",
@@ -1276,6 +1362,7 @@ def main(argv=None):
         check_disclaimer(a.repo, rep)       # E1
         check_skill_registry(a.repo, rep)   # E2
         check_system_registry(a.repo, rep)  # E4
+        check_identity(a.repo, rep)         # E5
 
     # 16 oracle: always reported as not discharged (only meaningful when a graph was checked)
     oracle_note = "8.16 (oracle) Inclusion and study type: NOT DISCHARGED - requires reading each paper (section 4, 9.3)."
