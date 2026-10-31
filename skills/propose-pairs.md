@@ -4,6 +4,25 @@
 
 `type: resource.procedure` · `spec: agent.skill` · subordinate to `docs/follow-agent-contract.md`, which governs on any conflict.
 
+## Document graph
+
+- ← [docs/follow-agent-contract.md](../docs/follow-agent-contract.md) — supplies catalogue schema, evidence boundary, and proposal shape.
+- ← [skills/resolve-key.md](resolve-key.md) — supplies exact protein-key resolution and failure semantics.
+- → [systems/record-traces.md](../systems/record-traces.md) — records proposal acts without assigning study type.
+
+## Specification card
+
+| field | value |
+|---|---|
+| role | `resource.procedure` · `agent.skill` |
+| authority | Subordinate to `follow-agent-contract.md` §10. |
+| purpose | Convert structured authority records into unresolved catalogue candidates. |
+| reads | Pinned catalogue and proposals plus UniProt, UniParc, ChEMBL, Thera-SAbDab, PubMed, and Europe PMC. |
+| writes | `proposals.json` only; never `graph.json`. |
+| invariants | Every proposal has binder, target, and PMID; no study-type assignment or oracle claim. |
+| failure | Stop at the first gate; distinguish refused, `unresolved`, and `unavailable`. |
+| verification | Recall 1.0, zero curator false-admits, refusal ledger, canonical serialization, and add-only checks. |
+
 ## 0. Objective
 
 Propose `(binder, target)` pairs for `graph.json` by writing them to `proposals.json`. **This procedure never writes `graph.json`**, on any branch (`docs/follow-agent-contract.md` §9). A candidate qualifies when **all** hold:

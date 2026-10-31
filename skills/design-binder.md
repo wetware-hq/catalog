@@ -12,6 +12,26 @@ It writes no file in this repository and its output can never become a row (§1)
 
 A binder this procedure returns is a hypothesis, not a therapy, and carries no evidence of benefit, safety or activity in any system. **Nothing this procedure returns has been shown to help anyone.**
 
+## Document graph
+
+- ← [docs/follow-agent-contract.md](../docs/follow-agent-contract.md) — supplies target grammar, catalogue gate, and write prohibition.
+- ← [docs/pin-references.md](../docs/pin-references.md) — supplies pinned screen-performance evidence and its limitations.
+- → [systems/record-traces.md](../systems/record-traces.md) — records catalogue context, refusals, hypotheses, and halt.
+- → [systems/run-campaign.md](../systems/run-campaign.md) — specifies the reference harness for this procedure.
+
+## Specification card
+
+| field | value |
+|---|---|
+| role | `resource.procedure` · `agent.skill` · `class: special` |
+| authority | Subordinate to `follow-agent-contract.md` §10; wet-lab results remain the oracle. |
+| purpose | Generate and screen de novo binder hypotheses only after the indication-aware catalogue gate. |
+| reads | Human target, indication, healthy-tissue context, pinned catalogue, and pinned current methods. |
+| writes | None in this repository; return a disclaimer-bound experimental worklist. |
+| invariants | Every emitted sequence is a hypothesis with named scorer, uncertainty, screens, and killing assays. |
+| failure | Refuse target or safety gates; stop on same-indication evidence; keep `unavailable` distinct from no candidate. |
+| verification | Blind evidenced-target acceptance test, campaign trace judgement, and named experimental falsifiers. |
+
 ## 0. Objective
 
 Given a **native human protein target** and a **clinical or research indication**, design candidate synthetic binders, screen them, and return the survivors **ordered by a named scorer** — or, where only prediction separates them, as **unranked candidates**.

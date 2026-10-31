@@ -5,7 +5,7 @@ Usage:
     verify.py GRAPH.json                 # pure predicates (8.1-8.15, 8.17, 8.18)
     verify.py --prev OLD.json NEW.json   # the above on NEW, plus relational 8.19 (add-only)
     verify.py --merge A.json B.json      # section 6 merge; writes canonical bytes to stdout
-    verify.py GRAPH.json --repo DIR      # + extension predicates E1 (banner), E2 (skill registry), E4 (system registry), E5 (identity line); these gate
+    verify.py GRAPH.json --repo DIR      # + gating repository predicates E1, E2, E4, E5, E6
     verify.py GRAPH.json --online        # + E3 pmid resolution via NCBI E-utilities; NON-BLOCKING, never gates
     verify.py --trace CORE.trace W.trace # TRACES judgements (systems/record-traces.md); hard-coded carrier sets
     verify.py --json ...                 # machine-readable report on stdout
@@ -62,6 +62,7 @@ EXTENSIONS = {
     "E3": ("online-ext", "pmid: resolves via NCBI E-utilities (non-blocking)"),
     "E4": ("pure-ext", "System registry (systems/*.md <-> docs/follow-agent-contract.md section 11)"),
     "E5": ("pure-ext", "Identity line (docs/follow-agent-contract.md section 0c)"),
+    "E6": ("pure-ext", "Live Markdown document DAG and specification cards"),
 }
 BANNER = "\u26a0\ufe0f ACADEMIC RESEARCH PURPOSES ONLY; NOT FOR MEDICAL USE WITHOUT LICENSED OVERSIGHT"
 
@@ -1287,6 +1288,221 @@ def check_identity(repo_dir, rep):
     rep.add("E5", not problems, problems)
 
 
+# Exact manifest: tests require this to equal every fixture Markdown path and require every entry
+# to lack the live-document headings. A directory prefix would hide a real document parked there.
+E6_FIXTURE_PATHS = (
+    "verifier/tests/fixtures/ext_disclaimer_fail/docs/follow-agent-contract.md",
+    "verifier/tests/fixtures/ext_disclaimer_fail/skip-disclaimer-banner.md",
+    "verifier/tests/fixtures/ext_disclaimer_ok/docs/follow-agent-contract.md",
+    "verifier/tests/fixtures/ext_disclaimer_ok/record-fixture-notes.md",
+    "verifier/tests/fixtures/ext_registry_fail/docs/follow-agent-contract.md",
+    "verifier/tests/fixtures/ext_registry_fail/skills/exercise-special-scope.md",
+    "verifier/tests/fixtures/ext_registry_fail/skills/leave-unregistered.md",
+    "verifier/tests/fixtures/ext_registry_ok/docs/follow-agent-contract.md",
+    "verifier/tests/fixtures/ext_registry_ok/skills/exercise-special-scope.md",
+)
+E6_ROOT = "docs/read-repository.md"
+E6_HEADINGS = ("## Document graph", "## Specification card")
+E6_CARD_FIELDS = (
+    "role", "authority", "purpose", "reads",
+    "writes", "invariants", "failure", "verification",
+)
+_E6_EDGE_RE = re.compile(
+    r"^- ([←→]) \[([^\]]+)\]\(([^)]+\.md)\)(?: — \S.*)?$")
+_E6_LINK_RE = re.compile(r"\[[^\]\r\n]+\]\([^)]+\)")
+
+
+def live_markdown_paths(repo_dir):
+    """Repository-relative Markdown documentation nodes; verifier fixtures are test inputs."""
+    return sorted(
+        rel for rel in (_relposix(path, repo_dir) for path in _md_files(repo_dir))
+        if rel not in E6_FIXTURE_PATHS
+    )
+
+
+def _e6_sections(text):
+    """Return headings, first two bodies, and prefix constructs outside E6's strict profile."""
+    lines = text.splitlines()
+    headings = []
+    prefix_problems = []
+    fence_char = None
+    fence_len = 0
+    for index, line in enumerate(lines):
+        fence = re.match(r"^ {0,3}(`{3,}|~{3,})(.*)$", line)
+        if fence is not None:
+            marker, rest = fence.group(1), fence.group(2)
+            if fence_char is None:
+                # CommonMark forbids a backtick in a backtick fence's info string.
+                if marker[0] != "`" or "`" not in rest:
+                    fence_char, fence_len = marker[0], len(marker)
+            elif marker[0] == fence_char and len(marker) >= fence_len and not rest.strip():
+                fence_char, fence_len = None, 0
+            continue
+        if (len(headings) < 2 and fence_char is None
+                and re.match(r"^ {0,3}<(?:!--|/?[A-Za-z]|![A-Z]|\?)", line)):
+            prefix_problems.append(
+                f"raw HTML before the required H2 pair at line {index + 1}")
+        h2 = re.match(r"^( {0,3})##(?=[ \t]|\Z)", line) if fence_char is None else None
+        if h2 is not None:
+            if len(headings) < 2 and h2.group(1):
+                prefix_problems.append(
+                    f"indented H2 before the required column-zero pair at line {index + 1}")
+            headings.append((index, line))
+        if (len(headings) < 2 and fence_char is None and index > 0
+                and lines[index - 1].strip()
+                and re.match(r"^ {0,3}-+[ \t]*$", line)):
+            prefix_problems.append(
+                f"possible setext H2 before the required ATX pair at line {index + 1}")
+    if len(headings) < 2:
+        return headings, [], [], prefix_problems
+    first_end = headings[1][0]
+    second_end = headings[2][0] if len(headings) > 2 else len(lines)
+    return (
+        headings,
+        lines[headings[0][0] + 1:first_end],
+        lines[headings[1][0] + 1:second_end],
+        prefix_problems,
+    )
+
+
+def _e6_card_problem(lines):
+    rows = [line for line in lines if line.strip()]
+    if len(rows) != len(E6_CARD_FIELDS) + 2:
+        return f"card has {max(0, len(rows) - 2)} data rows, expected {len(E6_CARD_FIELDS)}"
+    if rows[:2] != ["| field | value |", "|---|---|"]:
+        return "card header must be '| field | value |' followed by '|---|---|'"
+    fields = []
+    for line in rows[2:]:
+        if not (line.startswith("|") and line.endswith("|")):
+            return f"card row is not a two-column table row: {line!r}"
+        cells = [cell.strip() for cell in line[1:-1].split("|")]
+        if len(cells) != 2 or not cells[0] or not cells[1]:
+            return f"card row must have two non-empty cells: {line!r}"
+        fields.append(cells[0])
+    if tuple(fields) != E6_CARD_FIELDS:
+        return f"card fields are {fields!r}, expected {list(E6_CARD_FIELDS)!r}"
+    return None
+
+
+def check_document_graph(repo_dir, rep):
+    """E6 [pure-ext]: fixed first H2s, cards, reciprocal links, rooted reachability, and a DAG."""
+    import posixpath
+
+    problems = []
+    live = live_markdown_paths(repo_dir)
+    live_set = set(live)
+    if E6_ROOT not in live_set:
+        rep.add("E6", False, [f"root {E6_ROOT!r} is missing"])
+        return
+
+    # Each edge must be declared at both endpoints: source `→ target`, target `← source`.
+    declarations = {}
+    edges = set()
+
+    for rel in live:
+        path = os.path.join(repo_dir, *rel.split("/"))
+        try:
+            text = open(path, encoding="utf-8").read()
+        except (OSError, UnicodeError) as exc:
+            problems.append(f"{rel}: unreadable ({exc})")
+            continue
+        headings, graph_lines, card_lines, prefix_problems = _e6_sections(text)
+        problems.extend(f"{rel}: {problem}" for problem in prefix_problems)
+        first_two = tuple(line for _index, line in headings[:2])
+        if first_two != E6_HEADINGS:
+            problems.append(f"{rel}: first two H2 headings are {first_two!r}, expected {E6_HEADINGS!r}")
+            continue
+
+        card_problem = _e6_card_problem(card_lines)
+        if card_problem:
+            problems.append(f"{rel}: {card_problem}")
+
+        local = []
+        for line in graph_lines:
+            if not line.strip():
+                continue
+            match = _E6_EDGE_RE.fullmatch(line)
+            if line.startswith("- "):
+                if match is None:
+                    problems.append(f"{rel}: graph bullet has no edge production: {line!r}")
+                    continue
+            else:
+                problems.append(f"{rel}: Document graph contains non-edge content: {line!r}")
+                continue
+            if len(_E6_LINK_RE.findall(line)) != 1:
+                problems.append(f"{rel}: graph edge must contain exactly one Markdown link: {line!r}")
+                continue
+
+            arrow, label, href = match.group(1), match.group(2), match.group(3)
+            if (href.startswith("/") or "\\" in href or "://" in href
+                    or "#" in href or "?" in href):
+                problems.append(f"{rel}: edge target must be a plain relative Markdown path: {href!r}")
+                continue
+            target = posixpath.normpath(posixpath.join(posixpath.dirname(rel), href))
+            if target.startswith("../") or target not in live_set:
+                problems.append(f"{rel}: edge target does not resolve to a live Markdown node: {href!r}")
+                continue
+            if label != target:
+                problems.append(f"{rel}: edge label {label!r} must equal resolved path {target!r}")
+            if target == rel:
+                problems.append(f"{rel}: self-edge")
+                continue
+            item = (arrow, target)
+            if item in local:
+                problems.append(f"{rel}: duplicate edge declaration {arrow} {target}")
+                continue
+            local.append(item)
+            edge = (rel, target) if arrow == "→" else (target, rel)
+            edges.add(edge)
+            declarations.setdefault(edge, set()).add((rel, arrow))
+
+        expected_order = sorted(local, key=lambda item: (0 if item[0] == "←" else 1, item[1]))
+        if local != expected_order:
+            problems.append(f"{rel}: incoming edges must precede outgoing edges and each group must be path-sorted")
+        if not local:
+            problems.append(f"{rel}: Document graph has no edge-list item")
+
+    for source, target in sorted(edges):
+        expected = {(source, "→"), (target, "←")}
+        actual = declarations.get((source, target), set())
+        if actual != expected:
+            missing = sorted(expected - actual)
+            problems.append(f"{source} → {target}: asymmetric edge; missing {missing!r}")
+
+    outgoing = {node: set() for node in live}
+    indegree = {node: 0 for node in live}
+    for source, target in edges:
+        outgoing[source].add(target)
+        indegree[target] += 1
+
+    seen = {E6_ROOT}
+    stack = [E6_ROOT]
+    while stack:
+        source = stack.pop()
+        for target in outgoing[source] - seen:
+            seen.add(target)
+            stack.append(target)
+    unreachable = sorted(live_set - seen)
+    if unreachable:
+        problems.append(f"nodes unreachable from {E6_ROOT}: {unreachable!r}")
+
+    queue = sorted(node for node, degree in indegree.items() if degree == 0)
+    visited = 0
+    while queue:
+        source = queue.pop(0)
+        visited += 1
+        for target in sorted(outgoing[source]):
+            indegree[target] -= 1
+            if indegree[target] == 0:
+                queue.append(target)
+                queue.sort()
+    if visited != len(live):
+        cyclic = sorted(node for node, degree in indegree.items() if degree > 0)
+        problems.append(f"document graph contains a cycle through {cyclic!r}")
+
+    rep.add("E6", not problems, problems)
+
+
 def check_online_pmids(graph_path: str):
     """E3 [online-ext]: every pmid in graph.json resolves via NCBI E-utilities. NON-BLOCKING: never affects exit code.
     Returns (checked, resolved, unresolved_list, unavailable_bool)."""
@@ -1339,7 +1555,8 @@ def main(argv=None):
     ap.add_argument("graph", nargs="?", help="graph.json to validate")
     ap.add_argument("--prev", metavar="OLD", help="predecessor graph.json for relational 8.19 (add-only)")
     ap.add_argument("--merge", nargs=2, metavar=("A", "B"), help="merge two files per section 6 to stdout")
-    ap.add_argument("--repo", metavar="DIR", help="run repository extension predicates (E1 banner, E2 skill registry, E4 system registry, E5 identity line) over DIR")
+    ap.add_argument("--repo", metavar="DIR",
+                    help="run gating repository predicates E1, E2, E4, E5, and E6 over DIR")
     ap.add_argument("--trace", nargs="+", metavar="FILE",
                     help="decide systems/record-traces.md: CORE.trace followed by worker .trace files")
     ap.add_argument("--online", action="store_true",
@@ -1385,6 +1602,7 @@ def main(argv=None):
         check_skill_registry(a.repo, rep)   # E2
         check_system_registry(a.repo, rep)  # E4
         check_identity(a.repo, rep)         # E5
+        check_document_graph(a.repo, rep)   # E6
 
     # 16 oracle: always reported as not discharged (only meaningful when a graph was checked)
     oracle_note = "8.16 (oracle) Inclusion and study type: NOT DISCHARGED - requires reading each paper (section 4, 9.3)."

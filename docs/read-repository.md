@@ -4,6 +4,61 @@
 
 `type: initialization` · non-normative. `docs/follow-agent-contract.md` governs on any conflict.
 
+## Document graph
+
+- → [docs/follow-agent-contract.md](follow-agent-contract.md) — authoritative catalogue and documentation contract.
+
+## Specification card
+
+| field | value |
+|---|---|
+| role | `initialization` · explanation |
+| authority | Non-normative; `docs/follow-agent-contract.md` wins on conflict. |
+| purpose | Orient readers to the catalogue, procedures, systems, provenance, and checks. |
+| reads | `graph.json` and the linked repository documentation. |
+| writes | None. |
+| invariants | Study types remain separate; absence is not a negative; no clinical recommendation. |
+| failure | Defer ambiguity or conflict to the normative contract. |
+| verification | E1 disclaimer and E6 documentation-graph checks. |
+
+## Documentation architecture
+
+The edge lists are canonical. The diagram is their derived overview: `A --> B` means “read A before B”.
+
+```mermaid
+flowchart TD
+    start["docs/read-repository.md"] --> contract["docs/follow-agent-contract.md"]
+    contract --> pins["docs/pin-references.md"]
+    contract --> design["skills/design-binder.md"]
+    contract --> propose["skills/propose-pairs.md"]
+    contract --> resolve["skills/resolve-key.md"]
+    contract --> traces["systems/record-traces.md"]
+    contract --> campaign["systems/run-campaign.md"]
+    contract --> bench["systems/use-bench.md"]
+    pins --> design
+    resolve --> propose
+    resolve --> traces
+    propose --> traces
+    design --> campaign
+    design --> traces
+    bench --> campaign
+    traces --> campaign
+```
+
+### Design basis
+
+| source | convention applied |
+|---|---|
+| [CommonMark 0.31.2](https://spec.commonmark.org/0.31.2/) | Portable ATX H2 headings, unordered-list items, and relative links. |
+| [GitHub Flavored Markdown 0.29-gfm](https://github.github.com/gfm/#tables-extension-) | The table extension supplies the compact two-column specification cards. |
+| [AgentKit, arXiv:2404.11483v2](https://arxiv.org/abs/2404.11483v2) | Natural-language nodes with dependency edges form a DAG traversed in topological order. |
+| [AGENTS.md](https://agents.md/) | Plain Markdown and path-local guidance support progressive disclosure without a proprietary format. |
+| [Mermaid flowcharts](https://mermaid.ai/open-source/syntax/flowchart.html) | `flowchart TD` and `-->` provide a renderer-portable derived view. |
+
+Retrieved 1 Nov 2026 (Australia/Sydney). These sources define representation, not clinical evidence, and do not discharge `docs/follow-agent-contract.md` §8.16.
+
+## Overview
+
 **Background.** Deciding which biological therapy is worth using against a given protein target means reading the trial literature pair by pair. There is no compact, machine-readable record of which binder has been shown to help patients when directed at which target.
 
 **Contents.** One file, `graph.json`. Each entry pairs a **binder** — an antibody, peptide or other protein therapeutic, identified by its sequence rather than by a name — with the single **protein target** it is directed against, and lists the PubMed identifier of a paper reporting utility for that specific pairing. Entries are separated by study type: those reporting **clinical benefit in humans** and those reporting **preclinical** utility, which are kept in different sections and never pooled. The catalogue currently holds 55 clinical pairs across 41 targets, each resting on a single reference, and no preclinical entries yet.
@@ -22,6 +77,6 @@
 
 **Systems.** [systems/use-bench.md](../systems/use-bench.md) specifies `BENCH`, a scratchpad rather than a record: a run-scoped, append-only store where several agents working on one problem can read and write partial work at the same time without a coordinator. It is deliberately not a catalogue — every entry declares what kind of evidence it is, nothing in it is pooled across those kinds, and nothing in it reaches `graph.json`, which still admits a pair only when someone has read a paper. It is discarded when the run ends. [systems/record-traces.md](../systems/record-traces.md) specifies `TRACES`, the act log of one `fleet.campaign` run: which catalogue commit was pinned, which procedure ran, which gate refused, which triple was proposed, and a halt that can record only that the run did not read the papers. It stores no study type and no utility score, it is not a bench and not a proposal file, and it is discarded when the run ends. [systems/run-campaign.md](../systems/run-campaign.md) specifies the reference harness; [`fleet/fleet.py`](../fleet/fleet.py) is that harness and emits both stores outside the repository; [`verifier/verify.py`](../verifier/verify.py) decides the trace judgements from those bytes. `agent.skill` is a procedure. `fleet.campaign` is that one run. `agent.swarm` and `agent.fleet` are not specs here; the ordinary senses of those words are pinned in [follow-agent-contract.md](follow-agent-contract.md) §11.
 
-**Checks.** [verifier/](../verifier/) holds `verify.py`, a standard-library-only checker for `graph.json`, and its test suite. It implements the pure predicates of [follow-agent-contract.md](follow-agent-contract.md) §8, the relational add-only check against a predecessor file, the trace judgements in [systems/record-traces.md](../systems/record-traces.md) (`--trace`), and five repository extension predicates — E1, the documentation banner on every Markdown file; E2, the bijection between `skills/*.md` and `docs/follow-agent-contract.md` §10; E3, a non-blocking resolution of every `pmid:` against NCBI E-utilities; E4, the bijection between `systems/*.md` and `docs/follow-agent-contract.md` §11; and E5, the identity line in `docs/follow-agent-contract.md` §0c. GitHub Actions runs the verifier and fleet suites through `.github/workflows/validate.yml` on every push that touches `graph.json`, the verifier, the fleet harness, a skill, a system, or any Markdown file — the trigger filter is deliberately kept as wide as what the checks read, so a documentation-only change cannot slip past E1. A green run proves the pure conditions and the gating extension predicates E1, E2, E4, and E5, and nothing else: E3 runs in a separate non-blocking job, so a green run says nothing about whether the pmids resolved, and §8.16 — that a paper actually reports the benefit the row claims — is an oracle, never discharged by a machine (`docs/follow-agent-contract.md` §9.6).
+**Checks.** [verifier/](../verifier/) holds `verify.py`, a standard-library-only checker for `graph.json`, and its test suite. It implements the pure predicates of [follow-agent-contract.md](follow-agent-contract.md) §8, the relational add-only check against a predecessor file, the trace judgements in [systems/record-traces.md](../systems/record-traces.md) (`--trace`), and six repository extension predicates — E1, the documentation banner on every Markdown file; E2, the bijection between `skills/*.md` and `docs/follow-agent-contract.md` §10; E3, a non-blocking resolution of every `pmid:` against NCBI E-utilities; E4, the bijection between `systems/*.md` and `docs/follow-agent-contract.md` §11; E5, the identity line in `docs/follow-agent-contract.md` §0c; and E6, the live Markdown DAG and specification cards in §0d. GitHub Actions runs the verifier and fleet suites through `.github/workflows/validate.yml` on every push that touches `graph.json`, the verifier, the fleet harness, a skill, a system, or any Markdown file — the trigger filter is deliberately kept as wide as what the checks read, so a documentation-only change cannot slip past E1 or E6. A green run proves the pure conditions and the gating extension predicates E1, E2, E4, E5, and E6, and nothing else: E3 runs in a separate non-blocking job, so a green run says nothing about whether the pmids resolved, and §8.16 — that a paper actually reports the benefit the row claims — is an oracle, never discharged by a machine (`docs/follow-agent-contract.md` §9.6).
 
 **Specification.** [follow-agent-contract.md](follow-agent-contract.md) is the normative contract — schema, key grammar, inclusion rules, serialisation, merge laws and validation predicates. [pin-references.md](pin-references.md) is a separate, pinned reference table for the external literature this repository's own methods rest on — it is **not** the catalogue's citations. Each row pins a versioned id, a retrieval date and either a byte hash or a text-layer hash with the exact extraction command, records the refereed status it could establish and says "unestablished" where it could not, and states what the paper actually measured. Its own status section is explicit that the rows were resolved by automated retrieval and that, with one noted exception, no human has read them for this repository: resolving a citation is not the oracle step `graph.json` entries require.

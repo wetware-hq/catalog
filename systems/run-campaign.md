@@ -11,6 +11,26 @@ specification of that harness and a row of `docs/follow-agent-contract.md` §11.
 one hash, bounds, one halt.
 `agent.swarm` and `agent.fleet` are not specs. Wikidata Q863960 names collective behaviour of decentralized, self-organized systems, and that item is a different object from this run. The run is the `fleet.campaign` in `docs/follow-agent-contract.md` §11. Re-checked 1 Nov 2026 (Australia/Sydney): arXiv:2502.14743 was still v2, arXiv:2411.11616 was still v2, and arXiv:2510.10379 was still v1, and the PDF byte hashes matched §11. Workers in this harness do not read one another's bench lines. The swarm paper is about agents that learn from local messages. The fleet-manager paper keeps allocating work after a plan exists. A `pair` hit ends this run before Boltz and before the advisory panel.
 
+## Document graph
+
+- ← [docs/follow-agent-contract.md](../docs/follow-agent-contract.md) — supplies campaign scope and repository-write boundaries.
+- ← [skills/design-binder.md](../skills/design-binder.md) — supplies the procedure executed by the harness.
+- ← [systems/record-traces.md](record-traces.md) — supplies the act-log grammar and judgement.
+- ← [systems/use-bench.md](use-bench.md) — supplies the campaign scratch-store format.
+
+## Specification card
+
+| field | value |
+|---|---|
+| role | `agent.system` · `fleet.campaign` |
+| authority | Subordinate to `follow-agent-contract.md` §11; specifies `fleet/fleet.py`. |
+| purpose | Preflight, run, bound, record, and verify one de novo binder campaign. |
+| reads | Explicit CLI bounds, pinned catalogue SHA, target record, service status, and model prices. |
+| writes | BENCH and TRACES run files outside this repository only. |
+| invariants | No hidden defaults; Boltz is required; hypotheses never enter catalogue or proposals. |
+| failure | Refuse missing bounds, budget excess, invalid target, or unavailable required service; fail closed. |
+| verification | `fleet/tests/test_fleet.py`, `fleet.py verify`, and trace `result`. |
+
 ## preflight
 
 ```bash

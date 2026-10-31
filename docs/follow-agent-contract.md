@@ -4,6 +4,30 @@
 
 `type: resource.reference` · **normative**. `docs/read-repository.md` is `type: initialization` and non-normative; on conflict this file governs. Implement verifiers, mergers and updaters from this file alone.
 
+## Document graph
+
+- ← [docs/read-repository.md](read-repository.md) — initializes the repository before this contract is selected.
+- → [docs/pin-references.md](pin-references.md) — pins the methods literature used by this repository.
+- → [skills/design-binder.md](../skills/design-binder.md) — special, write-nothing design procedure.
+- → [skills/propose-pairs.md](../skills/propose-pairs.md) — catalogue intake procedure.
+- → [skills/resolve-key.md](../skills/resolve-key.md) — read-only key resolution procedure.
+- → [systems/record-traces.md](../systems/record-traces.md) — run act-log specification.
+- → [systems/run-campaign.md](../systems/run-campaign.md) — reference campaign harness specification.
+- → [systems/use-bench.md](../systems/use-bench.md) — run-scoped commons specification.
+
+## Specification card
+
+| field | value |
+|---|---|
+| role | `resource.reference` · normative reference |
+| authority | Governs every procedure, system, verifier, and agent write in this repository. |
+| purpose | Define schema, key grammar, evidence admission, merge, read, validation, and write boundaries. |
+| reads | `graph.json`, registered procedures and systems, provenance, initialization, harness, verifier, and CI. |
+| writes | Agents write only `graph.json` or `proposals.json`, and only under §9. |
+| invariants | §8 predicates, E1–E6 repository extensions, and an external oracle for §8.16. |
+| failure | Refuse unknown versions, invalid keys, unpinned runtime reads, forbidden writes, and unverified evidence. |
+| verification | `verifier/verify.py`; `--prev` adds §8.19 and `--repo` adds E1, E2, E4, E5, and E6. |
+
 ## 0. Scope
 
 - **Read:** `graph.json`, `docs/*.md`, `skills/*.md`, `systems/*.md` (§11), `fleet/`, `verifier/`, `.github/workflows/`, `LICENSE`.
@@ -28,6 +52,28 @@ Every file in `skills/` and `systems/` names itself once, in the header, before 
 | `systems/` | an `agent.system`, spec `fleet.campaign`. No class. |
 
 `agent.skill` is the spec of a procedure. `fleet.campaign` is the spec of one run. `agent.swarm` and `agent.fleet` are not specs and not types. A header outside these two directories that carries either spec fails E5: that file is an orphan. The checker skips exactly two registry fixtures, `verifier/tests/fixtures/ext_registry_fail/skills/exercise-special-scope.md` and `verifier/tests/fixtures/ext_registry_ok/skills/exercise-special-scope.md`. They declare the skill spec so E2 can be tested, and they are not skills of this contract. The harness code under `fleet/` is not a row of this table. Its specification is [`systems/run-campaign.md`](../systems/run-campaign.md). The four strings, and the ordinary words next to them, are set out in §11.
+
+## 0d. Documentation DAG and specification cards
+
+**Live Markdown** is every repository `*.md` except the exact fixture paths in `verifier/verify.py`'s `E6_FIXTURE_PATHS`. Each excluded file is a deliberately incomplete or invalid verifier input under `verifier/tests/fixtures/`, not documentation; tests require the manifest to equal the fixture Markdown set and require every entry to lack the live-document headings. E1 still checks every bannered fixture and its exact one-path allowlist is unchanged.
+
+Every live Markdown file has these as its first two H2 headings, byte-for-byte and at column zero:
+
+1. `## Document graph`
+2. `## Specification card`
+
+Fenced-code contents never supply those headings. Raw HTML, an indented CommonMark H2, or a setext H2 is refused before the pair; this strict profile keeps the required pair both column-zero ATX and first in rendered structure.
+
+The document graph is a directed read-before graph rooted at `docs/read-repository.md`. Its only non-blank content is one column-zero unordered-list item per incident edge, using exactly one relative Markdown link:
+
+- `← [path](relative.md)` declares `path → this file`.
+- `→ [path](relative.md)` declares `this file → path`.
+
+The link label is the target's repository-relative path. Each edge occurs once at each endpoint, incoming items precede outgoing items, and each group is path-sorted. Self-edges, broken or external targets, duplicate declarations, asymmetric edges, unreachable nodes, and cycles are invalid. A file may contain ordinary links elsewhere; only this first H2 defines graph edges.
+
+The specification card is a column-zero, two-column Markdown table. Its rows occur exactly once and in this order: `role`, `authority`, `purpose`, `reads`, `writes`, `invariants`, `failure`, `verification`. Values are terse functional statements; use `None.` rather than omitting a capability. The card indexes the document and never weakens its body. The Mermaid overview in `docs/read-repository.md` is a derived rendering, not a second edge registry.
+
+Extension predicate E6 checks this section from repository bytes: fixed H2 order, exact card fields, internal link resolution, reciprocal edges, root reachability, and acyclicity. Edge syntax is a column-zero subset of CommonMark; card tables use GitHub Flavored Markdown's table extension. The research and renderer basis is recorded in `docs/read-repository.md`.
 
 ## 1. Purpose
 
@@ -154,7 +200,7 @@ Implement from this section alone. Tags: **pure** = decidable from one file's by
 3. **File boundary.** Autonomous intake writes `proposals.json` only, and never writes `graph.json` on any branch. Admission is the act of reading the paper, and that act is what moves bytes from `proposals.json` into `graph.json`, choosing the dictionary per §4. **Trust is carried by the file, not by a branch:** a branch name is mutable and has no merge law, so a fence of the form "unverified rows live on branch X" dissolves at the first merge and relaunders those rows as verified, while `proposals.json` merges into `proposals.json` on every branch. Condition 16 is therefore discharged at the file move, by a reader, and never by the run that proposed the row.
 4. **`proposals.json`.** Root: a non-array object with exactly `version` (the number `2`) and `proposal` (an array). Each element has exactly `binder`, `target`, `pmid`, each satisfying §3. A proposal carries **no dictionary assignment**: `pair` versus `preclinical` is part of the oracle and is chosen when the paper is read. Serialise per §5; add-only per §8.19. It is not catalogue-shaped and must not be read as one.
 5. Intake procedure: [`skills/propose-pairs.md`](../skills/propose-pairs.md). It enumerates structured authorities; it does not crawl prose, and its own acceptance test is rediscovery of the rows already committed.
-6. This repository ships no updater and no cron. It does ship a verifier (`verifier/`) and a workflow (`.github/workflows/validate.yml`) that runs it, and neither writes `graph.json` or `proposals.json`: a passing run proves only the pure conditions (§8) and the repository extension predicates E1, E2, E4, and E5, which are not §8 predicates and do not renumber them (E3, pmid resolution, is non-blocking and gates nothing). It never proves §8.16. Compliance is your behaviour against this contract, not a green check.
+6. This repository ships no updater and no cron. It does ship a verifier (`verifier/`) and a workflow (`.github/workflows/validate.yml`) that runs it, and neither writes `graph.json` or `proposals.json`: a passing run proves only the pure conditions (§8) and the repository extension predicates E1, E2, E4, E5, and E6, which are not §8 predicates and do not renumber them (E3, pmid resolution, is non-blocking and gates nothing). It never proves §8.16. Compliance is your behaviour against this contract, not a green check.
 
 A proposed row failing any rule above is **refused**, naming the condition that failed.
 

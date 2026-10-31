@@ -12,6 +12,24 @@ Repo: `wetware-hq/catalog` · Compiled 30 Oct 2026 (Australia/Sydney) · Every P
 
 ---
 
+## Document graph
+
+- ← [docs/follow-agent-contract.md](follow-agent-contract.md) — separates repository-method provenance from catalogue citations.
+- → [skills/design-binder.md](../skills/design-binder.md) — supplies the pinned binder-screen evidence used by the design procedure.
+
+## Specification card
+
+| field | value |
+|---|---|
+| role | reference · evidence provenance |
+| authority | Informational; never admits or classifies a `graph.json` row. |
+| purpose | Pin external method claims to versions, retrievals, hashes, read status, and measured scope. |
+| reads | Versioned publisher artifacts, venue metadata, and reproducible text or figure extractions. |
+| writes | None. |
+| invariants | A resolvable identifier is not a read; non-binder benchmarks make no binder-quality claim. |
+| failure | Record no hash when bytes or extraction cannot be reproduced; state conflicts and unknowns. |
+| verification | Re-download and hash checks, explicit extraction commands, and recorded independent reads. |
+
 ## Table
 
 | # | Title (exact, as the pinned artefact gives it) | Authors | Pinned ID (version) | Dates (v1 / pinned version) | Retrieved | URL downloaded | Hash + extraction command | Refereed status (source of check) | READ STATUS | What it actually measured | Binder-design relevance |
