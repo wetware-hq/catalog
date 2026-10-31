@@ -4,9 +4,9 @@ name: validate graph.json
 # graph.json. The file name is kept as validate.yml so the check name GitHub reports does not move.
 on:
   push:
-    paths: ["graph.json", "verifier/**", "skills/**", "systems/**", "**.md", ".github/workflows/validate.yml"]
+    paths: ["graph.json", "verifier/**", "fleet/**", "skills/**", "systems/**", "**.md", ".github/workflows/validate.yml"]
   pull_request:
-    paths: ["graph.json", "verifier/**", "skills/**", "systems/**", "**.md", ".github/workflows/validate.yml"]
+    paths: ["graph.json", "verifier/**", "fleet/**", "skills/**", "systems/**", "**.md", ".github/workflows/validate.yml"]
   workflow_dispatch:
 
 jobs:
@@ -21,6 +21,8 @@ jobs:
           python-version: "3.12"
       - name: Unit tests
         run: python3 verifier/tests/test_verify.py
+      - name: Fleet tests
+        run: python3 fleet/tests/test_fleet.py
       - name: Pure predicates on graph.json
         run: python3 verifier/verify.py graph.json
       - name: Relational add-only vs previous commit

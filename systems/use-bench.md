@@ -2,7 +2,7 @@
 
 **Licensed oversight is required for any use of this system; none has been performed to date.**
 
-# `BENCH` — a shared append-only commons for a swarm
+# `BENCH` — a shared append-only commons for a fleet
 
 `type: resource.system` · `spec: agent.fleet` · subordinate to `follow-agent-contract.md`, which governs on any conflict (`follow-agent-contract.md` §0).
 
@@ -91,7 +91,7 @@ A tier-1 measurement rooted at the core; two tier-2 predictions derived from it 
 
 ## 4. Admissibility: nothing here reaches `graph.json`
 
-`follow-agent-contract.md` §4 is a **semantic oracle**: a row enters `graph.json` only because a reader read the paper and judged the study type. Nothing a swarm writes to a scratchpad touches that gate, and this specification does not amend it.
+`follow-agent-contract.md` §4 is a **semantic oracle**: a row enters `graph.json` only because a reader read the paper and judged the study type. Nothing a fleet writes to a scratchpad touches that gate, and this specification does not amend it.
 
 - No `.bench` node, head, query answer or aggregate is a candidate row for `graph.json` or for `proposals.json`. A tier-3 record is an experimental result in a run's working notes; it is not a published paper, and `follow-agent-contract.md` §3 admits citations only as bare `pmid:<digits>`.
 - A tier-2 record is a model prediction and is categorically ineligible by `follow-agent-contract.md` §10's `special` test: it originates a claim no source has reported.
@@ -176,4 +176,8 @@ Stated here rather than in a design note, because a reader of this file is the p
 
 ## 11. Status
 
-Design, reported as checked in an off-repo TLA+ model on 2026-10-29 (§9, not reproducible here), **not implemented**. No code in this repository implements the store and no implementation is proposed here (§0).
+Implemented by [`fleet/fleet.py`](../fleet/fleet.py) as a run-directory writer: immutable core, one
+worker file per configured worker, tier-first records, content-derived ids, parent edges and the run
+hash on every node. Its eleven hermetic tests include canonical field ordering and refusal of an
+untiered line. The query index, replication protocol, pose distance and garbage collection remain
+unimplemented. The off-repo TLA+ report from 2026-10-29 (§9) remains unreproducible here.

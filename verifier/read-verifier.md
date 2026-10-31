@@ -122,12 +122,13 @@ catalogue. §8.16 is reported as not discharged. No violations found.
 4. **§8.18 scope.** Reported only when both dictionaries are empty (otherwise N/A).
 
 ## Tests & CI
-- `python3 verifier/tests/test_verify.py` — 36 tests: one minimal failing fixture per pure predicate plus §8.19,
+- `python3 verifier/tests/test_verify.py` — 36 verifier tests: one minimal failing fixture per pure predicate plus §8.19,
   failing + passing fixtures for the E1/E2/E4 extension predicates (and an offline no-op test for E3), the four tests
   that pin E1's exclusion allowlist, the trace witness plus the admit / R9 / R10 refusals, and the HELM scope-vs-monomer distinction. (pytest optional; a stdlib runner is built in.)
   **`--merge` (§6) is not covered by the suite**: no test exercises it, so the merge path is implemented and unverified.
-- `.github/workflows/validate.yml` — the GitHub Actions workflow that runs this verifier on `wetware-hq/catalog`:
-  the unit tests, the pure predicates, the add-only check against the previous commit, and the E1/E2/E4 extension
+- `python3 fleet/tests/test_fleet.py` — 11 hermetic tests for the fleet emitter and its fail-closed live-service gates.
+- `.github/workflows/validate.yml` — the GitHub Actions workflow that runs both suites on `wetware-hq/catalog`:
+  the verifier and fleet tests, the pure predicates, the add-only check against the previous commit, and the E1/E2/E4 extension
   predicates, with E3 in a separate non-blocking job. The workflow file keeps its `validate.yml` name so the
   check name GitHub reports does not move. A green run proves the pure conditions and the **gating** extension
   predicates E1, E2, and E4, and nothing else: E3 is non-blocking (`continue-on-error: true`), so a green run says

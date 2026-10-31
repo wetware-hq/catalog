@@ -376,6 +376,13 @@ def test_trace_carrier_sets_exclude_scores():
     assert not (names & V.TRACE_FORBIDDEN_FIELDS)
     assert set(V.TRACE_SKILLS) == {"resolve-key", "propose-pairs", "design-binder"}
     assert V.TRACE_FIELDS["halt"] == ("bound-n", "bound-tok", "oracle")
+    assert V.TRACE_STEPS["design-binder"] == {"catalogue", "generator", "model"}
+    assert V._trace_value_code(
+        "design-binder", "unavailable",
+        {"key": "uniprot:P12345", "release": "unspecified", "retrieved": "2026-10-31",
+         "source": "openrouter", "step": "generator"},
+        "1", "1",
+    ) is None
     assert "pair" not in V.TRACE_ACTS["propose-pairs"]
     assert "preclinical" not in V.TRACE_ACTS["propose-pairs"]
 
