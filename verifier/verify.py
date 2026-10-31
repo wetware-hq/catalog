@@ -553,6 +553,7 @@ TRACE_FIELDS = {
 TRACE_CONTEXT = {
     "hit-same-indication": ("stop", ("binder", "gloss", "pmid", "target", "verdict")),
     "hit-other-indication": ("transfers-not", ("binder", "gloss", "pmid", "target", "verdict")),
+    "hit-unread": ("not-read", ("binder", "gloss", "pmid", "target", "verdict")),
     "absent": ("not-a-negative", ("gloss", "target", "verdict")),
 }
 TRACE_VALUE_MAX = 4096
@@ -979,7 +980,7 @@ def check_trace(core_path, worker_paths):
             for node in by_act.get("refuse", []):
                 if node["fields"]["gate"] not in TRACE_PRE_PIN and node["parent"] != "^" + pins[0]["id"]:
                     return _trace_fail("R10", ["refuse parent"])
-            if contexts[0]["fields"]["verdict"] == "hit-same-indication" and by_act.get("emit"):
+            if contexts[0]["fields"]["verdict"] in ("hit-same-indication", "hit-unread") and by_act.get("emit"):
                 return _trace_fail("R10", ["emit on hit"])
         else:
             return _trace_fail("R10", ["pins"])

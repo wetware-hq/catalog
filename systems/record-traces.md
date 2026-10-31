@@ -80,6 +80,7 @@ For `design-binder`, the gates `grammar`, `species`, `not-protein`, and `indicat
 |---|---|---|
 | `hit-same-indication` | `stop` | `binder`, `gloss`, `pmid`, `target`, `verdict` |
 | `hit-other-indication` | `transfers-not` | `binder`, `gloss`, `pmid`, `target`, `verdict` |
+| `hit-unread` | `not-read` | `binder`, `gloss`, `pmid`, `target`, `verdict` |
 | `absent` | `not-a-negative` | `gloss`, `target`, `verdict` |
 
 `gloss` and `verdict` belong to the context row they are written on, and to no other row. `path` is `graph.json`. `oracle` is `not-discharged`. `kind` is `hypothesis`. `disclaimer` is the first non-blank line of this file, byte for byte.
@@ -145,7 +146,7 @@ On a head whose file is well formed:
 
 **`design-binder`, no pin.** At least one refusal whose gate is `grammar`, `species`, `not-protein`, or `indication-absent`. No context and no emit. Every line that is not the call parents the call.
 
-**`design-binder`, one pin.** Exactly one context, and it parents the pin. The halt parents the pin. Every emit parents the pin. Every refusal whose gate is not one of those four parents the pin. A verdict of `hit-same-indication` means there is no emit. Every emit has kind `hypothesis` and the disclaimer.
+**`design-binder`, one pin.** Exactly one context, and it parents the pin. The halt parents the pin. Every emit parents the pin. Every refusal whose gate is not one of those four parents the pin. A verdict of `hit-same-indication` or `hit-unread` means there is no emit. Every emit has kind `hypothesis` and the disclaimer. `hit-unread` means `pair` already cites the target and the paper was not read. The binder on that line is one key. It is not a claim that the indication matches, and it is not a claim that the binder fails to transfer.
 
 The head is a result when the file is well formed and R1 through R10 all hold. The checker prints `result` and the run, or `partial` and the first code. It does not print a fraction.
 
@@ -157,7 +158,7 @@ A checker that returns `result` has not decided any of the following.
 
 - A line's act is an event that occurred. Admission decides shape.
 - The catalogue blob named by `rev` was fetched. `decide` does not open `graph.json`.
-- `docs/follow-agent-contract.md` §8.16. The only derived oracle string is `not-discharged`.
+- `docs/follow-agent-contract.md` §8.16. The only derived oracle string is `not-discharged`. A `hit-unread` line does not decide the indication. `hit-same-indication` and `hit-other-indication` are the shapes for a reader who did. The checker does not know which reader ran.
 - Patient benefit. A result on a design head is a hypothesis carrying the disclaimer, or a named refusal. The disclaimer sits inside the preimage, so a line with the disclaimer removed has a different id and fails `hash`.
 - Any area under a curve. The checker's answer is `result`, not a number.
 
