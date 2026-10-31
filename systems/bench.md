@@ -1,10 +1,8 @@
 ⚠️ ACADEMIC RESEARCH PURPOSES ONLY; NOT FOR MEDICAL USE WITHOUT LICENSED OVERSIGHT
 
-**Licensed oversight is required for any use of this system; none has been performed to date.**
-
 # `BENCH` — a shared append-only commons for a swarm
 
-`type: resource.system` · `spec: agent.swarm` · subordinate to `AGENTS.md`, which governs on any conflict (`AGENTS.md` §0).
+`type: resource.system` · `spec: agent.swarm` · subordinate to `AGENTS.md`, which governs on any conflict.
 
 BENCH is working space, not a record. It is where several agents in one run put partial work while they are still working, and where any of them can search what the others have put there so far. **Nothing written here is admissible to `graph.json`** (§4 below).
 
@@ -176,4 +174,4 @@ Stated here rather than in a design note, because a reader of this file is the p
 
 ## 11. Status
 
-Design, reported as checked in an off-repo TLA+ model on 2026-10-29 (§9, not reproducible here), **not implemented**. No code in this repository implements the store and no implementation is proposed here (§0).
+Design, reported as checked in an off-repo TLA+ model on 2026-10-29 (§9, not reproducible here), **not implemented**. No code in this repository implements the store and no implementation is proposed here (§0). **Licensed oversight is required for any use of this system, and none has been performed to date.**

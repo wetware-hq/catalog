@@ -1,6 +1,6 @@
 ⚠️ ACADEMIC RESEARCH PURPOSES ONLY; NOT FOR MEDICAL USE WITHOUT LICENSED OVERSIGHT
 
-# resolve-key
+# `resolve-key` — key to labels
 
 `type: resource.procedure` · `spec: agent.swarm` · subordinate to `AGENTS.md`, which governs on any conflict.
 
