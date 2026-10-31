@@ -62,7 +62,7 @@ _WORKER_RE = re.compile(r"^[a-z][a-z0-9-]{0,31}$")
 
 
 class Unavailable(Exception):
-    """A source did not answer. Retry, cache nothing (follow-agent-contract.md section 7)."""
+    """A source did not answer. Retry, cache nothing (docs/follow-agent-contract.md section 7)."""
 
     def __init__(self, source: str, detail: str):
         self.source = source
@@ -369,7 +369,7 @@ def developability(sequence: str, cdrs=()):
 
 
 def canonical_aa(chains):
-    """An `aa:` key: segments non-decreasing by byte order (follow-agent-contract.md section 3)."""
+    """An `aa:` key: segments non-decreasing by byte order (docs/follow-agent-contract.md section 3)."""
     return "aa:" + "/".join(sorted(chains))
 
 
@@ -380,7 +380,7 @@ def valid_binder(key: str) -> bool:
 def admit_candidate(sequence: str):
     """Is this an admissible binder key? Returns (key, reason-or-None).
 
-    `follow-agent-contract.md` section 3 bounds the alphabet and not the length. A length window is
+    `docs/follow-agent-contract.md` section 3 bounds the alphabet and not the length. A length window is
     not a grammar gate.
     """
     if not sequence:

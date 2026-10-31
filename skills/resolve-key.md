@@ -2,7 +2,7 @@
 
 # `resolve-key` — key to labels
 
-`type: resource.procedure` · `spec: agent.skill` · subordinate to `follow-agent-contract.md`, which governs on any conflict.
+`type: resource.procedure` · `spec: agent.skill` · subordinate to `docs/follow-agent-contract.md`, which governs on any conflict.
 
 Resolve a database key to labels. Read-only. Never writes.
 
