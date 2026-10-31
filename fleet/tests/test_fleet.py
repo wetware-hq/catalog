@@ -159,7 +159,7 @@ class FleetTests(unittest.TestCase):
                 patch.object(fleet, "pin_catalogue", return_value=("a" * 40, graph)), \
                 patch.object(fleet, "boltz_auth", return_value={"workspace": "test"}), \
                 patch.object(fleet, "boltz_estimate", return_value={"estimated_cost_usd": "0.01"}), \
-                patch.object(fleet, "_fan_out", return_value=outcomes), \
+                patch.object(fleet, "_fan_out", return_value=outcomes) as fan_out, \
                 patch.object(fleet, "_screen_and_emit", return_value=([], [])):
             report = fleet.run_fleet(
                 target="uniprot:P01111", indication="research",
@@ -168,10 +168,60 @@ class FleetTests(unittest.TestCase):
                 min_aa=45, max_aa=110, max_tokens=100, timeout=1,
             )
             self.assertEqual(report["catalogue_context"]["verdict"], "absent")
+            fan_out.assert_called_once()
             ok, code, rows = fleet.verify_run(Path(tmp))
             self.assertTrue(ok, (code, rows))
             self.assertEqual(sorted(p.name for p in Path(tmp).glob("w*.bench")),
                              ["w1.bench", "w2.bench"])
+            core_bench = (Path(tmp) / "core.bench").read_text(encoding="utf-8")
+            self.assertIn(f'trace:"{report["run"]}"', core_bench)
+
+    def test_unread_catalogue_hit_stops_before_design(self):
+        record = {
+            "accession": "P01111", "organism": "Homo sapiens",
+            "sequence": "A" * 100, "length": 100, "type": "protein",
+        }
+        graph = {
+            "version": 2,
+            "pair": {
+                "aa:ACD": {"uniprot:P01111": ["pmid:2"]},
+                "aa:EEE": {"uniprot:P01111": ["pmid:4", "pmid:3"]},
+                "aa:AAA": {"uniprot:P99999": ["pmid:1"]},
+            },
+            "preclinical": {"aa:KKK": {"uniprot:P01111": ["pmid:9"]}},
+        }
+        with tempfile.TemporaryDirectory() as tmp, \
+                patch.object(fleet, "uniprot_record", return_value=record), \
+                patch.object(fleet, "pin_catalogue", return_value=("b" * 40, graph)), \
+                patch.object(fleet, "boltz_auth") as boltz_auth, \
+                patch.object(fleet, "_fan_out") as fan_out:
+            report = fleet.run_fleet(
+                target="uniprot:P01111", indication="research",
+                models=["test/one"], out=tmp, live=True,
+                bound_tok=1000, bound_n=1, k=1,
+                min_aa=45, max_aa=110, max_tokens=100, timeout=1,
+            )
+            boltz_auth.assert_not_called()
+            fan_out.assert_not_called()
+            self.assertEqual(report["stopped"], "hit-unread")
+            self.assertEqual(report["catalogue_context"]["rows"], [
+                {"binder": "aa:EEE", "pmid": ["pmid:3", "pmid:4"]},
+                {"binder": "aa:ACD", "pmid": ["pmid:2"]},
+            ])
+            self.assertEqual(report["preclinical_rows"], [
+                {"binder": "aa:KKK", "pmid": ["pmid:9"]},
+            ])
+            self.assertEqual(report["emitted"], [])
+            text = (Path(tmp) / "w1.trace").read_text(encoding="utf-8")
+            self.assertIn('verdict:"hit-unread"', text)
+            self.assertIn('gloss:"not-read"', text)
+            self.assertIn('binder:"aa:EEE"', text)
+            self.assertIn('pmid:"pmid:3"', text)
+            self.assertNotIn("hit-other-indication", text)
+            self.assertNotIn("aa:KKK", text)
+            self.assertNotIn("emit ", text)
+            ok, code, rows = fleet.verify_run(Path(tmp))
+            self.assertTrue(ok, (code, rows))
 
 
     def test_cli_refuses_a_preflight_without_bounds(self):

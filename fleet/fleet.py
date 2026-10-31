@@ -183,6 +183,12 @@ def reverse_index(graph: dict, target: str):
     return out
 
 
+def citation_rows(mapping):
+    """§7 order inside one dictionary for one target: count descending, binder key ascending."""
+    binders = sorted(mapping, key=lambda binder: (-len(mapping[binder]), binder))
+    return [{"binder": binder, "pmid": sorted(mapping[binder])} for binder in binders]
+
+
 def uniprot_record(accession: str):
     """Target admission needs the organism and the sequence; both come from the authority."""
     bare = accession.split(":", 1)[1].split("-", 1)[0]
@@ -226,22 +232,6 @@ def boltz_estimate(body: dict):
     base = _service_base("BOLTZ_API_BASE", "boltz")
     return _http("POST", f"{base}/protein/design/estimate-cost",
                  headers={"x-api-key": key}, body=body, source="boltz")
-
-
-def boltz_submit(body: dict, *, idempotency_key: str):
-    """Submit one paid design run. Call only after estimate <= the pre-registered cap."""
-    key = _secret("BOLTZ_API_KEY", "boltz")
-    base = _service_base("BOLTZ_API_BASE", "boltz")
-    payload = dict(body, idempotency_key=idempotency_key)
-    return _http("POST", f"{base}/protein/design",
-                 headers={"x-api-key": key}, body=payload, timeout=120, source="boltz")
-
-
-def boltz_status(job_id: str):
-    key = _secret("BOLTZ_API_KEY", "boltz")
-    base = _service_base("BOLTZ_API_BASE", "boltz")
-    return _http("GET", f"{base}/protein/design/{job_id}",
-                 headers={"x-api-key": key}, source="boltz")
 
 
 def boltz_design_body(target_sequence: str, num_proteins: int, min_aa: int, max_aa: int):
@@ -464,6 +454,7 @@ class Run:
         self.bench_core = bench_core_bytes({
             "bound-n": self.bound_n, "bound-tok": self.bound_tok, "skill": SKILL,
             "spec": spec_sha, "target": target, "indication": indication,
+            "trace": self.run,
         })
         self.bench_run = hashlib.sha256(self.bench_core).hexdigest()
         self.trace_lines = {}   # worker -> [line]
@@ -570,19 +561,32 @@ def run_fleet(*, target, indication, models, out, live, bound_tok, k, bound_n=No
 
     index = reverse_index(graph, target)
     evidenced = index.get("pair") or {}
+    preclinical = index.get("preclinical") or {}
+    if preclinical:
+        report["preclinical_rows"] = citation_rows(preclinical)
     if evidenced:
-        binder = sorted(evidenced)[0]
-        pmid = sorted(evidenced[binder])[0]
-        # The indication is not in the file. Absent a read paper this run cannot claim the hit is in
-        # this indication, and the honest verdict is the weaker one.
+        # The paper was not read. hit-same-indication and hit-other-indication are that oracle.
+        # Design does not fire. §7 picks the one binder a context line can hold.
+        rows = citation_rows(evidenced)
+        top = rows[0]
         run.trace_all("context", pin_parent, {
-            "binder": binder, "gloss": "transfers-not", "pmid": pmid,
-            "target": target, "verdict": "hit-other-indication"})
-        report["catalogue_context"] = {"verdict": "hit-other-indication", "binder": binder, "pmid": pmid}
-    else:
-        run.trace_all("context", pin_parent, {
-            "gloss": "not-a-negative", "target": target, "verdict": "absent"})
-        report["catalogue_context"] = {"verdict": "absent"}
+            "binder": top["binder"], "gloss": "not-read", "pmid": top["pmid"][0],
+            "target": target, "verdict": "hit-unread"})
+        report["catalogue_context"] = {"verdict": "hit-unread", "gloss": "not-read", "rows": rows}
+        report["stopped"] = "hit-unread"
+        run.trace_all("halt", pin_parent, {
+            "bound-n": str(run.bound_n), "bound-tok": str(run.bound_tok),
+            "oracle": "not-discharged"})
+        report["workers"] = []
+        report["emitted"] = []
+        report["post_pin_refusals"] = []
+        report["spend"] = run.spend
+        report["notes"] = run.notes
+        report["out"] = str(run.write(Path(out)))
+        return report
+    run.trace_all("context", pin_parent, {
+        "gloss": "not-a-negative", "target": target, "verdict": "absent"})
+    report["catalogue_context"] = {"verdict": "absent", "gloss": "not-a-negative"}
 
     # Boltz is the design engine, not an optional scorer. Authenticate and price the exact request
     # before the advisory panel runs; OpenRouter must never silently substitute for this step.
@@ -969,11 +973,17 @@ def _format_preflight(report):
 
 def _format_run(report):
     out = [f"RUN {report['run'][:16]}  target={report['target']}  spec={report['spec'][:12]}"]
-    if report.get("refused"):
+    ctx = report.get("catalogue_context") or {}
+    if report.get("refused") and not report.get("catalogue_rev"):
         out.append(f"  refused before the pin: {report['refused']}")
+    elif report.get("stopped"):
+        out.append(f"  catalogue rev {report.get('catalogue_rev', '?')[:12]} "
+                   f"verdict {ctx.get('verdict')}  rows={len(ctx.get('rows') or [])}")
+    elif report.get("refused"):
+        out.append(f"  halted after the pin: {report['refused']}")
     else:
         out.append(f"  catalogue rev {report.get('catalogue_rev', '?')[:12]} "
-                   f"verdict {report.get('catalogue_context', {}).get('verdict')}")
+                   f"verdict {ctx.get('verdict')}")
     for worker in report.get("workers", []):
         out.append(f"  {worker['worker']:4} {worker['model']:34} {worker['status']:11} "
                    f"proposed={worker.get('proposed', 0)}")

@@ -602,6 +602,18 @@ def test_trace_same_molecule_is_R9_and_hit_emit_is_R10():
     core_path, paths = _write_trace("trace_hit", dcore, [("a1.trace", dbody)])
     ok, code, rows = V.check_trace(core_path, paths)
     assert ok and code == "result", (code, rows)
+    unread = V.trace_emit("context", drun, dskill, dparent, {
+        "binder": "aa:ACD", "gloss": "not-read", "pmid": "pmid:1",
+        "target": "uniprot:P12345", "verdict": "hit-unread",
+    })
+    ubody = dheader + "\n".join([dcall, dpin, unread, emitted, dhalt]) + "\n"
+    core_path, paths = _write_trace("trace_unread_emit", dcore, [("a1.trace", ubody)])
+    ok, code, rows = V.check_trace(core_path, paths)
+    assert ok is False and code == "R10", (code, rows)
+    ubody = dheader + "\n".join([dcall, dpin, unread, dhalt]) + "\n"
+    core_path, paths = _write_trace("trace_unread", dcore, [("a1.trace", ubody)])
+    ok, code, rows = V.check_trace(core_path, paths)
+    assert ok and code == "result", (code, rows)
     # admission refuse, no catalogue pin: halt parents the call
     call_parent = "^" + V.trace_call_id(drun, dskill)
     refused = V.trace_emit("refuse", drun, dskill, call_parent, {"gate": "species", "subject": "Mus"})

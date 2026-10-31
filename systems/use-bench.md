@@ -102,7 +102,7 @@ Hash naming is what makes this work without identity metadata: "same node" is de
 
 `core.bench` holds the run's pre-registered parameters. It is read-only, and that is structural, not a convention:
 
-1. **The run id is the core's hash.** `run = H(core bytes)`. One changed byte is a different hash, hence a different run. The core cannot be modified, only replaced by a core that is not this run's.
+1. **The run id is the core's hash.** `run = H(core bytes)`. One changed byte is a different hash, hence a different run. The core cannot be modified, only replaced by a core that is not this run's. That `run` names this store. The campaign id is the hash of `core.trace` (`systems/record-traces.md`). `core.bench` records that hash as the parameter `trace`.
 2. **Every node names the run**, inside the bytes its own name covers, so a node cannot be moved between runs or have its run rewritten without changing its own name.
 3. **The receiver validates, not the sender.** On merge, a node whose run is not this run's core hash is refused, as is a node without a tier. This rule is load-bearing rather than decorative (§9).
 4. **There is no write path.** `append` requires at least one parent; the core is the only parentless node and is written once by the initialiser, before any agent starts. No agent interface can produce a parentless node.
