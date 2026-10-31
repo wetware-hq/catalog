@@ -2,6 +2,18 @@
 
 # changelogs
 
+## 2026-10-31 — folder sort by spec
+
+### changed
+
+- Sorted every markdown specification into two directories. `skills/` holds `agent.skill`. `systems/` holds `fleet.campaign`. A header outside those directories that carries either spec is an orphan.
+- Moved `tracer/record-fleet-traces.md` to `systems/record-fleet-traces.md`. Moved `fleet/read-fleet.md` to `systems/read-fleet.md` and gave it `type: agent.system`. The harness code stays in `fleet/`. The `.trace` store stays outside the repository.
+- §11 names three systems, and E4's bijection is `systems/*.md` against that table. E5 refuses a live spec left outside the two folders. Two registry fixtures stay on an exact allowlist.
+
+### tested
+
+- Verifier suite, including an orphan spec outside `systems/` and the allowlist pin. Fleet suite. `graph.json` is untouched. §8.16 is not discharged.
+
 ## 2026-10-31 — specbase vocabulary
 
 ### changed

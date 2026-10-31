@@ -317,13 +317,17 @@ _E4_AGENTS = V.BANNER + """
 ## 11. Systems
 
 | [`systems/use-bench.md`](systems/use-bench.md) | substrate | .bench only |
-| [`tracer/record-fleet-traces.md`](tracer/record-fleet-traces.md) | act log | .trace only |
+| [`systems/record-fleet-traces.md`](systems/record-fleet-traces.md) | act log | .trace only |
 """
 
 
-def test_E4_repo_lists_exactly_bench_and_traces():
+def test_E4_repo_lists_exactly_the_systems():
     text = open(os.path.join(REPO_ROOT, "follow-agent-contract.md"), encoding="utf-8").read()
-    assert V.parse_section11(text) == ["systems/use-bench.md", "tracer/record-fleet-traces.md"]
+    assert V.parse_section11(text) == [
+        "systems/use-bench.md",
+        "systems/record-fleet-traces.md",
+        "systems/read-fleet.md",
+    ]
     rep = V.Report(); V.check_system_registry(REPO_ROOT, rep)
     assert rep.findings[0].ok is True, rep.findings[0].rows
 
@@ -332,8 +336,8 @@ def test_E4_orphan_file_fails():
     repo = _tmp_repo("e4_orphan", {
         "follow-agent-contract.md": _E4_AGENTS,
         "systems/use-bench.md": V.BANNER + "\n",
+        "systems/record-fleet-traces.md": V.BANNER + "\n",
         "systems/extra.md": V.BANNER + "\n",
-        "tracer/record-fleet-traces.md": V.BANNER + "\n",
     })
     rep = V.Report(); V.check_system_registry(repo, rep)
     assert rep.findings[0].ok is False
@@ -347,7 +351,25 @@ def test_E4_dangling_row_fails():
     })
     rep = V.Report(); V.check_system_registry(repo, rep)
     assert rep.findings[0].ok is False
-    assert any("tracer/record-fleet-traces.md" in row for row in rep.findings[0].rows), rep.findings[0].rows
+    assert any("systems/record-fleet-traces.md" in row for row in rep.findings[0].rows), rep.findings[0].rows
+
+
+def test_E4_path_outside_systems_is_not_a_row():
+    agents = V.BANNER + """
+
+## 11. Systems
+
+| [`tracer/record-fleet-traces.md`](tracer/record-fleet-traces.md) | act log | .trace only |
+| [`systems/use-bench.md`](systems/use-bench.md) | substrate | .bench only |
+"""
+    repo = _tmp_repo("e4_outside", {
+        "follow-agent-contract.md": agents,
+        "systems/use-bench.md": V.BANNER + "\n",
+        "tracer/record-fleet-traces.md": V.BANNER + "\n",
+    })
+    rep = V.Report(); V.check_system_registry(repo, rep)
+    assert rep.findings[0].ok is False
+    assert any("tracer/record-fleet-traces.md" in row and "not under systems/" in row for row in rep.findings[0].rows), rep.findings[0].rows
 
 
 def test_E5_repo_identity_lines_match():
@@ -377,6 +399,43 @@ def test_E5_rejects_agent_fleet_as_a_spec():
     assert any("agent.fleet is not a spec and not a type" in row for row in rep.findings[0].rows), rep.findings[0].rows
 
 
+def test_E5_spec_outside_skills_and_systems_is_an_orphan():
+    line = "`type: agent.system` · `spec: fleet.campaign` · subordinate.\n"
+    repo = _tmp_repo("e5_orphan_spec", {
+        "follow-agent-contract.md": V.BANNER + "\n\n# contract\n\n`type: resource.reference`\n\n## 0\n\n",
+        "fleet/read-fleet.md": V.BANNER + "\n\n# run\n\n" + line + "\n## 0\n\n",
+    })
+    rep = V.Report(); V.check_identity(repo, rep)
+    assert rep.findings[0].ok is False
+    assert any("orphan spec 'fleet.campaign'" in row and "systems/" in row for row in rep.findings[0].rows), rep.findings[0].rows
+
+
+def test_E5_spec_allowlist_is_the_only_outside_specs():
+    """The allowlist is exact: each entry declares a live spec, and no other file outside the two folders does."""
+    assert V.E5_SPEC_ALLOWLIST, "an empty allowlist means every outside spec is an orphan; drop the mechanism instead"
+    outside = []
+    for path in V._md_files(REPO_ROOT):
+        rel = V._relposix(path, REPO_ROOT)
+        if rel.startswith("skills/") or rel.startswith("systems/"):
+            continue
+        text = open(path, encoding="utf-8").read()
+        specs = [s.strip() for s in V._IDENTITY_SPEC_RE.findall(V._identity_header(text))]
+        live = [s for s in specs if s in V._SPEC_FOLDER]
+        if live:
+            outside.append(rel)
+            assert rel in V.E5_SPEC_ALLOWLIST, f"{rel}: live spec {live} is an orphan"
+    assert sorted(outside) == sorted(V.E5_SPEC_ALLOWLIST)
+    for rel in V.E5_SPEC_ALLOWLIST:
+        text = open(os.path.join(REPO_ROOT, rel), encoding="utf-8").read()
+        repo = _tmp_repo("e5_allow_" + rel.replace("/", "_"), {
+            "follow-agent-contract.md": V.BANNER + "\n",
+            "notes/copied.md": text,
+        })
+        rep = V.Report(); V.check_identity(repo, rep)
+        assert rep.findings[0].ok is False, rel
+        assert any("orphan spec" in row for row in rep.findings[0].rows), rep.findings[0].rows
+
+
 def test_E5_rejects_a_system_that_is_not_agent_system():
     line = "`type: resource.system` · `spec: fleet.campaign` · subordinate.\n"
     repo = _tmp_repo("e5_type", {
@@ -389,7 +448,7 @@ def test_E5_rejects_a_system_that_is_not_agent_system():
 
 
 def _fence_after(label):
-    text = open(os.path.join(REPO_ROOT, "tracer", "record-fleet-traces.md"), encoding="utf-8").read()
+    text = open(os.path.join(REPO_ROOT, "systems", "record-fleet-traces.md"), encoding="utf-8").read()
     start = text.index("```\n", text.index(label)) + 4
     end = text.index("\n```", start)
     return text[start:end] + "\n"

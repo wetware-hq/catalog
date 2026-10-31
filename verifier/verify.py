@@ -7,7 +7,7 @@ Usage:
     verify.py --merge A.json B.json      # section 6 merge; writes canonical bytes to stdout
     verify.py GRAPH.json --repo DIR      # + extension predicates E1 (banner), E2 (skill registry), E4 (system registry), E5 (identity line); these gate
     verify.py GRAPH.json --online        # + E3 pmid resolution via NCBI E-utilities; NON-BLOCKING, never gates
-    verify.py --trace CORE.trace W.trace # TRACES judgements (tracer/record-fleet-traces.md); hard-coded carrier sets
+    verify.py --trace CORE.trace W.trace # TRACES judgements (systems/record-fleet-traces.md); hard-coded carrier sets
     verify.py --json ...                 # machine-readable report on stdout
 
 Exit status: 0 = every evaluated pure/relational predicate passed; 1 = a violation/refusal; 2 = usage/IO error.
@@ -60,7 +60,7 @@ EXTENSIONS = {
     "E1": ("pure-ext", "Disclaimer banner (every .md first non-blank line)"),
     "E2": ("pure-ext", "Skill registry (skills <-> follow-agent-contract.md section 10)"),
     "E3": ("online-ext", "pmid: resolves via NCBI E-utilities (non-blocking)"),
-    "E4": ("pure-ext", "System registry (systems/*.md and tracer/*.md <-> follow-agent-contract.md section 11)"),
+    "E4": ("pure-ext", "System registry (systems/*.md <-> follow-agent-contract.md section 11)"),
     "E5": ("pure-ext", "Identity line (follow-agent-contract.md section 0c)"),
 }
 BANNER = "\u26a0\ufe0f ACADEMIC RESEARCH PURPOSES ONLY; NOT FOR MEDICAL USE WITHOUT LICENSED OVERSIGHT"
@@ -516,7 +516,7 @@ def do_merge(a_path: str, b_path: str):
 
 
 # ---------------------------------------------------------------------------------------------------------------
-# TRACES judgements (tracer/record-fleet-traces.md). Carrier sets are literals. They are not read from the markdown.
+# TRACES judgements (systems/record-fleet-traces.md). Carrier sets are literals. They are not read from the markdown.
 # decide() is total: the first failure in the order R1, R3, admit, R2, R4..R10, else result.
 # ---------------------------------------------------------------------------------------------------------------
 TRACE_SKILLS = ("resolve-key", "propose-pairs", "design-binder")
@@ -838,7 +838,7 @@ def _trace_fail(code, rows):
 
 
 def check_trace(core_path, worker_paths):
-    """Decide tracer/record-fleet-traces.md over one core file and zero or more worker files.
+    """Decide systems/record-fleet-traces.md over one core file and zero or more worker files.
 
     Returns (ok, code, rows). ok is True only for Result. code is 'result', 'R1'..'R10', or 'admit'.
     On result, rows is [run].
@@ -1135,8 +1135,14 @@ def check_skill_registry(repo_dir: str, rep: "Report"):
     rep.add("E2", not problems, problems)
 
 
+_SYSTEM_PATH_RE = re.compile(r"systems/[A-Za-z0-9._-]+\.md")
+
+
 def parse_section11(agents_text):
-    """Paths in follow-agent-contract.md section 11 that point at systems/*.md or tracer/*.md, in order."""
+    """Markdown paths linked from follow-agent-contract.md section 11, in order.
+
+    A row is a link whose target ends in .md. The bijection admits only systems/<file>.md.
+    """
     found = []
     in11 = False
     for ln in agents_text.splitlines():
@@ -1145,15 +1151,15 @@ def parse_section11(agents_text):
             continue
         if not in11:
             continue
-        found.extend(re.findall(r"\(((?:systems|tracer)/[A-Za-z0-9._-]+\.md)\)", ln))
+        found.extend(re.findall(r"\(([^)\s]+\.md)\)", ln))
     return found
 
 
 def check_system_registry(repo_dir, rep):
-    """E4 [pure-ext]: systems/*.md and tracer/*.md <-> follow-agent-contract.md section 11 are in bijection.
+    """E4 [pure-ext]: systems/*.md <-> follow-agent-contract.md section 11 are in bijection.
 
-    Directories are hard-coded. A file anywhere else is not a system, and a system path that is not one of
-    those two directories is not a row this check accepts.
+    The directory is hard-coded. A markdown link in section 11 that is not systems/<file>.md is not a row
+    this check accepts. A file in systems/ that section 11 does not name is an orphan.
     """
     problems = []
     agents_path = os.path.join(repo_dir, "follow-agent-contract.md")
@@ -1163,16 +1169,19 @@ def check_system_registry(repo_dir, rep):
     found = parse_section11(open(agents_path, encoding="utf-8").read())
     if len(found) != len(set(found)):
         problems.append("section 11 lists a system path more than once")
-    listed = set(found)
+    listed = set()
+    for path in found:
+        if _SYSTEM_PATH_RE.fullmatch(path):
+            listed.add(path)
+        else:
+            problems.append(f"{path}: section 11 row is not under systems/")
     disk = set()
-    for folder in ("systems", "tracer"):
-        directory = os.path.join(repo_dir, folder)
-        if not os.path.isdir(directory):
-            continue
+    directory = os.path.join(repo_dir, "systems")
+    if os.path.isdir(directory):
         for fn in sorted(os.listdir(directory)):
             full = os.path.join(directory, fn)
             if fn.endswith(".md") and os.path.isfile(full):
-                disk.add(folder + "/" + fn)
+                disk.add("systems/" + fn)
     for path in sorted(disk - listed):
         problems.append(f"{path}: system file present but not listed in follow-agent-contract.md section 11")
     for path in sorted(listed - disk):
@@ -1186,6 +1195,17 @@ _IDENTITY_TYPE_RE = re.compile(r"`type:\s*([^`]+?)`")
 _IDENTITY_SPEC_RE = re.compile(r"`spec:\s*([^`]+?)`")
 _IDENTITY_CLASS_RE = re.compile(r"`class:\s*([^`]+?)`")
 _REJECTED_RUN_UNITS = ("agent.swarm", "agent.fleet")
+_SPEC_FOLDER = {
+    "agent.skill": "skills",
+    "fleet.campaign": "systems",
+}
+# Registry fixtures declare a live spec on purpose, outside skills/ and systems/. Exact paths.
+# test_E5_spec_allowlist_is_the_only_outside_specs fails when an entry no longer declares one,
+# and when any other markdown declares one.
+E5_SPEC_ALLOWLIST = (
+    "verifier/tests/fixtures/ext_registry_fail/skills/exercise-special-scope.md",
+    "verifier/tests/fixtures/ext_registry_ok/skills/exercise-special-scope.md",
+)
 
 
 def _identity_header(text):
@@ -1195,9 +1215,10 @@ def _identity_header(text):
 def check_identity(repo_dir, rep):
     """E5 [pure-ext]: header lines match follow-agent-contract.md section 0c.
 
-    skills/ are resource.procedure with spec agent.skill. systems/ and tracer/ are agent.system with
-    spec fleet.campaign. fleet/*.md carries spec fleet.campaign and no type. agent.swarm and
-    agent.fleet are refused as a spec or a type.
+    skills/ are resource.procedure with spec agent.skill. systems/ are agent.system with spec
+    fleet.campaign. A header outside those two directories that carries either spec is an orphan,
+    except the exact paths in E5_SPEC_ALLOWLIST. agent.swarm and agent.fleet are refused as a spec
+    or a type.
     """
     problems = []
 
@@ -1215,8 +1236,7 @@ def check_identity(repo_dir, rep):
                 problems.append(f"{rel}: {token} is not a spec and not a type")
 
     for folder, expect_type, expect_spec in (("skills", "resource.procedure", "agent.skill"),
-                                             ("systems", "agent.system", "fleet.campaign"),
-                                             ("tracer", "agent.system", "fleet.campaign")):
+                                             ("systems", "agent.system", "fleet.campaign")):
         directory = os.path.join(repo_dir, folder)
         if not os.path.isdir(directory):
             continue
@@ -1245,23 +1265,23 @@ def check_identity(repo_dir, rep):
             elif classes:
                 problems.append(f"{rel}: agent.system declares no class, found {classes!r}")
 
-    fleet_dir = os.path.join(repo_dir, "fleet")
-    if os.path.isdir(fleet_dir):
-        for fn in sorted(os.listdir(fleet_dir)):
-            if not fn.endswith(".md"):
-                continue
-            rel = "fleet/" + fn
-            text = read(rel)
-            if not text:
-                continue
-            header = _identity_header(text)
-            types = [t.strip() for t in _IDENTITY_TYPE_RE.findall(header)]
-            specs = [s.strip() for s in _IDENTITY_SPEC_RE.findall(header)]
-            reject_run_unit(rel, types, specs)
-            if types:
-                problems.append(f"{rel}: the harness declares no type")
-            if specs != ["fleet.campaign"]:
-                problems.append(f"{rel}: spec {specs!r}, expected ['fleet.campaign']")
+    allow = set(E5_SPEC_ALLOWLIST)
+    for path in _md_files(repo_dir):
+        rel = _relposix(path, repo_dir)
+        folder = rel.split("/", 1)[0]
+        if folder in ("skills", "systems") or rel in allow:
+            continue
+        text = read(rel)
+        if not text:
+            continue
+        header = _identity_header(text)
+        types = [t.strip() for t in _IDENTITY_TYPE_RE.findall(header)]
+        specs = [s.strip() for s in _IDENTITY_SPEC_RE.findall(header)]
+        reject_run_unit(rel, types, specs)
+        for spec in specs:
+            home = _SPEC_FOLDER.get(spec)
+            if home:
+                problems.append(f"{rel}: orphan spec {spec!r}; belongs in {home}/")
 
     rep.add("E5", not problems, problems)
 
@@ -1320,7 +1340,7 @@ def main(argv=None):
     ap.add_argument("--merge", nargs=2, metavar=("A", "B"), help="merge two files per section 6 to stdout")
     ap.add_argument("--repo", metavar="DIR", help="run repository extension predicates (E1 banner, E2 skill registry, E4 system registry, E5 identity line) over DIR")
     ap.add_argument("--trace", nargs="+", metavar="FILE",
-                    help="decide tracer/record-fleet-traces.md: CORE.trace followed by worker .trace files")
+                    help="decide systems/record-fleet-traces.md: CORE.trace followed by worker .trace files")
     ap.add_argument("--online", action="store_true",
                     help="also resolve every pmid via NCBI E-utilities (E3). NON-BLOCKING: network, never changes exit code")
     ap.add_argument("--json", action="store_true", help="machine-readable report")
