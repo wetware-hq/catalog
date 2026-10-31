@@ -2,6 +2,22 @@
 
 # changelogs
 
+## 2026-10-31 — term grounding
+
+### changed
+
+- Recorded the productions of `agent.fleet` and `agent.swarm` in `follow-agent-contract.md` §11.
+  `agent.fleet` is one run: one core, `run` equal to the hash of that core, bounds, one halt.
+  `agent.swarm` has no production in this tree.
+- Pinned the external neighbors retrieved the same day. Wikidata Q529909 (multi-agent system,
+  last revision 2516060604), Q863960 (swarm intelligence, last revision 2515886205), Q47311934
+  (fleet, last revision 2520618032). arXiv:2502.14743v2 byte sha256
+  `de8fbdff90b586fdd478ef5009e7584a5a1e7d37fd3c15eeab5d66fd495aab8e`, arXiv:2411.11616v2 byte
+  sha256 `e5072b74c4a622c95f7996607b3e17b2566dbc248f35dbd854a7836a65fe38bb`, arXiv:2510.10379v1
+  byte sha256 `e6494d40cf75e7cdc60cd7713960f58e30b515b144b243d580feb690148e79d8`.
+- The unification of the English word earlier the same day removed a label with no production.
+  Q863960 remains a different object from the run.
+
 ## 2026-10-31 — minimal stable live fleet
 
 ### changed
