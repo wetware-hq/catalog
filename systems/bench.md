@@ -4,7 +4,7 @@
 
 # `BENCH` — a shared append-only commons for a swarm
 
-`type: resource.system` · `spec: agent.fleet` · subordinate to `AGENTS.md`, which governs on any conflict (`AGENTS.md` §0).
+`type: resource.system` · `spec: agent.swarm` · subordinate to `AGENTS.md`, which governs on any conflict (`AGENTS.md` §0).
 
 BENCH is working space, not a record. It is where several agents in one run put partial work while they are still working, and where any of them can search what the others have put there so far. **Nothing written here is admissible to `graph.json`** (§4 below).
 

@@ -2,7 +2,7 @@
 
 # resolve-key
 
-`type: resource.procedure` · `spec: agent.fleet` · subordinate to `AGENTS.md`, which governs on any conflict.
+`type: resource.procedure` · `spec: agent.swarm` · subordinate to `AGENTS.md`, which governs on any conflict.
 
 Resolve a database key to labels. Read-only. Never writes.
 
@@ -117,7 +117,7 @@ shard unit: a BATCH of keys, never one key per worker.
 
 ```
 enrich : Identity -> Findings        -- note the domain: Identity, NOT Key
-fleet / swarm. open. parallel. no coordinator. no shared mutable state.
+swarm. open. parallel. no coordinator. no shared mutable state.
 
 stage 1 returning unresolved HALTS enrichment for that key. fail-closed.
 no worker may put residues into a search. observed once, 2026-10-29, catalog-systems:

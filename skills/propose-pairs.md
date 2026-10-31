@@ -2,7 +2,7 @@
 
 # `propose-pairs` — catalogue intake
 
-`type: resource.procedure` · `spec: agent.fleet` · subordinate to `AGENTS.md`, which governs on any conflict.
+`type: resource.procedure` · `spec: agent.swarm` · subordinate to `AGENTS.md`, which governs on any conflict.
 
 ## 0. Objective
 
