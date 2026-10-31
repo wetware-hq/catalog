@@ -199,5 +199,5 @@ Licensed oversight is required for any use of this system; none has been perform
 `verifier/verify.py --trace` decides this file. `fleet/fleet.py` writes the lines through the
 verifier's own `trace_emit`, then hands every completed run back to that checker. Extension
 predicate E4 decides the bijection between `follow-agent-contract.md` §11 and the files
-`systems/*.md` and `tracer/*.md`. The identity line above is extension predicate E5
+`systems/*.md`. The identity line above is extension predicate E5
 (`follow-agent-contract.md` §0c). Neither decision is §8.16.

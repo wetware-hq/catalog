@@ -6,7 +6,7 @@
 
 ## 0. Scope
 
-- **Read:** `graph.json`, `follow-agent-contract.md`, `skills/*.md`, `systems/*.md` (§11), `tracer/*.md` (§11), `pin-references.md`, `read-repository.md` (non-normative), `fleet/`, `verifier/`, `.github/workflows/`, `LICENSE`.
+- **Read:** `graph.json`, `follow-agent-contract.md`, `skills/*.md`, `systems/*.md` (§11), `pin-references.md`, `read-repository.md` (non-normative), `fleet/`, `verifier/`, `.github/workflows/`, `LICENSE`.
 - **Write:** `graph.json` and `proposals.json` only, under §9.
 - **Refuse:** writing scripts, workflows, CI, package manifests or secondary data files in this repo, `proposals.json` (§9) being the single named exception — the fleet harness under `fleet/`, verifier under `verifier/` and workflow under `.github/workflows/` are human-directed additions that exercise or check this contract and are outside every agent's write scope, so an agent reads them and does not edit them; stored ranks, scores or grades; citations other than bare `pmid:<digits>`; empty citation arrays; pairs without qualifying evidence (§4); removal or rewriting of existing rows absent explicit human supersession.
 
@@ -20,14 +20,14 @@ Every Markdown file in this repository opens, as its **first non-blank line**, w
 
 ## 0c. Identity line
 
-Every file in `skills/`, `systems/` and `tracer/` names itself once, in the header, before the first section heading. Extension predicate E5 checks that line. E5 is not a §8 predicate and does not renumber them.
+Every file in `skills/` and `systems/` names itself once, in the header, before the first section heading. Extension predicate E5 checks that line. E5 is not a §8 predicate and does not renumber them.
 
 | directory | what the line says |
 |---|---|
 | `skills/` | a `resource.procedure`, spec `agent.skill`. The one skill §10 marks `special` also says so. The others do not. |
-| `systems/`, `tracer/` | an `agent.system`, spec `fleet.campaign`. No class. |
+| `systems/` | an `agent.system`, spec `fleet.campaign`. No class. |
 
-`agent.skill` is the spec of a procedure. `fleet.campaign` is the spec of one run. `agent.swarm` and `agent.fleet` are not specs and not types. The harness under `fleet/` is not a row of this table. It names that same run and does not name a type. The four strings, and the ordinary words next to them, are set out in §11.
+`agent.skill` is the spec of a procedure. `fleet.campaign` is the spec of one run. `agent.swarm` and `agent.fleet` are not specs and not types. A header outside these two directories that carries either spec fails E5: that file is an orphan. The checker skips exactly two registry fixtures, `verifier/tests/fixtures/ext_registry_fail/skills/exercise-special-scope.md` and `verifier/tests/fixtures/ext_registry_ok/skills/exercise-special-scope.md`. They declare the skill spec so E2 can be tested, and they are not skills of this contract. The harness code under `fleet/` is not a row of this table. Its specification is [`systems/run-campaign.md`](systems/run-campaign.md). The four strings, and the ordinary words next to them, are set out in §11.
 
 ## 1. Purpose
 
@@ -186,7 +186,7 @@ The reader-facing warning is therefore not carried by a path either. It is carri
 
 ## 11. Systems
 
-`systems/*.md` and `tracer/*.md` are specifications of machinery a skill may run, not procedures a skill follows: §10 governs what a skill may do to claims, this section governs what a system is. A system is subordinate to this file on the same terms as a skill (§0), and holds no element of `graph.json` or `proposals.json`. `systems/` is the shared working substrate. `tracer/` is the execution record of a run. They do not share a header, an extension, or a query.
+`systems/*.md` are specifications of machinery a skill may run, not procedures a skill follows: §10 governs what a skill may do to claims, this section governs what a system is. A system is subordinate to this file on the same terms as a skill (§0), and holds no element of `graph.json` or `proposals.json`. Every `fleet.campaign` specification lives in this directory. A header outside `systems/` that carries that spec is an orphan and fails E5. The bench store and the trace store do not share a header, an extension, or a query. The harness code under `fleet/` writes both stores and is specified by `systems/run-campaign.md`.
 
 ### Terms
 
@@ -194,7 +194,7 @@ The reader-facing warning is therefore not carried by a path either. It is carri
 
 **`agent.skill` is a procedure.** It is the spec on every skill in §10. It is not a run. Wikidata `wbsearchentities` for `agent.skill`, language `en`, limit 5, returned an empty `search` array on this retrieval. The ordinary word is [Q205961](https://www.wikidata.org/wiki/Q205961), English label "skill", English description "learned ability and competence to carry out an action", last revision 2541591399, modified 2026-09-07T08:25:55Z.
 
-**`fleet.campaign` is one run.** It is the spec on both systems in the table below and on `fleet/*.md`. The run has one core. `run` is the SHA-256 of that core's bytes. The core carries `bound-n` and `bound-tok`. The run ends on one `halt`. Workers that append bench lines or trace lines are members of that run. Set-union merge with no coordinator is a property of the bench store inside the run. Wikidata `wbsearchentities` for `fleet.campaign`, language `en`, limit 5, returned an empty `search` array on this retrieval.
+**`fleet.campaign` is one run.** It is the spec on every system in the table below. The run has one core. `run` is the SHA-256 of that core's bytes. The core carries `bound-n` and `bound-tok`. The run ends on one `halt`. Workers that append bench lines or trace lines are members of that run. Set-union merge with no coordinator is a property of the bench store inside the run. Wikidata `wbsearchentities` for `fleet.campaign`, language `en`, limit 5, returned an empty `search` array on this retrieval.
 
 **`agent.swarm` is not a spec and not a type.** No header in this tree names it as either. A run of this contract is a `fleet.campaign`.
 
@@ -214,11 +214,12 @@ A procedure of this contract is an `agent.skill`. A run of this contract is one 
 | system | what it holds | write scope |
 |---|---|---|
 | [`systems/use-bench.md`](systems/use-bench.md) | a run-scoped append-only commons where a campaign's workers read and write partial work concurrently | its own `.bench` store only; never `graph.json`, never `proposals.json` |
-| [`tracer/record-fleet-traces.md`](tracer/record-fleet-traces.md) | the act log of one `fleet.campaign` run: pin, call, refusal, proposal, emission, halt | its own `.trace` store only, outside this repository; never `graph.json`, never `proposals.json`, never `.bench` |
+| [`systems/record-traces.md`](systems/record-traces.md) | the act log of one `fleet.campaign` run: pin, call, refusal, proposal, emission, halt | its own `.trace` store only, outside this repository; never `graph.json`, never `proposals.json`, never `.bench` |
+| [`systems/run-campaign.md`](systems/run-campaign.md) | the reference harness for one run: preflight, execution of `design-binder`, and the handoff to `--trace` | no file in this repository; `fleet/fleet.py` appends the `.bench` and `.trace` stores the other rows specify, outside this repository |
 
 - A system is not a skill and is not listed in §10. It originates nothing and admits nothing: §4 is untouched by anything written to a scratchpad or an act log, and a record in a `.bench` or `.trace` store is not a claim this file recognises.
 - `bench` is scoped to a single run and is discarded with it. It is not a second catalogue, and it is not a cache of `graph.json`.
 - Every `.bench` record declares an evidence tier, and no query pools across tiers — the same refusal §2 makes between clinical and preclinical, one layer down. A tier that is declared is not thereby honest; the line can only require the declaration.
-- `tracer` records acts, not evidence. The record has no tier, no study type, and no score. A `.trace` file is not a proposal and is not a bench. It is discarded with the run. The directory `tracer/` in this repository is the specification only. `verifier/verify.py --trace` decides it. That decision is pure and does not discharge §8.16.
-- The rows of this table and the files `systems/*.md` and `tracer/*.md` are in bijection. That bijection is extension predicate E4. It is not a §8 predicate and it does not renumber them.
-- Two systems, named here exactly. A specification not listed in this section is not part of this contract.
+- The trace records acts, not evidence. The record has no tier, no study type, and no score. A `.trace` file is not a proposal and is not a bench. It is discarded with the run. The specification is `systems/record-traces.md`. `verifier/verify.py --trace` decides it. That decision is pure and does not discharge §8.16.
+- The rows of this table and the files `systems/*.md` are in bijection. That bijection is extension predicate E4. It is not a §8 predicate and it does not renumber them.
+- Three systems, named here exactly. A specification not listed in this section is not part of this contract.

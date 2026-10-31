@@ -10,9 +10,9 @@ BENCH is working space, not a record. It is where several agents in one run put 
 
 - **Read:** this file, `follow-agent-contract.md`, the run's own `.bench` files.
 - **Write:** `.bench` files inside a run directory, which lives outside this repository.
-- **Refuse:** `graph.json`, `proposals.json`, and every other file in this repository. This directory holds this specification only. The harness that writes `.bench` files lives under `fleet/` and is outside this system's write scope (§11).
+- **Refuse:** `graph.json`, `proposals.json`, and every other file in this repository. This directory holds the `fleet.campaign` specifications. This file's write scope is `.bench` files inside a run directory. The harness code that appends them lives under `fleet/` and is specified by `systems/run-campaign.md`; it is outside this file's write scope (§11).
 
-**`systems/` and `skills/`.** `skills/*.md` are *procedures*: a named thing an agent does, registered in `follow-agent-contract.md` §10, each with a signature and a write scope. `systems/*.md` are *substrates*: a named thing agents run on, with a format, a merge law and an invariant list. A system is not a skill, declares no signature over catalogue keys, and is not registered in §10; it is registered in `follow-agent-contract.md` §11. A skill may use a system; a system never discharges a skill's obligations, and neither widens `follow-agent-contract.md` §0.
+**`systems/` and `skills/`.** `skills/*.md` are *procedures*: a named thing an agent does, registered in `follow-agent-contract.md` §10, each with a signature and a write scope. `systems/*.md` are the `fleet.campaign` specifications registered in §11. This file is a substrate: a format, a merge law and an invariant list. A system is not a skill, declares no signature over catalogue keys, and is not registered in §10. A skill may use a system; a system never discharges a skill's obligations, and neither widens `follow-agent-contract.md` §0.
 
 ## 1. Structure
 

@@ -22,7 +22,7 @@ python3 verifier/verify.py --prev OLD.json graph.json # + relational §8.19 (add
 python3 verifier/verify.py --merge A.json B.json      # §6 merge -> canonical bytes on stdout
 python3 verifier/verify.py graph.json --repo .        # + extension predicates E1 (banner), E2 (skill registry), E4 (system registry), E5 (identity line)
 python3 verifier/verify.py graph.json --online        # + E3 pmid resolution via NCBI E-utilities (NON-BLOCKING)
-python3 verifier/verify.py --trace core.trace a1.trace # TRACES judgements (tracer/record-fleet-traces.md); carrier sets are literals
+python3 verifier/verify.py --trace core.trace a1.trace # TRACES judgements (systems/record-traces.md); carrier sets are literals
 python3 verifier/verify.py --json graph.json          # machine-readable report
 ```
 Exit status: `0` all evaluated predicates passed · `1` a violation/refusal · `2` usage/IO error.
@@ -63,14 +63,14 @@ repository/documentation invariants agreed for `fleet.campaign` / `agent.skill` 
 | E1 Disclaimer banner | pure-ext | `--repo DIR` | the **first non-blank line** of every `.md` under `DIR` is byte-identical to `⚠️ ACADEMIC RESEARCH PURPOSES ONLY; NOT FOR MEDICAL USE WITHOUT LICENSED OVERSIGHT` — one fixed repeated string, no paraphrase or cross-reference (distinct from the README's *What it is not* scope paragraph). Exclusions: the exact paths in `E1_ALLOWLIST`, see below. |
 | E2 Skill registry | pure-ext | `--repo DIR` | `skills/*.md` on disk and the rows of follow-agent-contract.md **§10** are in bijection (no orphan file, no dangling row); a skill whose header declares it `class: special` must declare write scope **`none`**. |
 | E3 pmid resolution | online-ext | `--online` | every `pmid:` in `graph.json` resolves via NCBI E-utilities (`esummary`). **NON-BLOCKING**: it needs network + a live third-party service, is reported separately, and **never** changes the exit code. A service outage reports *UNAVAILABLE*, not a failure. |
-| E4 System registry | pure-ext | `--repo DIR` | `systems/*.md` and `tracer/*.md` on disk and the paths named in follow-agent-contract.md **§11** are in bijection. The two directories are hard-coded; a markdown file anywhere else is not a system row. |
-| E5 Identity line | pure-ext | `--repo DIR` | the header of every `skills/*.md`, `systems/*.md` and `tracer/*.md` matches follow-agent-contract.md **§0c**: skills are `type: resource.procedure` with `spec: agent.skill`, systems and tracer are `type: agent.system` with `spec: fleet.campaign`. `fleet/*.md` carries `spec: fleet.campaign` and declares no `type`. `agent.swarm` and `agent.fleet` are refused as a `spec` or a `type`. The markdown may name either string when it says it is neither. |
+| E4 System registry | pure-ext | `--repo DIR` | `systems/*.md` on disk and the paths named in follow-agent-contract.md **§11** are in bijection. The directory is hard-coded; a section 11 link that is not `systems/<file>.md` is not a row, and a file in `systems/` that §11 does not name is an orphan. |
+| E5 Identity line | pure-ext | `--repo DIR` | the header of every `skills/*.md` and `systems/*.md` matches follow-agent-contract.md **§0c**: skills are `type: resource.procedure` with `spec: agent.skill`, systems are `type: agent.system` with `spec: fleet.campaign`. A header outside those two directories that carries either spec is an orphan, except the exact paths in `E5_SPEC_ALLOWLIST`. `agent.swarm` and `agent.fleet` are refused as a `spec` or a `type`. The markdown may name either string when it says it is neither. |
 
 E1, E2, E4, and E5 are pure and **do** gate (exit `1` on violation) when `--repo` is supplied. E3 never gates.
 
 ### Trace judgements
 
-`--trace CORE.trace WORKER.trace …` decides `tracer/record-fleet-traces.md`. The carrier sets (`Skill`, `Act`, `Gate`, `Step`, `Fields`, `Context`) are literals in `verify.py`. They are not loaded from the markdown. Exit `0` is the judgement `result`. Any other exit is `partial` and names the first code in the spec's order: `R1`, `R3`, `admit`, then `R2`, `R4`–`R10`. `admit` reports the line code (`syntax`, `hash`, `run`, `skill`, `act`, `fields`, `value`, `parent`). A `result` does not discharge `follow-agent-contract.md` §8.16, and it does not decide that a logged act occurred.
+`--trace CORE.trace WORKER.trace …` decides `systems/record-traces.md`. The carrier sets (`Skill`, `Act`, `Gate`, `Step`, `Fields`, `Context`) are literals in `verify.py`. They are not loaded from the markdown. Exit `0` is the judgement `result`. Any other exit is `partial` and names the first code in the spec's order: `R1`, `R3`, `admit`, then `R2`, `R4`–`R10`. `admit` reports the line code (`syntax`, `hash`, `run`, `skill`, `act`, `fields`, `value`, `parent`). A `result` does not discharge `follow-agent-contract.md` §8.16, and it does not decide that a logged act occurred.
 
 ### E1's exclusion allowlist
 
@@ -123,7 +123,7 @@ catalogue. §8.16 is reported as not discharged. No violations found.
 4. **§8.18 scope.** Reported only when both dictionaries are empty (otherwise N/A).
 
 ## Tests & CI
-- `python3 verifier/tests/test_verify.py` — 39 verifier tests: one minimal failing fixture per pure predicate plus §8.19,
+- `python3 verifier/tests/test_verify.py` — 43 verifier tests: one minimal failing fixture per pure predicate plus §8.19,
   failing + passing fixtures for the E1/E2/E4/E5 extension predicates (and an offline no-op test for E3), the four tests
   that pin E1's exclusion allowlist, the trace witness plus the admit / R9 / R10 refusals, and the HELM scope-vs-monomer distinction. (pytest optional; a stdlib runner is built in.)
   **`--merge` (§6) is not covered by the suite**: no test exercises it, so the merge path is implemented and unverified.
