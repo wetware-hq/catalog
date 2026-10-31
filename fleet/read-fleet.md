@@ -1,6 +1,6 @@
 ⚠️ ACADEMIC RESEARCH PURPOSES ONLY; NOT FOR MEDICAL USE WITHOUT LICENSED OVERSIGHT
 
-# run a fleet
+# run a campaign
 
 `spec: fleet.campaign` · subordinate to `follow-agent-contract.md`, which governs on any conflict.
 
@@ -8,7 +8,7 @@
 `skills/design-binder.md`, writes BENCH and TRACES artifacts outside this repository, and hands the
 trace back to `verifier/verify.py --trace`. It declares no `type`: it is not a row of
 `follow-agent-contract.md` §0c. The run is the one §11 describes: one core, one hash, bounds, one halt.
-`agent.swarm` is not a spec. Wikidata Q863960 names collective behaviour of decentralized, self-organized systems, and that item is a different object from this run.
+`agent.swarm` and `agent.fleet` are not specs. Wikidata Q863960 names collective behaviour of decentralized, self-organized systems, and that item is a different object from this run. The run is the `fleet.campaign` in `follow-agent-contract.md` §11.
 
 ## preflight
 
@@ -61,6 +61,6 @@ python3 verifier/tests/test_verify.py
 python3 verifier/verify.py graph.json --repo .
 ```
 
-The fleet suite is hermetic. It covers content-addressed BENCH lines, tier refusal, binder admission,
+The harness suite is hermetic. It covers content-addressed BENCH lines, tier refusal, binder admission,
 the named developability motifs, JSON parsing, pre-pin refusal, Boltz fail-closed behaviour, budget
 preflight, full worker-file materialization, and an end-to-end `result` trace with live calls faked.

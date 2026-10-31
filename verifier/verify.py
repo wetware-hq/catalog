@@ -1180,12 +1180,12 @@ def check_system_registry(repo_dir, rep):
     rep.add("E4", not problems, problems)
 
 
-# Header lines named in follow-agent-contract.md section 0c. agent.swarm is refused as a spec or a
-# type. The markdown may use the word when it says that string is neither.
+# Header lines named in follow-agent-contract.md section 0c. agent.swarm and agent.fleet are
+# refused as a spec or a type. The markdown may use either word when it says that string is neither.
 _IDENTITY_TYPE_RE = re.compile(r"`type:\s*([^`]+?)`")
 _IDENTITY_SPEC_RE = re.compile(r"`spec:\s*([^`]+?)`")
 _IDENTITY_CLASS_RE = re.compile(r"`class:\s*([^`]+?)`")
-_REJECTED_RUN_UNIT = "agent.swarm"
+_REJECTED_RUN_UNITS = ("agent.swarm", "agent.fleet")
 
 
 def _identity_header(text):
@@ -1196,7 +1196,8 @@ def check_identity(repo_dir, rep):
     """E5 [pure-ext]: header lines match follow-agent-contract.md section 0c.
 
     skills/ are resource.procedure with spec agent.skill. systems/ and tracer/ are agent.system with
-    spec fleet.campaign. fleet/*.md carries spec fleet.campaign and no type. agent.swarm is refused as a spec or a type.
+    spec fleet.campaign. fleet/*.md carries spec fleet.campaign and no type. agent.swarm and
+    agent.fleet are refused as a spec or a type.
     """
     problems = []
 
@@ -1209,8 +1210,9 @@ def check_identity(repo_dir, rep):
             return ""
 
     def reject_run_unit(rel, types, specs):
-        if _REJECTED_RUN_UNIT in types or _REJECTED_RUN_UNIT in specs:
-            problems.append(f"{rel}: {_REJECTED_RUN_UNIT} is not a spec and not a type")
+        for token in _REJECTED_RUN_UNITS:
+            if token in types or token in specs:
+                problems.append(f"{rel}: {token} is not a spec and not a type")
 
     for folder, expect_type, expect_spec in (("skills", "resource.procedure", "agent.skill"),
                                              ("systems", "agent.system", "fleet.campaign"),

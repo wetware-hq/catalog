@@ -34,7 +34,7 @@ The query carries three things. Only the first is a key.
 - **Indication** — clinical or research. It is **not** stored anywhere and must not be: `follow-agent-contract.md` §2 fixes the root to exactly `version`, `pair` and `preclinical`, and an indication field would have no merge law. It lives in the query.
 - **Target expression in healthy tissue** — recorded with the query, because on-target off-tissue toxicity is the usual clinical killer and it is a property of the **target**, not of the binder. No design fixes it. A target expressed widely in healthy tissue constrains or refuses the brief before any sequence exists.
 
-**Both kill conditions are pre-registered here, before the fleet runs.** They are **defaults in this file**, not parameters a run chooses. A run may override one, and then the report states the override and its reason — a run that loosened the selectivity window says so out loud instead of starting from blank. Thresholds supplied per run are the same refitting hole one level up. Kill conditions chosen while holding a candidate get fitted to it — the panel quietly becomes the one it does not cross-react with — and a screen fitted after the fact screens nothing.
+**Both kill conditions are pre-registered here, before the campaign runs.** They are **defaults in this file**, not parameters a run chooses. A run may override one, and then the report states the override and its reason — a run that loosened the selectivity window says so out loud instead of starting from blank. Thresholds supplied per run are the same refitting hole one level up. Kill conditions chosen while holding a candidate get fitted to it — the panel quietly becomes the one it does not cross-react with — and a screen fitted after the fact screens nothing.
 
 - **Paralogue panel.** Every human protein at or above 30% identity to the target over the domain carrying the epitope; at or above 50%, the counter-screen is mandatory rather than optional. Fixed by the threshold, never hand-picked per target.
 - **Healthy-tissue bar.** The target is disqualified outright where protein-level expression is medium or high in myocardium, lung alveolar epithelium or haematopoietic progenitors, and in CNS where the construct is designed to cross. Overridable by the indication only, and the override is written down with its reason.
@@ -52,7 +52,7 @@ Refuse before designing, naming the condition that failed:
 
 ## 4. Look it up before designing it
 
-**Design does not fire until the catalogue has been asked and has come back empty for this target in this indication.** A fleet invented to find a molecule for a target that already has one sitting in the file is pure waste.
+**Design does not fire until the catalogue has been asked and has come back empty for this target in this indication.** A campaign invented to find a molecule for a target that already has one sitting in the file is pure waste.
 
 Build the reverse index for the target per `follow-agent-contract.md` §7 — pin the read to a commit SHA or tag, never a branch name.
 
@@ -63,7 +63,7 @@ Build the reverse index for the target per `follow-agent-contract.md` §7 — pi
 
 ## 5. Design
 
-Fan out a fleet of scientist agents over the design space in parallel, each carrying the same specification — target, epitope, indication-derived constraints — and reporting candidates in a common schema. Breadth is the point: independent scaffolds and independent methods, so the ordering in §6 compares genuinely different hypotheses rather than variations of one.
+The campaign fans its workers out over the design space in parallel, each carrying the same specification — target, epitope, indication-derived constraints — and reporting candidates in a common schema. Breadth is the point: independent scaffolds and independent methods, so the ordering in §6 compares genuinely different hypotheses rather than variations of one.
 
 Scaffold follows the indication, never the other way round. Minibinders and designed miniproteins, nanobodies and single-domain formats, constrained peptides and macrocycles, designed ankyrin and other repeat proteins, and conventional Fv-derived formats are all admissible; a molecule needing non-standard residues, terminal caps or an explicit disulfide pattern must be written `helm:` (`follow-agent-contract.md` §3, §8.8), and one expressible as plain L-chains must be written `aa:` (`follow-agent-contract.md` §8.13c).
 
@@ -71,7 +71,7 @@ Every candidate is carried as its **sequence**. A design has no name to drift, w
 
 ### Method selection — `EVOLVE`
 
-The design methods are not fixed in this file, because they move faster than it does. Before fanning out, the fleet reads the current state of the art and chooses from it, under three constraints.
+The design methods are not fixed in this file, because they move faster than it does. Before fanning out, the campaign reads the current state of the art and chooses from it, under three constraints.
 
 **Read the benchmark, and pin it.** Check current fleet and design architectures against the primary literature — arXiv and equivalent preprint and journal records — and the standing benchmarks those methods are scored on. A SOTA claim read at runtime is a **dated measurement, not a standing fact**: the same query two days apart returns a different answer. So the benchmark read is pinned exactly as the catalogue read is pinned to a SHA (§4), and the report's `generator` field records which benchmark, which version, which numbers and which date chose the method. A method selected from an unrecorded read is unreproducible, and a run nobody can reproduce is not a result.
 
@@ -79,7 +79,7 @@ The design methods are not fixed in this file, because they move faster than it 
 
 **No clinical axis exists.** Benchmarks score structure and affinity prediction. Not one of them scores patient benefit, so no point on this frontier is closer to clinical utility than any other, and the frontier must never be reported as though it were. Where a brief names a clinical benchmark, it is a benchmark of a *prediction*, and the report labels it so.
 
-**Token-efficiency is a stopping rule, not a style.** The §4 lookup gate is the largest saving available and runs first. Within a run: breadth buys independent hypotheses and nothing else, so the fleet fans out once over genuinely distinct scaffolds and methods rather than iterating variations, and a candidate excluded by a stage-one screen (§6) is dropped immediately rather than carried, re-scored or argued with.
+**Token-efficiency is a stopping rule, not a style.** The §4 lookup gate is the largest saving available and runs first. Within a run: breadth buys independent hypotheses and nothing else, so the campaign fans out once over genuinely distinct scaffolds and methods rather than iterating variations, and a candidate excluded by a stage-one screen (§6) is dropped immediately rather than carried, re-scored or argued with.
 
 **The auto-loop needs a stopping condition or it is a hypothesis pump.** Looping `EVOLVE` is admissible only with all of: a bar stated before the loop starts, in the axes above; a bounded iteration count and token budget; and a requirement that each iteration either crosses the bar or names what it learned that changed the next one. A loop that generates candidates at zero marginal cost and never terminates is the cheapest possible way to look productive, and every candidate it emits still owes §7 two killing assays and somebody who could run them. That obligation, not the loop, is what bounds this procedure.
 
@@ -97,7 +97,7 @@ A weighted sum cannot do this job: a total can be high for the wrong reason, and
 
 **Stage two — order the survivors, and name the scorer.** No candidate is ordered above another without the computable quantity that chose it stated outright, with its value and its uncertainty: predicted binding free energy or interface score, structural confidence, agreement between independent predictors. Every signal is labelled **prediction** or **measurement**.
 
-**There is no computable score for clinical utility.** Affinity, developability and epitope content are computable, and not one of them predicts patient benefit. That is the oracle, and no fleet closes it. Where the top two are separated only by prediction, the honest output is **unranked candidates**, not a confident first place; a run returning a #1 with no stated scorer is manufacturing the oracle step.
+**There is no computable score for clinical utility.** Affinity, developability and epitope content are computable, and not one of them predicts patient benefit. That is the oracle, and no campaign closes it. Where the top two are separated only by prediction, the honest output is **unranked candidates**, not a confident first place; a run returning a #1 with no stated scorer is manufacturing the oracle step.
 
 ### Screen performance, as the source reports it
 

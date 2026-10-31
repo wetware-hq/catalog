@@ -363,7 +363,18 @@ def test_E5_rejects_agent_swarm_as_a_spec():
     })
     rep = V.Report(); V.check_identity(repo, rep)
     assert rep.findings[0].ok is False
-    assert any("not a spec and not a type" in row for row in rep.findings[0].rows), rep.findings[0].rows
+    assert any("agent.swarm is not a spec and not a type" in row for row in rep.findings[0].rows), rep.findings[0].rows
+
+
+def test_E5_rejects_agent_fleet_as_a_spec():
+    line = "`type: resource.procedure` · `spec: agent.fleet` · subordinate.\n"
+    repo = _tmp_repo("e5_retired_fleet", {
+        "follow-agent-contract.md": V.BANNER + "\n\nfleet.campaign is the run. agent.fleet is not a spec.\n",
+        "skills/propose-pairs.md": V.BANNER + "\n\n# `propose-pairs`\n\n" + line + "\n## 0\n\n",
+    })
+    rep = V.Report(); V.check_identity(repo, rep)
+    assert rep.findings[0].ok is False
+    assert any("agent.fleet is not a spec and not a type" in row for row in rep.findings[0].rows), rep.findings[0].rows
 
 
 def test_E5_rejects_a_system_that_is_not_agent_system():

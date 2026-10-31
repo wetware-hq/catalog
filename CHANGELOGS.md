@@ -2,6 +2,14 @@
 
 # changelogs
 
+## 2026-10-31 — specbase vocabulary
+
+### changed
+
+- Sorted the specbase onto two specs. `agent.skill` is a procedure, on every file in `skills/`. `fleet.campaign` is one run, on `systems/`, `tracer/`, and `fleet/*.md`: one core, one hash, bounds, one halt. Workers are the members of that run.
+- Retired `agent.fleet` as a spec and as a type, beside `agent.swarm`. E5 rejects either token in a header. In a skill, "the campaign" names the run and "workers" names its members. "Fleet and design architectures" in `skills/design-binder.md` §5 stays a literature phrase.
+- Pinned the ordinary-word neighbours retrieved the same day. Wikidata Q205961 (skill, last revision 2541591399) and Q831663 (military campaign, alias "campaign", last revision 2552201427). `wbsearchentities` for `agent.skill`, `fleet.campaign`, `agent.fleet`, and `agent.swarm` returned empty search lists.
+
 ## 2026-10-31 — reading rule for a fleet of agents
 
 ### changed

@@ -1,6 +1,6 @@
 ⚠️ ACADEMIC RESEARCH PURPOSES ONLY; NOT FOR MEDICAL USE WITHOUT LICENSED OVERSIGHT
 
-# `BENCH` — a shared append-only commons for a fleet
+# `BENCH` — a shared append-only commons for a campaign
 
 `type: agent.system` · `spec: fleet.campaign` · subordinate to `follow-agent-contract.md`, which governs on any conflict.
 
@@ -79,7 +79,7 @@ A tier-1 measurement rooted at the core; two tier-2 predictions derived from it 
 
 ## 4. Admissibility: nothing here reaches `graph.json`
 
-`follow-agent-contract.md` §4 is a **semantic oracle**: a row enters `graph.json` only because a reader read the paper and judged the study type. Nothing a fleet writes to a scratchpad touches that gate, and this specification does not amend it.
+`follow-agent-contract.md` §4 is a **semantic oracle**: a row enters `graph.json` only because a reader read the paper and judged the study type. Nothing a campaign writes to a scratchpad touches that gate, and this specification does not amend it.
 
 - No `.bench` node, head, query answer or aggregate is a candidate row for `graph.json` or for `proposals.json`. A tier-3 record is an experimental result in a run's working notes; it is not a published paper, and `follow-agent-contract.md` §3 admits citations only as bare `pmid:<digits>`.
 - A tier-2 record is a model prediction and is categorically ineligible by `follow-agent-contract.md` §10's `special` test: it originates a claim no source has reported.

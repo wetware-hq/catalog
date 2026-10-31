@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
-"""Harness that runs one `fleet.campaign` fleet and records it as BENCH and TRACES artifacts.
+"""Harness that runs one `fleet.campaign` and records it as BENCH and TRACES artifacts.
 
 Usage is `fleet/read-fleet.md`. Bounds are arguments: this file gives none of them a default.
 
-`fleet.py run` executes `skills/design-binder.md` over a fleet of workers and writes, per worker, a
+`fleet.py run` executes `skills/design-binder.md` over the workers of that campaign and writes, per worker, a
 `.bench` scratchpad line set (systems/use-bench.md) and a `.trace` act log (tracer/record-fleet-traces.md).
 The run directory lives outside this repository, as both systems require.
 
@@ -391,7 +391,7 @@ def admit_candidate(sequence: str):
     return key, None
 
 
-# ---- the fleet -------------------------------------------------------------------------------------
+# ---- the campaign ----------------------------------------------------------------------------------
 
 WORKER_PROMPT = """$banner
 
@@ -442,7 +442,7 @@ def parse_candidates(text: str):
 
 
 class Run:
-    """One fleet run. Holds the immutable cores and collects per-worker BENCH and TRACES lines."""
+    """One campaign. Holds the immutable cores and collects per-worker BENCH and TRACES lines."""
 
     def __init__(self, *, target, indication, spec_sha, bound_n, bound_tok, models, live):
         self.target = target
@@ -521,7 +521,7 @@ class Run:
 
 def run_fleet(*, target, indication, models, out, live, bound_tok, k, bound_n=None,
               timeout=None, max_tokens=None, min_aa=None, max_aa=None):
-    """Execute skills/design-binder.md over a fleet, and record it. Returns the report."""
+    """Execute skills/design-binder.md as one campaign, and record it. Returns the report."""
     spec_sha = repo_head_sha()
     models = list(models)
     bound_n = int(bound_n if bound_n is not None else len(models) * k)
@@ -757,7 +757,7 @@ def repo_head_sha():
 
 
 def preflight(*, models, budget_usd, target, k, prompt_tokens, completion_tokens, min_aa, max_aa, workers=None):
-    """Price and probe every live service this fleet needs. Spends nothing.
+    """Price and probe every live service this campaign needs. Spends nothing.
 
     This is the cheapest-first stopping rule of skills/design-binder.md section 5, run as a gate:
     surface the Pareto-minimal option before spending anything beyond it, and refuse to launch where
@@ -811,7 +811,7 @@ def preflight(*, models, budget_usd, target, k, prompt_tokens, completion_tokens
     probe("boltz/estimate", check_boltz)
     probe("modal/run_gates", lambda: {"gates": sorted(modal_call("run_gates", {}).keys())})
 
-    # -- OpenRouter advisory spend plus the Boltz estimate is the total fleet projection ----------
+    # -- OpenRouter advisory spend plus the Boltz estimate is the total campaign projection -------
     try:
         remaining = openrouter_budget()
         budget["key_limit_usd"] = remaining.get("limit")
@@ -909,7 +909,7 @@ def main(argv=None):
     pre.add_argument("--max-aa", type=int, required=True)
     pre.add_argument("--json", action="store_true")
 
-    run = sub.add_parser("run", help="run one fleet and write its BENCH and TRACES artifacts")
+    run = sub.add_parser("run", help="run one campaign and write its BENCH and TRACES artifacts")
     run.add_argument("--target", required=True)
     run.add_argument("--indication", required=True)
     run.add_argument("--out", required=True)
