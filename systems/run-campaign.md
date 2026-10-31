@@ -13,23 +13,13 @@ one hash, bounds, one halt.
 
 ## Document graph
 
-- ← [docs/follow-agent-contract.md](../docs/follow-agent-contract.md) — supplies campaign scope and repository-write boundaries.
-- ← [skills/design-binder.md](../skills/design-binder.md) — supplies the procedure executed by the harness.
-- ← [systems/record-traces.md](record-traces.md) — supplies the act-log grammar and judgement.
-- ← [systems/use-bench.md](use-bench.md) — supplies the campaign scratch-store format.
+- ← [systems/record-traces.md](record-traces.md)
 
 ## Specification card
 
-| field | value |
-|---|---|
-| role | `agent.system` · `fleet.campaign` |
-| authority | Subordinate to `follow-agent-contract.md` §11; specifies `fleet/fleet.py`. |
-| purpose | Preflight, run, bound, record, and verify one de novo binder campaign. |
-| reads | Explicit CLI bounds, pinned catalogue SHA, target record, service status, and model prices. |
-| writes | BENCH and TRACES run files outside this repository only. |
-| invariants | No hidden defaults; Boltz is required; hypotheses never enter catalogue or proposals. |
-| failure | Refuse missing bounds, budget excess, invalid target, or unavailable required service; fail closed. |
-| verification | `fleet/tests/test_fleet.py`, `fleet.py verify`, and trace `result`. |
+| role | does | reads | writes | must | check |
+|---|---|---|---|---|---|
+| campaign system | preflight and run `design-binder` | bounds; pinned catalogue; services | `.bench`, `.trace` outside repo | catalogue hit stops before spend | fleet tests; trace `result` |
 
 ## preflight
 

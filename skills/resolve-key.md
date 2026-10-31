@@ -11,22 +11,13 @@ Nucleic-acid rows are out of scope and are refused at the door, never classified
 
 ## Document graph
 
-- ← [docs/follow-agent-contract.md](../docs/follow-agent-contract.md) — supplies key grammar, verdict semantics, and write boundaries.
-- → [skills/propose-pairs.md](propose-pairs.md) — consumes exact key resolution during catalogue intake.
-- → [systems/record-traces.md](../systems/record-traces.md) — records resolution calls, refusals, and terminal verdicts.
+- → [skills/propose-pairs.md](propose-pairs.md)
 
 ## Specification card
 
-| field | value |
-|---|---|
-| role | `resource.procedure` · `agent.skill` |
-| authority | Subordinate to `follow-agent-contract.md` §10. |
-| purpose | Resolve an admitted protein key to one identity by an exact, release-pinned path. |
-| reads | One key, intrinsic grammar, and named UniParc or UniProt releases. |
-| writes | None; return only to the caller. |
-| invariants | `unresolved`, `unavailable`, refusal, and catalogue absence remain distinct. |
-| failure | Refuse bad scope or grammar; cache `unresolved`; retry and never cache `unavailable`. |
-| verification | Contract §3 and §8 key predicates plus `resolve-key` trace judgements. |
+| role | does | reads | writes | must | check |
+|---|---|---|---|---|---|
+| read-only skill | map protein key to identity | key; named release | none | `unresolved` ≠ `unavailable` | key predicates; trace |
 
 ## Folder contract (all skills here)
 
@@ -61,7 +52,7 @@ total. no network. never fails. intrinsic: reads the bytes, needs no library and
 ns, body = split(Key, ':', 1)
     ns == "aa"                      -> assert body subset_of PROTEIN_MONOMERS ; admit
     ns == "helm", all blocks PEPTIDE-> assert monomers(body) subset_of PROTEIN_MONOMERS ; admit
-    ns == "uniprot", body matches follow-agent-contract.md §3 accession grammar -> admit
+    ns == "uniprot", body matches docs/follow-agent-contract.md §3 accession grammar -> admit
     otherwise                       -> refuse (out of scope or ungrammatical)
 
 refuse is not a classification. an RNA or DNA block is refused unexamined;

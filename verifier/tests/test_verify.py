@@ -449,18 +449,18 @@ def test_E5_rejects_a_system_that_is_not_agent_system():
 
 def _e6_card():
     values = {
-        "role": "test reference.",
-        "authority": "test only.",
-        "purpose": "exercise E6.",
-        "reads": "test bytes.",
-        "writes": "None.",
-        "invariants": "fixed shape.",
-        "failure": "fail closed.",
-        "verification": "E6.",
+        "role": "test",
+        "does": "exercise E6",
+        "reads": "bytes",
+        "writes": "none",
+        "must": "fail closed",
+        "check": "E6",
     }
-    rows = ["| field | value |", "|---|---|"]
-    rows.extend(f"| {field} | {values[field]} |" for field in V.E6_CARD_FIELDS)
-    return "\n".join(rows)
+    return "\n".join([
+        "| " + " | ".join(V.E6_CARD_FIELDS) + " |",
+        "|" + "|".join("---" for _field in V.E6_CARD_FIELDS) + "|",
+        "| " + " | ".join(values[field] for field in V.E6_CARD_FIELDS) + " |",
+    ])
 
 
 def _e6_doc(edges, *, second_heading="Specification card", card=None):
@@ -478,16 +478,16 @@ def _e6_finding(repo):
     return rep.findings[0]
 
 
-def _e6_two_node_repo(name, *, start_edges=None, contract_edges=None, start_card=None):
-    start_edges = start_edges if start_edges is not None else [
-        "- → [follow-agent-contract.md](../follow-agent-contract.md) — contract.",
+def _e6_two_node_repo(name, *, root_edges=None, sink_edges=None, root_card=None):
+    root_edges = root_edges if root_edges is not None else [
+        "- → [systems/run-campaign.md](../systems/run-campaign.md)",
     ]
-    contract_edges = contract_edges if contract_edges is not None else [
-        "- ← [start/read-repository.md](start/read-repository.md) — root.",
+    sink_edges = sink_edges if sink_edges is not None else [
+        "- ← [docs/read-repository.md](../docs/read-repository.md)",
     ]
     return _tmp_repo(name, {
-        "start/read-repository.md": _e6_doc(start_edges, card=start_card),
-        "follow-agent-contract.md": _e6_doc(contract_edges),
+        "docs/read-repository.md": _e6_doc(root_edges, card=root_card),
+        "systems/run-campaign.md": _e6_doc(sink_edges),
     })
 
 
@@ -498,9 +498,9 @@ def test_E6_repo_document_graph_passes():
 
 def test_E6_fixture_markdown_is_not_a_live_node():
     live = set(V.live_markdown_paths(REPO_ROOT))
-    assert "start/read-repository.md" in live
-    assert "follow-agent-contract.md" in live
-    assert "verifier/read-verifier.md" in live
+    assert "docs/read-repository.md" in live
+    assert "docs/follow-agent-contract.md" in live
+    assert "systems/run-campaign.md" in live
     fixture_md = {
         V._relposix(path, REPO_ROOT) for path in V._md_files(REPO_ROOT)
         if V._relposix(path, REPO_ROOT).startswith("verifier/tests/fixtures/")
@@ -517,7 +517,7 @@ def test_E6_fixture_markdown_is_not_a_live_node():
 
 def test_E6_rejects_heading_and_card_schema_drift():
     repo = _e6_two_node_repo("e6_heading")
-    path = os.path.join(repo, "start", "read-repository.md")
+    path = os.path.join(repo, "docs", "read-repository.md")
     text = open(path, encoding="utf-8").read().replace(
         "## Specification card", "## Spec card", 1)
     open(path, "w", encoding="utf-8").write(text)
@@ -526,13 +526,27 @@ def test_E6_rejects_heading_and_card_schema_drift():
     assert any("first two H2" in row for row in finding.rows), finding.rows
 
     bad_card = _e6_card().replace("| role |", "| kind |", 1)
-    repo = _e6_two_node_repo("e6_card", start_card=bad_card)
+    repo = _e6_two_node_repo("e6_card", root_card=bad_card)
     finding = _e6_finding(repo)
     assert finding.ok is False
-    assert any("card fields" in row for row in finding.rows), finding.rows
+    assert any("card header" in row for row in finding.rows), finding.rows
+
+    long_card = _e6_card().replace("| test |", "| " + "x" * 97 + " |", 1)
+    repo = _e6_two_node_repo("e6_card_cap", root_card=long_card)
+    finding = _e6_finding(repo)
+    assert finding.ok is False
+    assert any("exceed 96" in row for row in finding.rows), finding.rows
+
+    repo = _e6_two_node_repo("e6_root_cap")
+    path = os.path.join(repo, "docs", "read-repository.md")
+    with open(path, "a", encoding="utf-8") as stream:
+        stream.write("\n## Body\n\n" + "x" * V.E6_ROOT_MAX_BYTES + "\n")
+    finding = _e6_finding(repo)
+    assert finding.ok is False
+    assert any("initialization exceeds" in row for row in finding.rows), finding.rows
 
     repo = _e6_two_node_repo("e6_graph_prose")
-    path = os.path.join(repo, "start", "read-repository.md")
+    path = os.path.join(repo, "docs", "read-repository.md")
     text = open(path, encoding="utf-8").read().replace(
         "## Document graph\n\n", "## Document graph\n\nNot a list item.\n\n", 1)
     open(path, "w", encoding="utf-8").write(text)
@@ -540,17 +554,18 @@ def test_E6_rejects_heading_and_card_schema_drift():
     assert finding.ok is False
     assert any("non-edge content" in row for row in finding.rows), finding.rows
 
-    repo = _e6_two_node_repo("e6_indented_edge", start_edges=[
-        "    - → [follow-agent-contract.md](../follow-agent-contract.md) — code block.",
+    repo = _e6_two_node_repo("e6_indented_edge", root_edges=[
+        "    - → [systems/run-campaign.md](../systems/run-campaign.md)",
     ])
     finding = _e6_finding(repo)
     assert finding.ok is False
     assert any("non-edge content" in row for row in finding.rows), finding.rows
 
     repo = _e6_two_node_repo("e6_indented_card")
-    path = os.path.join(repo, "start", "read-repository.md")
+    path = os.path.join(repo, "docs", "read-repository.md")
     text = open(path, encoding="utf-8").read().replace(
-        "| field | value |", "    | field | value |", 1)
+        "| role | does | reads | writes | must | check |",
+        "    | role | does | reads | writes | must | check |", 1)
     open(path, "w", encoding="utf-8").write(text)
     finding = _e6_finding(repo)
     assert finding.ok is False
@@ -559,16 +574,21 @@ def test_E6_rejects_heading_and_card_schema_drift():
     fenced = (
         V.BANNER + "\n\n# fake\n\n```\n"
         "## Document graph\n\n"
-        "- → [follow-agent-contract.md](follow-agent-contract.md)\n\n"
+        "- → [systems/run-campaign.md](../systems/run-campaign.md)\n\n"
         "## Specification card\n\n" + _e6_card() + "\n```\n"
     )
-    repo = _tmp_repo("e6_fenced_headings", {"start/read-repository.md": fenced})
+    repo = _tmp_repo("e6_fenced_headings", {
+        "docs/read-repository.md": fenced,
+        "systems/run-campaign.md": _e6_doc([
+            "- ← [docs/read-repository.md](../docs/read-repository.md)",
+        ]),
+    })
     finding = _e6_finding(repo)
     assert finding.ok is False
     assert any("first two H2" in row for row in finding.rows), finding.rows
 
     repo = _e6_two_node_repo("e6_earlier_indented_heading")
-    path = os.path.join(repo, "start", "read-repository.md")
+    path = os.path.join(repo, "docs", "read-repository.md")
     text = open(path, encoding="utf-8").read().replace(
         "# test\n\n", "# test\n\n   ## Earlier CommonMark H2\n\n", 1)
     open(path, "w", encoding="utf-8").write(text)
@@ -577,7 +597,7 @@ def test_E6_rejects_heading_and_card_schema_drift():
     assert any("indented H2" in row for row in finding.rows), finding.rows
 
     repo = _e6_two_node_repo("e6_earlier_setext_heading")
-    path = os.path.join(repo, "start", "read-repository.md")
+    path = os.path.join(repo, "docs", "read-repository.md")
     text = open(path, encoding="utf-8").read().replace(
         "# test\n\n", "# test\n\nEarlier\n---\n\n", 1)
     open(path, "w", encoding="utf-8").write(text)
@@ -588,16 +608,21 @@ def test_E6_rejects_heading_and_card_schema_drift():
     indented = (
         V.BANNER + "\n\n# fake\n\n"
         "   ## Document graph\n\n"
-        "   - → [follow-agent-contract.md](follow-agent-contract.md)\n\n"
+        "   - → [systems/run-campaign.md](../systems/run-campaign.md)\n\n"
         "   ## Specification card\n\n" + _e6_card() + "\n"
     )
-    repo = _tmp_repo("e6_indented_headings", {"start/read-repository.md": indented})
+    repo = _tmp_repo("e6_indented_headings", {
+        "docs/read-repository.md": indented,
+        "systems/run-campaign.md": _e6_doc([
+            "- ← [docs/read-repository.md](../docs/read-repository.md)",
+        ]),
+    })
     finding = _e6_finding(repo)
     assert finding.ok is False
     assert any("first two H2" in row for row in finding.rows), finding.rows
 
     repo = _e6_two_node_repo("e6_raw_html")
-    path = os.path.join(repo, "start", "read-repository.md")
+    path = os.path.join(repo, "docs", "read-repository.md")
     text = open(path, encoding="utf-8").read().replace(
         "# test\n\n", "# test\n\n<script>\n## hidden\n</script>\n\n", 1)
     open(path, "w", encoding="utf-8").write(text)
@@ -606,25 +631,25 @@ def test_E6_rejects_heading_and_card_schema_drift():
     assert any("raw HTML" in row for row in finding.rows), finding.rows
 
 
-def test_E6_rejects_broken_and_asymmetric_edges():
-    repo = _e6_two_node_repo("e6_broken", start_edges=[
-        "- → [missing.md](../missing.md) — broken.",
+def test_E6_rejects_broken_edges_and_sink_drift():
+    repo = _e6_two_node_repo("e6_broken", root_edges=[
+        "- → [missing.md](../missing.md)",
     ])
     finding = _e6_finding(repo)
     assert finding.ok is False
     assert any("does not resolve" in row for row in finding.rows), finding.rows
 
-    repo = _e6_two_node_repo("e6_asymmetric", contract_edges=[])
+    repo = _e6_two_node_repo("e6_sink", sink_edges=[])
     finding = _e6_finding(repo)
     assert finding.ok is False
-    assert any("asymmetric edge" in row for row in finding.rows), finding.rows
+    assert any("sink must contain exactly one" in row for row in finding.rows), finding.rows
 
-    repo = _e6_two_node_repo("e6_extra_link", start_edges=[
-        "- → [follow-agent-contract.md](../follow-agent-contract.md) — see [duplicate](../follow-agent-contract.md).",
+    repo = _e6_two_node_repo("e6_annotation", root_edges=[
+        "- → [systems/run-campaign.md](../systems/run-campaign.md) — annotation",
     ])
     finding = _e6_finding(repo)
     assert finding.ok is False
-    assert any("exactly one Markdown link" in row for row in finding.rows), finding.rows
+    assert any("no edge production" in row for row in finding.rows), finding.rows
 
 
 def test_E6_rejects_unreachable_nodes_and_cycles():
@@ -635,20 +660,64 @@ def test_E6_rejects_unreachable_nodes_and_cycles():
     assert finding.ok is False
     assert any("unreachable" in row for row in finding.rows), finding.rows
 
-    repo = _e6_two_node_repo(
-        "e6_cycle",
-        start_edges=[
-            "- ← [follow-agent-contract.md](../follow-agent-contract.md) — cycle.",
-            "- → [follow-agent-contract.md](../follow-agent-contract.md) — contract.",
-        ],
-        contract_edges=[
-            "- ← [start/read-repository.md](start/read-repository.md) — root.",
-            "- → [start/read-repository.md](start/read-repository.md) — cycle.",
-        ],
-    )
+    repo = _tmp_repo("e6_cycle", {
+        "docs/read-repository.md": _e6_doc([
+            "- → [docs/follow-agent-contract.md](follow-agent-contract.md)",
+        ]),
+        "docs/follow-agent-contract.md": _e6_doc([
+            "- → [docs/read-repository.md](read-repository.md)",
+            "- → [systems/run-campaign.md](../systems/run-campaign.md)",
+        ]),
+        "systems/run-campaign.md": _e6_doc([
+            "- ← [docs/follow-agent-contract.md](../docs/follow-agent-contract.md)",
+        ]),
+    })
     finding = _e6_finding(repo)
     assert finding.ok is False
     assert any("contains a cycle" in row for row in finding.rows), finding.rows
+
+    repo = _tmp_repo("e6_transitive", {
+        "docs/read-repository.md": _e6_doc([
+            "- → [docs/follow-agent-contract.md](follow-agent-contract.md)",
+            "- → [systems/run-campaign.md](../systems/run-campaign.md)",
+        ]),
+        "docs/follow-agent-contract.md": _e6_doc([
+            "- → [systems/run-campaign.md](../systems/run-campaign.md)",
+        ]),
+        "systems/run-campaign.md": _e6_doc([
+            "- ← [docs/follow-agent-contract.md](../docs/follow-agent-contract.md)",
+        ]),
+    })
+    finding = _e6_finding(repo)
+    assert finding.ok is False
+    assert any("not transitively reduced" in row for row in finding.rows), finding.rows
+
+    repo = _tmp_repo("e6_edge_cap", {
+        "docs/read-repository.md": _e6_doc([
+            "- → [docs/a.md](a.md)",
+            "- → [docs/b.md](b.md)",
+            "- → [docs/c.md](c.md)",
+        ]),
+        **{
+            f"docs/{name}.md": _e6_doc([
+                "- → [docs/d.md](d.md)",
+                "- → [docs/e.md](e.md)",
+            ])
+            for name in ("a", "b", "c")
+        },
+        "docs/d.md": _e6_doc([
+            "- → [systems/run-campaign.md](../systems/run-campaign.md)",
+        ]),
+        "docs/e.md": _e6_doc([
+            "- → [systems/run-campaign.md](../systems/run-campaign.md)",
+        ]),
+        "systems/run-campaign.md": _e6_doc([
+            "- ← [docs/d.md](../docs/d.md)",
+        ]),
+    })
+    finding = _e6_finding(repo)
+    assert finding.ok is False
+    assert any("cap is" in row for row in finding.rows), finding.rows
 
 
 def _fence_after(label):

@@ -6,22 +6,13 @@
 
 ## Document graph
 
-- ← [docs/follow-agent-contract.md](../docs/follow-agent-contract.md) — supplies catalogue schema, evidence boundary, and proposal shape.
-- ← [skills/resolve-key.md](resolve-key.md) — supplies exact protein-key resolution and failure semantics.
-- → [systems/record-traces.md](../systems/record-traces.md) — records proposal acts without assigning study type.
+- → [systems/record-traces.md](../systems/record-traces.md)
 
 ## Specification card
 
-| field | value |
-|---|---|
-| role | `resource.procedure` · `agent.skill` |
-| authority | Subordinate to `follow-agent-contract.md` §10. |
-| purpose | Convert structured authority records into unresolved catalogue candidates. |
-| reads | Pinned catalogue and proposals plus UniProt, UniParc, ChEMBL, Thera-SAbDab, PubMed, and Europe PMC. |
-| writes | `proposals.json` only; never `graph.json`. |
-| invariants | Every proposal has binder, target, and PMID; no study-type assignment or oracle claim. |
-| failure | Stop at the first gate; distinguish refused, `unresolved`, and `unavailable`. |
-| verification | Recall 1.0, zero curator false-admits, refusal ledger, canonical serialization, and add-only checks. |
+| role | does | reads | writes | must | check |
+|---|---|---|---|---|---|
+| catalogue skill | prepare evidence candidates | structured authorities; catalogue | `proposals.json` | never classify study type | recall 1.0; zero false-admits |
 
 ## 0. Objective
 

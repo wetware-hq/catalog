@@ -1302,13 +1302,13 @@ E6_FIXTURE_PATHS = (
     "verifier/tests/fixtures/ext_registry_ok/skills/exercise-special-scope.md",
 )
 E6_ROOT = "docs/read-repository.md"
+E6_SINK = "systems/run-campaign.md"
+E6_ROOT_MAX_BYTES = 2048
+E6_EDGE_SURPLUS_MAX = 2
 E6_HEADINGS = ("## Document graph", "## Specification card")
-E6_CARD_FIELDS = (
-    "role", "authority", "purpose", "reads",
-    "writes", "invariants", "failure", "verification",
-)
-_E6_EDGE_RE = re.compile(
-    r"^- ([←→]) \[([^\]]+)\]\(([^)]+\.md)\)(?: — \S.*)?$")
+E6_CARD_FIELDS = ("role", "does", "reads", "writes", "must", "check")
+E6_CARD_VALUE_MAX = 96
+_E6_EDGE_RE = re.compile(r"^- ([←→]) \[([^\]]+)\]\(([^)]+\.md)\)$")
 _E6_LINK_RE = re.compile(r"\[[^\]\r\n]+\]\([^)]+\)")
 
 
@@ -1367,37 +1367,42 @@ def _e6_sections(text):
 
 def _e6_card_problem(lines):
     rows = [line for line in lines if line.strip()]
-    if len(rows) != len(E6_CARD_FIELDS) + 2:
-        return f"card has {max(0, len(rows) - 2)} data rows, expected {len(E6_CARD_FIELDS)}"
-    if rows[:2] != ["| field | value |", "|---|---|"]:
-        return "card header must be '| field | value |' followed by '|---|---|'"
-    fields = []
-    for line in rows[2:]:
-        if not (line.startswith("|") and line.endswith("|")):
-            return f"card row is not a two-column table row: {line!r}"
-        cells = [cell.strip() for cell in line[1:-1].split("|")]
-        if len(cells) != 2 or not cells[0] or not cells[1]:
-            return f"card row must have two non-empty cells: {line!r}"
-        fields.append(cells[0])
-    if tuple(fields) != E6_CARD_FIELDS:
-        return f"card fields are {fields!r}, expected {list(E6_CARD_FIELDS)!r}"
+    header = "| " + " | ".join(E6_CARD_FIELDS) + " |"
+    separator = "|" + "|".join("---" for _field in E6_CARD_FIELDS) + "|"
+    if len(rows) != 3:
+        return f"card has {max(0, len(rows) - 2)} data rows, expected 1"
+    if rows[:2] != [header, separator]:
+        return f"card header must be {header!r} followed by {separator!r}"
+    line = rows[2]
+    if not (line.startswith("|") and line.endswith("|")):
+        return f"card data is not a table row: {line!r}"
+    cells = [cell.strip() for cell in line[1:-1].split("|")]
+    if len(cells) != len(E6_CARD_FIELDS) or any(not cell for cell in cells):
+        return f"card data must have {len(E6_CARD_FIELDS)} non-empty cells"
+    too_long = [
+        field for field, cell in zip(E6_CARD_FIELDS, cells)
+        if len(cell.encode("utf-8")) > E6_CARD_VALUE_MAX
+    ]
+    if too_long:
+        return f"card cells exceed {E6_CARD_VALUE_MAX} UTF-8 bytes: {too_long!r}"
     return None
 
 
 def check_document_graph(repo_dir, rep):
-    """E6 [pure-ext]: fixed first H2s, cards, reciprocal links, rooted reachability, and a DAG."""
+    """E6 [pure-ext]: compact cards and a rooted, single-sink, transitively reduced DAG."""
     import posixpath
 
     problems = []
     live = live_markdown_paths(repo_dir)
     live_set = set(live)
-    if E6_ROOT not in live_set:
-        rep.add("E6", False, [f"root {E6_ROOT!r} is missing"])
+    missing_endpoints = [node for node in (E6_ROOT, E6_SINK) if node not in live_set]
+    if missing_endpoints:
+        rep.add("E6", False, [f"required graph endpoints are missing: {missing_endpoints!r}"])
         return
 
-    # Each edge must be declared at both endpoints: source `→ target`, target `← source`.
     declarations = {}
     edges = set()
+    sink_backlink = None
 
     for rel in live:
         path = os.path.join(repo_dir, *rel.split("/"))
@@ -1406,6 +1411,9 @@ def check_document_graph(repo_dir, rep):
         except (OSError, UnicodeError) as exc:
             problems.append(f"{rel}: unreadable ({exc})")
             continue
+        if rel == E6_ROOT and len(text.encode("utf-8")) > E6_ROOT_MAX_BYTES:
+            problems.append(
+                f"{rel}: initialization exceeds {E6_ROOT_MAX_BYTES} UTF-8 bytes")
         headings, graph_lines, card_lines, prefix_problems = _e6_sections(text)
         problems.extend(f"{rel}: {problem}" for problem in prefix_problems)
         first_two = tuple(line for _index, line in headings[:2])
@@ -1456,24 +1464,40 @@ def check_document_graph(repo_dir, rep):
             edges.add(edge)
             declarations.setdefault(edge, set()).add((rel, arrow))
 
-        expected_order = sorted(local, key=lambda item: (0 if item[0] == "←" else 1, item[1]))
-        if local != expected_order:
-            problems.append(f"{rel}: incoming edges must precede outgoing edges and each group must be path-sorted")
-        if not local:
-            problems.append(f"{rel}: Document graph has no edge-list item")
+        if rel == E6_SINK:
+            if len(local) != 1 or local[0][0] != "←":
+                problems.append(f"{rel}: the sink must contain exactly one incoming backlink")
+            else:
+                sink_backlink = (local[0][1], rel)
+        else:
+            if not local or any(arrow != "→" for arrow, _target in local):
+                problems.append(f"{rel}: every non-sink must list one or more outgoing edges only")
+            targets = [target for _arrow, target in local]
+            if targets != sorted(targets):
+                problems.append(f"{rel}: outgoing edges must be path-sorted")
 
     for source, target in sorted(edges):
-        expected = {(source, "→"), (target, "←")}
+        expected = {(source, "→")}
+        if (source, target) == sink_backlink:
+            expected.add((target, "←"))
         actual = declarations.get((source, target), set())
         if actual != expected:
-            missing = sorted(expected - actual)
-            problems.append(f"{source} → {target}: asymmetric edge; missing {missing!r}")
+            problems.append(
+                f"{source} → {target}: declarations are {sorted(actual)!r}, expected {sorted(expected)!r}")
+
+    edge_cap = len(live) - 1 + E6_EDGE_SURPLUS_MAX
+    if len(edges) > edge_cap:
+        problems.append(f"document graph has {len(edges)} edges, cap is {edge_cap}")
 
     outgoing = {node: set() for node in live}
     indegree = {node: 0 for node in live}
     for source, target in edges:
         outgoing[source].add(target)
         indegree[target] += 1
+
+    sinks = sorted(node for node, targets in outgoing.items() if not targets)
+    if sinks != [E6_SINK]:
+        problems.append(f"document graph sinks are {sinks!r}, expected {[E6_SINK]!r}")
 
     seen = {E6_ROOT}
     stack = [E6_ROOT]
@@ -1499,6 +1523,28 @@ def check_document_graph(repo_dir, rep):
     if visited != len(live):
         cyclic = sorted(node for node, degree in indegree.items() if degree > 0)
         problems.append(f"document graph contains a cycle through {cyclic!r}")
+
+    def has_alternate_path(source, target):
+        seen_nodes = {source}
+        stack_nodes = [source]
+        while stack_nodes:
+            node = stack_nodes.pop()
+            for neighbor in outgoing[node]:
+                if node == source and neighbor == target:
+                    continue
+                if neighbor == target:
+                    return True
+                if neighbor not in seen_nodes:
+                    seen_nodes.add(neighbor)
+                    stack_nodes.append(neighbor)
+        return False
+
+    redundant = sorted(
+        (source, target) for source, target in edges
+        if has_alternate_path(source, target)
+    )
+    if redundant:
+        problems.append(f"document graph is not transitively reduced: {redundant!r}")
 
     rep.add("E6", not problems, problems)
 

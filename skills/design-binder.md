@@ -14,23 +14,13 @@ A binder this procedure returns is a hypothesis, not a therapy, and carries no e
 
 ## Document graph
 
-- ← [docs/follow-agent-contract.md](../docs/follow-agent-contract.md) — supplies target grammar, catalogue gate, and write prohibition.
-- ← [docs/pin-references.md](../docs/pin-references.md) — supplies pinned screen-performance evidence and its limitations.
-- → [systems/record-traces.md](../systems/record-traces.md) — records catalogue context, refusals, hypotheses, and halt.
-- → [systems/run-campaign.md](../systems/run-campaign.md) — specifies the reference harness for this procedure.
+- → [systems/record-traces.md](../systems/record-traces.md)
 
 ## Specification card
 
-| field | value |
-|---|---|
-| role | `resource.procedure` · `agent.skill` · `class: special` |
-| authority | Subordinate to `follow-agent-contract.md` §10; wet-lab results remain the oracle. |
-| purpose | Generate and screen de novo binder hypotheses only after the indication-aware catalogue gate. |
-| reads | Human target, indication, healthy-tissue context, pinned catalogue, and pinned current methods. |
-| writes | None in this repository; return a disclaimer-bound experimental worklist. |
-| invariants | Every emitted sequence is a hypothesis with named scorer, uncertainty, screens, and killing assays. |
-| failure | Refuse target or safety gates; stop on same-indication evidence; keep `unavailable` distinct from no candidate. |
-| verification | Blind evidenced-target acceptance test, campaign trace judgement, and named experimental falsifiers. |
+| role | does | reads | writes | must | check |
+|---|---|---|---|---|---|
+| special skill | design and screen binder hypotheses | target; indication; pinned catalogue and methods | none | catalogue hit stops; assay-gated hypothesis only | trace result; wet-lab oracle |
 
 ## 0. Objective
 

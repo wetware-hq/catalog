@@ -6,27 +6,15 @@
 
 ## Document graph
 
-- ← [docs/read-repository.md](read-repository.md) — initializes the repository before this contract is selected.
-- → [docs/pin-references.md](pin-references.md) — pins the methods literature used by this repository.
-- → [skills/design-binder.md](../skills/design-binder.md) — special, write-nothing design procedure.
-- → [skills/propose-pairs.md](../skills/propose-pairs.md) — catalogue intake procedure.
-- → [skills/resolve-key.md](../skills/resolve-key.md) — read-only key resolution procedure.
-- → [systems/record-traces.md](../systems/record-traces.md) — run act-log specification.
-- → [systems/run-campaign.md](../systems/run-campaign.md) — reference campaign harness specification.
-- → [systems/use-bench.md](../systems/use-bench.md) — run-scoped commons specification.
+- → [docs/pin-references.md](pin-references.md)
+- → [skills/resolve-key.md](../skills/resolve-key.md)
+- → [systems/use-bench.md](../systems/use-bench.md)
 
 ## Specification card
 
-| field | value |
-|---|---|
-| role | `resource.reference` · normative reference |
-| authority | Governs every procedure, system, verifier, and agent write in this repository. |
-| purpose | Define schema, key grammar, evidence admission, merge, read, validation, and write boundaries. |
-| reads | `graph.json`, registered procedures and systems, provenance, initialization, harness, verifier, and CI. |
-| writes | Agents write only `graph.json` or `proposals.json`, and only under §9. |
-| invariants | §8 predicates, E1–E6 repository extensions, and an external oracle for §8.16. |
-| failure | Refuse unknown versions, invalid keys, unpinned runtime reads, forbidden writes, and unverified evidence. |
-| verification | `verifier/verify.py`; `--prev` adds §8.19 and `--repo` adds E1, E2, E4, E5, and E6. |
+| role | does | reads | writes | must | check |
+|---|---|---|---|---|---|
+| normative reference | define schema, evidence, merge, read, and write law | catalogue; registered specs | authorized paths under §9 | §8.16 requires paper review | `verifier/verify.py` |
 
 ## 0. Scope
 
@@ -64,16 +52,16 @@ Every live Markdown file has these as its first two H2 headings, byte-for-byte a
 
 Fenced-code contents never supply those headings. Raw HTML, an indented CommonMark H2, or a setext H2 is refused before the pair; this strict profile keeps the required pair both column-zero ATX and first in rendered structure.
 
-The document graph is a directed read-before graph rooted at `docs/read-repository.md`. Its only non-blank content is one column-zero unordered-list item per incident edge, using exactly one relative Markdown link:
+The document graph is a directed read-before DAG rooted at `docs/read-repository.md`. Its only non-blank content is a column-zero unordered list of bare relative Markdown links:
 
 - `← [path](relative.md)` declares `path → this file`.
 - `→ [path](relative.md)` declares `this file → path`.
 
-The link label is the target's repository-relative path. Each edge occurs once at each endpoint, incoming items precede outgoing items, and each group is path-sorted. Self-edges, broken or external targets, duplicate declarations, asymmetric edges, unreachable nodes, and cycles are invalid. A file may contain ordinary links elsewhere; only this first H2 defines graph edges.
+Every non-sink lists all and only its outgoing edges, path-sorted. The graph has one sink, `systems/run-campaign.md`; that file lists one incoming edge as a navigation backlink. This backlink is the only duplicated edge declaration. Labels are repository-relative paths. The graph is root-reachable, acyclic, transitively reduced, and has at most `|V| + 1` edges — two above the rooted reachability minimum. Self-edges, broken or external targets, annotations, and duplicate local items are invalid. Links elsewhere are not graph edges.
 
-The specification card is a column-zero, two-column Markdown table. Its rows occur exactly once and in this order: `role`, `authority`, `purpose`, `reads`, `writes`, `invariants`, `failure`, `verification`. Values are terse functional statements; use `None.` rather than omitting a capability. The card indexes the document and never weakens its body. The Mermaid overview in `docs/read-repository.md` is a derived rendering, not a second edge registry.
+The specification card is one GFM table row under this exact six-column header: `role`, `does`, `reads`, `writes`, `must`, `check`. Each non-empty cell is at most 96 UTF-8 bytes. Use `none` explicitly. The card routes work; it never weakens the body. The Mermaid overview is derived, not a second registry. The initialization file is at most 2,048 UTF-8 bytes.
 
-Extension predicate E6 checks this section from repository bytes: fixed H2 order, exact card fields, internal link resolution, reciprocal edges, root reachability, and acyclicity. Edge syntax is a column-zero subset of CommonMark; card tables use GitHub Flavored Markdown's table extension. The research and renderer basis is recorded in `docs/read-repository.md`.
+E6 checks the H2 profile, card shape and cap, links, single sink/backlink, reachability, acyclicity, and transitive reduction. Representation sources are in `docs/pin-references.md`.
 
 ## 1. Purpose
 

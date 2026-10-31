@@ -8,21 +8,13 @@ BENCH is working space, not a record. It is where several agents in one run put 
 
 ## Document graph
 
-- ← [docs/follow-agent-contract.md](../docs/follow-agent-contract.md) — supplies namespace, evidence, and repository-write boundaries.
-- → [systems/run-campaign.md](run-campaign.md) — implements BENCH as the campaign's run-scoped scratch store.
+- → [systems/run-campaign.md](run-campaign.md)
 
 ## Specification card
 
-| field | value |
-|---|---|
-| role | `agent.system` · `fleet.campaign` |
-| authority | Subordinate to `follow-agent-contract.md` §11. |
-| purpose | Define a run-scoped, tiered, append-only Merkle DAG for concurrent partial work. |
-| reads | Immutable run core and that run's worker `.bench` heads. |
-| writes | `.bench` files outside this repository only. |
-| invariants | Set-union merge; content-derived IDs; tiers never pool; no node reaches catalogue or proposals. |
-| failure | Refuse untiered, malformed, or foreign-run nodes; never infer truth from a declared tier. |
-| verification | Fleet content-addressing tests; off-repo TLA+ and pose reports remain non-reproducible here. |
+| role | does | reads | writes | must | check |
+|---|---|---|---|---|---|
+| campaign system | merge tiered run work | core; worker heads | `.bench` outside repo | never pool tiers or enter catalogue | fleet tests |
 
 ## 0. Scope
 

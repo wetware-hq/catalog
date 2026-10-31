@@ -10,24 +10,13 @@ One thing in the format is free: the worker's basename. The checker's answer is 
 
 ## Document graph
 
-- ← [docs/follow-agent-contract.md](../docs/follow-agent-contract.md) — supplies key predicates, oracle boundary, and registered skills.
-- ← [skills/design-binder.md](../skills/design-binder.md) — defines the design acts that a trace may report.
-- ← [skills/propose-pairs.md](../skills/propose-pairs.md) — defines the proposal acts that a trace may report.
-- ← [skills/resolve-key.md](../skills/resolve-key.md) — defines the resolution acts that a trace may report.
-- → [systems/run-campaign.md](run-campaign.md) — writes and decides trace artifacts for a campaign.
+- → [systems/run-campaign.md](run-campaign.md)
 
 ## Specification card
 
-| field | value |
-|---|---|
-| role | `agent.system` · `fleet.campaign` |
-| authority | Subordinate to `follow-agent-contract.md` §11. |
-| purpose | Define the content-addressed act log and the total `result` or `partial` judgement. |
-| reads | One immutable trace core and the run's worker `.trace` files. |
-| writes | `.trace` files outside this repository only. |
-| invariants | One run, skill, call, halt, and oracle refusal; no score, tier, study type, or clinical claim. |
-| failure | Reject bytes or shape by admission code, then return the first failed R1–R10 judgement. |
-| verification | `verifier/verify.py --trace`, the byte-exact witness below, and fleet end-to-end tests. |
+| role | does | reads | writes | must | check |
+|---|---|---|---|---|---|
+| campaign system | content-address run acts | core; worker traces | `.trace` outside repo | `oracle=not-discharged`; no scores | `verify.py --trace` |
 
 ## 0. Lines
 

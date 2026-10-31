@@ -14,21 +14,17 @@ Repo: `wetware-hq/catalog` · Compiled 30 Oct 2026 (Australia/Sydney) · Every P
 
 ## Document graph
 
-- ← [docs/follow-agent-contract.md](follow-agent-contract.md) — separates repository-method provenance from catalogue citations.
-- → [skills/design-binder.md](../skills/design-binder.md) — supplies the pinned binder-screen evidence used by the design procedure.
+- → [skills/design-binder.md](../skills/design-binder.md)
 
 ## Specification card
 
-| field | value |
-|---|---|
-| role | reference · evidence provenance |
-| authority | Informational; never admits or classifies a `graph.json` row. |
-| purpose | Pin external method claims to versions, retrievals, hashes, read status, and measured scope. |
-| reads | Versioned publisher artifacts, venue metadata, and reproducible text or figure extractions. |
-| writes | None. |
-| invariants | A resolvable identifier is not a read; non-binder benchmarks make no binder-quality claim. |
-| failure | Record no hash when bytes or extraction cannot be reproduced; state conflicts and unknowns. |
-| verification | Re-download and hash checks, explicit extraction commands, and recorded independent reads. |
+| role | does | reads | writes | must | check |
+|---|---|---|---|---|---|
+| reference | pin method claims and read status | versioned external artifacts | none | resolved is not read | hash replay; marked second reads |
+
+## Documentation graph basis
+
+[CommonMark 0.31.2](https://spec.commonmark.org/0.31.2/) supplies headings, lists, and links; [GFM 0.29](https://github.github.com/gfm/#tables-extension-) supplies cards; [AgentKit v2](https://arxiv.org/pdf/2404.11483v2), byte sha256 `029ebd4f7d8cec7b611a97b640ae33f2eafd6b9294f712bf6e2dc10cd3b2f351`, supplies natural-language dependency DAGs; [AGENTS.md](https://agents.md/) supplies path-local disclosure; [Mermaid](https://mermaid.ai/open-source/syntax/flowchart.html) supplies the derived view. Retrieved 1 Nov 2026 (Australia/Sydney). These are representation sources, not clinical evidence.
 
 ## Table
 
