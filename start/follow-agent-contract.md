@@ -2,11 +2,11 @@
 
 # `graph.json` — agent contract
 
-`type: resource.reference` · **normative**. `start/read-repository.md` is `type: initialization` and non-normative; on conflict this file governs. Implement verifiers, mergers and updaters from this file alone.
+`type: resource.reference` · **normative**. Implement verifiers, mergers and updaters from this file alone.
 
 ## 0. Scope
 
-- **Read:** `graph.json`, `start/follow-agent-contract.md`, `skills/*.md`, `systems/*.md` (§11), `start/pin-references.md`, `start/read-repository.md` (non-normative), `fleet/`, `verifier/`, `.github/workflows/`, `LICENSE`.
+- **Read:** `graph.json`, `start/follow-agent-contract.md`, `skills/*.md`, `systems/*.md` (§11), `start/pin-references.md`, `fleet/`, `verifier/`, `.github/workflows/`, `LICENSE`.
 - **Root:** no Markdown file is a direct child of the repository root. The documents opened first live in `start/`.
 - **Write:** `graph.json` and `proposals.json` only, under §9.
 - **Refuse:** writing scripts, workflows, CI, package manifests or secondary data files in this repo, `proposals.json` (§9) being the single named exception — the fleet harness under `fleet/`, verifier under `verifier/` and workflow under `.github/workflows/` are human-directed additions that exercise or check this contract and are outside every agent's write scope, so an agent reads them and does not edit them; stored ranks, scores or grades; citations other than bare `pmid:<digits>`; empty citation arrays; pairs without qualifying evidence (§4); removal or rewriting of existing rows absent explicit human supersession.
@@ -17,7 +17,7 @@ Every Markdown file in this repository opens, as its **first non-blank line**, w
 
 `⚠️ ACADEMIC RESEARCH PURPOSES ONLY; NOT FOR MEDICAL USE WITHOUT LICENSED OVERSIGHT`
 
-— one fixed, repeated string, byte-identical in every file, never paraphrased, abbreviated or replaced by a cross-reference. It states **who may act on this repository**, and is deliberately distinct from the README's *What it is not* paragraph, which states what the catalogue records; the two are not merged. This is a normative documentation invariant. It is **not** one of the nineteen §8 predicates and does not renumber them; it is checked as a verifier extension, predicate E1 (see `verifier/`).
+— one fixed, repeated string, byte-identical in every file, never paraphrased, abbreviated or replaced by a cross-reference. It states **who may act on this repository**. §1 states what the catalogue records. The two are not the same text and are not merged. This is a normative documentation invariant. It is **not** one of the nineteen §8 predicates and does not renumber them; it is checked as a verifier extension, predicate E1 (see `verifier/`).
 
 ## 0c. Identity line
 
@@ -32,7 +32,7 @@ Every file in `skills/` and `systems/` names itself once, in the header, before 
 
 ## 1. Purpose
 
-Single-file bipartite database: biological binders → protein targets. An edge lists PubMed identifiers for that pair, in one of two dictionaries separated by **study type**: `pair` for clinical benefit in humans, `preclinical` for non-human or in-vitro utility. Protein-only (§3, §8.8). The two are never merged and never ranked against each other (§7).
+Single-file bipartite database: biological binders → protein targets. An edge lists PubMed identifiers for that pair, in one of two dictionaries separated by **study type**: `pair` for clinical benefit in humans, `preclinical` for non-human or in-vitro utility. Protein-only (§3, §8.8). The two are never merged and never ranked against each other (§7). A binder is its sequence. A drug name is not a key: one molecule can carry a code, an international non-proprietary name, and a trade name that changes by market.
 
 ## 2. Schema
 

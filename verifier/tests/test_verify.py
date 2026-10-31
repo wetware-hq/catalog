@@ -380,12 +380,12 @@ def test_E6_repo_root_has_no_markdown():
 def test_E6_root_markdown_fails():
     repo = _tmp_repo("e6_root_md", {
         "notes.md": V.BANNER + "\n",
-        "start/read-repository.md": V.BANNER + "\n",
+        "start/kept.md": V.BANNER + "\n",
     })
     rep = V.Report(); V.check_root_markdown(repo, rep)
     assert rep.findings[0].ok is False
     assert any(row.startswith("notes.md:") for row in rep.findings[0].rows), rep.findings[0].rows
-    assert not any("read-repository.md" in row for row in rep.findings[0].rows), rep.findings[0].rows
+    assert not any("kept.md" in row for row in rep.findings[0].rows), rep.findings[0].rows
 
 
 def test_E5_repo_identity_lines_match():
