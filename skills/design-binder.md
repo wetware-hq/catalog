@@ -101,7 +101,7 @@ A weighted sum cannot do this job: a total can be high for the wrong reason, and
 
 ### Screen performance, as the source reports it
 
-The screen above has a published success rate, and the report carries it (§7). Source: Figure 3, panel E of the ipSAE preprint, read off the rendered panel at 600 dpi — row 9 of [`pin-references.md`](../pin-references.md), which is where the pin and the read status live. The x-axis groups are **`Recall = 0.2`**, **`Recall = 0.4`** and **`Max F1`**; the Figure 3 legend's "0.6" is an error in the source and the Results prose is the correct one. The rows below are in the panel's legend order, which is also the bar order in all three groups.
+The screen above has a published success rate, and the report carries it (§7). Source: Figure 3, panel E of the ipSAE preprint, read off the rendered panel at 600 dpi — row 9 of [`pin-references.md`](../start/pin-references.md), which is where the pin and the read status live. The x-axis groups are **`Recall = 0.2`**, **`Recall = 0.4`** and **`Max F1`**; the Figure 3 legend's "0.6" is an error in the source and the Results prose is the correct one. The rows below are in the panel's legend order, which is also the bar order in all three groups.
 
 | discriminator | legend AP | Recall = 0.2 | Recall = 0.4 | Max F1 |
 |---|---|---|---|---|

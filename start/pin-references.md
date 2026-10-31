@@ -2,6 +2,8 @@
 
 # `pin-references` — pinned reference table
 
+`type: initialization` · pinned reference table. `follow-agent-contract.md` governs on any conflict.
+
 Repo: `wetware-hq/catalog` · Compiled 30 Oct 2026 (Australia/Sydney) · Every PDF below was downloaded on the box on that date.
 
 **Pinning rule.** A bare arXiv or DOI id is *not* a pin. A pin is: versioned id + retrieval date + either (a) a SHA-256 of the delivered bytes, where the publisher serves a fixed file per version (arXiv does), or (b) where the bytes are regenerated per request (bioRxiv does), a SHA-256 of the normalised **text layer**, recorded together with the **exact runnable extraction command and tool version**, because the flags change the hash. Where neither a stable byte hash nor a reproducible command can be given, record **no hash at all** and pin DOI + version + date + the extracted values. Re-pinning is a deliberate, recorded act.

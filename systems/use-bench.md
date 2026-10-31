@@ -8,7 +8,7 @@ BENCH is working space, not a record. It is where several agents in one run put 
 
 ## 0. Scope
 
-- **Read:** this file, `follow-agent-contract.md`, the run's own `.bench` files.
+- **Read:** this file, `start/follow-agent-contract.md`, the run's own `.bench` files.
 - **Write:** `.bench` files inside a run directory, which lives outside this repository.
 - **Refuse:** `graph.json`, `proposals.json`, and every other file in this repository. This directory holds the `fleet.campaign` specifications. This file's write scope is `.bench` files inside a run directory. The harness code that appends them lives under `fleet/` and is specified by `systems/run-campaign.md`; it is outside this file's write scope (§11).
 

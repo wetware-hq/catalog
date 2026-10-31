@@ -2,6 +2,20 @@
 
 # changelogs
 
+`type: initialization` · the record of changes. `follow-agent-contract.md` governs on any conflict.
+
+## 2026-11-01 — root holds no markdown
+
+### changed
+
+- Moved the three markdown files still at the repository root into `start/`. The root holds no Markdown file. That rule is extension predicate E6.
+- `follow-agent-contract.md` stays `type: resource.reference`. The checker reads it at `start/follow-agent-contract.md`.
+- `pin-references.md` and `read-changelogs.md` are start documents. Their headers are `type: initialization`.
+
+### tested
+
+- Verifier suite and fleet suite. `graph.json` is untouched. §8.16 is not discharged.
+
 ## 2026-11-01 — initialization into start
 
 ### changed

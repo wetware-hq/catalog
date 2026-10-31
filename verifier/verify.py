@@ -5,7 +5,7 @@ Usage:
     verify.py GRAPH.json                 # pure predicates (8.1-8.15, 8.17, 8.18)
     verify.py --prev OLD.json NEW.json   # the above on NEW, plus relational 8.19 (add-only)
     verify.py --merge A.json B.json      # section 6 merge; writes canonical bytes to stdout
-    verify.py GRAPH.json --repo DIR      # + extension predicates E1 (banner), E2 (skill registry), E4 (system registry), E5 (identity line); these gate
+    verify.py GRAPH.json --repo DIR      # + extension predicates E1 (banner), E2 (skill registry), E4 (system registry), E5 (identity line), E6 (no root markdown); these gate
     verify.py GRAPH.json --online        # + E3 pmid resolution via NCBI E-utilities; NON-BLOCKING, never gates
     verify.py --trace CORE.trace W.trace # TRACES judgements (systems/record-traces.md); hard-coded carrier sets
     verify.py --json ...                 # machine-readable report on stdout
@@ -62,6 +62,7 @@ EXTENSIONS = {
     "E3": ("online-ext", "pmid: resolves via NCBI E-utilities (non-blocking)"),
     "E4": ("pure-ext", "System registry (systems/*.md <-> follow-agent-contract.md section 11)"),
     "E5": ("pure-ext", "Identity line (follow-agent-contract.md section 0c)"),
+    "E6": ("pure-ext", "No Markdown file is a direct child of the repository root"),
 }
 BANNER = "\u26a0\ufe0f ACADEMIC RESEARCH PURPOSES ONLY; NOT FOR MEDICAL USE WITHOUT LICENSED OVERSIGHT"
 
@@ -1099,7 +1100,7 @@ def _parse_section10(agents_text: str):
             continue
         if not ln.lstrip().startswith("|"):
             continue
-        m = re.search(r"\(skills/([A-Za-z0-9._\-]+\.md)\)", ln)
+        m = re.search(r"\((?:\.\./)?skills/([A-Za-z0-9._\-]+\.md)\)", ln)
         if not m:
             continue
         cells = [c.strip() for c in ln.strip().strip("|").split("|")]
@@ -1108,15 +1109,18 @@ def _parse_section10(agents_text: str):
     return rows
 
 
+_CONTRACT_REL = "start/follow-agent-contract.md"
+
+
 def check_skill_registry(repo_dir: str, rep: "Report"):
     """E2 [pure-ext]: skills/*.md <-> follow-agent-contract.md section 10 are in bijection; `special` skills declare write scope `none`."""
     import os
     problems = []
     disk = {os.path.relpath(p0, repo_dir).replace(os.sep, "/") for p0 in _md_files(repo_dir)
             if os.path.relpath(p0, repo_dir).replace(os.sep, "/").startswith("skills/")}
-    agents_path = os.path.join(repo_dir, "follow-agent-contract.md")
+    agents_path = os.path.join(repo_dir, _CONTRACT_REL)
     if not os.path.exists(agents_path):
-        rep.add("E2", False, ["follow-agent-contract.md not found; cannot check the registry"]); return
+        rep.add("E2", False, [f"{_CONTRACT_REL} not found; cannot check the registry"]); return
     rows = _parse_section10(open(agents_path, encoding="utf-8").read())
     listed = {r[0] for r in rows}
 
@@ -1141,7 +1145,9 @@ _SYSTEM_PATH_RE = re.compile(r"systems/[A-Za-z0-9._-]+\.md")
 def parse_section11(agents_text):
     """Markdown paths linked from follow-agent-contract.md section 11, in order.
 
-    A row is a link whose target ends in .md. The bijection admits only systems/<file>.md.
+    A row is a link whose target ends in .md. A leading ``../`` is stripped, because the
+    contract lives in start/ and the link is file-relative. The bijection admits only
+    systems/<file>.md after that strip.
     """
     found = []
     in11 = False
@@ -1151,20 +1157,24 @@ def parse_section11(agents_text):
             continue
         if not in11:
             continue
-        found.extend(re.findall(r"\(([^)\s]+\.md)\)", ln))
+        for path in re.findall(r"\(([^)\s]+\.md)\)", ln):
+            if path.startswith("../"):
+                path = path[3:]
+            found.append(path)
     return found
 
 
 def check_system_registry(repo_dir, rep):
     """E4 [pure-ext]: systems/*.md <-> follow-agent-contract.md section 11 are in bijection.
 
-    The directory is hard-coded. A markdown link in section 11 that is not systems/<file>.md is not a row
-    this check accepts. A file in systems/ that section 11 does not name is an orphan.
+    The directory is hard-coded. A markdown link in section 11 that is not systems/<file>.md
+    after stripping one leading ``../`` is not a row this check accepts. A file in systems/
+    that section 11 does not name is an orphan.
     """
     problems = []
-    agents_path = os.path.join(repo_dir, "follow-agent-contract.md")
+    agents_path = os.path.join(repo_dir, _CONTRACT_REL)
     if not os.path.exists(agents_path):
-        rep.add("E4", False, ["follow-agent-contract.md not found; cannot check the system registry"])
+        rep.add("E4", False, [f"{_CONTRACT_REL} not found; cannot check the system registry"])
         return
     found = parse_section11(open(agents_path, encoding="utf-8").read())
     if len(found) != len(set(found)):
@@ -1286,6 +1296,24 @@ def check_identity(repo_dir, rep):
     rep.add("E5", not problems, problems)
 
 
+def check_root_markdown(repo_dir, rep):
+    """E6 [pure-ext]: no Markdown file is a direct child of the repository root.
+
+    The documents opened first live in start/. A file under a subdirectory is not a root file.
+    """
+    problems = []
+    try:
+        names = sorted(os.listdir(repo_dir))
+    except OSError as exc:
+        rep.add("E6", False, [f"unreadable ({exc})"])
+        return
+    for name in names:
+        path = os.path.join(repo_dir, name)
+        if name.endswith(".md") and os.path.isfile(path):
+            problems.append(f"{name}: Markdown file at the repository root; start documents live in start/")
+    rep.add("E6", not problems, problems)
+
+
 def check_online_pmids(graph_path: str):
     """E3 [online-ext]: every pmid in graph.json resolves via NCBI E-utilities. NON-BLOCKING: never affects exit code.
     Returns (checked, resolved, unresolved_list, unavailable_bool)."""
@@ -1338,7 +1366,7 @@ def main(argv=None):
     ap.add_argument("graph", nargs="?", help="graph.json to validate")
     ap.add_argument("--prev", metavar="OLD", help="predecessor graph.json for relational 8.19 (add-only)")
     ap.add_argument("--merge", nargs=2, metavar=("A", "B"), help="merge two files per section 6 to stdout")
-    ap.add_argument("--repo", metavar="DIR", help="run repository extension predicates (E1 banner, E2 skill registry, E4 system registry, E5 identity line) over DIR")
+    ap.add_argument("--repo", metavar="DIR", help="run repository extension predicates (E1 banner, E2 skill registry, E4 system registry, E5 identity line, E6 no root markdown) over DIR")
     ap.add_argument("--trace", nargs="+", metavar="FILE",
                     help="decide systems/record-traces.md: CORE.trace followed by worker .trace files")
     ap.add_argument("--online", action="store_true",
@@ -1384,6 +1412,7 @@ def main(argv=None):
         check_skill_registry(a.repo, rep)   # E2
         check_system_registry(a.repo, rep)  # E4
         check_identity(a.repo, rep)         # E5
+        check_root_markdown(a.repo, rep)    # E6
 
     # 16 oracle: always reported as not discharged (only meaningful when a graph was checked)
     oracle_note = "8.16 (oracle) Inclusion and study type: NOT DISCHARGED - requires reading each paper (section 4, 9.3)."

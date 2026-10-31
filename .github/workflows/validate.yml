@@ -35,7 +35,7 @@ jobs:
           else
             echo "no predecessor graph.json; skipping 8.19"
           fi
-      - name: Extension predicates (E1 banner, E2 skill registry, E4 system registry, E5 identity line)
+      - name: Extension predicates (E1 banner, E2 skill registry, E4 system registry, E5 identity line, E6 no root markdown)
         run: python3 verifier/verify.py graph.json --repo .
 
   # Separate, NON-BLOCKING job: resolve every pmid via NCBI E-utilities. It needs network and a live third-party

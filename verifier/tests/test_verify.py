@@ -268,7 +268,7 @@ def test_E1_fixture_named_file_outside_the_fixtures_tree_still_fails():
     fails E1 when it lives anywhere other than the allowlisted path.
     """
     repo = _tmp_repo("e1_lookalike", {
-        "follow-agent-contract.md": V.BANNER + "\n\n# agents\n",
+        "start/follow-agent-contract.md": V.BANNER + "\n\n# agents\n",
         "docs/ext_disclaimer_fail/notes.md": "# notes\n\nNo banner, and not at the allowlisted path.\n",
         "tests/fixtures/ext_disclaimer_fail/notes.md": "# notes\n\nNot the allowlisted path either.\n",
     })
@@ -288,7 +288,7 @@ def test_E1_real_file_at_an_allowlisted_path_is_skipped():
     """
     rel = V.E1_ALLOWLIST[0]
     repo = _tmp_repo("e1_blindspot", {
-        "follow-agent-contract.md": V.BANNER + "\n\n# agents\n",
+        "start/follow-agent-contract.md": V.BANNER + "\n\n# agents\n",
         rel: "# a real document, no banner, parked at an allowlisted path\n",
     })
     assert V.banner_violation(os.path.join(repo, rel)) is not None   # it does violate E1 ...
@@ -322,7 +322,7 @@ _E4_AGENTS = V.BANNER + """
 
 
 def test_E4_repo_lists_exactly_the_systems():
-    text = open(os.path.join(REPO_ROOT, "follow-agent-contract.md"), encoding="utf-8").read()
+    text = open(os.path.join(REPO_ROOT, "start", "follow-agent-contract.md"), encoding="utf-8").read()
     assert V.parse_section11(text) == [
         "systems/use-bench.md",
         "systems/record-traces.md",
@@ -334,7 +334,7 @@ def test_E4_repo_lists_exactly_the_systems():
 
 def test_E4_orphan_file_fails():
     repo = _tmp_repo("e4_orphan", {
-        "follow-agent-contract.md": _E4_AGENTS,
+        "start/follow-agent-contract.md": _E4_AGENTS,
         "systems/use-bench.md": V.BANNER + "\n",
         "systems/record-traces.md": V.BANNER + "\n",
         "systems/extra.md": V.BANNER + "\n",
@@ -346,7 +346,7 @@ def test_E4_orphan_file_fails():
 
 def test_E4_dangling_row_fails():
     repo = _tmp_repo("e4_dangling", {
-        "follow-agent-contract.md": _E4_AGENTS,
+        "start/follow-agent-contract.md": _E4_AGENTS,
         "systems/use-bench.md": V.BANNER + "\n",
     })
     rep = V.Report(); V.check_system_registry(repo, rep)
@@ -363,13 +363,29 @@ def test_E4_path_outside_systems_is_not_a_row():
 | [`systems/use-bench.md`](systems/use-bench.md) | substrate | .bench only |
 """
     repo = _tmp_repo("e4_outside", {
-        "follow-agent-contract.md": agents,
+        "start/follow-agent-contract.md": agents,
         "systems/use-bench.md": V.BANNER + "\n",
         "tracer/record-fleet-traces.md": V.BANNER + "\n",
     })
     rep = V.Report(); V.check_system_registry(repo, rep)
     assert rep.findings[0].ok is False
     assert any("tracer/record-fleet-traces.md" in row and "not under systems/" in row for row in rep.findings[0].rows), rep.findings[0].rows
+
+
+def test_E6_repo_root_has_no_markdown():
+    rep = V.Report(); V.check_root_markdown(REPO_ROOT, rep)
+    assert rep.findings[0].ok is True, rep.findings[0].rows
+
+
+def test_E6_root_markdown_fails():
+    repo = _tmp_repo("e6_root_md", {
+        "notes.md": V.BANNER + "\n",
+        "start/read-repository.md": V.BANNER + "\n",
+    })
+    rep = V.Report(); V.check_root_markdown(repo, rep)
+    assert rep.findings[0].ok is False
+    assert any(row.startswith("notes.md:") for row in rep.findings[0].rows), rep.findings[0].rows
+    assert not any("read-repository.md" in row for row in rep.findings[0].rows), rep.findings[0].rows
 
 
 def test_E5_repo_identity_lines_match():
@@ -380,7 +396,7 @@ def test_E5_repo_identity_lines_match():
 def test_E5_rejects_agent_swarm_as_a_spec():
     line = "`type: resource.procedure` · `spec: agent.swarm` · subordinate.\n"
     repo = _tmp_repo("e5_run_unit", {
-        "follow-agent-contract.md": V.BANNER + "\n\nfleet.campaign is the run. agent.swarm is not a spec.\n",
+        "start/follow-agent-contract.md": V.BANNER + "\n\nfleet.campaign is the run. agent.swarm is not a spec.\n",
         "skills/propose-pairs.md": V.BANNER + "\n\n# `propose-pairs`\n\n" + line + "\n## 0\n\n",
     })
     rep = V.Report(); V.check_identity(repo, rep)
@@ -391,7 +407,7 @@ def test_E5_rejects_agent_swarm_as_a_spec():
 def test_E5_rejects_agent_fleet_as_a_spec():
     line = "`type: resource.procedure` · `spec: agent.fleet` · subordinate.\n"
     repo = _tmp_repo("e5_retired_fleet", {
-        "follow-agent-contract.md": V.BANNER + "\n\nfleet.campaign is the run. agent.fleet is not a spec.\n",
+        "start/follow-agent-contract.md": V.BANNER + "\n\nfleet.campaign is the run. agent.fleet is not a spec.\n",
         "skills/propose-pairs.md": V.BANNER + "\n\n# `propose-pairs`\n\n" + line + "\n## 0\n\n",
     })
     rep = V.Report(); V.check_identity(repo, rep)
@@ -402,7 +418,7 @@ def test_E5_rejects_agent_fleet_as_a_spec():
 def test_E5_spec_outside_skills_and_systems_is_an_orphan():
     line = "`type: agent.system` · `spec: fleet.campaign` · subordinate.\n"
     repo = _tmp_repo("e5_orphan_spec", {
-        "follow-agent-contract.md": V.BANNER + "\n\n# contract\n\n`type: resource.reference`\n\n## 0\n\n",
+        "start/follow-agent-contract.md": V.BANNER + "\n\n# contract\n\n`type: resource.reference`\n\n## 0\n\n",
         "fleet/read-fleet.md": V.BANNER + "\n\n# run\n\n" + line + "\n## 0\n\n",
     })
     rep = V.Report(); V.check_identity(repo, rep)
@@ -428,7 +444,7 @@ def test_E5_spec_allowlist_is_the_only_outside_specs():
     for rel in V.E5_SPEC_ALLOWLIST:
         text = open(os.path.join(REPO_ROOT, rel), encoding="utf-8").read()
         repo = _tmp_repo("e5_allow_" + rel.replace("/", "_"), {
-            "follow-agent-contract.md": V.BANNER + "\n",
+            "start/follow-agent-contract.md": V.BANNER + "\n",
             "notes/copied.md": text,
         })
         rep = V.Report(); V.check_identity(repo, rep)
@@ -439,7 +455,7 @@ def test_E5_spec_allowlist_is_the_only_outside_specs():
 def test_E5_rejects_a_system_that_is_not_agent_system():
     line = "`type: resource.system` · `spec: fleet.campaign` · subordinate.\n"
     repo = _tmp_repo("e5_type", {
-        "follow-agent-contract.md": V.BANNER + "\n\nfleet.campaign is the run machinery spec.\n",
+        "start/follow-agent-contract.md": V.BANNER + "\n\nfleet.campaign is the run machinery spec.\n",
         "systems/use-bench.md": V.BANNER + "\n\n# `BENCH`\n\n" + line + "\n## 0\n\n",
     })
     rep = V.Report(); V.check_identity(repo, rep)
