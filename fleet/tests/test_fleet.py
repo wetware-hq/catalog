@@ -1,4 +1,4 @@
-"""Hermetic tests for the agent.fleet runner. Standard-library unittest only."""
+"""Hermetic tests for the fleet.campaign runner. Standard-library unittest only."""
 
 from __future__ import annotations
 

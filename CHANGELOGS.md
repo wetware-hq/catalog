@@ -2,6 +2,15 @@
 
 # changelogs
 
+## 2026-10-31 — spec sort and tracer rename
+
+### changed
+
+- Renamed directory `traces/` to `tracer/`.
+- Sorted identity lines by spec: `skills/*.md` declare `spec: agent.skill`; `systems/*.md` and
+  `tracer/*.md` declare `spec: fleet.campaign`. The harness under `fleet/*.md` carries
+  `spec: fleet.campaign` and no `type`. Extension predicates E4 and E5 follow the new paths and specs.
+
 ## 2026-10-31 — term grounding
 
 ### changed

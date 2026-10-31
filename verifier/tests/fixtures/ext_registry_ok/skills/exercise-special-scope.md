@@ -2,4 +2,4 @@
 
 # exercise-special-scope
 
-`spec: agent.skill`
+`type: resource.procedure` · `class: special` · `spec: agent.skill`

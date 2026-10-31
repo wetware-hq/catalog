@@ -2,9 +2,9 @@
 
 # run a fleet
 
-`spec: agent.fleet` · subordinate to `follow-agent-contract.md`, which governs on any conflict.
+`spec: fleet.campaign` · subordinate to `follow-agent-contract.md`, which governs on any conflict.
 
-`fleet.py` is the standard-library reference harness for one `agent.fleet` run. It executes
+`fleet.py` is the standard-library reference harness for one `fleet.campaign` run. It executes
 `skills/design-binder.md`, writes BENCH and TRACES artifacts outside this repository, and hands the
 trace back to `verifier/verify.py --trace`. It declares no `type`: it is not a row of
 `follow-agent-contract.md` §0c. The run is the one §11 describes: one core, one hash, bounds, one halt.
@@ -43,7 +43,7 @@ python3 fleet/fleet.py verify /tmp/catalog-fleet
 
 `--min-aa` and `--max-aa` are sent only on the Boltz design request. They are not a grammar gate: `follow-agent-contract.md` §3 bounds the alphabet, not the length. The harness admits the target when UniProt names the organism *Homo sapiens*, pins `graph.json` to the checkout SHA, builds the target reverse index, authenticates and estimates the Boltz request, then fans out the advisory panel. A failed Boltz authentication records `unavailable` with `step:"generator"` and halts before that panel. Candidate sequences are hypotheses; nothing writes `graph.json` or `proposals.json`.
 
-A `grammar` refusal parents the call. For `design-binder`, grammar, species, not-protein, and indication-absent parent the call even when the candidate was produced after the pin (`traces/record-fleet-traces.md`).
+A `grammar` refusal parents the call. For `design-binder`, grammar, species, not-protein, and indication-absent parent the call even when the candidate was produced after the pin (`tracer/record-fleet-traces.md`).
 
 A service failure records the source and the status. It does not record a response body.
 

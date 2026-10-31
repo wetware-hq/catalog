@@ -1,10 +1,10 @@
 #!/usr/bin/env python3
-"""Harness that runs one `agent.fleet` fleet and records it as BENCH and TRACES artifacts.
+"""Harness that runs one `fleet.campaign` fleet and records it as BENCH and TRACES artifacts.
 
 Usage is `fleet/read-fleet.md`. Bounds are arguments: this file gives none of them a default.
 
 `fleet.py run` executes `skills/design-binder.md` over a fleet of workers and writes, per worker, a
-`.bench` scratchpad line set (systems/use-bench.md) and a `.trace` act log (traces/record-fleet-traces.md).
+`.bench` scratchpad line set (systems/use-bench.md) and a `.trace` act log (tracer/record-fleet-traces.md).
 The run directory lives outside this repository, as both systems require.
 
 The trace grammar is not restated here. Lines are emitted through `verifier/verify.py`'s own
@@ -57,7 +57,7 @@ GITHUB_API = "https://api.github.com"
 UNIPROT_API = "https://rest.uniprot.org/uniprotkb"
 _REPO_IN_REMOTE = re.compile(r"github\.com[:/]([\w.-]+/[\w.-]+?)(?:\.git)?$")
 
-#: Worker basenames are the one free parameter of a trace file (traces/record-fleet-traces.md, Freedom = 1).
+#: Worker basenames are the one free parameter of a trace file (tracer/record-fleet-traces.md, Freedom = 1).
 _WORKER_RE = re.compile(r"^[a-z][a-z0-9-]{0,31}$")
 
 
@@ -314,7 +314,7 @@ def openrouter_chat(model, prompt, *, max_tokens, timeout):
 
 
 def _slug(model: str) -> str:
-    """A `source` value is [A-Za-z0-9._:/-]{1,64} (traces/record-fleet-traces.md section 1)."""
+    """A `source` value is [A-Za-z0-9._:/-]{1,64} (tracer/record-fleet-traces.md section 1)."""
     return re.sub(r"[^A-Za-z0-9._:/-]", "-", model)[:40]
 
 
@@ -395,7 +395,7 @@ def admit_candidate(sequence: str):
 
 WORKER_PROMPT = """$banner
 
-You are one worker in an agent.fleet run of design-binder. A sequence you return is a hypothesis, not a therapy, and this run writes nothing to the catalogue.
+You are one worker in a fleet.campaign run of design-binder. A sequence you return is a hypothesis, not a therapy, and this run writes nothing to the catalogue.
 
 Target: $target ($organism), length $length aa.
 Indication: $indication
@@ -632,7 +632,7 @@ def run_fleet(*, target, indication, models, out, live, bound_tok, k, bound_n=No
             sequence = re.sub(r"[^A-Z]", "", (cand.get("sequence") or "").upper())
             key, bad = admit_candidate(sequence)
             if bad is not None:
-                # `grammar` is a PrePin gate, so the refusal parents the call (traces/record-fleet-traces.md, P4).
+                # `grammar` is a PrePin gate, so the refusal parents the call (tracer/record-fleet-traces.md, P4).
                 run.trace(worker, "refuse", call_parent, {"gate": "grammar", "subject": bad})
                 entry["screened"].append({"key": key[:40], "screen": "grammar", "result": bad})
                 continue
