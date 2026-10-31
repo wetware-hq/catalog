@@ -9,6 +9,15 @@
 - `follow-agent-contract.md` §11 now reads two phrases as one run. "The fleet" in a skill names the `agent.fleet` run. "A fleet of" agents, including `skills/design-binder.md` §5, names the workers of that run. Neither phrase is a second spec, and neither is Wikidata Q863960.
 - Re-checked the pins from the term-grounding entry the same day. Q529909 last revision 2516060604, Q863960 last revision 2515886205, and Q47311934 last revision 2520618032 were unchanged. The three arXiv PDF sha256 values matched the bytes at `https://arxiv.org/pdf/<id>`. `wbsearchentities` for `agent.fleet` and for `agent.swarm` (language `en`, limit 10) each returned an empty search list.
 
+## 2026-10-31 — spec sort and tracer rename
+
+### changed
+
+- Renamed directory `traces/` to `tracer/`.
+- Sorted identity lines by spec: `skills/*.md` declare `spec: agent.skill`; `systems/*.md` and
+  `tracer/*.md` declare `spec: fleet.campaign`. The harness under `fleet/*.md` carries
+  `spec: fleet.campaign` and no `type`. Extension predicates E4 and E5 follow the new paths and specs.
+
 ## 2026-10-31 — term grounding
 
 ### changed

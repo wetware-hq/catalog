@@ -22,7 +22,7 @@ python3 verifier/verify.py --prev OLD.json graph.json # + relational §8.19 (add
 python3 verifier/verify.py --merge A.json B.json      # §6 merge -> canonical bytes on stdout
 python3 verifier/verify.py graph.json --repo .        # + extension predicates E1 (banner), E2 (skill registry), E4 (system registry), E5 (identity line)
 python3 verifier/verify.py graph.json --online        # + E3 pmid resolution via NCBI E-utilities (NON-BLOCKING)
-python3 verifier/verify.py --trace core.trace a1.trace # TRACES judgements (traces/record-fleet-traces.md); carrier sets are literals
+python3 verifier/verify.py --trace core.trace a1.trace # TRACES judgements (tracer/record-fleet-traces.md); carrier sets are literals
 python3 verifier/verify.py --json graph.json          # machine-readable report
 ```
 Exit status: `0` all evaluated predicates passed · `1` a violation/refusal · `2` usage/IO error.
@@ -56,21 +56,21 @@ Each failing predicate prints its id (e.g. `8.13`) and the offending row.
 ## Extension predicates (beyond §8)
 
 These are **not** part of follow-agent-contract.md §8's nineteen normative predicates and do not renumber them. They enforce
-repository/documentation invariants agreed for `agent.fleet` and are ids-prefixed `E`:
+repository/documentation invariants agreed for `fleet.campaign` / `agent.skill` and are ids-prefixed `E`:
 
 | id | tag | mode | what it checks |
 |---|---|---|---|
 | E1 Disclaimer banner | pure-ext | `--repo DIR` | the **first non-blank line** of every `.md` under `DIR` is byte-identical to `⚠️ ACADEMIC RESEARCH PURPOSES ONLY; NOT FOR MEDICAL USE WITHOUT LICENSED OVERSIGHT` — one fixed repeated string, no paraphrase or cross-reference (distinct from the README's *What it is not* scope paragraph). Exclusions: the exact paths in `E1_ALLOWLIST`, see below. |
-| E2 Skill registry | pure-ext | `--repo DIR` | `skills/*.md` on disk and the rows of follow-agent-contract.md **§10** are in bijection (no orphan file, no dangling row); a skill whose header declares it a `special` / `agent.skill` must declare write scope **`none`**. |
+| E2 Skill registry | pure-ext | `--repo DIR` | `skills/*.md` on disk and the rows of follow-agent-contract.md **§10** are in bijection (no orphan file, no dangling row); a skill whose header declares it `class: special` must declare write scope **`none`**. |
 | E3 pmid resolution | online-ext | `--online` | every `pmid:` in `graph.json` resolves via NCBI E-utilities (`esummary`). **NON-BLOCKING**: it needs network + a live third-party service, is reported separately, and **never** changes the exit code. A service outage reports *UNAVAILABLE*, not a failure. |
-| E4 System registry | pure-ext | `--repo DIR` | `systems/*.md` and `traces/*.md` on disk and the paths named in follow-agent-contract.md **§11** are in bijection. The two directories are hard-coded; a markdown file anywhere else is not a system row. |
-| E5 Identity line | pure-ext | `--repo DIR` | the header of every `skills/*.md`, `systems/*.md` and `traces/*.md` matches follow-agent-contract.md **§0c**: skills are `type: resource.procedure`, systems and traces are `type: agent.system`, and `spec` is `agent.fleet`. `fleet/*.md` carries that spec and declares no `type`. `agent.swarm` is refused as a `spec` or a `type`. The markdown may name that string when it says it is neither. |
+| E4 System registry | pure-ext | `--repo DIR` | `systems/*.md` and `tracer/*.md` on disk and the paths named in follow-agent-contract.md **§11** are in bijection. The two directories are hard-coded; a markdown file anywhere else is not a system row. |
+| E5 Identity line | pure-ext | `--repo DIR` | the header of every `skills/*.md`, `systems/*.md` and `tracer/*.md` matches follow-agent-contract.md **§0c**: skills are `type: resource.procedure` with `spec: agent.skill`, systems and tracer are `type: agent.system` with `spec: fleet.campaign`. `fleet/*.md` carries `spec: fleet.campaign` and declares no `type`. `agent.swarm` is refused as a `spec` or a `type`. The markdown may name that string when it says it is neither. |
 
 E1, E2, E4, and E5 are pure and **do** gate (exit `1` on violation) when `--repo` is supplied. E3 never gates.
 
 ### Trace judgements
 
-`--trace CORE.trace WORKER.trace …` decides `traces/record-fleet-traces.md`. The carrier sets (`Skill`, `Act`, `Gate`, `Step`, `Fields`, `Context`) are literals in `verify.py`. They are not loaded from the markdown. Exit `0` is the judgement `result`. Any other exit is `partial` and names the first code in the spec's order: `R1`, `R3`, `admit`, then `R2`, `R4`–`R10`. `admit` reports the line code (`syntax`, `hash`, `run`, `skill`, `act`, `fields`, `value`, `parent`). A `result` does not discharge `follow-agent-contract.md` §8.16, and it does not decide that a logged act occurred.
+`--trace CORE.trace WORKER.trace …` decides `tracer/record-fleet-traces.md`. The carrier sets (`Skill`, `Act`, `Gate`, `Step`, `Fields`, `Context`) are literals in `verify.py`. They are not loaded from the markdown. Exit `0` is the judgement `result`. Any other exit is `partial` and names the first code in the spec's order: `R1`, `R3`, `admit`, then `R2`, `R4`–`R10`. `admit` reports the line code (`syntax`, `hash`, `run`, `skill`, `act`, `fields`, `value`, `parent`). A `result` does not discharge `follow-agent-contract.md` §8.16, and it does not decide that a logged act occurred.
 
 ### E1's exclusion allowlist
 
@@ -96,8 +96,8 @@ scanned like any other file. Four tests hold it shut:
 
 Version-control internals and generated tool caches (`.git`, `.pytest_cache`, `__pycache__`, …) are not walked at
 all: they are not repository content, are absent from a fresh clone, and are not exclusions of anything.
-A skill is "special" iff its header block (text before the first `## `) contains the token `agent.skill`, or a
-`class`/`type`/`spec` declaration whose value is `special`.
+A skill is "special" iff its header block (text before the first `## `) has a `class`/`type`/`spec` declaration
+whose value is `special`. Every skill carries `spec: agent.skill`; that is not the special marker.
 
 ## Current result (`graph.json`: 55 `pair` rows, 41 targets, 0 `preclinical`)
 All pure predicates **PASS**, and E1/E2/E4/E5 pass with `--repo .`. Add-only **PASSES** against `graph.json` at
