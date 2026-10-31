@@ -32,14 +32,19 @@
 - Ran a six-model live advisory fleet. After tightening the prompt and parser, all six providers
   returned three parseable candidates; no candidate was emitted as a therapy or catalogue row.
 - Probed the deployed Modal fleet and launched a 50,000-repeat synthetic sequence-design workload.
-- Authenticated the refreshed Boltz workspace key, obtained an exact estimate of USD 0.90 for 18
-  designs under a USD 2.00 cap, and launched the hosted `boltzprot` run. The API reported it running;
-  completion remains an external asynchronous event.
+- Authenticated the refreshed Boltz workspace key and priced the exact run: USD 0.90 for 18 designs,
+  plus USD 0.015582 for the advisory panel, under a USD 2.00 cap. Hosted `boltzprot` completed all
+  18 designs without an API error. Eleven passed the local hard developability screen; all 18 passed
+  the deployed Modal homology gates against their explicitly synthetic reference fixtures. The
+  resulting BENCH/TRACES run decided `result` and emitted zero candidates because the two killing
+  assays were not run.
 
 ### known limits
 
 - The live Boltz run is prediction, not measurement. It does not discharge paper inclusion,
   binding, selectivity, immunogenicity, developability, safety or patient benefit.
+- Modal's shipped human and hazard references are synthetic fixtures, not the human proteome or a
+  hazard inventory. Their pass is an integration result only and is not a safety claim.
 - BENCH query/index/replication and pose operations remain specifications, not implementations.
 - Healthy-tissue expression, paralogue-panel affinity, MHC-II prediction and the two killing assays
   remain required before any candidate may be emitted.
