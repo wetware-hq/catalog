@@ -216,8 +216,12 @@ def parse_helm(payload: str):
 
 def valid_monomer_symbol(inner: str) -> bool:
     """Heuristic separating a HELM monomer code (e.g. dF, Nle, ac, am, Thi, Hyp) from inline SMILES (e.g. CCO).
-    Decidable from bytes; see README 'Spec ambiguities'. Rule: alphanumeric token that is NOT an all-uppercase
-    multi-letter run (which is read as SMILES/non-monomer, per the [CCO] example in 8.8)."""
+
+    Section 8.8 names [CCO] as a monomer failure and [dF], [Nle], [ac], [am], [Thi], [Hyp], [dTic], [Phi]
+    as valid, and gives no general predicate. A bracketed token is a monomer iff it is alphanumeric and
+    not an all-uppercase multi-letter run. An all-uppercase monomer code longer than one character would
+    be a false negative. A registered-monomer list would be an oracle, which 8.8 forbids.
+    """
     if not re.fullmatch(r"[A-Za-z0-9]+", inner):
         return False
     if len(inner) > 1 and inner.isupper():
@@ -253,7 +257,9 @@ def aa_multiset(key: str):
 
 
 def helm_identity(key: str):
-    # normalise polymer index digits only
+    # Section 8.13(b) says "normalising polymer index digits only" and does not say which digits
+    # are polymer indexes rather than connection coordinates. Digit runs after a letter or ]
+    # are treated as indexes. The current catalogue has no collision either way.
     payload = key[len("helm:"):]
     return re.sub(r"([A-Za-z\]])([0-9]+)", lambda m: m.group(1) + "#", payload)
 
@@ -423,7 +429,10 @@ def check_pure(path: str, rep: Report):
                 seq = is_plain_lchain_helm(b[len("helm:"):])
                 if seq is not None:
                     plain[(seq,)] = b
-    # aa vs plain-L-chain helm
+    # Section 8.13(c): a plain L-chain HELM is the same molecule as the aa form, and only the
+    # aa form is valid. This check reports the collision. A standalone plain-L-chain HELM with
+    # no aa counterpart is not reported; the spec frames the rule as identity, and no such row
+    # is in the catalogue.
     for ms, aakey in aa_keys.items():
         if len(ms) == 1:
             if (ms[0],) in plain:
@@ -464,7 +473,7 @@ def check_pure(path: str, rep: Report):
     # non-pmid citation forms already caught by 10; here flag any stored rank/score keys at root
     rep.add("17", not bad17, [f"forbidden root key {k!r}" for k in bad17])
 
-    # 18 empty catalogue
+    # 18 empty catalogue. Reported only when both dictionaries are empty; otherwise N/A.
     if dicts.get("pair") == {} and dicts.get("preclinical") == {}:
         rep.add("18", raw == EMPTY_CATALOGUE,
                 [] if raw == EMPTY_CATALOGUE else ["empty catalogue not in the exact 5-line canonical form"])
