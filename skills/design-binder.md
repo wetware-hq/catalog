@@ -2,7 +2,7 @@
 
 # `design-binder` — de novo binder design
 
-`type: resource.procedure` · `class: special` · `spec: agent.fleet` · subordinate to `follow-agent-contract.md`, which governs on any conflict.
+`type: resource.procedure` · `class: special` · `spec: agent.skill` · subordinate to `follow-agent-contract.md`, which governs on any conflict.
 
 **This is not a catalogue procedure.** It needs no directory of its own: it writes nothing (§1), so there is no output boundary left to erode — the same contract `resolve-key` already has.
 

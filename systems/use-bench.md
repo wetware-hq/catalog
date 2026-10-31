@@ -2,7 +2,7 @@
 
 # `BENCH` — a shared append-only commons for a fleet
 
-`type: agent.system` · `spec: agent.fleet` · subordinate to `follow-agent-contract.md`, which governs on any conflict.
+`type: agent.system` · `spec: fleet.campaign` · subordinate to `follow-agent-contract.md`, which governs on any conflict.
 
 BENCH is working space, not a record. It is where several agents in one run put partial work while they are still working, and where any of them can search what the others have put there so far. **Nothing written here is admissible to `graph.json`** (§4 below).
 

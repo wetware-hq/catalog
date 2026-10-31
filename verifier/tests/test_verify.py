@@ -317,13 +317,13 @@ _E4_AGENTS = V.BANNER + """
 ## 11. Systems
 
 | [`systems/use-bench.md`](systems/use-bench.md) | substrate | .bench only |
-| [`traces/record-fleet-traces.md`](traces/record-fleet-traces.md) | act log | .trace only |
+| [`tracer/record-fleet-traces.md`](tracer/record-fleet-traces.md) | act log | .trace only |
 """
 
 
 def test_E4_repo_lists_exactly_bench_and_traces():
     text = open(os.path.join(REPO_ROOT, "follow-agent-contract.md"), encoding="utf-8").read()
-    assert V.parse_section11(text) == ["systems/use-bench.md", "traces/record-fleet-traces.md"]
+    assert V.parse_section11(text) == ["systems/use-bench.md", "tracer/record-fleet-traces.md"]
     rep = V.Report(); V.check_system_registry(REPO_ROOT, rep)
     assert rep.findings[0].ok is True, rep.findings[0].rows
 
@@ -333,7 +333,7 @@ def test_E4_orphan_file_fails():
         "follow-agent-contract.md": _E4_AGENTS,
         "systems/use-bench.md": V.BANNER + "\n",
         "systems/extra.md": V.BANNER + "\n",
-        "traces/record-fleet-traces.md": V.BANNER + "\n",
+        "tracer/record-fleet-traces.md": V.BANNER + "\n",
     })
     rep = V.Report(); V.check_system_registry(repo, rep)
     assert rep.findings[0].ok is False
@@ -347,7 +347,7 @@ def test_E4_dangling_row_fails():
     })
     rep = V.Report(); V.check_system_registry(repo, rep)
     assert rep.findings[0].ok is False
-    assert any("traces/record-fleet-traces.md" in row for row in rep.findings[0].rows), rep.findings[0].rows
+    assert any("tracer/record-fleet-traces.md" in row for row in rep.findings[0].rows), rep.findings[0].rows
 
 
 def test_E5_repo_identity_lines_match():
@@ -358,7 +358,7 @@ def test_E5_repo_identity_lines_match():
 def test_E5_rejects_agent_swarm_as_a_spec():
     line = "`type: resource.procedure` · `spec: agent.swarm` · subordinate.\n"
     repo = _tmp_repo("e5_run_unit", {
-        "follow-agent-contract.md": V.BANNER + "\n\nagent.fleet is the run. agent.swarm is not a spec.\n",
+        "follow-agent-contract.md": V.BANNER + "\n\nfleet.campaign is the run. agent.swarm is not a spec.\n",
         "skills/propose-pairs.md": V.BANNER + "\n\n# `propose-pairs`\n\n" + line + "\n## 0\n\n",
     })
     rep = V.Report(); V.check_identity(repo, rep)
@@ -367,9 +367,9 @@ def test_E5_rejects_agent_swarm_as_a_spec():
 
 
 def test_E5_rejects_a_system_that_is_not_agent_system():
-    line = "`type: resource.system` · `spec: agent.fleet` · subordinate.\n"
+    line = "`type: resource.system` · `spec: fleet.campaign` · subordinate.\n"
     repo = _tmp_repo("e5_type", {
-        "follow-agent-contract.md": V.BANNER + "\n\nagent.fleet is the only run-unit spec.\n",
+        "follow-agent-contract.md": V.BANNER + "\n\nfleet.campaign is the run machinery spec.\n",
         "systems/use-bench.md": V.BANNER + "\n\n# `BENCH`\n\n" + line + "\n## 0\n\n",
     })
     rep = V.Report(); V.check_identity(repo, rep)
@@ -378,7 +378,7 @@ def test_E5_rejects_a_system_that_is_not_agent_system():
 
 
 def _fence_after(label):
-    text = open(os.path.join(REPO_ROOT, "traces", "record-fleet-traces.md"), encoding="utf-8").read()
+    text = open(os.path.join(REPO_ROOT, "tracer", "record-fleet-traces.md"), encoding="utf-8").read()
     start = text.index("```\n", text.index(label)) + 4
     end = text.index("\n```", start)
     return text[start:end] + "\n"

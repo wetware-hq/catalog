@@ -2,9 +2,9 @@
 
 # `TRACES` — act log
 
-`type: agent.system` · `spec: agent.fleet` · subordinate to `follow-agent-contract.md`, which governs on any conflict.
+`type: agent.system` · `spec: fleet.campaign` · subordinate to `follow-agent-contract.md`, which governs on any conflict.
 
-A trace is the act log of one `agent.fleet` run. This file says what a legal log is. `verifier/verify.py --trace` hard-codes the lists below and decides them from bytes. It does not discharge `follow-agent-contract.md` §8.16.
+A trace is the act log of one `fleet.campaign` run. This file says what a legal log is. `verifier/verify.py --trace` hard-codes the lists below and decides them from bytes. It does not discharge `follow-agent-contract.md` §8.16.
 
 One thing in the format is free: the worker's basename. The checker's answer is `result` or `partial`. There is no field for an area, a rank, a grade, a score, a tier, a study type, or a utility.
 
@@ -199,5 +199,5 @@ Licensed oversight is required for any use of this system; none has been perform
 `verifier/verify.py --trace` decides this file. `fleet/fleet.py` writes the lines through the
 verifier's own `trace_emit`, then hands every completed run back to that checker. Extension
 predicate E4 decides the bijection between `follow-agent-contract.md` §11 and the files
-`systems/*.md` and `traces/*.md`. The identity line above is extension predicate E5
+`systems/*.md` and `tracer/*.md`. The identity line above is extension predicate E5
 (`follow-agent-contract.md` §0c). Neither decision is §8.16.
