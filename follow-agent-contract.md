@@ -196,6 +196,8 @@ The reader-facing warning is therefore not carried by a path either. It is carri
 
 **`agent.swarm` is not a spec and not a type.** No header in this tree names it as either. A run of this contract is `agent.fleet`.
 
+**Two readings, one run.** "The fleet" in a skill names that run. "A fleet of" agents, including the sentence in `skills/design-binder.md` §5 that fans out a fleet of scientist agents, names the workers of that run. Neither reading is a second spec. Neither is [Q863960](https://www.wikidata.org/wiki/Q863960): the item's English description is collective behavior of decentralized, self-organized systems, and this run has one core and one halt. Wikidata `wbsearchentities` for `agent.fleet` and for `agent.swarm`, language `en`, limit 10, returned an empty `search` array for each on this retrieval.
+
 **The ordinary words sit next to those strings, and they are not the same object.**
 
 - Wikidata [Q529909](https://www.wikidata.org/wiki/Q529909), English label "multi-agent system", English description "built of multiple interacting agents", last revision 2516060604, modified 2026-07-10T21:47:04Z. Instance of [Q96116695](https://www.wikidata.org/wiki/Q96116695) "type of system". Subclass of [Q2429814](https://www.wikidata.org/wiki/Q2429814) "software system". arXiv:2502.14743v2 (Sun, Yang, Duan, Shi, Lyu, Chang, Lin, Shen), byte sha256 `de8fbdff90b586fdd478ef5009e7584a5a1e7d37fd3c15eeab5d66fd495aab8e`. Definition 1, read off that PDF: "The multi-agent system is a system consisting of multiple independent interactive decision makers called agents, where an agent may be a person, a robot, a robotic subsystem, a manipulator's finger, a distributed computing unit, a language model, a satellite, etc."
