@@ -355,15 +355,15 @@ def test_E5_repo_identity_lines_match():
     assert rep.findings[0].ok is True, rep.findings[0].rows
 
 
-def test_E5_rejects_the_run_unit_token_with_no_production():
-    line = "`type: resource.procedure` · `spec: agent.fleet` · subordinate.\n"
+def test_E5_rejects_agent_swarm_as_a_spec():
+    line = "`type: resource.procedure` · `spec: agent.swarm` · subordinate.\n"
     repo = _tmp_repo("e5_run_unit", {
-        "follow-agent-contract.md": V.BANNER + "\n\nagent.fleet is the only run-unit spec.\n",
-        "skills/propose-pairs.md": V.BANNER + "\n\n# `propose-pairs`\n\n" + line + "\n## 0\n\nswarm\n",
+        "follow-agent-contract.md": V.BANNER + "\n\nagent.fleet is the run. agent.swarm is not a spec.\n",
+        "skills/propose-pairs.md": V.BANNER + "\n\n# `propose-pairs`\n\n" + line + "\n## 0\n\n",
     })
     rep = V.Report(); V.check_identity(repo, rep)
     assert rep.findings[0].ok is False
-    assert any("is not a name used here" in row for row in rep.findings[0].rows), rep.findings[0].rows
+    assert any("not a spec and not a type" in row for row in rep.findings[0].rows), rep.findings[0].rows
 
 
 def test_E5_rejects_a_system_that_is_not_agent_system():

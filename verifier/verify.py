@@ -1180,12 +1180,12 @@ def check_system_registry(repo_dir, rep):
     rep.add("E4", not problems, problems)
 
 
-# Header lines named in follow-agent-contract.md section 0c. The rejected run-unit spelling is a
-# literal in this checker. The markdown does not have to carry the word.
+# Header lines named in follow-agent-contract.md section 0c. agent.swarm is refused as a spec or a
+# type. The markdown may use the word when it says that string is neither.
 _IDENTITY_TYPE_RE = re.compile(r"`type:\s*([^`]+?)`")
 _IDENTITY_SPEC_RE = re.compile(r"`spec:\s*([^`]+?)`")
 _IDENTITY_CLASS_RE = re.compile(r"`class:\s*([^`]+?)`")
-_REJECTED_RUN_UNIT = "swarm"
+_REJECTED_RUN_UNIT = "agent.swarm"
 
 
 def _identity_header(text):
@@ -1196,7 +1196,7 @@ def check_identity(repo_dir, rep):
     """E5 [pure-ext]: header lines match follow-agent-contract.md section 0c.
 
     skills/ are resource.procedure. systems/ and traces/ are agent.system. spec is agent.fleet.
-    fleet/*.md carries that spec and no type. The rejected run-unit spelling is not used.
+    fleet/*.md carries that spec and no type. agent.swarm is refused as a spec or a type.
     """
     problems = []
 
@@ -1208,9 +1208,9 @@ def check_identity(repo_dir, rep):
             problems.append(f"{rel}: unreadable ({exc})")
             return ""
 
-    def reject_run_unit(rel, text):
-        if re.search(r"\b" + _REJECTED_RUN_UNIT + r"\b", text):
-            problems.append(f"{rel}: {_REJECTED_RUN_UNIT!r} is not a name used here")
+    def reject_run_unit(rel, types, specs):
+        if _REJECTED_RUN_UNIT in types or _REJECTED_RUN_UNIT in specs:
+            problems.append(f"{rel}: {_REJECTED_RUN_UNIT} is not a spec and not a type")
 
     for folder, expect_type in (("skills", "resource.procedure"),
                                 ("systems", "agent.system"),
@@ -1225,11 +1225,11 @@ def check_identity(repo_dir, rep):
             text = read(rel)
             if not text:
                 continue
-            reject_run_unit(rel, text)
             header = _identity_header(text)
-            types = _IDENTITY_TYPE_RE.findall(header)
-            specs = _IDENTITY_SPEC_RE.findall(header)
+            types = [t.strip() for t in _IDENTITY_TYPE_RE.findall(header)]
+            specs = [s.strip() for s in _IDENTITY_SPEC_RE.findall(header)]
             classes = [c.strip() for c in _IDENTITY_CLASS_RE.findall(header)]
+            reject_run_unit(rel, types, specs)
             if types != [expect_type]:
                 problems.append(f"{rel}: type {types!r}, expected {[expect_type]!r}")
             if specs != ["agent.fleet"]:
@@ -1252,16 +1252,15 @@ def check_identity(repo_dir, rep):
             text = read(rel)
             if not text:
                 continue
-            reject_run_unit(rel, text)
             header = _identity_header(text)
-            if _IDENTITY_TYPE_RE.search(header):
+            types = [t.strip() for t in _IDENTITY_TYPE_RE.findall(header)]
+            specs = [s.strip() for s in _IDENTITY_SPEC_RE.findall(header)]
+            reject_run_unit(rel, types, specs)
+            if types:
                 problems.append(f"{rel}: the harness declares no type")
-            if _IDENTITY_SPEC_RE.findall(header) != ["agent.fleet"]:
-                problems.append(f"{rel}: spec {_IDENTITY_SPEC_RE.findall(header)!r}, expected ['agent.fleet']")
+            if specs != ["agent.fleet"]:
+                problems.append(f"{rel}: spec {specs!r}, expected ['agent.fleet']")
 
-    contract = read("follow-agent-contract.md")
-    if contract:
-        reject_run_unit("follow-agent-contract.md", contract)
     rep.add("E5", not problems, problems)
 
 

@@ -7,7 +7,8 @@
 `fleet.py` is the standard-library reference harness for one `agent.fleet` run. It executes
 `skills/design-binder.md`, writes BENCH and TRACES artifacts outside this repository, and hands the
 trace back to `verifier/verify.py --trace`. It declares no `type`: it is not a row of
-`follow-agent-contract.md` §0c.
+`follow-agent-contract.md` §0c. The run is the one §11 describes: one core, one hash, bounds, one halt.
+`agent.swarm` is not a spec. Wikidata Q863960 names collective behaviour of decentralized, self-organized systems, and that item is a different object from this run.
 
 ## preflight
 
