@@ -6,7 +6,7 @@
 
 ## 0. Scope
 
-- **Read:** `graph.json`, `follow-agent-contract.md`, `skills/*.md`, `systems/*.md` (§11), `traces/*.md` (§11), `pin-pin-references.md`, `read-repository.md` (non-normative), `fleet/`, `verifier/`, `.github/workflows/`, `LICENSE`.
+- **Read:** `graph.json`, `follow-agent-contract.md`, `skills/*.md`, `systems/*.md` (§11), `traces/*.md` (§11), `pin-references.md`, `read-repository.md` (non-normative), `fleet/`, `verifier/`, `.github/workflows/`, `LICENSE`.
 - **Write:** `graph.json` and `proposals.json` only, under §9.
 - **Refuse:** writing scripts, workflows, CI, package manifests or secondary data files in this repo, `proposals.json` (§9) being the single named exception — the fleet harness under `fleet/`, verifier under `verifier/` and workflow under `.github/workflows/` are human-directed additions that exercise or check this contract and are outside every agent's write scope, so an agent reads them and does not edit them; stored ranks, scores or grades; citations other than bare `pmid:<digits>`; empty citation arrays; pairs without qualifying evidence (§4); removal or rewriting of existing rows absent explicit human supersession.
 
@@ -17,6 +17,17 @@ Every Markdown file in this repository opens, as its **first non-blank line**, w
 `⚠️ ACADEMIC RESEARCH PURPOSES ONLY; NOT FOR MEDICAL USE WITHOUT LICENSED OVERSIGHT`
 
 — one fixed, repeated string, byte-identical in every file, never paraphrased, abbreviated or replaced by a cross-reference. It states **who may act on this repository**, and is deliberately distinct from the README's *What it is not* paragraph, which states what the catalogue records; the two are not merged. This is a normative documentation invariant. It is **not** one of the nineteen §8 predicates and does not renumber them; it is checked as a verifier extension, predicate E1 (see `verifier/`).
+
+## 0c. Identity line
+
+Every file in `skills/`, `systems/` and `traces/` names itself once, in the header, before the first section heading. Extension predicate E5 checks that line. E5 is not a §8 predicate and does not renumber them.
+
+| directory | what the line says |
+|---|---|
+| `skills/` | a `resource.procedure`, spec `agent.fleet`. The one skill §10 marks `special` also says so. The others do not. |
+| `systems/`, `traces/` | an `agent.system`, spec `agent.fleet`. No class. |
+
+`agent.fleet` is the only name for a run. `agent.swarm` is not a spec and not a type. The harness under `fleet/` is not one of these files. It names that same run and does not name a type. The two strings, and the ordinary words next to them, are set out in §11.
 
 ## 1. Purpose
 
@@ -143,7 +154,7 @@ Implement from this section alone. Tags: **pure** = decidable from one file's by
 3. **File boundary.** Autonomous intake writes `proposals.json` only, and never writes `graph.json` on any branch. Admission is the act of reading the paper, and that act is what moves bytes from `proposals.json` into `graph.json`, choosing the dictionary per §4. **Trust is carried by the file, not by a branch:** a branch name is mutable and has no merge law, so a fence of the form "unverified rows live on branch X" dissolves at the first merge and relaunders those rows as verified, while `proposals.json` merges into `proposals.json` on every branch. Condition 16 is therefore discharged at the file move, by a reader, and never by the run that proposed the row.
 4. **`proposals.json`.** Root: a non-array object with exactly `version` (the number `2`) and `proposal` (an array). Each element has exactly `binder`, `target`, `pmid`, each satisfying §3. A proposal carries **no dictionary assignment**: `pair` versus `preclinical` is part of the oracle and is chosen when the paper is read. Serialise per §5; add-only per §8.19. It is not catalogue-shaped and must not be read as one.
 5. Intake procedure: [`skills/propose-pairs.md`](skills/propose-pairs.md). It enumerates structured authorities; it does not crawl prose, and its own acceptance test is rediscovery of the rows already committed.
-6. This repository ships no updater and no cron. It does ship a verifier (`verifier/`) and a workflow (`.github/workflows/validate.yml`) that runs it, and neither writes `graph.json` or `proposals.json`: a passing run proves only the pure conditions (§8) and the repository extension predicates E1, E2, and E4, which are not §8 predicates and do not renumber them (E3, pmid resolution, is non-blocking and gates nothing). It never proves §8.16. Compliance is your behaviour against this contract, not a green check.
+6. This repository ships no updater and no cron. It does ship a verifier (`verifier/`) and a workflow (`.github/workflows/validate.yml`) that runs it, and neither writes `graph.json` or `proposals.json`: a passing run proves only the pure conditions (§8) and the repository extension predicates E1, E2, E4, and E5, which are not §8 predicates and do not renumber them (E3, pmid resolution, is non-blocking and gates nothing). It never proves §8.16. Compliance is your behaviour against this contract, not a green check.
 
 A proposed row failing any rule above is **refused**, naming the condition that failed.
 
@@ -177,6 +188,22 @@ The reader-facing warning is therefore not carried by a path either. It is carri
 
 `systems/*.md` and `traces/*.md` are specifications of machinery a skill may run, not procedures a skill follows: §10 governs what a skill may do to claims, this section governs what a system is. A system is subordinate to this file on the same terms as a skill (§0), and holds no element of `graph.json` or `proposals.json`. `systems/` is the shared working substrate. `traces/` is the execution record of a run. They do not share a header, an extension, or a query.
 
+### Terms
+
+`agent.fleet` and `agent.swarm` are two strings. This contract uses the first. Retrieved 31 Oct 2026 (Australia/Sydney). The Wikidata items are live entities, pinned by last revision, with no byte hash. Each arXiv row is pinned by versioned id plus the SHA-256 of the PDF bytes downloaded that day from `https://arxiv.org/pdf/<id>`. A quoted sentence was read off that PDF's text layer (`pdftotext -layout`, poppler 24.02.0). The remainder of each paper was not read for this repository. These records describe the ordinary words. They do not replace the sentences below.
+
+**`agent.fleet` is one run.** It is the spec on every skill in §10 and on both systems in the table below. The run has one core. `run` is the SHA-256 of that core's bytes. The core carries `bound-n` and `bound-tok`. The run ends on one `halt`. Workers that append bench lines or trace lines are members of that run. Set-union merge with no coordinator is a property of the bench store inside the run.
+
+**`agent.swarm` is not a spec and not a type.** No header in this tree names it as either. A run of this contract is `agent.fleet`.
+
+**The ordinary words sit next to those strings, and they are not the same object.**
+
+- Wikidata [Q529909](https://www.wikidata.org/wiki/Q529909), English label "multi-agent system", English description "built of multiple interacting agents", last revision 2516060604, modified 2026-07-10T21:47:04Z. Instance of [Q96116695](https://www.wikidata.org/wiki/Q96116695) "type of system". Subclass of [Q2429814](https://www.wikidata.org/wiki/Q2429814) "software system". arXiv:2502.14743v2 (Sun, Yang, Duan, Shi, Lyu, Chang, Lin, Shen), byte sha256 `de8fbdff90b586fdd478ef5009e7584a5a1e7d37fd3c15eeab5d66fd495aab8e`. Definition 1, read off that PDF: "The multi-agent system is a system consisting of multiple independent interactive decision makers called agents, where an agent may be a person, a robot, a robotic subsystem, a manipulator's finger, a distributed computing unit, a language model, a satellite, etc."
+- Wikidata has no item labelled `agent.swarm`. The nearest item names a behaviour. [Q863960](https://www.wikidata.org/wiki/Q863960), English label "swarm intelligence", English description "collective behavior of decentralized, self-organized systems", last revision 2515886205, modified 2026-07-10T14:01:57Z. Instance of [Q125161275](https://www.wikidata.org/wiki/Q125161275) "type of intelligence", [Q609408](https://www.wikidata.org/wiki/Q609408) "auto-organisation", [Q188961](https://www.wikidata.org/wiki/Q188961) "decentralization", and [Q2548752](https://www.wikidata.org/wiki/Q2548752) "collective behavior". Subclass of [Q83500](https://www.wikidata.org/wiki/Q83500) "intelligence". Facet of [Q17156857](https://www.wikidata.org/wiki/Q17156857) "decentralised system" and of [Q4406838](https://www.wikidata.org/wiki/Q4406838) "self-organizing system". arXiv:2411.11616v2 (Cazenille, Toquebiau, Lobato-Dauzier, Loi, Macabre, Aubert-Kato, Genot, Bredeche), byte sha256 `e5072b74c4a622c95f7996607b3e17b2566dbc248f35dbd854a7836a65fe38bb`. The definition that paper adopts, read off that PDF: "swarm robotics involves deploying robotic agents that coordinate in a decentralized manner to achieve a common goal, with each robot limited to sensing and acting within its immediate environment."
+- [Q47311934](https://www.wikidata.org/wiki/Q47311934), English label "fleet", English description "group of vehicles operated by an organization", last revision 2520618032, modified 2026-07-21T11:05:03Z. Subclass of [Q16887380](https://www.wikidata.org/wiki/Q16887380) "group". arXiv:2510.10379v1 (Gupta, Asbery, Merchant, Anwar, Thomason), byte sha256 `e6494d40cf75e7cdc60cd7713960f58e30b515b144b243d580feb690148e79d8`. System Design, read off that PDF: "At its core, the system employs a centralized fleet manager that orchestrates robot operations through a planning and allocation framework."
+
+A run of this contract is `agent.fleet`: one core, one hash, bounds, one halt. Q863960 is collective behaviour of decentralized, self-organized systems, in the item's own spelling. Q47311934 is a group of vehicles operated by an organization. arXiv:2510.10379v1 describes a centralized fleet manager. Q863960 remains a different object from the run.
+
 | system | what it holds | write scope |
 |---|---|---|
 | [`systems/use-bench.md`](systems/use-bench.md) | a run-scoped append-only commons where a fleet's agents read and write partial work concurrently | its own `.bench` store only; never `graph.json`, never `proposals.json` |
@@ -184,7 +211,7 @@ The reader-facing warning is therefore not carried by a path either. It is carri
 
 - A system is not a skill and is not listed in §10. It originates nothing and admits nothing: §4 is untouched by anything written to a scratchpad or an act log, and a record in a `.bench` or `.trace` store is not a claim this file recognises.
 - `bench` is scoped to a single run and is discarded with it. It is not a second catalogue, and it is not a cache of `graph.json`.
-- Every `.bench` record declares an evidence tier, and no query pools across tiers — the same refusal §2 makes between clinical and preclinical, one layer down. A tier that is declared is not thereby honest; the grammar can only require the declaration.
-- `traces` records acts, not evidence. Its grammar has no tier, no study type, and no score. A `.trace` file is not a proposal and is not a bench. It is discarded with the run. The directory `traces/` in this repository is the specification only. Its judgements are decided by `verifier/verify.py --trace`. That decision is pure and does not discharge §8.16.
+- Every `.bench` record declares an evidence tier, and no query pools across tiers — the same refusal §2 makes between clinical and preclinical, one layer down. A tier that is declared is not thereby honest; the line can only require the declaration.
+- `traces` records acts, not evidence. The record has no tier, no study type, and no score. A `.trace` file is not a proposal and is not a bench. It is discarded with the run. The directory `traces/` in this repository is the specification only. `verifier/verify.py --trace` decides it. That decision is pure and does not discharge §8.16.
 - The rows of this table and the files `systems/*.md` and `traces/*.md` are in bijection. That bijection is extension predicate E4. It is not a §8 predicate and it does not renumber them.
 - Two systems, named here exactly. A specification not listed in this section is not part of this contract.

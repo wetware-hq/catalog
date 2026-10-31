@@ -2,12 +2,26 @@
 
 # changelogs
 
+## 2026-10-31 — term grounding
+
+### changed
+
+- Recorded `agent.fleet` and `agent.swarm` in `follow-agent-contract.md` §11.
+  `agent.fleet` is one run: one core, `run` equal to the hash of that core, bounds, one halt.
+  `agent.swarm` is not a spec and not a type. The checker rejects it as either. The markdown may name it when saying so.
+- Pinned the external neighbors retrieved the same day. Wikidata Q529909 (multi-agent system,
+  last revision 2516060604), Q863960 (swarm intelligence, last revision 2515886205), Q47311934
+  (fleet, last revision 2520618032). arXiv:2502.14743v2 byte sha256
+  `de8fbdff90b586fdd478ef5009e7584a5a1e7d37fd3c15eeab5d66fd495aab8e`, arXiv:2411.11616v2 byte
+  sha256 `e5072b74c4a622c95f7996607b3e17b2566dbc248f35dbd854a7836a65fe38bb`, arXiv:2510.10379v1
+  byte sha256 `e6494d40cf75e7cdc60cd7713960f58e30b515b144b243d580feb690148e79d8`.
+
 ## 2026-10-31 — minimal stable live fleet
 
 ### changed
 
 - Unified all run terminology on `fleet`. `agent.fleet` is the only run unit in the contract; the
-  removed alternate label had no production.
+  removed alternate label is not used.
 - Added `fleet/fleet.py`, a standard-library runner for `design-binder` with budget preflight,
   catalogue and UniProt gates, a required Boltz design gate, a multi-model OpenRouter advisory
   panel, BENCH worker heads, TRACES act logs and final trace verification.
@@ -26,7 +40,7 @@
 
 - Added eleven hermetic fleet tests: BENCH content addressing and tier refusal, key and length
   admission, hard developability screens, fenced/truncated JSON, pre-pin refusal, Boltz fail-closed
-  behavior, budget preflight, worker-head materialization, and a complete `result` trace.
+  behaviour, budget preflight, worker-head materialization, and a complete `result` trace.
 - Retained all 36 verifier tests and all graph/E1/E2/E4 predicates.
 - Added the fleet suite to `.github/workflows/validate.yml` and made `fleet/**` changes trigger CI.
 - Ran a six-model live advisory fleet. After tightening the prompt and parser, all six providers
@@ -48,3 +62,20 @@
 - BENCH query/index/replication and pose operations remain specifications, not implementations.
 - Healthy-tissue expression, paralogue-panel affinity, MHC-II prediction and the two killing assays
   remain required before any candidate may be emitted.
+
+## 2026-10-31 — specbase consistency
+
+### changed
+
+- Identity lines are grammar (`follow-agent-contract.md` §0c). Skills are `resource.procedure`, systems and
+  traces are `agent.system`, and the only run-unit spec is `agent.fleet`. Extension predicate E5 decides
+  that from the header bytes. The rejected run-unit token is a carrier literal in the verifier.
+- `pin-references.md` is the pinned-reference path. The doubled name did not point at a file.
+- The bench line and the trace act log are written as markdown. The checker still hard-codes the
+  trace lists. It does not read a grammar out of the file.
+- BENCH's core file is `%bench-core/1`. Its hash is the run id, so the hash cannot occur inside the file.
+  `version` is the production `"1"`.
+- The harness no longer carries a standing model panel, length window, taxon integer, branch-tip read,
+  vendor app name, or response body. Those were a second contract beside the spec. A live bound that the
+  caller does not supply is `unavailable`. CDR motif screens run only inside supplied CDR bounds. The
+  hydrophobic-patch screen has no threshold in the skill, so the harness does not invent one.
