@@ -22,7 +22,7 @@ python3 verifier/verify.py --prev OLD.json graph.json # + relational §8.19 (add
 python3 verifier/verify.py --merge A.json B.json      # §6 merge -> canonical bytes on stdout
 python3 verifier/verify.py graph.json --repo .        # + extension predicates E1 (banner), E2 (skill registry), E4 (system registry), E5 (identity line)
 python3 verifier/verify.py graph.json --online        # + E3 pmid resolution via NCBI E-utilities (NON-BLOCKING)
-python3 verifier/verify.py --trace core.trace a1.trace # TRACES judgements (systems/record-fleet-traces.md); carrier sets are literals
+python3 verifier/verify.py --trace core.trace a1.trace # TRACES judgements (systems/record-traces.md); carrier sets are literals
 python3 verifier/verify.py --json graph.json          # machine-readable report
 ```
 Exit status: `0` all evaluated predicates passed · `1` a violation/refusal · `2` usage/IO error.
@@ -70,7 +70,7 @@ E1, E2, E4, and E5 are pure and **do** gate (exit `1` on violation) when `--repo
 
 ### Trace judgements
 
-`--trace CORE.trace WORKER.trace …` decides `systems/record-fleet-traces.md`. The carrier sets (`Skill`, `Act`, `Gate`, `Step`, `Fields`, `Context`) are literals in `verify.py`. They are not loaded from the markdown. Exit `0` is the judgement `result`. Any other exit is `partial` and names the first code in the spec's order: `R1`, `R3`, `admit`, then `R2`, `R4`–`R10`. `admit` reports the line code (`syntax`, `hash`, `run`, `skill`, `act`, `fields`, `value`, `parent`). A `result` does not discharge `follow-agent-contract.md` §8.16, and it does not decide that a logged act occurred.
+`--trace CORE.trace WORKER.trace …` decides `systems/record-traces.md`. The carrier sets (`Skill`, `Act`, `Gate`, `Step`, `Fields`, `Context`) are literals in `verify.py`. They are not loaded from the markdown. Exit `0` is the judgement `result`. Any other exit is `partial` and names the first code in the spec's order: `R1`, `R3`, `admit`, then `R2`, `R4`–`R10`. `admit` reports the line code (`syntax`, `hash`, `run`, `skill`, `act`, `fields`, `value`, `parent`). A `result` does not discharge `follow-agent-contract.md` §8.16, and it does not decide that a logged act occurred.
 
 ### E1's exclusion allowlist
 

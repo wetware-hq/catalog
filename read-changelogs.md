@@ -2,6 +2,19 @@
 
 # changelogs
 
+## 2026-10-31 — filename pass
+
+### changed
+
+- Renamed `CHANGELOGS.md` to `read-changelogs.md`. The old name was not kebab-case. The verb matches the other entry documents.
+- Renamed `systems/read-fleet.md` to `systems/run-campaign.md`. Same length. The file tells an agent to run the campaign.
+- Renamed `systems/record-fleet-traces.md` to `systems/record-traces.md`. The store is TRACES. The retired `fleet` token is not in the name.
+- Left the other markdown names. Each is already verb-led kebab-case of at most five words, and the name is the action an agent takes.
+
+### tested
+
+- Verifier suite and fleet suite. `graph.json` is untouched. §8.16 is not discharged.
+
 ## 2026-10-31 — folder sort by spec
 
 ### changed

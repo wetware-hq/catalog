@@ -317,7 +317,7 @@ _E4_AGENTS = V.BANNER + """
 ## 11. Systems
 
 | [`systems/use-bench.md`](systems/use-bench.md) | substrate | .bench only |
-| [`systems/record-fleet-traces.md`](systems/record-fleet-traces.md) | act log | .trace only |
+| [`systems/record-traces.md`](systems/record-traces.md) | act log | .trace only |
 """
 
 
@@ -325,8 +325,8 @@ def test_E4_repo_lists_exactly_the_systems():
     text = open(os.path.join(REPO_ROOT, "follow-agent-contract.md"), encoding="utf-8").read()
     assert V.parse_section11(text) == [
         "systems/use-bench.md",
-        "systems/record-fleet-traces.md",
-        "systems/read-fleet.md",
+        "systems/record-traces.md",
+        "systems/run-campaign.md",
     ]
     rep = V.Report(); V.check_system_registry(REPO_ROOT, rep)
     assert rep.findings[0].ok is True, rep.findings[0].rows
@@ -336,7 +336,7 @@ def test_E4_orphan_file_fails():
     repo = _tmp_repo("e4_orphan", {
         "follow-agent-contract.md": _E4_AGENTS,
         "systems/use-bench.md": V.BANNER + "\n",
-        "systems/record-fleet-traces.md": V.BANNER + "\n",
+        "systems/record-traces.md": V.BANNER + "\n",
         "systems/extra.md": V.BANNER + "\n",
     })
     rep = V.Report(); V.check_system_registry(repo, rep)
@@ -351,7 +351,7 @@ def test_E4_dangling_row_fails():
     })
     rep = V.Report(); V.check_system_registry(repo, rep)
     assert rep.findings[0].ok is False
-    assert any("systems/record-fleet-traces.md" in row for row in rep.findings[0].rows), rep.findings[0].rows
+    assert any("systems/record-traces.md" in row for row in rep.findings[0].rows), rep.findings[0].rows
 
 
 def test_E4_path_outside_systems_is_not_a_row():
@@ -448,7 +448,7 @@ def test_E5_rejects_a_system_that_is_not_agent_system():
 
 
 def _fence_after(label):
-    text = open(os.path.join(REPO_ROOT, "systems", "record-fleet-traces.md"), encoding="utf-8").read()
+    text = open(os.path.join(REPO_ROOT, "systems", "record-traces.md"), encoding="utf-8").read()
     start = text.index("```\n", text.index(label)) + 4
     end = text.index("\n```", start)
     return text[start:end] + "\n"

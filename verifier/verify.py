@@ -7,7 +7,7 @@ Usage:
     verify.py --merge A.json B.json      # section 6 merge; writes canonical bytes to stdout
     verify.py GRAPH.json --repo DIR      # + extension predicates E1 (banner), E2 (skill registry), E4 (system registry), E5 (identity line); these gate
     verify.py GRAPH.json --online        # + E3 pmid resolution via NCBI E-utilities; NON-BLOCKING, never gates
-    verify.py --trace CORE.trace W.trace # TRACES judgements (systems/record-fleet-traces.md); hard-coded carrier sets
+    verify.py --trace CORE.trace W.trace # TRACES judgements (systems/record-traces.md); hard-coded carrier sets
     verify.py --json ...                 # machine-readable report on stdout
 
 Exit status: 0 = every evaluated pure/relational predicate passed; 1 = a violation/refusal; 2 = usage/IO error.
@@ -516,7 +516,7 @@ def do_merge(a_path: str, b_path: str):
 
 
 # ---------------------------------------------------------------------------------------------------------------
-# TRACES judgements (systems/record-fleet-traces.md). Carrier sets are literals. They are not read from the markdown.
+# TRACES judgements (systems/record-traces.md). Carrier sets are literals. They are not read from the markdown.
 # decide() is total: the first failure in the order R1, R3, admit, R2, R4..R10, else result.
 # ---------------------------------------------------------------------------------------------------------------
 TRACE_SKILLS = ("resolve-key", "propose-pairs", "design-binder")
@@ -838,7 +838,7 @@ def _trace_fail(code, rows):
 
 
 def check_trace(core_path, worker_paths):
-    """Decide systems/record-fleet-traces.md over one core file and zero or more worker files.
+    """Decide systems/record-traces.md over one core file and zero or more worker files.
 
     Returns (ok, code, rows). ok is True only for Result. code is 'result', 'R1'..'R10', or 'admit'.
     On result, rows is [run].
@@ -1340,7 +1340,7 @@ def main(argv=None):
     ap.add_argument("--merge", nargs=2, metavar=("A", "B"), help="merge two files per section 6 to stdout")
     ap.add_argument("--repo", metavar="DIR", help="run repository extension predicates (E1 banner, E2 skill registry, E4 system registry, E5 identity line) over DIR")
     ap.add_argument("--trace", nargs="+", metavar="FILE",
-                    help="decide systems/record-fleet-traces.md: CORE.trace followed by worker .trace files")
+                    help="decide systems/record-traces.md: CORE.trace followed by worker .trace files")
     ap.add_argument("--online", action="store_true",
                     help="also resolve every pmid via NCBI E-utilities (E3). NON-BLOCKING: network, never changes exit code")
     ap.add_argument("--json", action="store_true", help="machine-readable report")

@@ -27,7 +27,7 @@ Every file in `skills/` and `systems/` names itself once, in the header, before 
 | `skills/` | a `resource.procedure`, spec `agent.skill`. The one skill §10 marks `special` also says so. The others do not. |
 | `systems/` | an `agent.system`, spec `fleet.campaign`. No class. |
 
-`agent.skill` is the spec of a procedure. `fleet.campaign` is the spec of one run. `agent.swarm` and `agent.fleet` are not specs and not types. A header outside these two directories that carries either spec fails E5: that file is an orphan. The checker skips exactly two registry fixtures, `verifier/tests/fixtures/ext_registry_fail/skills/exercise-special-scope.md` and `verifier/tests/fixtures/ext_registry_ok/skills/exercise-special-scope.md`. They declare the skill spec so E2 can be tested, and they are not skills of this contract. The harness code under `fleet/` is not a row of this table. Its specification is [`systems/read-fleet.md`](systems/read-fleet.md). The four strings, and the ordinary words next to them, are set out in §11.
+`agent.skill` is the spec of a procedure. `fleet.campaign` is the spec of one run. `agent.swarm` and `agent.fleet` are not specs and not types. A header outside these two directories that carries either spec fails E5: that file is an orphan. The checker skips exactly two registry fixtures, `verifier/tests/fixtures/ext_registry_fail/skills/exercise-special-scope.md` and `verifier/tests/fixtures/ext_registry_ok/skills/exercise-special-scope.md`. They declare the skill spec so E2 can be tested, and they are not skills of this contract. The harness code under `fleet/` is not a row of this table. Its specification is [`systems/run-campaign.md`](systems/run-campaign.md). The four strings, and the ordinary words next to them, are set out in §11.
 
 ## 1. Purpose
 
@@ -186,7 +186,7 @@ The reader-facing warning is therefore not carried by a path either. It is carri
 
 ## 11. Systems
 
-`systems/*.md` are specifications of machinery a skill may run, not procedures a skill follows: §10 governs what a skill may do to claims, this section governs what a system is. A system is subordinate to this file on the same terms as a skill (§0), and holds no element of `graph.json` or `proposals.json`. Every `fleet.campaign` specification lives in this directory. A header outside `systems/` that carries that spec is an orphan and fails E5. The bench store and the trace store do not share a header, an extension, or a query. The harness code under `fleet/` writes both stores and is specified by `systems/read-fleet.md`.
+`systems/*.md` are specifications of machinery a skill may run, not procedures a skill follows: §10 governs what a skill may do to claims, this section governs what a system is. A system is subordinate to this file on the same terms as a skill (§0), and holds no element of `graph.json` or `proposals.json`. Every `fleet.campaign` specification lives in this directory. A header outside `systems/` that carries that spec is an orphan and fails E5. The bench store and the trace store do not share a header, an extension, or a query. The harness code under `fleet/` writes both stores and is specified by `systems/run-campaign.md`.
 
 ### Terms
 
@@ -214,12 +214,12 @@ A procedure of this contract is an `agent.skill`. A run of this contract is one 
 | system | what it holds | write scope |
 |---|---|---|
 | [`systems/use-bench.md`](systems/use-bench.md) | a run-scoped append-only commons where a campaign's workers read and write partial work concurrently | its own `.bench` store only; never `graph.json`, never `proposals.json` |
-| [`systems/record-fleet-traces.md`](systems/record-fleet-traces.md) | the act log of one `fleet.campaign` run: pin, call, refusal, proposal, emission, halt | its own `.trace` store only, outside this repository; never `graph.json`, never `proposals.json`, never `.bench` |
-| [`systems/read-fleet.md`](systems/read-fleet.md) | the reference harness for one run: preflight, execution of `design-binder`, and the handoff to `--trace` | no file in this repository; `fleet/fleet.py` appends the `.bench` and `.trace` stores the other rows specify, outside this repository |
+| [`systems/record-traces.md`](systems/record-traces.md) | the act log of one `fleet.campaign` run: pin, call, refusal, proposal, emission, halt | its own `.trace` store only, outside this repository; never `graph.json`, never `proposals.json`, never `.bench` |
+| [`systems/run-campaign.md`](systems/run-campaign.md) | the reference harness for one run: preflight, execution of `design-binder`, and the handoff to `--trace` | no file in this repository; `fleet/fleet.py` appends the `.bench` and `.trace` stores the other rows specify, outside this repository |
 
 - A system is not a skill and is not listed in §10. It originates nothing and admits nothing: §4 is untouched by anything written to a scratchpad or an act log, and a record in a `.bench` or `.trace` store is not a claim this file recognises.
 - `bench` is scoped to a single run and is discarded with it. It is not a second catalogue, and it is not a cache of `graph.json`.
 - Every `.bench` record declares an evidence tier, and no query pools across tiers — the same refusal §2 makes between clinical and preclinical, one layer down. A tier that is declared is not thereby honest; the line can only require the declaration.
-- The trace records acts, not evidence. The record has no tier, no study type, and no score. A `.trace` file is not a proposal and is not a bench. It is discarded with the run. The specification is `systems/record-fleet-traces.md`. `verifier/verify.py --trace` decides it. That decision is pure and does not discharge §8.16.
+- The trace records acts, not evidence. The record has no tier, no study type, and no score. A `.trace` file is not a proposal and is not a bench. It is discarded with the run. The specification is `systems/record-traces.md`. `verifier/verify.py --trace` decides it. That decision is pure and does not discharge §8.16.
 - The rows of this table and the files `systems/*.md` are in bijection. That bijection is extension predicate E4. It is not a §8 predicate and it does not renumber them.
 - Three systems, named here exactly. A specification not listed in this section is not part of this contract.
