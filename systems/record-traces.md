@@ -2,9 +2,9 @@
 
 # `TRACES` — act log
 
-`type: agent.system` · `spec: fleet.campaign` · subordinate to `follow-agent-contract.md`, which governs on any conflict.
+`type: agent.system` · `spec: fleet.campaign` · subordinate to `docs/follow-agent-contract.md`, which governs on any conflict.
 
-A trace is the act log of one `fleet.campaign` run. This file says what a legal log is. `verifier/verify.py --trace` hard-codes the lists below and decides them from bytes. It does not discharge `follow-agent-contract.md` §8.16.
+A trace is the act log of one `fleet.campaign` run. This file says what a legal log is. `verifier/verify.py --trace` hard-codes the lists below and decides them from bytes. It does not discharge `docs/follow-agent-contract.md` §8.16.
 
 One thing in the format is free: the worker's basename. The checker's answer is `result` or `partial`. There is no field for an area, a rank, a grade, a score, a tier, a study type, or a utility.
 
@@ -84,7 +84,7 @@ For `design-binder`, the gates `grammar`, `species`, `not-protein`, and `indicat
 
 `gloss` and `verdict` belong to the context row they are written on, and to no other row. `path` is `graph.json`. `oracle` is `not-discharged`. `kind` is `hypothesis`. `disclaimer` is the first non-blank line of this file, byte for byte.
 
-`binder` holds when the value satisfies `follow-agent-contract.md` §8.7 and §8.8. `target` holds when it satisfies §8.9. `pmid` holds when it satisfies §8.10. The checker calls those predicates. It does not restate them. `subject` is not sent through them.
+`binder` holds when the value satisfies `docs/follow-agent-contract.md` §8.7 and §8.8. `target` holds when it satisfies §8.9. `pmid` holds when it satisfies §8.10. The checker calls those predicates. It does not restate them. `subject` is not sent through them.
 
 `source` and `release` are 1 to 64 characters from letters, digits, and `._:/-`. `release` may be the literal `unspecified`. `retrieved` is a real Gregorian date `YYYY-MM-DD`, the UTC day, with no zone suffix. `rev` is 40 lowercase hex digits. `bound-n` and `bound-tok` are positive integers and equal the core.
 
@@ -103,7 +103,7 @@ The call's id is `H` of the text `call ^0 run=<run> skill=<skill>`, with no trai
 
 Any other shape has no parent.
 
-`sameMolecule` is `follow-agent-contract.md` §8.13 on the binder strings of `propose` lines: equal `aa:` multisets, equal `helm:` payloads after polymer-index normalisation, or an `aa:` key and a plain-L-chain `helm:` key with that sequence. One string used twice is one key.
+`sameMolecule` is `docs/follow-agent-contract.md` §8.13 on the binder strings of `propose` lines: equal `aa:` multisets, equal `helm:` payloads after polymer-index normalisation, or an `aa:` key and a plain-L-chain `helm:` key with that sequence. One string used twice is one key.
 
 ## 3. What the checker decides
 
@@ -157,7 +157,7 @@ A checker that returns `result` has not decided any of the following.
 
 - A line's act is an event that occurred. Admission decides shape.
 - The catalogue blob named by `rev` was fetched. `decide` does not open `graph.json`.
-- `follow-agent-contract.md` §8.16. The only derived oracle string is `not-discharged`.
+- `docs/follow-agent-contract.md` §8.16. The only derived oracle string is `not-discharged`.
 - Patient benefit. A result on a design head is a hypothesis carrying the disclaimer, or a named refusal. The disclaimer sits inside the preimage, so a line with the disclaimer removed has a different id and fails `hash`.
 - Any area under a curve. The checker's answer is `result`, not a number.
 
@@ -198,6 +198,6 @@ Licensed oversight is required for any use of this system; none has been perform
 
 `verifier/verify.py --trace` decides this file. `fleet/fleet.py` writes the lines through the
 verifier's own `trace_emit`, then hands every completed run back to that checker. Extension
-predicate E4 decides the bijection between `follow-agent-contract.md` §11 and the files
+predicate E4 decides the bijection between `docs/follow-agent-contract.md` §11 and the files
 `systems/*.md`. The identity line above is extension predicate E5
-(`follow-agent-contract.md` §0c). Neither decision is §8.16.
+(`docs/follow-agent-contract.md` §0c). Neither decision is §8.16.

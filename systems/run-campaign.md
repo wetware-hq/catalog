@@ -2,14 +2,14 @@
 
 # run a campaign
 
-`type: agent.system` · `spec: fleet.campaign` · subordinate to `follow-agent-contract.md`, which governs on any conflict.
+`type: agent.system` · `spec: fleet.campaign` · subordinate to `docs/follow-agent-contract.md`, which governs on any conflict.
 
 `fleet/fleet.py` is the standard-library reference harness for one `fleet.campaign` run. It executes
 `skills/design-binder.md`, writes BENCH and TRACES artifacts outside this repository, and hands the
 trace back to `verifier/verify.py --trace`. The code stays under `fleet/`. This file is the
-specification of that harness and a row of `follow-agent-contract.md` §11. The run is one core,
+specification of that harness and a row of `docs/follow-agent-contract.md` §11. The run is one core,
 one hash, bounds, one halt.
-`agent.swarm` and `agent.fleet` are not specs. Wikidata Q863960 names collective behaviour of decentralized, self-organized systems, and that item is a different object from this run. The run is the `fleet.campaign` in `follow-agent-contract.md` §11.
+`agent.swarm` and `agent.fleet` are not specs. Wikidata Q863960 names collective behaviour of decentralized, self-organized systems, and that item is a different object from this run. The run is the `fleet.campaign` in `docs/follow-agent-contract.md` §11.
 
 ## preflight
 
@@ -42,7 +42,7 @@ python3 fleet/fleet.py run \
 python3 fleet/fleet.py verify /tmp/catalog-fleet
 ```
 
-`--min-aa` and `--max-aa` are sent only on the Boltz design request. They are not a grammar gate: `follow-agent-contract.md` §3 bounds the alphabet, not the length. The harness admits the target when UniProt names the organism *Homo sapiens*, pins `graph.json` to the checkout SHA, builds the target reverse index, authenticates and estimates the Boltz request, then fans out the advisory panel. A failed Boltz authentication records `unavailable` with `step:"generator"` and halts before that panel. Candidate sequences are hypotheses; nothing writes `graph.json` or `proposals.json`.
+`--min-aa` and `--max-aa` are sent only on the Boltz design request. They are not a grammar gate: `docs/follow-agent-contract.md` §3 bounds the alphabet, not the length. The harness admits the target when UniProt names the organism *Homo sapiens*, pins `graph.json` to the checkout SHA, builds the target reverse index, authenticates and estimates the Boltz request, then fans out the advisory panel. A failed Boltz authentication records `unavailable` with `step:"generator"` and halts before that panel. Candidate sequences are hypotheses; nothing writes `graph.json` or `proposals.json`.
 
 A `grammar` refusal parents the call. For `design-binder`, grammar, species, not-protein, and indication-absent parent the call even when the candidate was produced after the pin (`systems/record-traces.md`).
 

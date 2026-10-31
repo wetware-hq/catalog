@@ -4,4 +4,4 @@
 
 | skill | namespaces | signature | write scope |
 |---|---|---|---|
-| [`skills/exercise-special-scope.md`](skills/exercise-special-scope.md) | `aa:` | `x -> y` | none; read-only |
+| [`skills/exercise-special-scope.md`](../skills/exercise-special-scope.md) | `aa:` | `x -> y` | none; read-only |

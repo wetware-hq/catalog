@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Verifier for wetware-hq/catalog `graph.json`, implemented from follow-agent-contract.md (sections 2, 3, 5, 6, 8) only.
+"""Verifier for wetware-hq/catalog `graph.json`, implemented from docs/follow-agent-contract.md (sections 2, 3, 5, 6, 8) only.
 
 Usage:
     verify.py GRAPH.json                 # pure predicates (8.1-8.15, 8.17, 8.18)
@@ -29,7 +29,7 @@ DICTS = ("pair", "preclinical")
 ROOT_KEYS = ("version", "pair", "preclinical")
 EMPTY_CATALOGUE = b'{\n  "version": 2,\n  "pair": {},\n  "preclinical": {}\n}\n'
 
-# Predicate registry (follow-agent-contract.md section 8). The two HELM refusals are kept as distinct sub-predicates (8.8).
+# Predicate registry (docs/follow-agent-contract.md section 8). The two HELM refusals are kept as distinct sub-predicates (8.8).
 PREDICATES = {
     "1": ("pure", "UTF-8"),
     "2": ("pure", "Final newline"),
@@ -54,14 +54,14 @@ PREDICATES = {
     "19": ("relational", "Add-only"),
 }
 
-# Extension predicates: documentation/repository invariants BEYOND follow-agent-contract.md section 8's nineteen.
+# Extension predicates: documentation/repository invariants BEYOND docs/follow-agent-contract.md section 8's nineteen.
 # They are NOT part of the normative predicate list and never renumber it; ids are prefixed "E".
 EXTENSIONS = {
     "E1": ("pure-ext", "Disclaimer banner (every .md first non-blank line)"),
-    "E2": ("pure-ext", "Skill registry (skills <-> follow-agent-contract.md section 10)"),
+    "E2": ("pure-ext", "Skill registry (skills <-> docs/follow-agent-contract.md section 10)"),
     "E3": ("online-ext", "pmid: resolves via NCBI E-utilities (non-blocking)"),
-    "E4": ("pure-ext", "System registry (systems/*.md <-> follow-agent-contract.md section 11)"),
-    "E5": ("pure-ext", "Identity line (follow-agent-contract.md section 0c)"),
+    "E4": ("pure-ext", "System registry (systems/*.md <-> docs/follow-agent-contract.md section 11)"),
+    "E5": ("pure-ext", "Identity line (docs/follow-agent-contract.md section 0c)"),
 }
 BANNER = "\u26a0\ufe0f ACADEMIC RESEARCH PURPOSES ONLY; NOT FOR MEDICAL USE WITHOUT LICENSED OVERSIGHT"
 
@@ -987,7 +987,7 @@ def check_trace(core_path, worker_paths):
 
 
 # ---------------------------------------------------------------------------------------------------------------
-# Extension predicates (documentation / repository invariants beyond follow-agent-contract.md section 8)
+# Extension predicates (documentation / repository invariants beyond docs/follow-agent-contract.md section 8)
 # ---------------------------------------------------------------------------------------------------------------
 
 # --- E1 exclusions ---------------------------------------------------------------------------------------------
@@ -1099,7 +1099,7 @@ def _parse_section10(agents_text: str):
             continue
         if not ln.lstrip().startswith("|"):
             continue
-        m = re.search(r"\(skills/([A-Za-z0-9._\-]+\.md)\)", ln)
+        m = re.search(r"\((?:\.\./)?skills/([A-Za-z0-9._\-]+\.md)\)", ln)
         if not m:
             continue
         cells = [c.strip() for c in ln.strip().strip("|").split("|")]
@@ -1109,20 +1109,20 @@ def _parse_section10(agents_text: str):
 
 
 def check_skill_registry(repo_dir: str, rep: "Report"):
-    """E2 [pure-ext]: skills/*.md <-> follow-agent-contract.md section 10 are in bijection; `special` skills declare write scope `none`."""
+    """E2 [pure-ext]: skills/*.md <-> docs/follow-agent-contract.md section 10 are in bijection; `special` skills declare write scope `none`."""
     import os
     problems = []
     disk = {os.path.relpath(p0, repo_dir).replace(os.sep, "/") for p0 in _md_files(repo_dir)
             if os.path.relpath(p0, repo_dir).replace(os.sep, "/").startswith("skills/")}
-    agents_path = os.path.join(repo_dir, "follow-agent-contract.md")
+    agents_path = os.path.join(repo_dir, "docs", "follow-agent-contract.md")
     if not os.path.exists(agents_path):
-        rep.add("E2", False, ["follow-agent-contract.md not found; cannot check the registry"]); return
+        rep.add("E2", False, ["docs/follow-agent-contract.md not found; cannot check the registry"]); return
     rows = _parse_section10(open(agents_path, encoding="utf-8").read())
     listed = {r[0] for r in rows}
 
     for f in sorted(disk):                         # every skill file must be registered
         if f not in listed:
-            problems.append(f"{f}: skill file present but not listed in follow-agent-contract.md section 10")
+            problems.append(f"{f}: skill file present but not listed in docs/follow-agent-contract.md section 10")
     for path, scope in rows:                       # every row must point to a real file
         abspath = os.path.join(repo_dir, path)
         if not os.path.exists(abspath):
@@ -1139,7 +1139,7 @@ _SYSTEM_PATH_RE = re.compile(r"systems/[A-Za-z0-9._-]+\.md")
 
 
 def parse_section11(agents_text):
-    """Markdown paths linked from follow-agent-contract.md section 11, in order.
+    """Markdown paths linked from docs/follow-agent-contract.md section 11, in order.
 
     A row is a link whose target ends in .md. The bijection admits only systems/<file>.md.
     """
@@ -1151,20 +1151,20 @@ def parse_section11(agents_text):
             continue
         if not in11:
             continue
-        found.extend(re.findall(r"\(([^)\s]+\.md)\)", ln))
+        found.extend(path.removeprefix("../") for path in re.findall(r"\(([^)\s]+\.md)\)", ln))
     return found
 
 
 def check_system_registry(repo_dir, rep):
-    """E4 [pure-ext]: systems/*.md <-> follow-agent-contract.md section 11 are in bijection.
+    """E4 [pure-ext]: systems/*.md <-> docs/follow-agent-contract.md section 11 are in bijection.
 
     The directory is hard-coded. A markdown link in section 11 that is not systems/<file>.md is not a row
     this check accepts. A file in systems/ that section 11 does not name is an orphan.
     """
     problems = []
-    agents_path = os.path.join(repo_dir, "follow-agent-contract.md")
+    agents_path = os.path.join(repo_dir, "docs", "follow-agent-contract.md")
     if not os.path.exists(agents_path):
-        rep.add("E4", False, ["follow-agent-contract.md not found; cannot check the system registry"])
+        rep.add("E4", False, ["docs/follow-agent-contract.md not found; cannot check the system registry"])
         return
     found = parse_section11(open(agents_path, encoding="utf-8").read())
     if len(found) != len(set(found)):
@@ -1183,13 +1183,13 @@ def check_system_registry(repo_dir, rep):
             if fn.endswith(".md") and os.path.isfile(full):
                 disk.add("systems/" + fn)
     for path in sorted(disk - listed):
-        problems.append(f"{path}: system file present but not listed in follow-agent-contract.md section 11")
+        problems.append(f"{path}: system file present but not listed in docs/follow-agent-contract.md section 11")
     for path in sorted(listed - disk):
         problems.append(f"{path}: listed in section 11 but no such file")
     rep.add("E4", not problems, problems)
 
 
-# Header lines named in follow-agent-contract.md section 0c. agent.swarm and agent.fleet are
+# Header lines named in docs/follow-agent-contract.md section 0c. agent.swarm and agent.fleet are
 # refused as a spec or a type. The markdown may use either word when it says that string is neither.
 _IDENTITY_TYPE_RE = re.compile(r"`type:\s*([^`]+?)`")
 _IDENTITY_SPEC_RE = re.compile(r"`spec:\s*([^`]+?)`")
@@ -1213,7 +1213,7 @@ def _identity_header(text):
 
 
 def check_identity(repo_dir, rep):
-    """E5 [pure-ext]: header lines match follow-agent-contract.md section 0c.
+    """E5 [pure-ext]: header lines match docs/follow-agent-contract.md section 0c.
 
     skills/ are resource.procedure with spec agent.skill. systems/ are agent.system with spec
     fleet.campaign. A header outside those two directories that carries either spec is an orphan,
@@ -1333,7 +1333,7 @@ def _label_of(pid):
 
 
 def main(argv=None):
-    ap = argparse.ArgumentParser(description="Validate catalog graph.json against follow-agent-contract.md section 8, "
+    ap = argparse.ArgumentParser(description="Validate catalog graph.json against docs/follow-agent-contract.md section 8, "
                                              "plus repository extension predicates.")
     ap.add_argument("graph", nargs="?", help="graph.json to validate")
     ap.add_argument("--prev", metavar="OLD", help="predecessor graph.json for relational 8.19 (add-only)")

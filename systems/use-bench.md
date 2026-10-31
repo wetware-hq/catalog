@@ -2,17 +2,17 @@
 
 # `BENCH` — a shared append-only commons for a campaign
 
-`type: agent.system` · `spec: fleet.campaign` · subordinate to `follow-agent-contract.md`, which governs on any conflict.
+`type: agent.system` · `spec: fleet.campaign` · subordinate to `docs/follow-agent-contract.md`, which governs on any conflict.
 
 BENCH is working space, not a record. It is where several agents in one run put partial work while they are still working, and where any of them can search what the others have put there so far. **Nothing written here is admissible to `graph.json`** (§4 below).
 
 ## 0. Scope
 
-- **Read:** this file, `follow-agent-contract.md`, the run's own `.bench` files.
+- **Read:** this file, `docs/follow-agent-contract.md`, the run's own `.bench` files.
 - **Write:** `.bench` files inside a run directory, which lives outside this repository.
 - **Refuse:** `graph.json`, `proposals.json`, and every other file in this repository. This directory holds the `fleet.campaign` specifications. This file's write scope is `.bench` files inside a run directory. The harness code that appends them lives under `fleet/` and is specified by `systems/run-campaign.md`; it is outside this file's write scope (§11).
 
-**`systems/` and `skills/`.** `skills/*.md` are *procedures*: a named thing an agent does, registered in `follow-agent-contract.md` §10, each with a signature and a write scope. `systems/*.md` are the `fleet.campaign` specifications registered in §11. This file is a substrate: a format, a merge law and an invariant list. A system is not a skill, declares no signature over catalogue keys, and is not registered in §10. A skill may use a system; a system never discharges a skill's obligations, and neither widens `follow-agent-contract.md` §0.
+**`systems/` and `skills/`.** `skills/*.md` are *procedures*: a named thing an agent does, registered in `docs/follow-agent-contract.md` §10, each with a signature and a write scope. `systems/*.md` are the `fleet.campaign` specifications registered in §11. This file is a substrate: a format, a merge law and an invariant list. A system is not a skill, declares no signature over catalogue keys, and is not registered in §10. A skill may use a system; a system never discharges a skill's obligations, and neither widens `docs/follow-agent-contract.md` §0.
 
 ## 1. Structure
 
@@ -39,7 +39,7 @@ The tier is the **first token of the line** (§3). A line that does not begin wi
 
 **No query or aggregation pools tiers.** Every aggregate takes a tier and returns a per-tier result; a summary across tiers is three results printed as three, never one. The reason is the failure this field exists to prevent: an append-only commons is exactly the structure that quietly turns predictions into evidence, because a model output carries a number, a unit, a provenance and a timestamp and reads like data at a glance. The tier makes averaging across kinds a parse-level refusal rather than a judgement call.
 
-The same separation `follow-agent-contract.md` §1 holds between `pair` and `preclinical` is held here between tiers, and for the same reason: the two are never merged and never ranked against each other.
+The same separation `docs/follow-agent-contract.md` §1 holds between `pair` and `preclinical` is held here between tiers, and for the same reason: the two are never merged and never ranked against each other.
 
 ## 3. The `.bench` line
 
@@ -61,7 +61,7 @@ A number is an optional minus, digits, an optional decimal fraction, and an opti
 
 Canonical bytes, which `H` is taken over: the line with fields sorted by key, single spaces, numbers in shortest round-trip form, no trailing space, the `id` elided. The name is therefore a function of the content alone, and a tampered line fails to verify instead of being accepted.
 
-**Namespaces.** BENCH mints none. A record is opaque to BENCH, but where a value names a molecule, a target or a paper it uses the `follow-agent-contract.md` §3 prefixes verbatim — `aa:`, `helm:`, `uniprot:`, `pmid:` — case-sensitive, no synonyms, no abbreviations, exactly as §3 requires. Those four are grammar, not style, and a scratchpad does not get a dialect of them. BENCH's own tokens — the leading tier digit, `^`, `M(…)` — are structure, not a namespace, and carry no colon-prefixed name.
+**Namespaces.** BENCH mints none. A record is opaque to BENCH, but where a value names a molecule, a target or a paper it uses the `docs/follow-agent-contract.md` §3 prefixes verbatim — `aa:`, `helm:`, `uniprot:`, `pmid:` — case-sensitive, no synonyms, no abbreviations, exactly as §3 requires. Those four are grammar, not style, and a scratchpad does not get a dialect of them. BENCH's own tokens — the leading tier digit, `^`, `M(…)` — are structure, not a namespace, and carry no colon-prefixed name.
 
 Worked example:
 
@@ -79,11 +79,11 @@ A tier-1 measurement rooted at the core; two tier-2 predictions derived from it 
 
 ## 4. Admissibility: nothing here reaches `graph.json`
 
-`follow-agent-contract.md` §4 is a **semantic oracle**: a row enters `graph.json` only because a reader read the paper and judged the study type. Nothing a campaign writes to a scratchpad touches that gate, and this specification does not amend it.
+`docs/follow-agent-contract.md` §4 is a **semantic oracle**: a row enters `graph.json` only because a reader read the paper and judged the study type. Nothing a campaign writes to a scratchpad touches that gate, and this specification does not amend it.
 
-- No `.bench` node, head, query answer or aggregate is a candidate row for `graph.json` or for `proposals.json`. A tier-3 record is an experimental result in a run's working notes; it is not a published paper, and `follow-agent-contract.md` §3 admits citations only as bare `pmid:<digits>`.
-- A tier-2 record is a model prediction and is categorically ineligible by `follow-agent-contract.md` §10's `special` test: it originates a claim no source has reported.
-- BENCH is not a proposals file and must not be read as one. The file boundary in `follow-agent-contract.md` §9.3 stands: trust is carried by the file, and `.bench` is not one of the two files that carry it.
+- No `.bench` node, head, query answer or aggregate is a candidate row for `graph.json` or for `proposals.json`. A tier-3 record is an experimental result in a run's working notes; it is not a published paper, and `docs/follow-agent-contract.md` §3 admits citations only as bare `pmid:<digits>`.
+- A tier-2 record is a model prediction and is categorically ineligible by `docs/follow-agent-contract.md` §10's `special` test: it originates a claim no source has reported.
+- BENCH is not a proposals file and must not be read as one. The file boundary in `docs/follow-agent-contract.md` §9.3 stands: trust is carried by the file, and `.bench` is not one of the two files that carry it.
 - A fact discovered in a run enters the catalogue the ordinary way and no other: someone publishes it, `propose-pairs` proposes it, a reader admits it.
 
 ## 5. Merge
@@ -125,7 +125,7 @@ No joins, no subqueries, no cross-tier aggregate, no "latest". Appending costs o
 
 ## 8. Pose, and the one place geometric algebra earns its place
 
-A record may carry a rigid-body transform as `pose:M(...)`: a **motor** in 3D projective geometric algebra `Cl(3,0,1)`, eight coefficients, composing rotation and translation in one object, compared by `d(M,N) = ‖log(M̃N)‖` over the screw parameters — rotation angle about the screw axis, translation along it. It earns its place because workers produce transforms independently and the system must compare them, and this comparison is invariant under a change of either frame. The numbers in this section come from a run made outside this repository on 2026-10-30: a standard-library Python script, seed `20261030`, which is not in this tree because agents may not commit scripts here (follow-agent-contract.md §0). Treat them as a dated snapshot, not a check this repository can re-run. Over 20,000 random pairs it reported `max |d(AM,AN) - d(M,N)| = 4.663e-15` and `max |d(MA,NA) - d(M,N)| = 4.177e-15`, while the obvious alternative — comparing rotation angle and translation vector separately — drifts by `2.301e+00` and `3.201e+00` under the same change of frame. An earlier draft of this file quoted `1e-13` and `5e-3` for these; that run did not reproduce `5e-3`, and the figures above are what it actually printed.
+A record may carry a rigid-body transform as `pose:M(...)`: a **motor** in 3D projective geometric algebra `Cl(3,0,1)`, eight coefficients, composing rotation and translation in one object, compared by `d(M,N) = ‖log(M̃N)‖` over the screw parameters — rotation angle about the screw axis, translation along it. It earns its place because workers produce transforms independently and the system must compare them, and this comparison is invariant under a change of either frame. The numbers in this section come from a run made outside this repository on 2026-10-30: a standard-library Python script, seed `20261030`, which is not in this tree because agents may not commit scripts here (`docs/follow-agent-contract.md` §0). Treat them as a dated snapshot, not a check this repository can re-run. Over 20,000 random pairs it reported `max |d(AM,AN) - d(M,N)| = 4.663e-15` and `max |d(MA,NA) - d(M,N)| = 4.177e-15`, while the obvious alternative — comparing rotation angle and translation vector separately — drifts by `2.301e+00` and `3.201e+00` under the same change of frame. An earlier draft of this file quoted `1e-13` and `5e-3` for these; that run did not reproduce `5e-3`, and the figures above are what it actually printed.
 
 Two findings that must travel with it:
 
