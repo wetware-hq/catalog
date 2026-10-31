@@ -536,7 +536,7 @@ TRACE_PRE_PIN = frozenset({"grammar", "species", "not-protein", "indication-abse
 TRACE_STEPS = {
     "resolve-key": frozenset({"resolve"}),
     "propose-pairs": frozenset({"3", "4"}),
-    "design-binder": frozenset({"catalogue", "model"}),
+    "design-binder": frozenset({"catalogue", "generator", "model"}),
 }
 # Sorted key order. context is TRACE_CONTEXT, not this table.
 TRACE_FIELDS = {
@@ -694,6 +694,8 @@ def _trace_value_code(skill, act, fields, bound_n, bound_tok):
             return "value:key"
         if skill == "design-binder" and step == "catalogue" and not _trace_target_ok(key):
             return "value:key"
+        if skill == "design-binder" and step == "generator" and not _trace_target_ok(key):
+            return "value:key"
         if skill == "design-binder" and step == "model" and not _trace_binder_ok(key):
             return "value:key"
         if skill == "resolve-key" and not (_trace_binder_ok(key) or _trace_target_ok(key)):
@@ -843,7 +845,8 @@ def check_trace(core_path, worker_paths):
     if os.path.basename(core_path) != "core.trace":
         return _trace_fail("R3", [f"core basename {os.path.basename(core_path)!r}"])
     try:
-        raw = open(core_path, "rb").read()
+        with open(core_path, "rb") as stream:
+            raw = stream.read()
     except OSError as exc:
         return _trace_fail("R1", [str(exc)])
     if b"\r" in raw or b"\x00" in raw or not raw.endswith(b"\n") or raw.endswith(b"\n\n"):
@@ -865,7 +868,8 @@ def check_trace(core_path, worker_paths):
         if not _TRACE_WORKER_RE.match(base):
             return _trace_fail("R3", [f"worker basename {base!r}"])
         try:
-            wraw = open(path, "rb").read()
+            with open(path, "rb") as stream:
+                wraw = stream.read()
         except OSError as exc:
             return _trace_fail("R3", [str(exc)])
         if b"\r" in wraw or b"\x00" in wraw or not wraw.endswith(b"\n") or wraw.endswith(b"\n\n"):

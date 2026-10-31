@@ -69,7 +69,7 @@ PrePin               = { grammar, species, not-protein, indication-absent }
 
 Steps(resolve-key)   = { resolve }
 Steps(propose-pairs) = { 3, 4 }
-Steps(design-binder) = { catalogue, model }
+Steps(design-binder) = { catalogue, generator, model }
 
 Path                 = { graph.json }
 Oracle               = { not-discharged }
@@ -101,6 +101,7 @@ Field tuples are the sorted key order. `gloss` and `verdict` are members of the 
 key(propose-pairs, 3)          = binder
 key(propose-pairs, 4)          = target
 key(design-binder, catalogue)  = target
+key(design-binder, generator)  = target
 key(design-binder, model)      = binder
 key(resolve-key, resolve)      = binder ∨ target
 ```
@@ -240,4 +241,7 @@ halt 9d2001abc00391ea2c66714740c2ba9ec5c279405495498f51a72db31be4d6a3 ^2f3f73356
 
 ## 6. Status
 
-`decide` is implemented by `verifier/verify.py --trace`. Extension predicate E4 decides the bijection between `follow-agent-contract.md` §11 and the files `systems/*.md` and `traces/*.md`. Neither judgement is §8.16.
+`decide` is implemented by `verifier/verify.py --trace`; `fleet/fleet.py` emits the language through
+the verifier's own `trace_emit`, then hands every completed run back to that checker. Extension
+predicate E4 decides the bijection between `follow-agent-contract.md` §11 and the files
+`systems/*.md` and `traces/*.md`. Neither judgement is §8.16.
