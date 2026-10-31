@@ -46,7 +46,7 @@ These are conventions from developability and selectivity practice, **not cutoff
 Refuse before designing, naming the condition that failed:
 
 - Target key fails `AGENTS.md` §3 → refuse (grammar).
-- Accession is **not the human protein** → refuse (scope). `AGENTS.md` §8.9 accepts any valid accession, including an ortholog; this procedure does not. A mouse surrogate is a different key and fragments coverage of the human target it stands in for. One accession, one species, and here it is *Homo sapiens*.
+- Accession is **not the human protein** → refuse (scope). `AGENTS.md` §8.9 accepts any valid accession, including an orthologue; this procedure does not. A mouse surrogate is a different key and fragments coverage of the human target it stands in for. One accession, one species, and here it is *Homo sapiens*.
 - Target is not a protein → refuse (`AGENTS.md` §3, §8.8). Nucleic acids and small molecules are out of scope by design.
 - Indication absent → refuse. It is not stored anywhere, and it is not decoration: it sets the required modality, route, residence time and off-target tolerance, which select the scaffold in §5.
 

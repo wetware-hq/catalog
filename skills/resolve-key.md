@@ -62,7 +62,7 @@ alphabet : refuse-if-illegal. never classify.
     payload whose characters fall outside PROTEIN_MONOMERS.
 
 ascii : every byte of every Key <= 0x7F, no BOM.
-    assertion over existing bytes, never a re-serialization.
+    assertion over existing bytes, never a re-serialisation.
     a non-ASCII byte in a key is a wrong row, not lint: return it to verification.
     closes homoglyph duplication (Cyrillic A != Latin A, identical on screen, two keys).
 
