@@ -2,6 +2,18 @@
 
 # changelogs
 
+## 2026-11-01 — initialization into start
+
+### changed
+
+- Typechecked the four markdown files left at the repository root. The folder sort had a home for `agent.skill` and a home for `fleet.campaign`. These four declare neither spec, which is why they were still top-level.
+- `read-repository.md` is the initialization document: the non-normative catalogue overview. Moved it to `start/read-repository.md`. Its header is `type: initialization`.
+- Left the other three at the root. `follow-agent-contract.md` is `type: resource.reference`. `pin-references.md` is the pinned reference table. `read-changelogs.md` is this history. None of those is initialization.
+
+### tested
+
+- Verifier suite and fleet suite. `graph.json` is untouched. §8.16 is not discharged.
+
 ## 2026-10-31 — filename pass
 
 ### changed
