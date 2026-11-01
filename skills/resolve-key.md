@@ -2,12 +2,7 @@
 
 # `resolve-key` — key to labels
 
-`type: resource.procedure` · `spec: agent.skill` · subordinate to `docs/follow-agent-contract.md`, which governs on any conflict.
-
-Resolve a database key to labels. Read-only. Never writes.
-
-Scope: protein only. The catalogue holds protein binders and protein targets.
-Nucleic-acid rows are out of scope and are refused at the door, never classified.
+`type: resource.procedure` · `spec: agent.skill`. Resolve one protein key to an identity, read-only. `unresolved` is a final record answer; `unavailable` means the service did not answer.
 
 ## Document graph
 
@@ -20,7 +15,71 @@ Nucleic-acid rows are out of scope and are refused at the door, never classified
 | Read-only skill | Map protein key to identity | `unresolved` ≠ `unavailable` |
 | Reads: key; named release | Writes: none | Check: key predicates; trace |
 
-## Folder contract (all skills here)
+## composition
+
+```yaml
+stages: ["0 admit", "1 resolve", "2 enrich"]
+graph: "Document graph above"
+writes: none
+```
+
+## indications
+
+Protein keys only: `aa:`, `helm:` whose blocks are all `PEPTIDE`, and `uniprot:` accessions that match the contract grammar.
+
+## contraindications
+
+- Nucleic-acid keys are refused unexamined, not classified.
+- Free-text search is out of scope. Residues do not go into a search engine.
+- The two failure verdicts are never merged, and this procedure never writes the catalogue.
+- A citation is not recoverable from residues.
+
+## algorithm
+
+### variables
+
+```yaml
+independent:
+  key: "aa: | helm: | uniprot:"
+  release: "named service release"
+dependent:
+  identity: "accession or inn_name, source, release, retrieved"
+  verdict: "unresolved | unavailable | refused"
+controlled:
+  polynomial: "CRC64 ISO 0xD800000000000000"
+  path: "one exact lookup; no alignment"
+  monomers: "one flat PROTEIN_MONOMERS set"
+objective: "one identity, or one typed failure"
+```
+
+### processes
+
+Control runs grammar at stage 0, before any request. Design is CRC64 against UniParc `checksum:`, exact lookup. Transport is a batch of keys on one path. Stopping: stage-1 `unresolved` halts enrichment for that key. Search is the checksum query, not an engine. Filter is the monomer set, ASCII bytes, and PEPTIDE blocks. Recovery: HTTP 5xx or 429 is `unavailable`, cache nothing, retry.
+
+```mermaid
+stateDiagram-v2
+[*] --> Admit
+Admit --> Refuse: out of scope or ungrammatical
+Admit --> Resolve: protein key
+Resolve --> Unresolved: zero or many records
+Resolve --> Unavailable: no answer
+Resolve --> Enrich: one identity
+Unresolved --> [*]
+Unavailable --> [*]
+Enrich --> [*]
+Refuse --> [*]
+```
+
+```mermaid
+flowchart LR
+Key --> Crc[CRC64 ISO]
+Crc --> UniParc
+UniParc --> Identity
+Key --> Grammar
+Grammar --> Refuse
+```
+
+### Folder contract (all skills here)
 
 Notation: one per folder. Blocks below are formal algorithms, not sample programs.
 
@@ -31,7 +90,7 @@ pure    : output depends on input + named release only
 no-write: output goes to the caller, never into the database
 ```
 
-## Types
+### Types
 
 ```
 Key       = "aa:" Residues | "helm:" Helm | "uniprot:" Accession
@@ -44,7 +103,7 @@ Failure   = unresolved        -- record answered, says nothing. final. cacheable
 
 No tier is computed and none is stored. A key is an admissible protein or it is refused.
 
-## Stage 0 - intrinsic
+### Stage 0 - intrinsic
 
 ```
 admit : Key -> { length, composition, shape } | refused
@@ -83,7 +142,7 @@ vectors:
     refuse : helm:PEPTIDE1{[CCO]}$$$$           -> refused, monomer outside PROTEIN_MONOMERS
 ```
 
-## Stage 1 - resolve
+### Stage 1 - resolve
 
 ```
 resolve : Key -> Identity | unresolved | unavailable
@@ -124,7 +183,7 @@ shard unit: a BATCH of keys, never one key per worker.
     the ratio is the point; the seconds are not a benchmark.
 ```
 
-## Stage 2 - enrich
+### Stage 2 - enrich
 
 ```
 enrich : Identity -> Findings        -- note the domain: Identity, NOT Key
@@ -143,8 +202,20 @@ rate limit: honour the service's published limit; a throttled campaign returns
 unavailable, never unresolved.
 ```
 
-## Not derivable
+### Not derivable
 
 A citation is not recoverable from residues. Names are derivable; evidence is not. `pmid:` stays stored in the database.
 
 A test vector proves a step is specified, not that it is right.
+
+## citations
+
+Grammar and verdict law: `docs/follow-agent-contract.md` §3 and §7. The 2026-10-29 UniParc counts in stage 1 are one live snapshot, not a pin, and are not reproducible from this checkout.
+
+## falsification
+
+Exact lookup is refuted if a one-letter mutant of a canonical sequence returns a hit. The recorded miss (P04626 residue 100 R to A, zero hits on 2026-10-29) is the supporting observation, not a permanent measurement. The naive benchmark is a fuzzy-match score.
+
+## licence
+
+MIT

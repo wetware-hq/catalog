@@ -2,7 +2,7 @@
 
 # `graph.json` — agent contract
 
-`type: resource.reference` · **normative**. `docs/read-repository.md` is `type: initialization` and non-normative; on conflict this file governs. Implement verifiers, mergers and updaters from this file alone.
+`graph.json` is the normative catalogue contract (`type: resource.reference`): schema, evidence split, merge, and write law. On conflict it governs non-normative `docs/read-repository.md`. Verifiers, mergers, and updaters are implemented from this file alone.
 
 ## Document graph
 
@@ -17,13 +17,85 @@
 | Normative reference | Define schema, evidence, merge, read, and write law | §8.16 requires paper review |
 | Reads: catalogue; registered specs | Writes: authorized paths under §9 | Check: `verifier/verify.py` |
 
-## 0. Scope
+## composition
+
+```yaml
+law: ["0", "0b", "0c", "0d", "1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "11"]
+graph: "Document graph above; relative paths; read before"
+registry_h2: ["## 10. Skills", "## 11. Systems"]
+embeds: [yaml, "mermaid stateDiagram-v2", "mermaid flowchart", "gfm table"]
+```
+
+- §§0–9 below are inside this algorithm. §§10–11 stay H2 headings so the registries parse.
+- Neighbour paths are the Document graph. Links elsewhere are not edges.
+
+## indications
+
+- Implement a verifier, merger, or updater from §§2–8.
+- Admit a row only after the paper is read (§4, §8.16, §9.3).
+- Read §10 before a skill acts, and §11 before a system acts.
+
+## contraindications
+
+- Autonomous intake writes `proposals.json` only, never `graph.json`.
+- No stored ranks, grades, scores, or citations other than bare `pmid:<digits>`.
+- A passing verifier leaves §8.16 undischarged.
+- Markdown under `verifier/tests/fixtures/` is a test input, not a live node.
+
+## algorithm
+
+### variables
+
+```yaml
+independent:
+  binder: "aa: chains or helm: PEPTIDE payload"
+  target: "uniprot: accession, optional isoform"
+  citation: "pmid:<digits>"
+  dictionary: "pair | preclinical"
+dependent:
+  admitted: "boolean after the paper is read"
+  bytes: "canonical UTF-8 of version, pair, preclinical"
+controlled:
+  version: 2
+  segment_order: "non-decreasing UTF-8"
+  helm_scope: "every block PEPTIDE"
+  helm_monomer: "standard residue or bracketed symbol; [CCO] fails monomer"
+  oracle: "not discharged by automation"
+objective: "canonical rows whose paper reports utility for that pair"
+```
+
+### processes
+
+Control is §8. Design is the two dictionaries, study type rather than strength. Transport is `proposals.json` into `graph.json` at the file move, by a reader. Stopping is the first failed predicate. Search builds the reverse index at read time and does not store it. Filters keep scope and monomer as two HELM refusals, and keep a dual-claim paper in `pair` only. Recovery retries `unavailable` with an empty cache; `unresolved` is final; catalogue absence is neither.
+
+```mermaid
+stateDiagram-v2
+[*] --> Parse
+Parse --> Refuse: predicate 1-15 or 17 fails
+Parse --> Hold: pure checks pass
+Hold --> Pair: paper reports human benefit
+Hold --> Preclinical: non-human or in-vitro utility
+Hold --> Refuse: study type undetermined, null, or harm-only
+Pair --> [*]
+Preclinical --> [*]
+Refuse --> [*]
+```
+
+```mermaid
+flowchart LR
+Source[structured record] --> Prop[proposals.json]
+Prop -->|reader reads the paper| Graph[graph.json]
+Bench[.bench] --> Out[inadmissible]
+Trace[.trace] --> Out
+```
+
+### 0. Scope
 
 - **Read:** `graph.json`, `docs/*.md`, `skills/*.md`, `systems/*.md` (§11), `fleet/`, `verifier/`, `.github/workflows/`, `LICENSE`.
 - **Write:** `graph.json` and `proposals.json` only, under §9.
 - **Refuse:** writing scripts, workflows, CI, package manifests or secondary data files in this repo, `proposals.json` (§9) being the single named exception — the fleet harness under `fleet/`, verifier under `verifier/` and workflow under `.github/workflows/` are human-directed additions that exercise or check this contract and are outside every agent's write scope, so an agent reads them and does not edit them; stored ranks, scores or grades; citations other than bare `pmid:<digits>`; empty citation arrays; pairs without qualifying evidence (§4); removal or rewriting of existing rows absent explicit human supersession.
 
-## 0b. Documentation banner
+### 0b. Documentation banner
 
 Every Markdown file in this repository opens, as its **first non-blank line**, with the exact byte string
 
@@ -31,7 +103,7 @@ Every Markdown file in this repository opens, as its **first non-blank line**, w
 
 — one fixed, repeated string, byte-identical in every file, never paraphrased, abbreviated or replaced by a cross-reference. It states **who may act on this repository**, and is deliberately distinct from the README's *What it is not* paragraph, which states what the catalogue records; the two are not merged. This is a normative documentation invariant. It is **not** one of the nineteen §8 predicates and does not renumber them; it is checked as a verifier extension, predicate E1 (see `verifier/`).
 
-## 0c. Identity line
+### 0c. Identity line
 
 Every file in `skills/` and `systems/` names itself once, in the header, before the first section heading. Extension predicate E5 checks that line. E5 is not a §8 predicate and does not renumber them.
 
@@ -42,7 +114,7 @@ Every file in `skills/` and `systems/` names itself once, in the header, before 
 
 `agent.skill` is the spec of a procedure. `fleet.campaign` is the spec of one run. `agent.swarm` and `agent.fleet` are not specs and not types. A header outside these two directories that carries either spec fails E5: that file is an orphan. The checker skips exactly two registry fixtures, `verifier/tests/fixtures/ext_registry_fail/skills/exercise-special-scope.md` and `verifier/tests/fixtures/ext_registry_ok/skills/exercise-special-scope.md`. They declare the skill spec so E2 can be tested, and they are not skills of this contract. The harness code under `fleet/` is not a row of this table. Its specification is [`systems/run-campaign.md`](../systems/run-campaign.md). The four strings, and the ordinary words next to them, are set out in §11.
 
-## 0d. Documentation DAG and specification cards
+### 0d. Documentation DAG and specification cards
 
 **Live Markdown** is every repository `*.md` except the exact fixture paths in `verifier/verify.py`'s `E6_FIXTURE_PATHS`. Each excluded file is a deliberately incomplete or invalid verifier input under `verifier/tests/fixtures/`, not documentation; tests require the manifest to equal the fixture Markdown set and require every entry to lack the live-document headings. E1 still checks every bannered fixture and its exact one-path allowlist is unchanged.
 
@@ -64,11 +136,13 @@ Cards use three GFM columns: `Role`, `Does`, `Must`; row two is `Reads:`, `Write
 
 E6 checks the H2 profile, card shape and cap, links, single sink/backlink, reachability, acyclicity, and transitive reduction. Representation sources are in `docs/pin-references.md`.
 
-## 1. Purpose
+After the card, each live file has `composition`, `indications`, `contraindications`, and `algorithm`, then its procedure, then `citations`, `falsification`, and `licence`. This file keeps `## 10. Skills` and `## 11. Systems` as column-zero H2 headings so E2 and E4 can parse them; §§0–9 sit inside `algorithm`. Fenced `yaml` holds variables. Fenced `mermaid` `stateDiagram-v2` is the statechart. Fenced `mermaid` flowcharts are diagrams. GFM tables are tables. These headings are not graph edges and do not renumber §8.
+
+### 1. Purpose
 
 Single-file bipartite database: biological binders → protein targets. An edge lists PubMed identifiers for that pair, in one of two dictionaries separated by **study type**: `pair` for clinical benefit in humans, `preclinical` for non-human or in-vitro utility. Protein-only (§3, §8.8). The two are never merged and never ranked against each other (§7).
 
-## 2. Schema
+### 2. Schema
 
 Root: a non-array object with **exactly** `version`, `pair`, `preclinical`, in that order.
 
@@ -85,7 +159,7 @@ Root: a non-array object with **exactly** `version`, `pair`, `preclinical`, in t
 - One molecule, one key (§8.13), across both dictionaries.
 - Absent by design: `status`, `ref`, evidence grades, ranks, scores. The `pair`/`preclinical` split is **study type, not strength**: it orders nothing and asserts nothing about weight of evidence.
 
-## 3. Key grammar
+### 3. Key grammar
 
 **Binder** — biological only.
 
@@ -106,7 +180,7 @@ Prefixes do not cross roles: no target or citation prefix on a binder key, and n
 
 The four namespace prefixes — `aa:`, `helm:`, `uniprot:`, `pmid:` — are **grammar, not style**: fixed, case-sensitive tokens with no synonyms and no abbreviations. Re-casing or renaming one invalidates every row that uses it. Files in this repository may be renamed; a key prefix may not.
 
-## 4. Citation admission
+### 4. Citation admission
 
 - `pair[binder][target]` **iff** the paper reports **clinical benefit in humans** for that binder against that target.
 - `preclinical[binder][target]` **iff** the paper reports utility in a non-human or in-vitro system for that pair, and makes no human-benefit claim.
@@ -116,7 +190,7 @@ The four namespace prefixes — `aa:`, `helm:`, `uniprot:`, `pmid:` — are **gr
 
 Admission is **semantic** and is an **oracle** step (§8.16): verify against the paper. No grammar check, record lookup, or crawl substitutes for it, and no automated run discharges it — see §9.
 
-## 5. Canonical serialisation
+### 5. Canonical serialisation
 
 - Encoding: valid UTF-8. Invalid byte sequences are invalid and must not be repaired lossily (no U+FFFD, no stripping).
 - Root key order: `version`, `pair`, `preclinical`. Every object: keys sorted ascending. Every citation array: sorted ascending, deduplicated.
@@ -124,7 +198,7 @@ Admission is **semantic** and is an **oracle** step (§8.16): verify against the
 - Exactly one terminating `\n` (`0x0A`); no other trailing whitespace; missing final newline → **invalid**. `\r\n` only if the whole file convention is explicitly CRLF; default is `\n`.
 - On-disk text = `JSON.stringify(obj, null, 2)` of the canonical object + that newline.
 
-## 6. Merge
+### 6. Merge
 
 Merge valid `A`, `B` → `M`:
 
@@ -133,7 +207,7 @@ Merge valid `A`, `B` → `M`:
 
 Re-serialise per §5. Commutative, associative, idempotent.
 
-## 7. Read contract
+### 7. Read contract
 
 For a consumer reading the catalogue at runtime:
 
@@ -143,7 +217,7 @@ For a consumer reading the catalogue at runtime:
 - **Absence is not a negative.** A missing pair means no qualifying paper has been entered. At present coverage that is not evidence that no such binder exists.
 - **Absence is not a resolve failure.** Key resolution ([`skills/resolve-key.md`](../skills/resolve-key.md)) has exactly two failure verdicts: `unresolved`, the record answered and matched zero or more than one entry — final, cacheable — and `unavailable`, the service did not answer — retry, cache nothing. Catalogue absence is neither. It is a read-layer fact about these bytes, reported by the reader's reverse index and never by the resolver: a binder can resolve perfectly and still not be entered. Mapping absence onto `unresolved` reads not-yet-entered as resolve-failed.
 
-### Ranking
+#### Ranking
 
 Never stored. Rank **within one dictionary only**; a `preclinical` row and a `pair` row are not comparable and must not appear in one ordering. For target `t` in dictionary `D`:
 
@@ -151,7 +225,7 @@ Never stored. Rank **within one dictionary only**; a `preclinical` row and a `pa
 2. Rank by `|D[b][t]|` descending.
 3. Tie-break: binder key ascending.
 
-## 8. Validation predicates
+### 8. Validation predicates
 
 Implement from this section alone. Tags: **pure** = decidable from one file's bytes; **relational** = needs a predecessor file; **oracle** = needs an external source. A passing verifier run proves **only the pure conditions**.
 
@@ -182,7 +256,7 @@ Implement from this section alone. Tags: **pure** = decidable from one file's by
 18. **[pure] Empty catalogue.** The empty catalogue is `{`, `  "version": 2,`, `  "pair": {},`, `  "preclinical": {}`, `}` on five lines with one trailing newline, and satisfies conditions 1–15 and 17. Any compact one-line form **fails** condition 6 and is invalid.
 19. **[relational] Add-only.** Given predecessor `P` and successor `S`, every binder, target and citation in `P` is present unchanged in `S`, in the same dictionary, except under human-directed supersession outside this spec. **A single-file verifier cannot implement this.**
 
-## 9. Background update contract
+### 9. Background update contract
 
 1. Satisfy §8.19 against the prior committed `graph.json`; add only rows satisfying §2–§4 and §8.1–§8.18.
 2. Re-serialise to §5 before persisting.
@@ -258,3 +332,15 @@ A procedure of this contract is an `agent.skill`. A run of this contract is one 
 - The trace records acts, not evidence. The record has no tier, no study type, and no score. A `.trace` file is not a proposal and is not a bench. It is discarded with the run. The specification is `systems/record-traces.md`. `verifier/verify.py --trace` decides it. That decision is pure and does not discharge §8.16.
 - The rows of this table and the files `systems/*.md` are in bijection. That bijection is extension predicate E4. It is not a §8 predicate and it does not renumber them.
 - Three systems, named here exactly. A specification not listed in this section is not part of this contract.
+
+## citations
+
+Ordinary-word pins and the three PDF byte hashes are in §11. Representation pins are in `docs/pin-references.md`: CommonMark 0.31.2, GFM 0.29, AgentKit v2 with its recorded sha256, AGENTS.md, and Mermaid flowcharts. On 1 Nov 2026 (Australia/Sydney) the HTML of arXiv:2602.12430v4 was opened at `https://arxiv.org/html/2602.12430v4`. That HTML is not a pin: no PDF byte hash was taken. It describes a skill directory whose front matter is preloaded and whose body loads on trigger. `agent.skill` in §11 remains the procedure spec of this contract.
+
+## falsification
+
+§4 is refuted for a triple when the paper does not report utility for that pair in that dictionary. Predicates 1–15 and 17 can pass while that paper still fails §4. The naive benchmark is a green verifier run. The withdrawn AUROC figure, and the separate papers in pin-table rows 3 and 4, are the worked cases.
+
+## licence
+
+MIT

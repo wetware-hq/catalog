@@ -2,11 +2,7 @@
 
 # `TRACES` — act log
 
-`type: agent.system` · `spec: fleet.campaign` · subordinate to `docs/follow-agent-contract.md`, which governs on any conflict.
-
-A trace is the act log of one `fleet.campaign` run. This file says what a legal log is. `verifier/verify.py --trace` hard-codes the lists below and decides them from bytes. It does not discharge `docs/follow-agent-contract.md` §8.16.
-
-One thing in the format is free: the worker's basename. The checker's answer is `result` or `partial`. There is no field for an area, a rank, a grade, a score, a tier, a study type, or a utility.
+`type: agent.system` · `spec: fleet.campaign`. This file is the act-log law for one run; `verifier/verify.py --trace` decides shape from bytes. The answer is `result` or `partial`, and §8.16 stays undischarged.
 
 ## Document graph
 
@@ -19,7 +15,69 @@ One thing in the format is free: the worker's basename. The checker's answer is 
 | Campaign system | Content-address run acts | `oracle=not-discharged`; no scores |
 | Reads: core; worker traces | Writes: `.trace` outside repo | Check: `verify.py --trace` |
 
-## 0. Lines
+## composition
+
+```yaml
+files: ["core.trace", "<worker>.trace"]
+answer: ["result", "partial"]
+graph: "Document graph above"
+```
+
+## indications
+
+One `fleet.campaign` run recording pin, call, refusal, proposal, emission, and halt for `resolve-key`, `propose-pairs`, or `design-binder`.
+
+## contraindications
+
+- No field for an area, rank, grade, score, tier, study type, or utility.
+- `result` does not establish that an event occurred, that `rev` was fetched, or that a patient benefited.
+- A `.trace` line is not a `proposals.json` element and not a `.bench` line.
+
+## algorithm
+
+### variables
+
+```yaml
+independent:
+  skill: "resolve-key | propose-pairs | design-binder"
+  bound_n: "positive integer, no leading zero"
+  bound_tok: "positive integer, no leading zero"
+dependent:
+  id: "SHA-256 of the preimage"
+  answer: "result | partial"
+controlled:
+  run: "SHA-256 of core.trace bytes"
+  oracle: "not-discharged"
+  disclaimer: "banner byte string, inside the emit preimage"
+objective: "a pure shape judgement with the oracle fixed"
+```
+
+### processes
+
+Control admits each line before R1–R10. Design parents follow P1–P6; any other shape has no parent. Transport is set union on `Id`. Stopping is one `halt` whose bounds equal the core. Search is the hard-coded act, gate, and field lists. Filter drops a token that is not in its list. Recovery: `unavailable` may be recorded; it does not invent a catalogue row.
+
+```mermaid
+stateDiagram-v2
+[*] --> Call
+Call --> Pin: propose-pairs or design-binder
+Call --> Acts: resolve-key
+Pin --> Acts
+Acts --> Halt
+Halt --> Result: R1-R10 hold
+Halt --> Partial: first failing code
+Result --> [*]
+Partial --> [*]
+```
+
+```mermaid
+flowchart LR
+Core[core.trace] --> Run[run hash]
+Run --> Line[admit line]
+Line --> Head[R1 to R10]
+Head --> Answer[result or partial]
+```
+
+### 0. Lines
 
 A file is UTF-8. A file that is not valid UTF-8, or that contains a NUL or a carriage return, is refused. No byte is rewritten as U+FFFD.
 
@@ -49,7 +107,7 @@ A worker file is one header and then one act per line. The header is `%trace/1 c
 
 The preimage of a line is that line with the id and the final newline removed. `H` is SHA-256, 64 lowercase hex digits, of the UTF-8 preimage. `run` is `H` of the core file's exact bytes.
 
-## 1. Allowed values
+### 1. Allowed values
 
 The checker hard-codes these lists. A token that is not in its list is refused.
 
@@ -100,7 +158,7 @@ For `design-binder`, the gates `grammar`, `species`, `not-protein`, and `indicat
 
 `source` and `release` are 1 to 64 characters from letters, digits, and `._:/-`. `release` may be the literal `unspecified`. `retrieved` is a real Gregorian date `YYYY-MM-DD`, the UTC day, with no zone suffix. `rev` is 40 lowercase hex digits. `bound-n` and `bound-tok` are positive integers and equal the core.
 
-## 2. Parents
+### 2. Parents
 
 The call's id is `H` of the text `call ^0 run=<run> skill=<skill>`, with no trailing newline. A line's parent is the first row below that applies.
 
@@ -117,7 +175,7 @@ Any other shape has no parent.
 
 `sameMolecule` is `docs/follow-agent-contract.md` §8.13 on the binder strings of `propose` lines: equal `aa:` multisets, equal `helm:` payloads after polymer-index normalisation, or an `aa:` key and a plain-L-chain `helm:` key with that sequence. One string used twice is one key.
 
-## 3. What the checker decides
+### 3. What the checker decides
 
 A line is admitted on its own. R1–R10 are said of the head of admitted lines. The checker returns the first failure in the order below, otherwise `result`.
 
@@ -163,7 +221,7 @@ The head is a result when the file is well formed and R1 through R10 all hold. T
 
 Merge of workers is set union on `Id`. Identical bytes are one line. Union is associative, commutative, and idempotent because `Id` is `H` of the preimage.
 
-## 4. What a passing check does not decide
+### 4. What a passing check does not decide
 
 A checker that returns `result` has not decided any of the following.
 
@@ -175,7 +233,7 @@ A checker that returns `result` has not decided any of the following.
 
 A `.trace` byte string is not a `proposals.json` element and not a `.bench` line. `%trace/` is not a `%bench/` line.
 
-## 5. Witness
+### 5. Witness
 
 Illustration. `spec` is forty `a`s and `rev` is forty `b`s. The proposal `aa:ACD` / `uniprot:P12345` / `pmid:1` is a shape fixture, not a claim of benefit. `H` of the core bytes is `run`. `H` of a line with its second token removed is that line's id.
 
@@ -204,7 +262,7 @@ halt 9d2001abc00391ea2c66714740c2ba9ec5c279405495498f51a72db31be4d6a3 ^2f3f73356
 
 `decide` of this pair of files is `result`.
 
-## 6. Status
+### 6. Status
 
 Licensed oversight is required for any use of this system; none has been performed to date.
 
@@ -213,3 +271,15 @@ verifier's own `trace_emit`, then hands every completed run back to that checker
 predicate E4 decides the bijection between `docs/follow-agent-contract.md` §11 and the files
 `systems/*.md`. The identity line above is extension predicate E5
 (`docs/follow-agent-contract.md` §0c). Neither decision is §8.16.
+
+## citations
+
+Predicates §8.7–§8.10 are called, not restated: `docs/follow-agent-contract.md`. Parent and skill shape are §§1–3 of this file. The witness in §5 is a shape fixture, not a claim of benefit.
+
+## falsification
+
+A halt whose oracle is anything but `not-discharged` must not verify. Removing the disclaimer from an emit changes the preimage, so the old id fails `hash`. The naive benchmark prints a fraction instead of `result`.
+
+## licence
+
+MIT
