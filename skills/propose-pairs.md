@@ -2,44 +2,56 @@
 
 # `propose-pairs` — catalogue intake
 
-`type: resource.procedure` · `spec: agent.skill`. Write `(binder, target, pmid)` candidates to `proposals.json` only. The reader who moves a row into `graph.json` chooses `pair` or `preclinical`.
+`type: resource.procedure` · `spec: agent.skill` · subordinate to `docs/follow-agent-contract.md`, which governs on any conflict.
 
-## Document graph
+Enumerate structured authorities, resolve complete protein triples, and append unclassified candidates to `proposals.json`. This procedure never writes `graph.json` or chooses a clinical versus preclinical study type.
 
-- → [systems/record-traces.md](../systems/record-traces.md)
+## Specification
 
-## Specification card
-
-| Role | Does | Must |
-|---|---|---|
-| Catalogue skill | Prepare evidence candidates | Never classify study type |
-| Reads: structured authorities; catalogue | Writes: `proposals.json` | Check: recall 1.0; zero false-admits |
-
-## composition
-
-```toml
-steps = ["1 admit", "2 payload", "3 binder", "4 target", "5 duplicate"]
-output = "proposals.json"
-graph = "Document graph above"
+```json
+{
+  "id": "skills/propose-pairs.md",
+  "type": "resource.procedure",
+  "role": "prepare evidence candidates for human admission",
+  "reads": ["structured authorities", "pinned graph.json", "existing proposals.json"],
+  "writes": ["proposals.json"],
+  "must": ["emit complete triples only", "never classify study type", "never write graph.json"],
+  "check": ["recall 1.0", "zero false-admits", "E2", "E5", "E6", "E7"]
+}
 ```
 
-## indications
+## Graph
 
-Biological protein binder, protein target, canonical sequence, UniProt accession, and at least one `pmid:<digits>` that reports utility for that pair.
+- → [../systems/record-traces.md](../systems/record-traces.md)
+- ← [resolve-key.md](resolve-key.md)
 
-## contraindications
-
-- Do not crawl prose, use DrugBank, or assign study type.
-- Do not write ranks, scores, grades, names, labels, indications, doses, or regulatory status.
-- Do not widen §3 to keep an unresolvable candidate.
-- Do not write `graph.json` on any branch.
-
-## algorithm
-
-### variables
+## Composition
 
 ```toml
-objective = "recall 1.0 on committed rows and a counted false-admit rate"
+steps = ["admit", "resolve payload", "resolve binder", "resolve target", "deduplicate"]
+output = "proposals.json"
+graph = "Graph section"
+```
+
+## Indications
+
+- Prepare machine-resolved triples for later paper review.
+- Re-run intake against a pinned catalogue to measure recall.
+- Record explicit refusal counts for incomplete or out-of-scope candidates.
+
+## Contraindications
+
+- Do not crawl prose, infer sequences from names, use approximate matches, or admit a row from metadata alone.
+- Do not classify `pair` versus `preclinical`; that choice is the paper-reading oracle.
+- Do not use DrugBank without re-checking its licence after the dated refusal below.
+- Do not store scores, names, indications, doses, labels, or regulatory status.
+
+## Algorithm
+
+### Variables
+
+```toml
+objective = "recall committed rows while counting false admissions"
 
 [independent]
 record = "structured authority row"
@@ -47,39 +59,27 @@ catalogue = "graph.json pinned to a commit SHA"
 
 [dependent]
 proposal = "binder, target, pmid"
-refusal = "step 1-5"
+refusal = "first failed intake step"
 
 [controlled]
-serialiser = "contract §5"
-merge = "contract §6, add-only §8.19"
+serializer = "contract section 5"
+merge = "contract section 6 and add-only predicate 19"
 drugbank = "refused; licence re-check dated 2026-10-29"
 ```
 
-### processes
-
-Control is the admit gate before resolution. Design emits three fields and no dictionary. Transport is one writer applying the §6 merge onto `proposals.json`. Stopping is the first refusal. Search enumerates UniProt, UniParc, ChEMBL, Thera-SAbDab, and PubMed or Europe PMC. Filter separates scope (step 1) from illegal payload (step 2). Recovery: a source error is `unavailable` and is not cached; a clean miss is `unresolved`.
+### Process
 
 ```mermaid
-stateDiagram-v2
-[*] --> Admit
-Admit --> Refuse: out of scope
-Admit --> Payload
-Payload --> Refuse: illegal monomer
-Payload --> Binder
-Binder --> Target
-Target --> Duplicate
-Duplicate --> Write: new triple
-Duplicate --> Refuse: already present
-Write --> [*]
-Refuse --> [*]
-```
-
-```mermaid
-flowchart LR
-Authorities --> Candidates
-Candidates --> Writer
-Writer --> Proposals[proposals.json]
-Proposals -->|reader| Graph[graph.json]
+flowchart TD
+    E[Enumerate structured records] --> A{Admitted protein payload?}
+    A -->|no| R[Record refusal]
+    A -->|yes| B[Resolve binder]
+    B --> T[Resolve target]
+    T --> P[Resolve PMID]
+    P --> D{Duplicate?}
+    D -->|yes| R
+    D -->|no| W[Single-writer append]
+    W --> V[Read back at commit SHA]
 ```
 
 ### 0. Objective
@@ -154,14 +154,31 @@ A run that cannot reproduce what is already trusted does not get to extend it.
 
 Condition 16 is an **oracle** predicate: that a paper reports utility for a pair, and in which direction, is not decidable from bytes, from a record, or from a crawl. A passing run proves the pure conditions and nothing more. State what you verified, name what you did not, and leave the claim to the reader who moves the row into `graph.json`. Nothing this procedure writes is ever read as a catalogue.
 
-## citations
+## Citations
 
-Write boundary and key grammar: `docs/follow-agent-contract.md` §3, §5, §6, §8.8, §9. DrugBank's non-commercial licence was checked on 2026-10-29 and is an external fact with a date, not a permanent law.
+| Source | Use | Pinning note |
+|---|---|---|
+| [UniProt REST API](https://www.uniprot.org/help/api_queries) | protein accessions and sequence identity | live service; record release and retrieval |
+| [ChEMBL web services](https://chembl.gitbook.io/chembl-interface-documentation/web-services) | structured activity and document records | record API release and query |
+| [Thera-SAbDab](https://opig.stats.ox.ac.uk/webapps/sabdab-sabpred/therasabdab/) | therapeutic antibody sequences and targets | live database; snapshot outputs |
+| [NCBI E-utilities](https://www.ncbi.nlm.nih.gov/books/NBK25501/) | PubMed identifier resolution | metadata does not establish paper content |
+| [DrugBank licence](https://go.drugbank.com/legal/academic_license) | dated exclusion check | re-check before changing the 29 Oct 2026 refusal |
+| [`follow-agent-contract.md`](../docs/follow-agent-contract.md) | grammar, proposal schema, and oracle boundary | repository commit is the governing pin |
 
-## falsification
+## Falsification
 
-Acceptance fails when recall against the committed catalogue is below 1.0, or when a curator rejects any row the run would write. A step that never fires is untested. The naive benchmark is the number of proposals written.
+| Challenge | Failure signal |
+|---|---|
+| Replay against committed catalogue | recall below `1.0` |
+| Curator rejects one emitted row before paper classification | false-admit rate above zero |
+| Remove `pmid`, binder, or target | candidate must be dropped, never padded |
+| Put `[CCO]` in a `PEPTIDE` block | distinct `illegal-payload` refusal |
+| Return 429 from one authority | `unavailable`, with no cached negative |
+| Run two writers against one proposals path | lost update demonstrates the single-writer requirement |
+| Assign `pair` during intake | procedure has crossed predicate 16 without reading the paper |
 
-## licence
+The refusal ledger must exercise every decision step; a gate with count zero is untested rather than satisfied.
+
+## Licence
 
 MIT

@@ -2,82 +2,86 @@
 
 # `TRACES` — act log
 
-`type: agent.system` · `spec: fleet.campaign`. This file is the act-log law for one run; `verifier/verify.py --trace` decides shape from bytes. The answer is `result` or `partial`, and §8.16 stays undischarged.
+`type: agent.system` · `spec: fleet.campaign` · subordinate to `docs/follow-agent-contract.md`, which governs on any conflict.
 
-## Document graph
+Define the content-addressed act log for one bounded `fleet.campaign` run and the byte-level decision procedure for accepting it. A valid trace proves shape and causal linkage, not that an act occurred or a paper supports a claim.
 
-- → [systems/run-campaign.md](run-campaign.md)
+## Specification
 
-## Specification card
+```json
+{
+  "id": "systems/record-traces.md",
+  "type": "agent.system",
+  "role": "content-address campaign acts and decide trace shape",
+  "reads": ["core.trace", "worker trace heads", "hard-coded carrier sets"],
+  "writes": [".trace files outside the repository"],
+  "must": ["derive ids from bytes", "end on one halt", "keep oracle not-discharged"],
+  "check": ["verifier/verify.py --trace", "R1-R10", "E4", "E5", "E6", "E7"]
+}
+```
 
-| Role | Does | Must |
-|---|---|---|
-| Campaign system | Content-address run acts | `oracle=not-discharged`; no scores |
-| Reads: core; worker traces | Writes: `.trace` outside repo | Check: `verify.py --trace` |
+## Graph
 
-## composition
+- ← [../skills/design-binder.md](../skills/design-binder.md)
+- ← [../skills/propose-pairs.md](../skills/propose-pairs.md)
+- → [run-campaign.md](run-campaign.md)
+
+## Composition
 
 ```toml
 files = ["core.trace", "<worker>.trace"]
 answer = ["result", "partial"]
-graph = "Document graph above"
+graph = "Graph section"
 ```
 
-## indications
+## Indications
 
-One `fleet.campaign` run recording pin, call, refusal, proposal, emission, and halt for `resolve-key`, `propose-pairs`, or `design-binder`.
+- Audit calls, pins, refusals, proposals, context verdicts, emissions, and halt for one run.
+- Merge independently written worker traces without a coordinator.
+- Recompute run and act identities from exact bytes.
 
-## contraindications
+## Contraindications
 
-- No field for an area, rank, grade, score, tier, study type, or utility.
-- `result` does not establish that an event occurred, that `rev` was fetched, or that a patient benefited.
-- A `.trace` line is not a `proposals.json` element and not a `.bench` line.
+- A trace is not event sourcing: it is discarded, is not authoritative state, and replay is not defined.
+- A hash proves byte identity, not occurrence, truth, provenance, clinical evidence, or patient benefit.
+- Scores, ranks, grades, tiers, study types, and utilities have no production in this grammar.
+- `result` never discharges the paper oracle or verifies that the pinned catalogue was fetched.
 
-## algorithm
+## Algorithm
 
-### variables
+### Variables
 
 ```toml
-objective = "a pure shape judgement with the oracle fixed"
+objective = "pure shape judgement with the paper oracle fixed"
 
 [independent]
 skill = "resolve-key | propose-pairs | design-binder"
-bound_n = "positive integer, no leading zero"
-bound_tok = "positive integer, no leading zero"
+bound_n = "positive integer without a leading zero"
+bound_tok = "positive integer without a leading zero"
 
 [dependent]
-id = "SHA-256 of the preimage"
+id = "SHA-256 of the act preimage"
 answer = "result | partial"
 
 [controlled]
 run = "SHA-256 of core.trace bytes"
 oracle = "not-discharged"
-disclaimer = "banner byte string, inside the emit preimage"
+disclaimer = "banner bytes inside the emit preimage"
 ```
 
-### processes
-
-Control admits each line before R1–R10. Design parents follow P1–P6; any other shape has no parent. Transport is set union on `Id`. Stopping is one `halt` whose bounds equal the core. Search is the hard-coded act, gate, and field lists. Filter drops a token that is not in its list. Recovery: `unavailable` may be recorded; it does not invent a catalogue row.
+### Process
 
 ```mermaid
 stateDiagram-v2
-[*] --> Call
-Call --> Pin: propose-pairs or design-binder
-Call --> Acts: resolve-key
-Pin --> Acts
-Acts --> Halt
-Halt --> Result: R1-R10 hold
-Halt --> Partial: first failing code
-Result --> [*]
-Partial --> [*]
-```
-
-```mermaid
-flowchart LR
-Core[core.trace] --> Run[run hash]
-Run --> Line[admit line]
-Line --> Head[R1 to R10]
-Head --> Answer[result or partial]
+    [*] --> ParseCore
+    ParseCore --> Partial: R1 or R3
+    ParseCore --> AdmitLines
+    AdmitLines --> Partial: syntax, hash, value, or parent
+    AdmitLines --> CheckHead
+    CheckHead --> Partial: first failed R2-R10
+    CheckHead --> Result: all predicates hold
+    Result --> [*]
+    Partial --> [*]
 ```
 
 ### 0. Lines
@@ -275,14 +279,34 @@ predicate E4 decides the bijection between `docs/follow-agent-contract.md` §11 
 `systems/*.md`. The identity line above is extension predicate E5
 (`docs/follow-agent-contract.md` §0c). Neither decision is §8.16.
 
-## citations
+## Citations
 
-Predicates §8.7–§8.10 are called, not restated: `docs/follow-agent-contract.md`. Parent and skill shape are §§1–3 of this file. The witness in §5 is a shape fixture, not a claim of benefit.
+| Pin | Claim used | Boundary |
+|---|---|---|
+| [W3C PROV-DM Recommendation](https://www.w3.org/TR/2013/REC-prov-dm-20130430/) | distinguish entities, activities, agents, use, generation, and responsibility | provenance does not prove truth |
+| [W3C Trace Context 1.0 Recommendation](https://www.w3.org/TR/2021/REC-trace-context-1-20211123/) | propagate trace identity across system boundaries | trace ids do not authenticate events |
+| [CloudEvents `ce@v1.0.2`, `fc1f6f3`](https://github.com/cloudevents/spec/blob/fc1f6f31f5f011a72183f1bcea20c987cb683ade/cloudevents/spec.md) | interoperable event envelope and context | no ordered store or replay semantics |
+| [OpenTelemetry GenAI conventions `244465e`](https://github.com/open-telemetry/semantic-conventions-genai/tree/244465e94b9d7167fa5ed5c31a4b2b49ab6ddee5) | current agent, tool, and MCP span vocabulary | marked Development, not stable |
+| [FIPS 180-4](https://doi.org/10.6028/NIST.FIPS.180-4) | SHA-256 digest algorithm | digest identity is not semantic evidence |
 
-## falsification
+Retrieved 1 Nov 2026 (Australia/Sydney). These sources explain adjacent interchange and provenance conventions; the carrier sets and parent rules remain repository-local.
 
-A halt whose oracle is anything but `not-discharged` must not verify. Removing the disclaimer from an emit changes the preimage, so the old id fails `hash`. The naive benchmark prints a fraction instead of `result`.
+## Falsification
 
-## licence
+| Mutation | Expected first failure |
+|---|---|
+| change an act field without recomputing its id | `hash` |
+| attach a line to a missing parent | R6 |
+| emit after `hit-unread` or `hit-same-indication` | R10 |
+| add `score`, `tier`, or `study-type` | `fields` |
+| use two pins or two halts | R5 |
+| omit the design disclaimer | `value:disclaimer` |
+| claim `oracle=discharged` | `value:oracle` |
+| duplicate one molecule under `aa:` and plain-chain HELM | R9 |
+| copy a valid trace and assert its events occurred | no checker predicate supports the assertion |
+
+The witness above must continue to round-trip through `trace_emit` and return `result`; every mutation test must fail for its named reason.
+
+## Licence
 
 MIT

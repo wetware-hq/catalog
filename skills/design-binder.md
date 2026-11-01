@@ -2,89 +2,92 @@
 
 # `design-binder` — de novo binder design
 
-`type: resource.procedure` · `class: special` · `spec: agent.skill`. Design binder hypotheses for one human protein and return an assay-gated worklist that writes no file. A returned sequence carries no evidence of benefit, safety, or activity.
+`type: resource.procedure` · `class: special` · `spec: agent.skill` · subordinate to `docs/follow-agent-contract.md`, which governs on any conflict.
 
-## Document graph
+Design and screen de novo binder hypotheses only after an indication-aware, commit-pinned catalogue gate. Survivors are experimental worklists, never therapies or catalogue rows.
 
-- → [systems/record-traces.md](../systems/record-traces.md)
+## Specification
 
-## Specification card
+```json
+{
+  "id": "skills/design-binder.md",
+  "type": "resource.procedure",
+  "role": "generate assay-gated binder hypotheses",
+  "reads": ["human target", "indication", "pinned catalogue", "pinned method benchmarks"],
+  "writes": [],
+  "must": ["stop on unread or same-indication evidence", "emit only with two killing assays"],
+  "check": ["trace result", "independent wet-lab measurement", "E2", "E5", "E6", "E7"]
+}
+```
 
-| Role | Does | Must |
-|---|---|---|
-| Special skill | Design and screen binder hypotheses | Catalogue hit stops; assay-gated hypothesis only |
-| Reads: target; indication; pinned catalogue and methods | Writes: none | Check: trace result; wet-lab oracle |
+## Graph
 
-## composition
+- ← [../docs/pin-references.md](../docs/pin-references.md)
+- → [../systems/record-traces.md](../systems/record-traces.md)
+
+## Composition
 
 ```toml
 class = "special"
 input = ["uniprot accession", "indication"]
-output = "worklist or named refusal"
-graph = "Document graph above"
+output = "experimental worklist or named refusal"
+graph = "Graph section"
 ```
 
-## indications
+## Indications
 
-A native human protein target and a clinical or research indication, after the pinned catalogue has been read for that target.
+- Native human protein target with an explicit clinical or research indication.
+- No unread `pair` hit and no read same-indication binder at the pinned catalogue revision.
+- A requester who can name owners for a binding assay and a pre-registered counter-screen.
+- A bounded campaign whose cheapest Pareto-minimal method is tried first.
 
-## contraindications
+## Contraindications
 
-- Writes nothing. Output cannot enter `graph.json` or `proposals.json`.
-- No design when a `pair` row exists and its paper is unread (`hit-unread`) or matches this indication.
-- Orthologues, non-proteins, and a missing indication are refusals.
-- No computable score is a clinical-utility score. Benchmarks here score structure and affinity prediction.
+- This special procedure originates an unreported sequence; it is not a conservative catalogue procedure.
+- It writes no file, cannot write `graph.json` or `proposals.json`, and cannot assign a PMID.
+- A returned sequence has no demonstrated benefit, safety, or activity and must not be called a therapy.
+- An unread `pair` hit, absent indication, non-human target, unsafe healthy-tissue profile, or missing assay owner stops the run.
+- Prediction cannot rank clinical utility; where prediction alone separates candidates, report them unranked.
 
-## algorithm
+## Algorithm
 
-### variables
+### Variables
 
 ```toml
-objective = "stop before spend when pair already cites the target; otherwise two named killing assays"
+objective = "stop before spend on a catalogue hit; otherwise define two killing assays"
 
 [independent]
 target = "human uniprot:"
-indication = "query only; not stored"
+indication = "query only; never stored"
+method = "distinct design route"
 
 [dependent]
 binder = "aa: or helm: hypothesis, or no emission"
 verdict = "hit-same-indication | hit-other-indication | hit-unread | absent"
 
 [controlled]
-paralogue = "30 percent identity panel; 50 percent forces a counter-screen"
-tissue_bar = "medium or high in myocardium, alveolar epithelium, haematopoietic progenitors"
-selectivity = "two logs weaker on every panel member"
 catalogue_pin = "commit SHA or tag"
+paralogue = "30 percent identity; 50 percent requires a counter-screen"
+selectivity = "two logs weaker on every panel member"
 ```
 
-### processes
-
-Control is the catalogue lookup before any generator call. Design fans out once over distinct scaffolds; methods are chosen from a pinned benchmark, cheapest-first. Transport keeps the disclaimer on the same block as every sequence. Stopping: a pre-registered bar, an iteration bound, and a token bound, or the run is a hypothesis pump. Search reads fleet and design literature as dated measurements. Filters are stage-one screens and they exclude; they do not penalise. Recovery is a wet-lab Kd plus a paralogue and tissue counter-screen, run by somebody named in the report.
+### Process
 
 ```mermaid
 stateDiagram-v2
-[*] --> Lookup
-Lookup --> Stop: hit-unread or hit-same-indication
-Lookup --> Design: absent, or hit-other after the paper is read
-Design --> Screen
-Screen --> Drop: stage-one fail
-Screen --> Emit: two assays named
-Screen --> Unranked: prediction alone separates the top two
-Stop --> [*]
-Emit --> [*]
-Unranked --> [*]
-Drop --> [*]
-```
-
-```mermaid
-flowchart LR
-Pin[graph.json at SHA] --> Index[reverse index]
-Index --> Hit{pair row}
-Hit -->|yes| Halt[stop before Boltz]
-Hit -->|no| Workers
-Workers --> Stage1[hard screens]
-Stage1 --> Stage2[named scorer]
-Stage2 --> Worklist
+    [*] --> Admit
+    Admit --> Refuse: grammar, species, protein, or indication fails
+    Admit --> Catalogue
+    Catalogue --> Stop: same-indication or unread pair hit
+    Catalogue --> Design: absent or read non-transfer
+    Design --> HardScreen
+    HardScreen --> Exclude: liability
+    HardScreen --> Order: survives
+    Order --> Refuse: no two killing assays
+    Order --> Emit: assays and uncertainty named
+    Emit --> [*]
+    Stop --> [*]
+    Refuse --> [*]
 ```
 
 ### 0. Objective
@@ -177,29 +180,19 @@ A weighted sum cannot do this job: a total can be high for the wrong reason, and
 
 #### Screen performance, as the source reports it
 
-The screen above has a published success rate, and the report carries it (§7). Source: Figure 3, panel E of the ipSAE preprint, read off the rendered panel at 600 dpi — row 9 of [`docs/pin-references.md`](../docs/pin-references.md), which is where the pin and the read status live. The x-axis groups are **`Recall = 0.2`**, **`Recall = 0.4`** and **`Max F1`**; the Figure 3 legend's "0.6" is an error in the source and the Results prose is the correct one. The rows below are in the panel's legend order, which is also the bar order in all three groups.
+The source reports median experimental success rates only for the five discriminators and three threshold strategies in the table below. It does **not** validate the stage-one hard screens, this composite procedure, or an arbitrary scorer. A report may carry a table value only when its discriminator and operating point match exactly; otherwise expected success rate is `not established`. Source: Figure 3, panel E of the ipSAE preprint, read at 600 dpi — row 9 of [`docs/pin-references.md`](../docs/pin-references.md). The x-axis groups are **`Recall = 0.2`**, **`Recall = 0.4`** and **`Max F1`**; the figure legend's "0.6" conflicts with the panel and Results prose.
 
-```csv
-discriminator,legend_ap,recall_0_2_percent,recall_0_4_percent,max_f1_percent
-LIS × input_interface_sc,0.58,54,50,44
-ipSAE_min × interface_ΔG/ΔSASA,0.56,61,53,36
-ipSAE_min,0.54,29,48,47
-ipTM,0.51,60,38,31
-AF2 pAE interaction,0.38,12,20,29
-```
+| discriminator | legend AP | Recall = 0.2 | Recall = 0.4 | Max F1 |
+|---|---|---|---|---|
+| LIS × input_interface_sc | 0.58 | 54% | 50% | 44% |
+| ipSAE_min × interface_ΔG/ΔSASA | 0.56 | 61% | 53% | 36% |
+| ipSAE_min | 0.54 | 29% | 48% | 47% |
+| ipTM | 0.51 | 60% | 38% | 31% |
+| AF2 pAE interaction | 0.38 | 12% | 20% | 29% |
 
-After loading that CSV as `screen`, the ranking disagreement is this R assertion:
+Each cell is a **median experimental success rate across 15 targets**, and the error bars are the **inter-quartile range**: at recall 0.2 the widest whiskers run from roughly **9% to 90%**, and ipSAE_min's from roughly **9% to 66%** around its 29% median. Those bounds are estimated from the axis; only bar labels are printed values. This is across-target dispersion, not repeated-order sampling noise and not a prediction interval for a new target. The targets were not sampled randomly; the direction of selection bias and generalization to an unseen target are unknown.
 
-```r
-stopifnot(!identical(
-  order(screen$legend_ap, decreasing = TRUE),
-  order(screen$recall_0_2_percent, decreasing = TRUE)
-))
-```
-
-Each cell is a **median experimental success rate across 15 targets**, and the error bars are the **inter-quartile range**, which is enormous: at recall 0.2 the widest whiskers in the panel run from roughly **9% to 90%**, and ipSAE_min's own run from roughly **9% to 66%** around its 29% median. Those bounds are estimated off the axis and are approximate; only the bar labels are printed values. **Read the spread for what it is.** It is a spread **across the 15 benchmark targets**, not across repeated orders against one target: it says how much the success rate depends on which protein you picked, and says nothing about the variation you would see ordering twice against the same protein. An order of N carries both — the across-target spread, and the sampling noise of N draws on top of it. A third caution compounds both: the source states its targets were not drawn at random, so the across-target spread is a **lower bound** on what an unseen target can do. A median drawn from a spread that wide is a weak summary of any single target, including yours.
-
-**At the order sizes this skill exists to serve, the variance dominates the median, and the report must say so.** A small order means operating at low recall and high stringency, which is the thin, jagged right-hand region of the precision curve (§6, Panel F) where few designs survive and each one swings the fraction. So the regime the skill is built for is the regime where its ranking is least stable. The honest output at an intended order size is the interval and the operating point, never a single confident percentage: not "order 8, expect about 5 to bind" off a 60% median, but "at this operating point the median is 60%, the across-target inter-quartile range is roughly X to Y, the spread dominates at N=8, and the ranking used holds only at this operating point." The check that kills a bad version of this skill: run two **different** targets at the same small N and watch the bind fraction land anywhere inside that range — that tests the across-target spread, which is what the figure measures. Running the **same** target twice tests sampling noise instead, which it does not. A version reporting one confident percentage has already failed the first check.
+**Do not extrapolate the medians to an order of N.** Panel E does not report finite-order uncertainty, repeated orders against one target, or performance for an unseen target. State the exact discriminator and operating point, carry the published across-target median and IQR when available, and label finite-order and target-specific success as `not established`; never write “order 8, expect about 5 to bind” from a 60% median.
 
 **Average precision and median success rate disagree, and the disagreement is the finding.** ipSAE_min is the best *single* feature on AP — 0.54 against ipTM's 0.51 and the AF2 pAE interaction baseline's 0.38, which is the comparison the 1.4-fold claim is made against, and the gap to ipTM is small — yet it returns **29% at recall 0.2**, below ipTM's 60% at the same stringency, and below every feature in the panel there except the AF2 baseline. The two measures answer different questions: AP scores the **whole ranking**, median success rate scores only **what you actually order at a stated stringency**. A run that quotes AP and then orders at low recall has quoted the wrong number. Report both, name the operating point, and carry the inter-quartile range beside the median.
 
@@ -218,7 +211,7 @@ Report, and write nothing. A single binder is emitted only when §6 earns it, an
 | evidence | each ranking signal, labelled prediction or measurement |
 | screens | each stage-one screen and its result, including for excluded candidates |
 | scorer | the quantity that produced the order, with values and uncertainty |
-| expected success rate | the median expected success rate for the scorer used, at the thresholds **as the source labels them** — the table in §6, with the operating point named, the inter-quartile range carried beside the median, and the pre-selection bias of the benchmark targets noted. Where the source is internally inconsistent, the discrepancy is resolved by reading the panel and the resolution recorded in `docs/pin-references.md`, never carried silently; and the ranking the number came from is stated, because average precision and median success rate do not agree (§6). This replaces a bare confidence score: "what fraction of what I order will bind" is the question a bench campaign actually asks, and every discriminator number is a proxy for it. |
+| expected success rate | for an exact discriminator and operating-point match in §6, the published across-target median and IQR, explicitly not an N-order estimate or new-target prediction; otherwise `not established`. Never transfer a cell to a composite screen or different scorer. |
 | killing assays | **two**, with thresholds and who could run each. A binding assay kills the affinity claim with a measured Kd. A counter-screen against the pre-registered paralogue panel and the healthy-tissue expression bar kills the safety claim even when the Kd is perfect — a binder that binds beautifully and also binds something in the myocardium is the failure mode that reaches patients. |
 | generator | what produced the sequence, standing in for the citation it does not have: the run, the design and scoring models with versions, the inputs, the date, and the catalogue PMIDs that justified choosing this target |
 | catalogue context | evidenced binders against this target at the pinned SHA with the indication read from each paper, or `hit-unread` naming every `pair` row when the papers were not read, or the explicit statement that none are entered and that this is not a negative. `preclinical` rows stay a separate list |
@@ -231,14 +224,34 @@ Nobody in this room can run a binding assay. So the output is a **worklist for a
 
 This procedure asserts nothing about patients and is therefore not acceptance-tested by rediscovery, as `propose-pairs` is. It passes when, for a target whose evidenced binders are already in `graph.json`, a run that is **blind to those rows** returns a candidate engaging the same epitope by an independent route. That is a test of the design process, not of the catalogue, and failing it bars no row — it tells you the ordering in §6 is not yet measuring what it claims to.
 
-## citations
+## Citations
 
-Catalogue law: `docs/follow-agent-contract.md` §7 and §10. Screen medians are Figure 3 panel E of pin-table row 9 in `docs/pin-references.md`, read off the rendered panel. Average precision and median success rate are both reported because they rank the same features differently.
+| Pin | Claim used | Scope limit |
+|---|---|---|
+| [Overath et al., bioRxiv v2, doi:10.1101/2025.08.14.670059](https://doi.org/10.1101/2025.08.14.670059) | panel E success rates, panel F operating behavior, and ipSAE/ipTM comparisons | unrefereed; 15 non-random targets; no patient outcome |
+| [`pin-references.md` row 9](../docs/pin-references.md) | exact text-layer digest, extraction command, figure reads, and contradiction resolution | governs every numeric claim above |
+| [AI Agents That Matter, arXiv:2407.01502v1](https://arxiv.org/abs/2407.01502v1) | report cost with accuracy and repeat stochastic evaluation | coding, web, and QA agents only |
+| [MAST, arXiv:2503.13657v3](https://arxiv.org/abs/2503.13657v3) | trace review must include design, coordination, and verification failures | taxonomy is observed, not exhaustive |
+| [NIST.AI.200-3](https://doi.org/10.6028/NIST.AI.200-3) | combine automated checks, red teaming, and realistic user evaluation | planning framework, not biological validation |
 
-## falsification
+Method selection at runtime must add its own versioned primary sources and benchmark measurements to the emitted `generator` field; this table is not a standing method leaderboard.
 
-The across-target claim is tested by two different targets at the same small N, not by repeating one target. A report that quotes one confident percentage has already failed. The naive benchmark treats average precision as the fraction of an order that will bind.
+## Falsification
 
-## licence
+| Challenge | Failure signal |
+|---|---|
+| Seed the pinned catalogue with an unread `pair` hit | any generator or scoring call occurs |
+| Reveal a same-indication evidenced binder | design continues instead of stopping |
+| Remove indication or use a non-human accession | any candidate is produced |
+| Omit either killing assay or its owner | any binder is emitted |
+| Copy a sequence without its exact disclaimer | trace hash or output contract fails |
+| Change the named scorer and keep the same order | ranking is not caused by its stated variable |
+| Treat the across-target IQR as a new-target prediction interval | the source reports no such interval |
+| Run one target twice and call the difference target variability | the test measures sampling noise instead |
+| Blind the process to a known binder | failure to recover the epitope by an independent route rejects the design ordering, not a catalogue row |
+
+The strongest break remains a wet-lab one: measured affinity above the stated threshold kills the binding claim; counter-screen binding or a disqualifying healthy-tissue profile kills the safety claim even when target affinity is excellent.
+
+## Licence
 
 MIT

@@ -2,48 +2,60 @@
 
 # `resolve-key` — key to labels
 
-`type: resource.procedure` · `spec: agent.skill`. Resolve one protein key to an identity, read-only. `unresolved` is a final record answer; `unavailable` means the service did not answer.
+`type: resource.procedure` · `spec: agent.skill` · subordinate to `docs/follow-agent-contract.md`, which governs on any conflict.
 
-## Document graph
+Resolve one admitted protein key to a release-pinned identity or to one of two non-overlapping failure verdicts. The procedure is read-only and never substitutes free-text search for exact resolution.
 
-- → [skills/propose-pairs.md](propose-pairs.md)
+## Specification
 
-## Specification card
+```json
+{
+  "id": "skills/resolve-key.md",
+  "type": "resource.procedure",
+  "role": "resolve a protein key to a release-pinned identity",
+  "reads": ["aa:, helm:, or uniprot: key", "named authority release"],
+  "writes": [],
+  "must": ["refuse before network access", "separate unresolved from unavailable"],
+  "check": ["key predicates", "trace result", "E2", "E5", "E6", "E7"]
+}
+```
 
-| Role | Does | Must |
-|---|---|---|
-| Read-only skill | Map protein key to identity | `unresolved` ≠ `unavailable` |
-| Reads: key; named release | Writes: none | Check: key predicates; trace |
+## Graph
 
-## composition
+- ← [../docs/follow-agent-contract.md](../docs/follow-agent-contract.md)
+- → [propose-pairs.md](propose-pairs.md)
+
+## Composition
 
 ```toml
-stages = ["0 admit", "1 resolve", "2 enrich"]
-graph = "Document graph above"
+stages = ["admit", "resolve", "enrich"]
+graph = "Graph section"
 writes = "none"
 ```
 
-## indications
+## Indications
 
-Protein keys only: `aa:`, `helm:` whose blocks are all `PEPTIDE`, and `uniprot:` accessions that match the contract grammar.
+- Map canonical protein sequences to UniParc or UniProt identities.
+- Resolve a `uniprot:` target before catalogue intake or design.
+- Distinguish a completed zero/multiple-match response from an outage.
 
-## contraindications
+## Contraindications
 
-- Nucleic-acid keys are refused unexamined, not classified.
-- Free-text search is out of scope. Residues do not go into a search engine.
-- The two failure verdicts are never merged, and this procedure never writes the catalogue.
-- A citation is not recoverable from residues.
+- Protein only: nucleic acids, small molecules, and non-`PEPTIDE` HELM blocks are refused before classification.
+- Do not recover citations from residues, align near-matches, or use web search as identity evidence.
+- Do not cache `unavailable`; do not retry or reinterpret final `unresolved`.
+- A resolved key can still be absent from the catalogue; absence is not a resolver verdict.
 
-## algorithm
+## Algorithm
 
-### variables
+### Variables
 
 ```toml
-objective = "one identity, or one typed failure"
+objective = "return one identity or one typed failure"
 
 [independent]
 key = "aa: | helm: | uniprot:"
-release = "named service release"
+release = "named authority snapshot"
 
 [dependent]
 identity = "accession or inn_name, source, release, retrieved"
@@ -55,31 +67,21 @@ path = "one exact lookup; no alignment"
 monomers = "one flat PROTEIN_MONOMERS set"
 ```
 
-### processes
-
-Control runs grammar at stage 0, before any request. Design is CRC64 against UniParc `checksum:`, exact lookup. Transport is a batch of keys on one path. Stopping: stage-1 `unresolved` halts enrichment for that key. Search is the checksum query, not an engine. Filter is the monomer set, ASCII bytes, and PEPTIDE blocks. Recovery: HTTP 5xx or 429 is `unavailable`, cache nothing, retry.
+### Process
 
 ```mermaid
 stateDiagram-v2
-[*] --> Admit
-Admit --> Refuse: out of scope or ungrammatical
-Admit --> Resolve: protein key
-Resolve --> Unresolved: zero or many records
-Resolve --> Unavailable: no answer
-Resolve --> Enrich: one identity
-Unresolved --> [*]
-Unavailable --> [*]
-Enrich --> [*]
-Refuse --> [*]
-```
-
-```mermaid
-flowchart LR
-Key --> Crc[CRC64 ISO]
-Crc --> UniParc
-UniParc --> Identity
-Key --> Grammar
-Grammar --> Refuse
+    [*] --> Admit
+    Admit --> Refused: grammar, scope, or ASCII fails
+    Admit --> Resolve: admitted
+    Resolve --> Identity: exactly one answer
+    Resolve --> Unresolved: zero or multiple answers
+    Resolve --> Unavailable: service did not answer
+    Identity --> Enrich
+    Refused --> [*]
+    Unresolved --> [*]
+    Unavailable --> [*]
+    Enrich --> [*]
 ```
 
 ### Folder contract (all skills here)
@@ -106,7 +108,7 @@ Failure   = unresolved        -- record answered, says nothing. final. cacheable
 
 No tier is computed and none is stored. A key is an admissible protein or it is refused.
 
-### Stage 0 - intrinsic
+### Stage 0 — intrinsic
 
 ```text
 admit : Key -> { length, composition, shape } | refused
@@ -145,7 +147,7 @@ vectors:
     refuse : helm:PEPTIDE1{[CCO]}$$$$           -> refused, monomer outside PROTEIN_MONOMERS
 ```
 
-### Stage 1 - resolve
+### Stage 1 — resolve
 
 ```text
 resolve : Key -> Identity | unresolved | unavailable
@@ -186,7 +188,7 @@ shard unit: a BATCH of keys, never one key per worker.
     the ratio is the point; the seconds are not a benchmark.
 ```
 
-### Stage 2 - enrich
+### Stage 2 — enrich
 
 ```text
 enrich : Identity -> Findings        -- note the domain: Identity, NOT Key
@@ -211,14 +213,31 @@ A citation is not recoverable from residues. Names are derivable; evidence is no
 
 A test vector proves a step is specified, not that it is right.
 
-## citations
+## Citations
 
-Grammar and verdict law: `docs/follow-agent-contract.md` §3 and §7. The 2026-10-29 UniParc counts in stage 1 are one live snapshot, not a pin, and are not reproducible from this checkout.
+| Source | Use | Reproducibility limit |
+|---|---|---|
+| [UniProt REST API](https://www.uniprot.org/help/api_queries) | accession and UniParc query surface | live service; record release and retrieval date |
+| [UniParc](https://www.uniprot.org/help/uniparc) | sequence identity archive | availability and indexing can change |
+| [`follow-agent-contract.md`](../docs/follow-agent-contract.md) | key grammar and molecule identity | repository revision must be pinned |
+| [`record-traces.md`](../systems/record-traces.md) | verdict carrier and source/release fields | shape does not prove the lookup occurred |
 
-## falsification
+Live-service observations in the algorithm were retrieved 29 Oct 2026 (Australia/Sydney) and are explicitly snapshots, not standing benchmarks.
 
-Exact lookup is refuted if a one-letter mutant of a canonical sequence returns a hit. The recorded miss (P04626 residue 100 R to A, zero hits on 2026-10-29) is the supporting observation, not a permanent measurement. The naive benchmark is a fuzzy-match score.
+## Falsification
 
-## licence
+| Challenge | Expected verdict |
+|---|---|
+| `helm:RNA1{R(A)P}$$$$` | refusal: scope |
+| `helm:PEPTIDE1{[CCO]}$$$$` | refusal: illegal monomer |
+| malformed or non-ASCII accession | refusal before network access |
+| one-residue mutation with zero exact UniParc hits | `unresolved` |
+| HTTP 429, timeout, or 5xx | `unavailable`; cache nothing |
+| multiple exact records | `unresolved`, never an arbitrary first hit |
+| catalogue has no row for a resolved target | catalogue absence, not resolve failure |
+
+Break the implementation by collapsing `unresolved` and `unavailable`; the resulting cache writes outages as facts. Break it again by adding approximate alignment; the resolver can then return a different molecule than the key.
+
+## Licence
 
 MIT

@@ -2,49 +2,62 @@
 
 # `BENCH` — a shared append-only commons for a campaign
 
-`type: agent.system` · `spec: fleet.campaign`. BENCH is one run's append-only commons for partial work. A `.bench` record is inadmissible to `graph.json` and to `proposals.json`.
+`type: agent.system` · `spec: fleet.campaign` · subordinate to `docs/follow-agent-contract.md`, which governs on any conflict.
 
-## Document graph
+Provide one run-scoped, append-only commons where workers exchange immutable partial work by set union. BENCH is disposable working space, and nothing in it is admissible to the catalogue.
 
-- → [systems/run-campaign.md](run-campaign.md)
+## Specification
 
-## Specification card
+```json
+{
+  "id": "systems/use-bench.md",
+  "type": "agent.system",
+  "role": "merge tiered campaign work without coordination",
+  "reads": ["core.bench", "worker heads", "one explicit evidence tier"],
+  "writes": [".bench files outside the repository"],
+  "must": ["merge by set union", "never pool tiers", "bind every node to one core"],
+  "check": ["fleet tests", "content hashes", "E4", "E5", "E6", "E7"]
+}
+```
 
-| Role | Does | Must |
-|---|---|---|
-| Campaign system | Merge tiered run work | Never pool tiers or enter catalogue |
-| Reads: core; worker heads | Writes: `.bench` outside repo | Check: fleet tests |
+## Graph
 
-## composition
+- ← [../docs/follow-agent-contract.md](../docs/follow-agent-contract.md)
+- → [run-campaign.md](run-campaign.md)
+
+## Composition
 
 ```toml
 files = ["core.bench", "<worker>.bench"]
 merge = "set union on content hashes"
-graph = "Document graph above"
+graph = "Graph section"
 ```
 
-## indications
+## Indications
 
-Workers of one `fleet.campaign` run, sharing partial measurements, predictions, and experimental notes inside that run's directory.
+- Share partial measurements, predictions, and experimental outcomes within one bounded campaign.
+- Merge retries, redelivery, and out-of-order worker output without locks.
+- Query causal ancestors or tier-pure aggregates at an explicit head.
 
-## contraindications
+## Contraindications
 
-- No query pools tiers 1, 2, and 3.
-- No `.bench` node is a catalogue row or a proposal.
-- Poses never enter a metric index. `near` is a linear scan.
-- This file does not widen the contract's write scope.
+- BENCH is not a catalogue, proposal file, durable record, truth oracle, or cross-run cache.
+- Never pool measurement, prediction, and experimental-result tiers.
+- A declared tier can be dishonest; syntax cannot establish provenance or truth.
+- Set union does not provide total order, exactly-once effects, deduplicated work, garbage collection, or termination.
+- Pose distance is not a metric and must not feed metric-tree indexes.
 
-## algorithm
+## Algorithm
 
-### variables
+### Variables
 
 ```toml
 objective = "join-semilattice merge and tier-pure answers at a named head"
 
 [independent]
 tier = "1 measurement | 2 prediction | 3 experiment"
-payload = "key value fields"
-parents = "^0 or earlier ids"
+payload = "key-value fields"
+parents = "zero or more earlier ids"
 
 [dependent]
 id = "prefix of SHA-256 of the canonical line"
@@ -55,28 +68,17 @@ run = "SHA-256 of core.bench bytes"
 order = "keys sorted; numbers in shortest round-trip form"
 ```
 
-### processes
-
-Control validates on receive: tier present, run hash matches. Design is a Merkle DAG of immutable lines. Transport is state-based set union, with no coordinator. Stopping is an iteration bound. Quiescence is not a state any one worker can see. Search is an add-only local index that may lag and must not invent nodes. Filter: a line that does not start with 1, 2, or 3 is not hashed and is not appended. Recovery is a new superseding node. Nothing is deleted.
-
-```mermaid
-stateDiagram-v2
-[*] --> Core
-Core --> Append: tier 1, 2, or 3
-Append --> Refuse: untiered or foreign run
-Append --> Merge: set union
-Merge --> Query: one tier, one head
-Query --> [*]
-Refuse --> [*]
-```
+### Process
 
 ```mermaid
 flowchart LR
-Core[core.bench] --> W1[worker head]
-Core --> W2[worker head]
-W1 --> Union[set union]
-W2 --> Union
-Union --> Answer[answer at that head]
+    C[Immutable core] --> A[Validate append]
+    A -->|invalid tier or run| R[Refuse]
+    A --> H1[Worker head A]
+    A --> H2[Worker head B]
+    H1 --> U[Set union]
+    H2 --> U
+    U --> Q[Tier-pure query at head]
 ```
 
 ### 0. Scope
@@ -161,25 +163,13 @@ A tier-1 measurement rooted at the core; two tier-2 predictions derived from it 
 
 ### 5. Merge
 
-Let `N` be the set of all possible nodes. The agent-facing computation is:
+Let `N` be the set of all possible nodes. Merge is `A ⊔ B = A ∪ B` on `(P(N), ⊆)`.
 
-```wolfram
-benchMerge[a_, b_] := Union[a, b]
-```
+- **Associative** — `(A ∪ B) ∪ C = A ∪ (B ∪ C)`.
+- **Commutative** — `A ∪ B = B ∪ A`.
+- **Idempotent** — `A ∪ A = A`.
 
-The human-readable laws, on the complete join-semilattice `(𝒫(N), ⊆)`, are:
-
-```tex
-\begin{aligned}
-A \sqcup B &= A \cup B, \\
-(A \cup B) \cup C &= A \cup (B \cup C), \\
-A \cup B &= B \cup A, \\
-A \cup A &= A, \\
-A \sqsubseteq B &\Longleftrightarrow A \subseteq B.
-\end{aligned}
-```
-
-The bottom is `∅`; the order says "B has seen everything A has seen". **What converges** is each worker's head, monotonically, to the union of all appended nodes, in any merge order, with duplicates and reordering. **What does not converge** is anything computed over the set; two readers at different heads give different correct answers, which is why §1 requires the head on every answer.
+So merge is a join on a complete join-semilattice with bottom `∅`, and the induced partial order is exactly `A ⊑ B ⟺ A ⊆ B`: "B has seen everything A has seen". **What converges** is each worker's head, monotonically, to the union of all appended nodes, in any merge order, with duplicates and reordering. **What does not converge** is anything computed over the set; two readers at different heads give different correct answers, which is why §1 requires the head on every answer.
 
 Hash naming is what makes this work without identity metadata: "same node" is decidable from the bytes.
 
@@ -210,13 +200,7 @@ No joins, no subqueries, no cross-tier aggregate, no "latest". Appending costs o
 
 ### 8. Pose, and the one place geometric algebra earns its place
 
-A record may carry a rigid-body transform as `pose:M(...)`: a **motor** in 3D projective geometric algebra `Cl(3,0,1)`, eight coefficients, composing rotation and translation in one object. Its comparison over the screw parameters is:
-
-```tex
-d(M,N) = \left\lVert \log\!\left(\widetilde{M}N\right) \right\rVert
-```
-
-Those parameters are rotation angle about the screw axis and translation along it. The comparison earns its place because workers produce transforms independently and must compare them invariantly under a change of either frame. The numbers in this section come from a run made outside this repository on 2026-10-30: a standard-library Python script, seed `20261030`, which is not in this tree because agents may not commit scripts here (`docs/follow-agent-contract.md` §0). Treat them as a dated snapshot, not a check this repository can re-run. Over 20,000 random pairs it reported `max |d(AM,AN) - d(M,N)| = 4.663e-15` and `max |d(MA,NA) - d(M,N)| = 4.177e-15`, while the obvious alternative — comparing rotation angle and translation vector separately — drifts by `2.301e+00` and `3.201e+00` under the same change of frame. An earlier draft of this file quoted `1e-13` and `5e-3` for these; that run did not reproduce `5e-3`, and the figures above are what it actually printed.
+A record may carry a rigid-body transform as `pose:M(...)`: a **motor** in 3D projective geometric algebra `Cl(3,0,1)`, eight coefficients, composing rotation and translation in one object, compared by `d(M,N) = ‖log(M̃N)‖` over the screw parameters — rotation angle about the screw axis, translation along it. It earns its place because workers produce transforms independently and the system must compare them, and this comparison is invariant under a change of either frame. The numbers in this section come from a run made outside this repository on 2026-10-30: a standard-library Python script, seed `20261030`, which is not in this tree because agents may not commit scripts here (`docs/follow-agent-contract.md` §0). Treat them as a dated snapshot, not a check this repository can re-run. Over 20,000 random pairs it reported `max |d(AM,AN) - d(M,N)| = 4.663e-15` and `max |d(MA,NA) - d(M,N)| = 4.177e-15`, while the obvious alternative — comparing rotation angle and translation vector separately — drifts by `2.301e+00` and `3.201e+00` under the same change of frame. An earlier draft of this file quoted `1e-13` and `5e-3` for these; that run did not reproduce `5e-3`, and the figures above are what it actually printed.
 
 Two findings that must travel with it:
 
@@ -263,14 +247,34 @@ hash on every node. Its hermetic tests include canonical field ordering and refu
 untiered line. The query index, replication protocol, pose distance and garbage collection remain
 unimplemented. The off-repo TLA+ report from 2026-10-29 (§9) remains unreproducible here.
 
-## citations
+## Citations
 
-Catalogue boundary: `docs/follow-agent-contract.md` §4 and §11. The 2026-10-30 pose distances and the 2026-10-29 TLC report are off-repo snapshots. This checkout cannot re-run them.
+| Pin | Claim used | Boundary |
+|---|---|---|
+| [Merkle-CRDTs, arXiv:2004.00107v2](https://arxiv.org/abs/2004.00107v2) | content-addressed DAGs can encode causal history and support convergent CRDT designs | an arbitrary hash DAG does not converge by itself |
+| [RFC 8785](https://www.rfc-editor.org/rfc/rfc8785) | deterministic serialization enables reproducible hashing | `.bench` canonicalization is local and is not JCS |
+| [TLA+](https://lamport.azurewebsites.net/tla/tla.html) | state exploration can falsify concurrency invariants | the cited model is not committed, so its result is not reproducible here |
+| [FIPS 180-4](https://doi.org/10.6028/NIST.FIPS.180-4) | SHA-256 content identity | hashes do not establish evidence tier or truth |
+| [`record-traces.md`](record-traces.md) | campaign trace identity carried by `core.bench` | traces and bench nodes remain separate formats |
 
-## falsification
+Retrieved or re-checked 1 Nov 2026 (Australia/Sydney). The measured token ratio, pose experiment, and TLA+ state counts remain dated off-repository observations, not claims reproduced by this checkout.
 
-Soundness fails if a query returns a node the store does not hold, or if one aggregate mixes tiers. The TLC run with receiver-side validation off broke untiered and foreign records in one step each; a check that cannot fail is the naive benchmark.
+## Falsification
 
-## licence
+| Challenge | Expected break |
+|---|---|
+| append a record without tier `1`, `2`, or `3` | receiver refuses before hashing |
+| move a valid node to a different core | run-hash validation fails |
+| merge heads in every permutation with duplicates | node set remains the same union |
+| aggregate tiers `1` and `2` together | query is unrepresentable |
+| query without recording the head | result is not reproducible |
+| mutate core bytes after one append | the core hash names a different run |
+| index a pose with a metric tree | triangle-inequality counterexamples invalidate pruning |
+| label a prediction as tier `1` | syntax passes, exposing the truthfulness limit |
+| run forever waiting for quiescence | no local termination predicate exists |
+
+The hermetic implementation tests cover canonical ordering, tier refusal, and run binding. Claims about replication, indexing, pose distance, and the off-repo TLA+ model remain falsification targets until executable fixtures are committed.
+
+## Licence
 
 MIT

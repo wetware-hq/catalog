@@ -2,69 +2,117 @@
 
 # catalog
 
-`type: initialization` and non-normative: it routes each task to the smallest sufficient spec. `docs/follow-agent-contract.md` governs on conflict. Absence is not a negative.
+`type: initialization` · non-normative. `docs/follow-agent-contract.md` governs on any conflict.
 
-## Document graph
+Route a catalogue task through the smallest sufficient path in the documentation DAG. The normative contract always wins.
 
-- → [docs/follow-agent-contract.md](follow-agent-contract.md)
+## Specification
 
-## Specification card
+```json
+{
+  "id": "docs/read-repository.md",
+  "type": "initialization",
+  "role": "route tasks through the documentation DAG",
+  "reads": ["graph.json", "neighbor Markdown on demand"],
+  "writes": [],
+  "must": ["load the contract before any procedure", "treat absence as unknown"],
+  "check": ["E1", "E6", "E7"]
+}
+```
 
-| Role | Does | Must |
-|---|---|---|
-| Initialization | Route each task to its smallest sufficient spec | Contract wins; absence is not negative |
-| Reads: `graph.json`; linked docs on demand | Writes: none | Check: E1, E6, E7 |
+## Graph
 
-## composition
+- → [follow-agent-contract.md](follow-agent-contract.md)
+
+## Composition
 
 ```toml
 root = "this file"
 sink = "systems/run-campaign.md"
-stop = "first sufficient row"
+stop = "first sufficient route"
 ```
 
-## indications
+## Indications
 
 | Task | Minimum read |
 |---|---|
-| read or rank | [§7](follow-agent-contract.md#7-read-contract) |
-| resolve a key | [resolve-key](../skills/resolve-key.md) |
-| propose a pair | [resolve-key](../skills/resolve-key.md), [propose-pairs](../skills/propose-pairs.md) |
-| design | [§7](follow-agent-contract.md#7-read-contract), [design-binder](../skills/design-binder.md), [run-campaign](../systems/run-campaign.md) |
-| verify | [§8](follow-agent-contract.md#8-validation-predicates), `python3 verifier/verify.py` |
+| read or rank catalogue rows | [`follow-agent-contract.md`](follow-agent-contract.md) |
+| resolve a key | contract → [`resolve-key`](../skills/resolve-key.md) |
+| propose an evidenced pair | contract → [`resolve-key`](../skills/resolve-key.md) → [`propose-pairs`](../skills/propose-pairs.md) |
+| run de novo design | contract; [`pin-references`](pin-references.md) → [`design-binder`](../skills/design-binder.md) → [`record-traces`](../systems/record-traces.md); [`use-bench`](../systems/use-bench.md) → [`run-campaign`](../systems/run-campaign.md) |
+| verify catalogue | contract → `python3 verifier/verify.py` |
+| verify traces | contract + [`record-traces`](../systems/record-traces.md) → `python3 verifier/verify.py --trace` |
 
-## contraindications
+Rows may stop at their endpoint; design lists the sink closure.
 
-- Not a formulary, prescription, rank, or recommendation.
-- Do not pool `pair` with `preclinical`. Absence is not a negative.
-- An unread `pair` hit stops design before spend.
+## Contraindications
 
-## algorithm
+- **Scope:** `graph.json` is evidence metadata—not a formulary, prescription, ranking, or recommendation.
+- **Separation:** `pair` and `preclinical` never pool; absence is not evidence of no binder.
+- **Oracle:** automation never discharges §8.16; an unread `pair` hit stops design before paid compute.
 
-Independent: task. Dependent: path. Controlled: contract wins.
+## Algorithm
+
+### Variables
+
+```toml
+objective = "select the smallest sufficient read-before route"
+
+[independent]
+task = "read | resolve | propose | design | verify"
+
+[dependent]
+route = "ordered Markdown path ending at the first sufficient node"
+
+[controlled]
+revision = "one pinned repository commit"
+contract = "docs/follow-agent-contract.md governs every route"
+```
+
+### Process
 
 ```mermaid
 stateDiagram-v2
-    [*] --> Route
-    Route --> Stop: first row
-    Stop --> [*]
+    [*] --> Contract
+    Contract --> Read: catalogue query
+    Contract --> Resolve: key query
+    Resolve --> Propose: intake query
+    Contract --> Pins: de novo query
+    Pins --> Design
+    Design --> Trace
+    Propose --> Trace
+    Contract --> Bench
+    Trace --> Run
+    Bench --> Run
+    Read --> [*]
+    Propose --> [*]
+    Run --> [*]
 ```
 
-```mermaid
-flowchart LR
-    C[Contract] --> P[Pins] --> D[Design] --> T[Trace] --> X[Run]
-    C --> K[Resolve] --> I[Propose] --> T
-    C --> B[Bench] --> X
-```
+- Pin the repository revision.
+- Read the contract.
+- Follow only the graph branch selected by the task table.
+- Stop at a refusal, oracle boundary, or the branch sink.
 
-## citations
+## Citations
 
-[pin-references.md](pin-references.md). Mermaid `stateDiagram-v2`, 1 Nov 2026 (Australia/Sydney), unhashed.
+| Pin | Supports |
+|---|---|
+| [CommonMark 0.31.2](https://spec.commonmark.org/0.31.2/) | Markdown parsing primitives |
+| [AgentKit, arXiv:2404.11483v2](https://arxiv.org/abs/2404.11483v2) | dependency-DAG execution |
+| [AGENTS.md commit `d001185`](https://github.com/agentsmd/agents.md/tree/d001185d792eb6402a58e4cbef1c228b309ec25d) | path-local progressive disclosure; no required heading schema |
 
-## falsification
+Retrieved 1 Nov 2026 (Australia/Sydney); these sources justify representation, not catalogue evidence.
 
-Reading every live file for one key refutes this router. Green CI leaves §8.16 undischarged.
+## Falsification
 
-## licence
+| Challenge | Failure signal |
+|---|---|
+| Delete or reverse one graph edge | E6 rejects reachability or reciprocity |
+| Route design without reading the contract | the catalogue gate and oracle boundary are absent |
+| Read a moving branch twice | returned bytes can differ under one unstated revision |
+| Treat a missing row as a negative | the consumer asserts information not present in the file |
+
+## Licence
 
 MIT
