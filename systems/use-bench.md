@@ -4,20 +4,75 @@
 
 `type: agent.system` · `spec: fleet.campaign` · subordinate to `docs/follow-agent-contract.md`, which governs on any conflict.
 
-BENCH is working space, not a record. It is where several agents in one run put partial work while they are still working, and where any of them can search what the others have put there so far. **Nothing written here is admissible to `graph.json`** (§4 below).
+Provide one run-scoped, append-only commons where workers exchange immutable partial work by set union. BENCH is disposable working space, and nothing in it is admissible to the catalogue.
 
-## Document graph
+## Specification
 
-- → [systems/run-campaign.md](run-campaign.md)
+```json
+{
+  "id": "systems/use-bench.md",
+  "type": "agent.system",
+  "role": "merge tiered campaign work without coordination",
+  "reads": ["core.bench", "worker heads", "one explicit evidence tier"],
+  "writes": [".bench files outside the repository"],
+  "must": ["merge by set union", "never pool tiers", "bind every node to one core"],
+  "check": ["fleet tests", "content hashes", "E4", "E5", "E6"]
+}
+```
 
-## Specification card
+## Graph
 
-| Role | Does | Must |
+- ← [../docs/follow-agent-contract.md](../docs/follow-agent-contract.md)
+- → [run-campaign.md](run-campaign.md)
+
+## Composition
+
+| Component | Function | Persistence |
 |---|---|---|
-| Campaign system | Merge tiered run work | Never pool tiers or enter catalogue |
-| Reads: core; worker heads | Writes: `.bench` outside repo | Check: fleet tests |
+| immutable core | pre-register run parameters and trace id | run lifetime |
+| worker file | append tiered content-addressed nodes | run lifetime |
+| head | set of admitted node ids | monotone, mergeable |
+| local index | derived search acceleration | rebuildable |
+| query result | value plus exact head | reproducible only at that head |
 
-## 0. Scope
+## Indications
+
+- Share partial measurements, predictions, and experimental outcomes within one bounded campaign.
+- Merge retries, redelivery, and out-of-order worker output without locks.
+- Query causal ancestors or tier-pure aggregates at an explicit head.
+
+## Contraindications
+
+- BENCH is not a catalogue, proposal file, durable record, truth oracle, or cross-run cache.
+- Never pool measurement, prediction, and experimental-result tiers.
+- A declared tier can be dishonest; syntax cannot establish provenance or truth.
+- Set union does not provide total order, exactly-once effects, deduplicated work, garbage collection, or termination.
+- Pose distance is not a metric and must not feed metric-tree indexes.
+
+## Algorithm
+
+### Variables
+
+| Class | Variable | Definition |
+|---|---|---|
+| independent | incoming nodes and local heads | immutable tiered records observed by each worker |
+| dependent | merged head and query answer | set union plus a result evaluated at that exact head |
+| controlled | core hash, tier, canonical bytes | one run identity, one evidence class, and content-derived ids |
+
+### Process
+
+```mermaid
+flowchart LR
+    C[Immutable core] --> A[Validate append]
+    A -->|invalid tier or run| R[Refuse]
+    A --> H1[Worker head A]
+    A --> H2[Worker head B]
+    H1 --> U[Set union]
+    H2 --> U
+    U --> Q[Tier-pure query at head]
+```
+
+### 0. Scope
 
 - **Read:** this file, `docs/follow-agent-contract.md`, the run's own `.bench` files.
 - **Write:** `.bench` files inside a run directory, which lives outside this repository.
@@ -25,7 +80,7 @@ BENCH is working space, not a record. It is where several agents in one run put 
 
 **`systems/` and `skills/`.** `skills/*.md` are *procedures*: a named thing an agent does, registered in `docs/follow-agent-contract.md` §10, each with a signature and a write scope. `systems/*.md` are the `fleet.campaign` specifications registered in §11. This file is a substrate: a format, a merge law and an invariant list. A system is not a skill, declares no signature over catalogue keys, and is not registered in §10. A skill may use a system; a system never discharges a skill's obligations, and neither widens `docs/follow-agent-contract.md` §0.
 
-## 1. Structure
+### 1. Structure
 
 A grow-only set of immutable nodes, each named by the hash of its own content, forming a Merkle DAG. Replication is state-based: an agent sends nodes, a receiver merges by **set union**.
 
@@ -36,7 +91,7 @@ A grow-only set of immutable nodes, each named by the hash of its own content, f
 
 Order comes from the merge, not from a schedule. That buys: no coordinator, no lock, no queue; workers may be added or killed mid-run; retries, redelivery and out-of-order arrival need no handling, because the merge is a join (§5). It costs: readers legitimately see different worlds, so **every answer carries the head it was computed at**, and an answer without one is not reproducible and is not a result; there is no total order and therefore no "latest"; and nothing prevents two workers doing the same expensive work, because preventing that is coordination.
 
-## 2. Evidence tier, and the rule against pooling
+### 2. Evidence tier, and the rule against pooling
 
 Every record declares a tier.
 
@@ -52,7 +107,7 @@ The tier is the **first token of the line** (§3). A line that does not begin wi
 
 The same separation `docs/follow-agent-contract.md` §1 holds between `pair` and `preclinical` is held here between tiers, and for the same reason: the two are never merged and never ranked against each other.
 
-## 3. The `.bench` line
+### 3. The `.bench` line
 
 Extension **`.bench`**. One node per line, newline-terminated, UTF-8. A run directory holds `core.bench` and one `<worker>.bench` per worker, each append-only. The version is `1`.
 
@@ -88,7 +143,7 @@ A tier-1 measurement rooted at the core; two tier-2 predictions derived from it 
 
 **Measured token cost.** The same ten records encoded in `.bench` and in JSON, counted with `tiktoken` (`o200k_base`): 602 tokens against 739 for compact one-object-per-line JSON, a ratio of **1.23×**. Stated honestly, because the other available figure is not: against *pretty-printed* JSON the ratio is 2.00×, and that mostly measures indentation. The saving also shrinks toward 1.0 as string payloads lengthen, because the win is per-field punctuation. 1.23× is the number; the format's other justifications are the tier the line requires and line-oriented diffs.
 
-## 4. Admissibility: nothing here reaches `graph.json`
+### 4. Admissibility: nothing here reaches `graph.json`
 
 `docs/follow-agent-contract.md` §4 is a **semantic oracle**: a row enters `graph.json` only because a reader read the paper and judged the study type. Nothing a campaign writes to a scratchpad touches that gate, and this specification does not amend it.
 
@@ -97,7 +152,7 @@ A tier-1 measurement rooted at the core; two tier-2 predictions derived from it 
 - BENCH is not a proposals file and must not be read as one. The file boundary in `docs/follow-agent-contract.md` §9.3 stands: trust is carried by the file, and `.bench` is not one of the two files that carry it.
 - A fact discovered in a run enters the catalogue the ordinary way and no other: someone publishes it, `propose-pairs` proposes it, a reader admits it.
 
-## 5. Merge
+### 5. Merge
 
 Let `N` be the set of all possible nodes. Merge is `A ⊔ B = A ∪ B` on `(P(N), ⊆)`.
 
@@ -109,7 +164,7 @@ So merge is a join on a complete join-semilattice with bottom `∅`, and the ind
 
 Hash naming is what makes this work without identity metadata: "same node" is decidable from the bytes.
 
-## 6. The immutable core
+### 6. The immutable core
 
 `core.bench` holds the run's pre-registered parameters. It is read-only, and that is structural, not a convention:
 
@@ -120,7 +175,7 @@ Hash naming is what makes this work without identity metadata: "same node" is de
 
 A run whose core changed is not a tainted run to be discarded by policy; it is arithmetically a different run, and anyone can recompute the hashes and see so. The report states the core hash.
 
-## 7. Index and query surface
+### 7. Index and query surface
 
 Per worker, local, derived, rebuildable, never shared: an inverted index over `key:value` terms, sorted arrays per numeric key, and the DAG adjacency. All three are **add-only**, which is the only reason concurrent search works — the node set only grows, so the index only gains postings, with no tombstones and no reader invalidation. Segments merge on a size ladder.
 
@@ -134,7 +189,7 @@ count | mean | sd | top-k  BY tier       aggregates are per tier, always
 
 No joins, no subqueries, no cross-tier aggregate, no "latest". Appending costs one posting insert per field, cheaper than hashing the node; segment merging is amortised `O(log n)`. **Freshness is not a safety property here; soundness is.** The index may lag the store, and the only guarantee is that it never returns a node the store does not hold. A worker needing a fresh view merges, then queries; that sequence is the only synchronisation BENCH has.
 
-## 8. Pose, and the one place geometric algebra earns its place
+### 8. Pose, and the one place geometric algebra earns its place
 
 A record may carry a rigid-body transform as `pose:M(...)`: a **motor** in 3D projective geometric algebra `Cl(3,0,1)`, eight coefficients, composing rotation and translation in one object, compared by `d(M,N) = ‖log(M̃N)‖` over the screw parameters — rotation angle about the screw axis, translation along it. It earns its place because workers produce transforms independently and the system must compare them, and this comparison is invariant under a change of either frame. The numbers in this section come from a run made outside this repository on 2026-10-30: a standard-library Python script, seed `20261030`, which is not in this tree because agents may not commit scripts here (`docs/follow-agent-contract.md` §0). Treat them as a dated snapshot, not a check this repository can re-run. Over 20,000 random pairs it reported `max |d(AM,AN) - d(M,N)| = 4.663e-15` and `max |d(MA,NA) - d(M,N)| = 4.177e-15`, while the obvious alternative — comparing rotation angle and translation vector separately — drifts by `2.301e+00` and `3.201e+00` under the same change of frame. An earlier draft of this file quoted `1e-13` and `5e-3` for these; that run did not reproduce `5e-3`, and the figures above are what it actually printed.
 
@@ -145,7 +200,7 @@ Two findings that must travel with it:
 
 This is the only use of geometric algebra in BENCH. It contributes nothing to the merge, the lattice, the index, the line format or the tier rules, and nothing elsewhere is expressed in it.
 
-## 9. Verification status
+### 9. Verification status
 
 The concurrency model was checked with TLC (TLA+) in an off-repo run on 2026-10-29 by catalog-systems. **The model is not in this repository** — there is no `.tla` or `.cfg` here — so nothing below is reproducible from this checkout, and the table records what that run reported rather than a property this repository can demonstrate. The configuration was: two agents, byte-level staging, a derived index, tier-pure aggregation, the immutable core, an untiered record and a record from a foreign run.
 
@@ -161,7 +216,7 @@ The concurrency model was checked with TLC (TLA+) in an off-repo run on 2026-10-
 
 That run reported 198 distinct states and 887 steps with every rule above holding, and the same model with receiver-side validation switched off broke "no untiered record" and "no foreign record" in **one step each** — which is why §6.3 is called load-bearing rather than decorative, and a check that cannot fail proves nothing. Until the model is committed here, that reasoning rests on a run nobody else can repeat.
 
-## 10. Known weaknesses
+### 10. Known weaknesses
 
 Stated here rather than in a design note, because a reader of this file is the person they would mislead.
 
@@ -173,7 +228,7 @@ Stated here rather than in a design note, because a reader of this file is the p
 6. **The token saving is 1.23×**, not transformational, and smaller still on prose-heavy records.
 7. **Pose comparison is a linear scan** by necessity (§8): adequate for thousands of poses, not for millions.
 
-## 11. Status
+### 11. Status
 
 Licensed oversight is required for any use of this system; none has been performed to date.
 
@@ -182,3 +237,35 @@ worker file per configured worker, tier-first records, content-derived ids, pare
 hash on every node. Its hermetic tests include canonical field ordering and refusal of an
 untiered line. The query index, replication protocol, pose distance and garbage collection remain
 unimplemented. The off-repo TLA+ report from 2026-10-29 (§9) remains unreproducible here.
+
+## Citations
+
+| Pin | Claim used | Boundary |
+|---|---|---|
+| [Merkle-CRDTs, arXiv:2004.00107v2](https://arxiv.org/abs/2004.00107v2) | content-addressed DAGs can encode causal history and support convergent CRDT designs | an arbitrary hash DAG does not converge by itself |
+| [RFC 8785](https://www.rfc-editor.org/rfc/rfc8785) | deterministic serialization enables reproducible hashing | `.bench` canonicalization is local and is not JCS |
+| [TLA+](https://lamport.azurewebsites.net/tla/tla.html) | state exploration can falsify concurrency invariants | the cited model is not committed, so its result is not reproducible here |
+| [FIPS 180-4](https://doi.org/10.6028/NIST.FIPS.180-4) | SHA-256 content identity | hashes do not establish evidence tier or truth |
+| [`record-traces.md`](record-traces.md) | campaign trace identity carried by `core.bench` | traces and bench nodes remain separate formats |
+
+Retrieved or re-checked 1 Nov 2026 (Australia/Sydney). The measured token ratio, pose experiment, and TLA+ state counts remain dated off-repository observations, not claims reproduced by this checkout.
+
+## Falsification
+
+| Challenge | Expected break |
+|---|---|
+| append a record without tier `1`, `2`, or `3` | receiver refuses before hashing |
+| move a valid node to a different core | run-hash validation fails |
+| merge heads in every permutation with duplicates | node set remains the same union |
+| aggregate tiers `1` and `2` together | query is unrepresentable |
+| query without recording the head | result is not reproducible |
+| mutate core bytes after one append | the core hash names a different run |
+| index a pose with a metric tree | triangle-inequality counterexamples invalidate pruning |
+| label a prediction as tier `1` | syntax passes, exposing the truthfulness limit |
+| run forever waiting for quiescence | no local termination predicate exists |
+
+The hermetic implementation tests cover canonical ordering, tier refusal, and run binding. Claims about replication, indexing, pose distance, and the off-repo TLA+ model remain falsification targets until executable fixtures are committed.
+
+## Licence
+
+MIT

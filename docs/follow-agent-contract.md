@@ -2,28 +2,87 @@
 
 # `graph.json` — agent contract
 
-`type: resource.reference` · **normative**. `docs/read-repository.md` is `type: initialization` and non-normative; on conflict this file governs. Implement verifiers, mergers and updaters from this file alone.
+`type: resource.reference` · **normative**. `docs/read-repository.md` is `type: initialization` and non-normative; on conflict this file governs.
 
-## Document graph
+Define the catalogue schema, evidence boundary, canonical bytes, merge law, read behavior, procedure registry, and campaign-system registry. Implement verifiers, mergers, and updaters from this file alone.
 
-- → [docs/pin-references.md](pin-references.md)
-- → [skills/resolve-key.md](../skills/resolve-key.md)
-- → [systems/use-bench.md](../systems/use-bench.md)
+## Specification
 
-## Specification card
+```json
+{
+  "id": "docs/follow-agent-contract.md",
+  "type": "resource.reference",
+  "role": "normative catalogue and agent-system contract",
+  "reads": ["graph.json", "registered Markdown", "predecessor catalogue", "paper evidence"],
+  "writes": ["graph.json under human supersession", "proposals.json under section 9"],
+  "must": ["preserve canonical bytes", "separate study types", "leave the paper oracle explicit"],
+  "check": ["predicates 1-19", "E1-E6"]
+}
+```
 
-| Role | Does | Must |
+## Graph
+
+- → [../skills/resolve-key.md](../skills/resolve-key.md)
+- → [../systems/use-bench.md](../systems/use-bench.md)
+- → [pin-references.md](pin-references.md)
+- ← [read-repository.md](read-repository.md)
+
+## Composition
+
+| Component | Authority | Function |
 |---|---|---|
-| Normative reference | Define schema, evidence, merge, read, and write law | §8.16 requires paper review |
-| Reads: catalogue; registered specs | Writes: authorized paths under §9 | Check: `verifier/verify.py` |
+| `graph.json` | normative data | admitted binder–target evidence |
+| `proposals.json` | intake boundary | unclassified candidate triples |
+| `skills/*.md` | subordinate procedures | resolve, propose, or design |
+| `systems/*.md` | subordinate run specs | bench, trace, and campaign machinery |
+| `verifier/` | executable checker | pure, relational, and repository predicates |
+| `docs/pin-references.md` | reproducibility record | versioned claims and read status |
 
-## 0. Scope
+## Indications
+
+- Reading or ranking catalogue rows.
+- Validating, merging, or extending catalogue bytes.
+- Resolving keys, proposing pairs, or launching de novo design.
+- Implementing a registered campaign system or interpreting its outputs.
+
+## Contraindications
+
+- This is not a formulary, prescription, clinical recommendation, or proof of patient benefit.
+- Automation cannot discharge predicate 16; admission requires reading the cited paper.
+- `pair` and `preclinical` are study types, not evidence grades, and are never pooled.
+- A missing row is unknown coverage, not evidence that no binder exists.
+- Repository-local `agent.skill` and `fleet.campaign` are not claims of conformance with external Agent Skills or A2A.
+
+## Algorithm
+
+### Variables
+
+| Class | Variable | Definition |
+|---|---|---|
+| independent | input bytes and cited artifacts | catalogue, predecessor, proposal, key, or paper supplied to an operation |
+| dependent | decision and output bytes | admission, refusal, canonical merge, resolution, or run result |
+| controlled | schema and revision | version `2`, one pinned commit, fixed grammars, and named source releases |
+
+### Process
+
+```mermaid
+flowchart LR
+    I[Input bytes] --> P[Pure predicates]
+    P -->|invalid| R[Refuse with predicate]
+    P --> O{Paper oracle needed?}
+    O -->|yes| H[Human reads paper]
+    O -->|no| C[Canonical operation]
+    H --> C
+    C --> A[Add-only successor]
+```
+
+### 0. Scope
 
 - **Read:** `graph.json`, `docs/*.md`, `skills/*.md`, `systems/*.md` (§11), `fleet/`, `verifier/`, `.github/workflows/`, `LICENSE`.
 - **Write:** `graph.json` and `proposals.json` only, under §9.
 - **Refuse:** writing scripts, workflows, CI, package manifests or secondary data files in this repo, `proposals.json` (§9) being the single named exception — the fleet harness under `fleet/`, verifier under `verifier/` and workflow under `.github/workflows/` are human-directed additions that exercise or check this contract and are outside every agent's write scope, so an agent reads them and does not edit them; stored ranks, scores or grades; citations other than bare `pmid:<digits>`; empty citation arrays; pairs without qualifying evidence (§4); removal or rewriting of existing rows absent explicit human supersession.
 
-## 0b. Documentation banner
+### 0b. Documentation banner
 
 Every Markdown file in this repository opens, as its **first non-blank line**, with the exact byte string
 
@@ -31,7 +90,7 @@ Every Markdown file in this repository opens, as its **first non-blank line**, w
 
 — one fixed, repeated string, byte-identical in every file, never paraphrased, abbreviated or replaced by a cross-reference. It states **who may act on this repository**, and is deliberately distinct from the README's *What it is not* paragraph, which states what the catalogue records; the two are not merged. This is a normative documentation invariant. It is **not** one of the nineteen §8 predicates and does not renumber them; it is checked as a verifier extension, predicate E1 (see `verifier/`).
 
-## 0c. Identity line
+### 0c. Identity line
 
 Every file in `skills/` and `systems/` names itself once, in the header, before the first section heading. Extension predicate E5 checks that line. E5 is not a §8 predicate and does not renumber them.
 
@@ -42,33 +101,30 @@ Every file in `skills/` and `systems/` names itself once, in the header, before 
 
 `agent.skill` is the spec of a procedure. `fleet.campaign` is the spec of one run. `agent.swarm` and `agent.fleet` are not specs and not types. A header outside these two directories that carries either spec fails E5: that file is an orphan. The checker skips exactly two registry fixtures, `verifier/tests/fixtures/ext_registry_fail/skills/exercise-special-scope.md` and `verifier/tests/fixtures/ext_registry_ok/skills/exercise-special-scope.md`. They declare the skill spec so E2 can be tested, and they are not skills of this contract. The harness code under `fleet/` is not a row of this table. Its specification is [`systems/run-campaign.md`](../systems/run-campaign.md). The four strings, and the ordinary words next to them, are set out in §11.
 
-## 0d. Documentation DAG and specification cards
+### 0d. Scientific Markdown profile and documentation DAG
 
 **Live Markdown** is every repository `*.md` except the exact fixture paths in `verifier/verify.py`'s `E6_FIXTURE_PATHS`. Each excluded file is a deliberately incomplete or invalid verifier input under `verifier/tests/fixtures/`, not documentation; tests require the manifest to equal the fixture Markdown set and require every entry to lack the live-document headings. E1 still checks every bannered fixture and its exact one-path allowlist is unchanged.
 
-Every live Markdown file has these as its first two H2 headings, byte-for-byte and at column zero:
+The header has exactly the banner block, one column-zero H1, an optional one-line block containing `` `type: ...` ``, and one functional-description paragraph; no other pre-H2 prose is allowed. The description has one to three sentences and at most 384 UTF-8 bytes. It is followed by exactly these column-zero H2 headings, in order: `Specification`, `Graph`, `Composition`, `Indications`, `Contraindications`, `Algorithm`, `Citations`, `Falsification`, `Licence`. Fenced content never supplies headings; indented or setext H2s are refused.
 
-1. `## Document graph`
-2. `## Specification card`
+`Specification` contains one fenced JSON object of at most 2,048 UTF-8 bytes with these unique ordered fields: `id`, `type`, `role`, `reads`, `writes`, `must`, `check`. `id` is the repository-relative path; scalar values and array items are non-empty and at most 128 UTF-8 bytes, while `writes` may be an empty array. Outside fenced content, `Algorithm` contains `### Variables` followed by `### Process`, each exactly once. Every section is non-empty; the exact `Licence` body is one blank line followed by `MIT`.
 
-Fenced-code contents never supply those headings. Raw HTML, an indented CommonMark H2, or a setext H2 is refused before the pair; this strict profile keeps the required pair both column-zero ATX and first in rendered structure.
+The document graph is a directed read-before DAG rooted at `docs/read-repository.md`. `Graph` contains only a column-zero unordered list of relative neighbor links:
 
-The document graph is a directed read-before DAG rooted at `docs/read-repository.md`. Its only non-blank content is a column-zero unordered list of bare relative Markdown links:
+- `← [relative.md](relative.md)` declares `neighbor → this file`.
+- `→ [relative.md](relative.md)` declares `this file → neighbor`.
 
-- `← [path](relative.md)` declares `path → this file`.
-- `→ [path](relative.md)` declares `this file → path`.
+Every edge is declared at both endpoints, so each file lists all and only its incoming and outgoing neighbors; labels equal canonical paths relative to that file and are path-sorted. The graph has one root and one sink, `systems/run-campaign.md`; it is root-reachable, acyclic, transitively reduced, and has at most `|V| + 1` edges. Self-edges, broken or external targets, annotations, duplicate local items, and one-sided declarations are invalid. Links elsewhere are not graph edges.
 
-Every non-sink lists all and only its outgoing edges, path-sorted. The graph has one sink, `systems/run-campaign.md`; that file lists one incoming edge as a navigation backlink. This backlink is the only duplicated edge declaration. Labels are repository-relative paths. The graph is root-reachable, acyclic, transitively reduced, and has at most `|V| + 1` edges — two above the rooted reachability minimum. Self-edges, broken or external targets, annotations, and duplicate local items are invalid. Links elsewhere are not graph edges.
+The initialization file is at most 4,096 UTF-8 bytes. JSON cards and graph lists are canonical routing data; Mermaid, tables, figures, statecharts, and other fenced languages are derived explanatory views and never override prose law.
 
-Cards use three GFM columns: `Role`, `Does`, `Must`; row two is `Reads:`, `Writes:`, `Check:`. Values are non-empty and at most 96 UTF-8 bytes; write `none` explicitly. Cards route but never override. Mermaid is derived. Initialization is at most 2,048 bytes.
+E6 checks the functional paragraph, H2 profile, JSON card, variable/process headings, MIT name, relative reciprocal links, single root and sink, reachability, acyclicity, edge budget, and transitive reduction. Representation sources are in `docs/pin-references.md`.
 
-E6 checks the H2 profile, card shape and cap, links, single sink/backlink, reachability, acyclicity, and transitive reduction. Representation sources are in `docs/pin-references.md`.
-
-## 1. Purpose
+### 1. Purpose
 
 Single-file bipartite database: biological binders → protein targets. An edge lists PubMed identifiers for that pair, in one of two dictionaries separated by **study type**: `pair` for clinical benefit in humans, `preclinical` for non-human or in-vitro utility. Protein-only (§3, §8.8). The two are never merged and never ranked against each other (§7).
 
-## 2. Schema
+### 2. Schema
 
 Root: a non-array object with **exactly** `version`, `pair`, `preclinical`, in that order.
 
@@ -85,7 +141,7 @@ Root: a non-array object with **exactly** `version`, `pair`, `preclinical`, in t
 - One molecule, one key (§8.13), across both dictionaries.
 - Absent by design: `status`, `ref`, evidence grades, ranks, scores. The `pair`/`preclinical` split is **study type, not strength**: it orders nothing and asserts nothing about weight of evidence.
 
-## 3. Key grammar
+### 3. Key grammar
 
 **Binder** — biological only.
 
@@ -106,7 +162,7 @@ Prefixes do not cross roles: no target or citation prefix on a binder key, and n
 
 The four namespace prefixes — `aa:`, `helm:`, `uniprot:`, `pmid:` — are **grammar, not style**: fixed, case-sensitive tokens with no synonyms and no abbreviations. Re-casing or renaming one invalidates every row that uses it. Files in this repository may be renamed; a key prefix may not.
 
-## 4. Citation admission
+### 4. Citation admission
 
 - `pair[binder][target]` **iff** the paper reports **clinical benefit in humans** for that binder against that target.
 - `preclinical[binder][target]` **iff** the paper reports utility in a non-human or in-vitro system for that pair, and makes no human-benefit claim.
@@ -116,7 +172,7 @@ The four namespace prefixes — `aa:`, `helm:`, `uniprot:`, `pmid:` — are **gr
 
 Admission is **semantic** and is an **oracle** step (§8.16): verify against the paper. No grammar check, record lookup, or crawl substitutes for it, and no automated run discharges it — see §9.
 
-## 5. Canonical serialisation
+### 5. Canonical serialisation
 
 - Encoding: valid UTF-8. Invalid byte sequences are invalid and must not be repaired lossily (no U+FFFD, no stripping).
 - Root key order: `version`, `pair`, `preclinical`. Every object: keys sorted ascending. Every citation array: sorted ascending, deduplicated.
@@ -124,7 +180,7 @@ Admission is **semantic** and is an **oracle** step (§8.16): verify against the
 - Exactly one terminating `\n` (`0x0A`); no other trailing whitespace; missing final newline → **invalid**. `\r\n` only if the whole file convention is explicitly CRLF; default is `\n`.
 - On-disk text = `JSON.stringify(obj, null, 2)` of the canonical object + that newline.
 
-## 6. Merge
+### 6. Merge
 
 Merge valid `A`, `B` → `M`:
 
@@ -133,7 +189,7 @@ Merge valid `A`, `B` → `M`:
 
 Re-serialise per §5. Commutative, associative, idempotent.
 
-## 7. Read contract
+### 7. Read contract
 
 For a consumer reading the catalogue at runtime:
 
@@ -143,7 +199,7 @@ For a consumer reading the catalogue at runtime:
 - **Absence is not a negative.** A missing pair means no qualifying paper has been entered. At present coverage that is not evidence that no such binder exists.
 - **Absence is not a resolve failure.** Key resolution ([`skills/resolve-key.md`](../skills/resolve-key.md)) has exactly two failure verdicts: `unresolved`, the record answered and matched zero or more than one entry — final, cacheable — and `unavailable`, the service did not answer — retry, cache nothing. Catalogue absence is neither. It is a read-layer fact about these bytes, reported by the reader's reverse index and never by the resolver: a binder can resolve perfectly and still not be entered. Mapping absence onto `unresolved` reads not-yet-entered as resolve-failed.
 
-### Ranking
+#### Ranking
 
 Never stored. Rank **within one dictionary only**; a `preclinical` row and a `pair` row are not comparable and must not appear in one ordering. For target `t` in dictionary `D`:
 
@@ -151,7 +207,7 @@ Never stored. Rank **within one dictionary only**; a `preclinical` row and a `pa
 2. Rank by `|D[b][t]|` descending.
 3. Tie-break: binder key ascending.
 
-## 8. Validation predicates
+### 8. Validation predicates
 
 Implement from this section alone. Tags: **pure** = decidable from one file's bytes; **relational** = needs a predecessor file; **oracle** = needs an external source. A passing verifier run proves **only the pure conditions**.
 
@@ -182,7 +238,7 @@ Implement from this section alone. Tags: **pure** = decidable from one file's by
 18. **[pure] Empty catalogue.** The empty catalogue is `{`, `  "version": 2,`, `  "pair": {},`, `  "preclinical": {}`, `}` on five lines with one trailing newline, and satisfies conditions 1–15 and 17. Any compact one-line form **fails** condition 6 and is invalid.
 19. **[relational] Add-only.** Given predecessor `P` and successor `S`, every binder, target and citation in `P` is present unchanged in `S`, in the same dictionary, except under human-directed supersession outside this spec. **A single-file verifier cannot implement this.**
 
-## 9. Background update contract
+### 9. Background update contract
 
 1. Satisfy §8.19 against the prior committed `graph.json`; add only rows satisfying §2–§4 and §8.1–§8.18.
 2. Re-serialise to §5 before persisting.
@@ -193,7 +249,7 @@ Implement from this section alone. Tags: **pure** = decidable from one file's by
 
 A proposed row failing any rule above is **refused**, naming the condition that failed.
 
-## 10. Skills
+### 10. Skills
 
 `skills/*.md` are procedures subordinate to this file; on any conflict this file governs (§0). Each skill declares its own description at its head and this file does not restate it: read the skill for what it does, read this section for where it may act.
 
@@ -219,11 +275,11 @@ The reader-facing warning is therefore not carried by a path either. It is carri
 - A skill does not widen §0. One needing to write anything else requires a change to this file first.
 - Three skills, named here exactly — two catalogue procedures and one `special`. A procedure not listed in this section is not part of this contract.
 
-## 11. Systems
+### 11. Systems
 
 `systems/*.md` are specifications of machinery a skill may run, not procedures a skill follows: §10 governs what a skill may do to claims, this section governs what a system is. A system is subordinate to this file on the same terms as a skill (§0), and holds no element of `graph.json` or `proposals.json`. Every `fleet.campaign` specification lives in this directory. A header outside `systems/` that carries that spec is an orphan and fails E5. The bench store and the trace store do not share a header, an extension, or a query. The harness code under `fleet/` writes both stores and is specified by `systems/run-campaign.md`.
 
-### Terms
+#### Terms
 
 `agent.skill`, `fleet.campaign`, `agent.swarm`, and `agent.fleet` are four strings. This contract uses the first as the spec of a procedure and the second as the spec of one run. Retrieved 31 Oct 2026 (Australia/Sydney). Re-checked 1 Nov 2026 (Australia/Sydney): Wikidata last revisions Q529909 `2516060604`, Q863960 `2515886205`, Q47311934 `2520618032`, Q205961 `2541591399`, and Q831663 `2552201427` were unchanged. `wbsearchentities` for `agent.skill`, `fleet.campaign`, `agent.fleet`, and `agent.swarm`, language `en`, limit 10, each returned an empty `search` array. arXiv:2502.14743 was still v2, arXiv:2411.11616 was still v2, and arXiv:2510.10379 was still v1. The three PDF byte hashes matched the pins below. The ten arXiv ids in `docs/pin-references.md` were still at the versions pinned there; those PDFs were not re-downloaded. The Wikidata items are live entities, pinned by last revision, with no byte hash. Each arXiv row is pinned by versioned id plus the SHA-256 of the PDF bytes downloaded that day from `https://arxiv.org/pdf/<id>`. A quoted sentence was read off that PDF's text layer (`pdftotext -layout`, poppler 24.02.0). The remainder of each paper was not read for this repository. These records describe the ordinary words. They do not replace the sentences below.
 
@@ -258,3 +314,34 @@ A procedure of this contract is an `agent.skill`. A run of this contract is one 
 - The trace records acts, not evidence. The record has no tier, no study type, and no score. A `.trace` file is not a proposal and is not a bench. It is discarded with the run. The specification is `systems/record-traces.md`. `verifier/verify.py --trace` decides it. That decision is pure and does not discharge §8.16.
 - The rows of this table and the files `systems/*.md` are in bijection. That bijection is extension predicate E4. It is not a §8 predicate and it does not renumber them.
 - Three systems, named here exactly. A specification not listed in this section is not part of this contract.
+
+## Citations
+
+| Pin | Claim used here | Boundary |
+|---|---|---|
+| [Multi-Agent Coordination, arXiv:2502.14743v2](https://arxiv.org/abs/2502.14743v2) | a multi-agent system has multiple independent interactive decision-makers | does not require a swarm or define this repository |
+| [Agent Skills specification at `69ef37e`](https://github.com/agentskills/agentskills/blob/69ef37e9424c0a7ea9dd2293b559e43ec8176379/docs/specification.mdx) | external skills are directories with frontmatter-bearing `SKILL.md` files | this repository's flat `agent.skill` documents are not conformant packages |
+| [MCP `2026-07-28` at `5f5440b`](https://github.com/modelcontextprotocol/modelcontextprotocol/tree/5f5440bb26a62e2cf3440b92da5a667efa03b267) | MCP separates host, client, server, tools, resources, and prompts | MCP does not define this internal campaign topology |
+| [A2A `v1.0.1` at `3303592`](https://github.com/a2aproject/A2A/tree/3303592588e388e62e0f69f701af531d2f4e3991) | Agent Cards describe services; Tasks carry state; Artifacts carry outputs | A2A `AgentSkill` metadata is not an Agent Skills package |
+| [MAST, arXiv:2503.13657v3](https://arxiv.org/abs/2503.13657v3) | observed multi-agent failures include system design, inter-agent, and verification failures | its taxonomy is not exhaustive or biomedical validation |
+| [NIST conformance guidance](https://www.nist.gov/itl/ai/applied-ai-research-group/what-thing-called-conformance) | a failed falsification proves nonconformance; passing tests prove only checked assertions | supports, but does not widen, predicates 1–19 and E1–E6 |
+
+Retrieved 1 Nov 2026 (Australia/Sydney). Exact artifact pins, hashes, extraction commands, and read status live in [`pin-references.md`](pin-references.md); external terminology never overrides the local definitions above.
+
+## Falsification
+
+| Challenge | Expected break |
+|---|---|
+| Change one canonical byte without changing meaning | predicate 6 fails |
+| Move one triple between `pair` and `preclinical` | predicates 15 or 19 fail; predicate 16 still needs a paper |
+| Supply a compact one-line empty catalogue | predicates 6 and 18 fail |
+| Remove one reciprocal Markdown edge | E6 fails even when the target exists |
+| Add an unregistered skill or system | E2 or E4 fails |
+| Label a prediction as a paper-backed row | pure checks may pass; predicate 16 remains explicitly undischarged |
+| Re-run a stochastic agent once and call it reliable | no contract predicate supports that inference |
+
+Run `python3 verifier/tests/test_verify.py`, `python3 verifier/verify.py graph.json --repo .`, and—when a predecessor exists—`python3 verifier/verify.py --prev OLD.json graph.json`. A green result is scoped evidence, never proof of clinical truth.
+
+## Licence
+
+MIT

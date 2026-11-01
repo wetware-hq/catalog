@@ -4,22 +4,76 @@
 
 `type: agent.system` · `spec: fleet.campaign` · subordinate to `docs/follow-agent-contract.md`, which governs on any conflict.
 
-A trace is the act log of one `fleet.campaign` run. This file says what a legal log is. `verifier/verify.py --trace` hard-codes the lists below and decides them from bytes. It does not discharge `docs/follow-agent-contract.md` §8.16.
+Define the content-addressed act log for one bounded `fleet.campaign` run and the byte-level decision procedure for accepting it. A valid trace proves shape and causal linkage, not that an act occurred or a paper supports a claim.
 
-One thing in the format is free: the worker's basename. The checker's answer is `result` or `partial`. There is no field for an area, a rank, a grade, a score, a tier, a study type, or a utility.
+## Specification
 
-## Document graph
+```json
+{
+  "id": "systems/record-traces.md",
+  "type": "agent.system",
+  "role": "content-address campaign acts and decide trace shape",
+  "reads": ["core.trace", "worker trace heads", "hard-coded carrier sets"],
+  "writes": [".trace files outside the repository"],
+  "must": ["derive ids from bytes", "end on one halt", "keep oracle not-discharged"],
+  "check": ["verifier/verify.py --trace", "R1-R10", "E4", "E5", "E6"]
+}
+```
 
-- → [systems/run-campaign.md](run-campaign.md)
+## Graph
 
-## Specification card
+- ← [../skills/design-binder.md](../skills/design-binder.md)
+- ← [../skills/propose-pairs.md](../skills/propose-pairs.md)
+- → [run-campaign.md](run-campaign.md)
 
-| Role | Does | Must |
+## Composition
+
+| Component | Content | Identity |
 |---|---|---|
-| Campaign system | Content-address run acts | `oracle=not-discharged`; no scores |
-| Reads: core; worker traces | Writes: `.trace` outside repo | Check: `verify.py --trace` |
+| `core.trace` | bounds, skill, spec revision | SHA-256 of exact core bytes |
+| `<worker>.trace` | header plus immutable acts | worker basename and content-derived act ids |
+| head | set union of admitted acts | ids, independent of arrival order |
+| checker | syntax, values, parents, and R1–R10 | `result` or first `partial` code |
 
-## 0. Lines
+## Indications
+
+- Audit calls, pins, refusals, proposals, context verdicts, emissions, and halt for one run.
+- Merge independently written worker traces without a coordinator.
+- Recompute run and act identities from exact bytes.
+
+## Contraindications
+
+- A trace is not event sourcing: it is discarded, is not authoritative state, and replay is not defined.
+- A hash proves byte identity, not occurrence, truth, provenance, clinical evidence, or patient benefit.
+- Scores, ranks, grades, tiers, study types, and utilities have no production in this grammar.
+- `result` never discharges the paper oracle or verifies that the pinned catalogue was fetched.
+
+## Algorithm
+
+### Variables
+
+| Class | Variable | Definition |
+|---|---|---|
+| independent | core bytes and worker lines | bounded run declaration plus candidate acts |
+| dependent | admitted head and decision | content-addressed act set and `result` or first failure |
+| controlled | carrier sets and hash function | fixed skills, acts, fields, parents, caps, and SHA-256 |
+
+### Process
+
+```mermaid
+stateDiagram-v2
+    [*] --> ParseCore
+    ParseCore --> Partial: R1 or R3
+    ParseCore --> AdmitLines
+    AdmitLines --> Partial: syntax, hash, value, or parent
+    AdmitLines --> CheckHead
+    CheckHead --> Partial: first failed R2-R10
+    CheckHead --> Result: all predicates hold
+    Result --> [*]
+    Partial --> [*]
+```
+
+### 0. Lines
 
 A file is UTF-8. A file that is not valid UTF-8, or that contains a NUL or a carriage return, is refused. No byte is rewritten as U+FFFD.
 
@@ -49,7 +103,7 @@ A worker file is one header and then one act per line. The header is `%trace/1 c
 
 The preimage of a line is that line with the id and the final newline removed. `H` is SHA-256, 64 lowercase hex digits, of the UTF-8 preimage. `run` is `H` of the core file's exact bytes.
 
-## 1. Allowed values
+### 1. Allowed values
 
 The checker hard-codes these lists. A token that is not in its list is refused.
 
@@ -100,7 +154,7 @@ For `design-binder`, the gates `grammar`, `species`, `not-protein`, and `indicat
 
 `source` and `release` are 1 to 64 characters from letters, digits, and `._:/-`. `release` may be the literal `unspecified`. `retrieved` is a real Gregorian date `YYYY-MM-DD`, the UTC day, with no zone suffix. `rev` is 40 lowercase hex digits. `bound-n` and `bound-tok` are positive integers and equal the core.
 
-## 2. Parents
+### 2. Parents
 
 The call's id is `H` of the text `call ^0 run=<run> skill=<skill>`, with no trailing newline. A line's parent is the first row below that applies.
 
@@ -117,7 +171,7 @@ Any other shape has no parent.
 
 `sameMolecule` is `docs/follow-agent-contract.md` §8.13 on the binder strings of `propose` lines: equal `aa:` multisets, equal `helm:` payloads after polymer-index normalisation, or an `aa:` key and a plain-L-chain `helm:` key with that sequence. One string used twice is one key.
 
-## 3. What the checker decides
+### 3. What the checker decides
 
 A line is admitted on its own. R1–R10 are said of the head of admitted lines. The checker returns the first failure in the order below, otherwise `result`.
 
@@ -163,7 +217,7 @@ The head is a result when the file is well formed and R1 through R10 all hold. T
 
 Merge of workers is set union on `Id`. Identical bytes are one line. Union is associative, commutative, and idempotent because `Id` is `H` of the preimage.
 
-## 4. What a passing check does not decide
+### 4. What a passing check does not decide
 
 A checker that returns `result` has not decided any of the following.
 
@@ -175,7 +229,7 @@ A checker that returns `result` has not decided any of the following.
 
 A `.trace` byte string is not a `proposals.json` element and not a `.bench` line. `%trace/` is not a `%bench/` line.
 
-## 5. Witness
+### 5. Witness
 
 Illustration. `spec` is forty `a`s and `rev` is forty `b`s. The proposal `aa:ACD` / `uniprot:P12345` / `pmid:1` is a shape fixture, not a claim of benefit. `H` of the core bytes is `run`. `H` of a line with its second token removed is that line's id.
 
@@ -204,7 +258,7 @@ halt 9d2001abc00391ea2c66714740c2ba9ec5c279405495498f51a72db31be4d6a3 ^2f3f73356
 
 `decide` of this pair of files is `result`.
 
-## 6. Status
+### 6. Status
 
 Licensed oversight is required for any use of this system; none has been performed to date.
 
@@ -213,3 +267,35 @@ verifier's own `trace_emit`, then hands every completed run back to that checker
 predicate E4 decides the bijection between `docs/follow-agent-contract.md` §11 and the files
 `systems/*.md`. The identity line above is extension predicate E5
 (`docs/follow-agent-contract.md` §0c). Neither decision is §8.16.
+
+## Citations
+
+| Pin | Claim used | Boundary |
+|---|---|---|
+| [W3C PROV-DM Recommendation](https://www.w3.org/TR/2013/REC-prov-dm-20130430/) | distinguish entities, activities, agents, use, generation, and responsibility | provenance does not prove truth |
+| [W3C Trace Context 1.0 Recommendation](https://www.w3.org/TR/2021/REC-trace-context-1-20211123/) | propagate trace identity across system boundaries | trace ids do not authenticate events |
+| [CloudEvents `ce@v1.0.2`, `fc1f6f3`](https://github.com/cloudevents/spec/blob/fc1f6f31f5f011a72183f1bcea20c987cb683ade/cloudevents/spec.md) | interoperable event envelope and context | no ordered store or replay semantics |
+| [OpenTelemetry GenAI conventions `244465e`](https://github.com/open-telemetry/semantic-conventions-genai/tree/244465e94b9d7167fa5ed5c31a4b2b49ab6ddee5) | current agent, tool, and MCP span vocabulary | marked Development, not stable |
+| [FIPS 180-4](https://doi.org/10.6028/NIST.FIPS.180-4) | SHA-256 digest algorithm | digest identity is not semantic evidence |
+
+Retrieved 1 Nov 2026 (Australia/Sydney). These sources explain adjacent interchange and provenance conventions; the carrier sets and parent rules remain repository-local.
+
+## Falsification
+
+| Mutation | Expected first failure |
+|---|---|
+| change an act field without recomputing its id | `hash` |
+| attach a line to a missing parent | R6 |
+| emit after `hit-unread` or `hit-same-indication` | R10 |
+| add `score`, `tier`, or `study-type` | `fields` |
+| use two pins or two halts | R5 |
+| omit the design disclaimer | `value:disclaimer` |
+| claim `oracle=discharged` | `value:oracle` |
+| duplicate one molecule under `aa:` and plain-chain HELM | R9 |
+| copy a valid trace and assert its events occurred | no checker predicate supports the assertion |
+
+The witness above must continue to round-trip through `trace_emit` and return `result`; every mutation test must fail for its named reason.
+
+## Licence
+
+MIT

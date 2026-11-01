@@ -4,23 +4,77 @@
 
 `type: resource.procedure` · `spec: agent.skill` · subordinate to `docs/follow-agent-contract.md`, which governs on any conflict.
 
-Resolve a database key to labels. Read-only. Never writes.
+Resolve one admitted protein key to a release-pinned identity or to one of two non-overlapping failure verdicts. The procedure is read-only and never substitutes free-text search for exact resolution.
 
-Scope: protein only. The catalogue holds protein binders and protein targets.
-Nucleic-acid rows are out of scope and are refused at the door, never classified.
+## Specification
 
-## Document graph
+```json
+{
+  "id": "skills/resolve-key.md",
+  "type": "resource.procedure",
+  "role": "resolve a protein key to a release-pinned identity",
+  "reads": ["aa:, helm:, or uniprot: key", "named authority release"],
+  "writes": [],
+  "must": ["refuse before network access", "separate unresolved from unavailable"],
+  "check": ["key predicates", "trace result", "E2", "E5", "E6"]
+}
+```
 
-- → [skills/propose-pairs.md](propose-pairs.md)
+## Graph
 
-## Specification card
+- ← [../docs/follow-agent-contract.md](../docs/follow-agent-contract.md)
+- → [propose-pairs.md](propose-pairs.md)
 
-| Role | Does | Must |
+## Composition
+
+| Layer | Input | Output |
 |---|---|---|
-| Read-only skill | Map protein key to identity | `unresolved` ≠ `unavailable` |
-| Reads: key; named release | Writes: none | Check: key predicates; trace |
+| intrinsic admission | key bytes | shape or refusal |
+| exact resolution | admitted key and release | identity, `unresolved`, or `unavailable` |
+| enrichment | resolved identity | attributed findings |
+| trace | acts and verdict | content-addressed run evidence |
 
-## Folder contract (all skills here)
+## Indications
+
+- Map canonical protein sequences to UniParc or UniProt identities.
+- Resolve a `uniprot:` target before catalogue intake or design.
+- Distinguish a completed zero/multiple-match response from an outage.
+
+## Contraindications
+
+- Protein only: nucleic acids, small molecules, and non-`PEPTIDE` HELM blocks are refused before classification.
+- Do not recover citations from residues, align near-matches, or use web search as identity evidence.
+- Do not cache `unavailable`; do not retry or reinterpret final `unresolved`.
+- A resolved key can still be absent from the catalogue; absence is not a resolver verdict.
+
+## Algorithm
+
+### Variables
+
+| Class | Variable | Definition |
+|---|---|---|
+| independent | `key`, `release` | exact key bytes and named authority snapshot |
+| dependent | `Identity \| unresolved \| unavailable` | one total verdict from the exact path |
+| controlled | grammar and endpoint | contract key predicates, CRC64 variant, and one authority route |
+
+### Process
+
+```mermaid
+stateDiagram-v2
+    [*] --> Admit
+    Admit --> Refused: grammar, scope, or ASCII fails
+    Admit --> Resolve: admitted
+    Resolve --> Identity: exactly one answer
+    Resolve --> Unresolved: zero or multiple answers
+    Resolve --> Unavailable: service did not answer
+    Identity --> Enrich
+    Refused --> [*]
+    Unresolved --> [*]
+    Unavailable --> [*]
+    Enrich --> [*]
+```
+
+### Folder contract (all skills here)
 
 Notation: one per folder. Blocks below are formal algorithms, not sample programs.
 
@@ -31,7 +85,7 @@ pure    : output depends on input + named release only
 no-write: output goes to the caller, never into the database
 ```
 
-## Types
+### Types
 
 ```
 Key       = "aa:" Residues | "helm:" Helm | "uniprot:" Accession
@@ -44,7 +98,7 @@ Failure   = unresolved        -- record answered, says nothing. final. cacheable
 
 No tier is computed and none is stored. A key is an admissible protein or it is refused.
 
-## Stage 0 - intrinsic
+### Stage 0 — intrinsic
 
 ```
 admit : Key -> { length, composition, shape } | refused
@@ -83,7 +137,7 @@ vectors:
     refuse : helm:PEPTIDE1{[CCO]}$$$$           -> refused, monomer outside PROTEIN_MONOMERS
 ```
 
-## Stage 1 - resolve
+### Stage 1 — resolve
 
 ```
 resolve : Key -> Identity | unresolved | unavailable
@@ -124,7 +178,7 @@ shard unit: a BATCH of keys, never one key per worker.
     the ratio is the point; the seconds are not a benchmark.
 ```
 
-## Stage 2 - enrich
+### Stage 2 — enrich
 
 ```
 enrich : Identity -> Findings        -- note the domain: Identity, NOT Key
@@ -143,8 +197,37 @@ rate limit: honour the service's published limit; a throttled campaign returns
 unavailable, never unresolved.
 ```
 
-## Not derivable
+### Not derivable
 
 A citation is not recoverable from residues. Names are derivable; evidence is not. `pmid:` stays stored in the database.
 
 A test vector proves a step is specified, not that it is right.
+
+## Citations
+
+| Source | Use | Reproducibility limit |
+|---|---|---|
+| [UniProt REST API](https://www.uniprot.org/help/api_queries) | accession and UniParc query surface | live service; record release and retrieval date |
+| [UniParc](https://www.uniprot.org/help/uniparc) | sequence identity archive | availability and indexing can change |
+| [`follow-agent-contract.md`](../docs/follow-agent-contract.md) | key grammar and molecule identity | repository revision must be pinned |
+| [`record-traces.md`](../systems/record-traces.md) | verdict carrier and source/release fields | shape does not prove the lookup occurred |
+
+Live-service observations in the algorithm were retrieved 29 Oct 2026 (Australia/Sydney) and are explicitly snapshots, not standing benchmarks.
+
+## Falsification
+
+| Challenge | Expected verdict |
+|---|---|
+| `helm:RNA1{R(A)P}$$$$` | refusal: scope |
+| `helm:PEPTIDE1{[CCO]}$$$$` | refusal: illegal monomer |
+| malformed or non-ASCII accession | refusal before network access |
+| one-residue mutation with zero exact UniParc hits | `unresolved` |
+| HTTP 429, timeout, or 5xx | `unavailable`; cache nothing |
+| multiple exact records | `unresolved`, never an arbitrary first hit |
+| catalogue has no row for a resolved target | catalogue absence, not resolve failure |
+
+Break the implementation by collapsing `unresolved` and `unavailable`; the resulting cache writes outages as facts. Break it again by adding approximate alignment; the resolver can then return a different molecule than the key.
+
+## Licence
+
+MIT

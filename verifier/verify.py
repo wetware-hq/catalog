@@ -62,7 +62,7 @@ EXTENSIONS = {
     "E3": ("online-ext", "pmid: resolves via NCBI E-utilities (non-blocking)"),
     "E4": ("pure-ext", "System registry (systems/*.md <-> docs/follow-agent-contract.md section 11)"),
     "E5": ("pure-ext", "Identity line (docs/follow-agent-contract.md section 0c)"),
-    "E6": ("pure-ext", "Live Markdown document DAG and specification cards"),
+    "E6": ("pure-ext", "Live Markdown scientific profile and navigable DAG"),
 }
 BANNER = "\u26a0\ufe0f ACADEMIC RESEARCH PURPOSES ONLY; NOT FOR MEDICAL USE WITHOUT LICENSED OVERSIGHT"
 
@@ -1089,16 +1089,25 @@ def _skill_is_special(path: str) -> bool:
     return bool(_SPECIAL_RE.search(header))
 
 
+def _numbered_section_lines(text, number, title):
+    """Yield one numbered H2/H3 section, allowing the registries to live under the Algorithm H2."""
+    level = None
+    wanted = re.compile(rf"^{number}\.\s+{re.escape(title)}\b", re.I)
+    for line in text.splitlines():
+        heading = re.match(r"^(#{2,6})[ \t]+(.+?)\s*$", line)
+        if level is None:
+            if heading and wanted.match(heading.group(2)):
+                level = len(heading.group(1))
+            continue
+        if heading and len(heading.group(1)) <= level:
+            break
+        yield line
+
+
 def _parse_section10(agents_text: str):
-    """Return list of (skill_path, write_scope_cell) for every table row in section 10 referencing skills/*.md."""
-    lines = agents_text.splitlines()
-    rows, in10 = [], False
-    for ln in lines:
-        if ln.startswith("## "):
-            in10 = ln.startswith("## 10.") or ln.lstrip("# ").lower().startswith("10. skills") or "10. skills" in ln.lower()
-            continue
-        if not in10:
-            continue
+    """Return (skill_path, write_scope_cell) rows from the contract's numbered skills registry."""
+    rows = []
+    for ln in _numbered_section_lines(agents_text, 10, "skills"):
         if not ln.lstrip().startswith("|"):
             continue
         m = re.search(r"\((?:\.\./)?skills/([A-Za-z0-9._\-]+\.md)\)", ln)
@@ -1146,13 +1155,7 @@ def parse_section11(agents_text):
     A row is a link whose target ends in .md. The bijection admits only systems/<file>.md.
     """
     found = []
-    in11 = False
-    for ln in agents_text.splitlines():
-        if ln.startswith("## "):
-            in11 = ln.startswith("## 11.")
-            continue
-        if not in11:
-            continue
+    for ln in _numbered_section_lines(agents_text, 11, "systems"):
         found.extend(path.removeprefix("../") for path in re.findall(r"\(([^)\s]+\.md)\)", ln))
     return found
 
@@ -1303,15 +1306,28 @@ E6_FIXTURE_PATHS = (
 )
 E6_ROOT = "docs/read-repository.md"
 E6_SINK = "systems/run-campaign.md"
-E6_ROOT_MAX_BYTES = 2048
+E6_ROOT_MAX_BYTES = 4096
 E6_EDGE_SURPLUS_MAX = 2
-E6_HEADINGS = ("## Document graph", "## Specification card")
-E6_CARD_FIELDS = ("role", "does", "reads", "writes", "must", "check")
-E6_CARD_TOP = ("role", "does", "must")
-E6_CARD_BOTTOM = ("reads", "writes", "check")
-E6_CARD_VALUE_MAX = 96
+E6_SECTION_NAMES = (
+    "Specification",
+    "Graph",
+    "Composition",
+    "Indications",
+    "Contraindications",
+    "Algorithm",
+    "Citations",
+    "Falsification",
+    "Licence",
+)
+E6_HEADINGS = tuple(f"## {name}" for name in E6_SECTION_NAMES)
+E6_CARD_FIELDS = ("id", "type", "role", "reads", "writes", "must", "check")
+E6_CARD_VALUE_MAX = 128
+E6_CARD_MAX_BYTES = 2048
+E6_DESCRIPTION_MAX_SENTENCES = 3
+E6_DESCRIPTION_MAX_BYTES = 384
 _E6_EDGE_RE = re.compile(r"^- ([←→]) \[([^\]]+)\]\(([^)]+\.md)\)$")
 _E6_LINK_RE = re.compile(r"\[[^\]\r\n]+\]\([^)]+\)")
+_E6_SENTENCE_RE = re.compile(r"""[.!?](?:["'”’)]*)?(?=\s|\Z)""")
 
 
 def live_markdown_paths(repo_dir):
@@ -1323,10 +1339,10 @@ def live_markdown_paths(repo_dir):
 
 
 def _e6_sections(text):
-    """Return headings, first two bodies, and prefix constructs outside E6's strict profile."""
+    """Return column-zero H2s, their bodies, the prefix, and profile violations."""
     lines = text.splitlines()
     headings = []
-    prefix_problems = []
+    problems = []
     fence_char = None
     fence_len = 0
     for index, line in enumerate(lines):
@@ -1340,69 +1356,136 @@ def _e6_sections(text):
             elif marker[0] == fence_char and len(marker) >= fence_len and not rest.strip():
                 fence_char, fence_len = None, 0
             continue
-        if (len(headings) < 2 and fence_char is None
+        if (not headings and fence_char is None
                 and re.match(r"^ {0,3}<(?:!--|/?[A-Za-z]|![A-Z]|\?)", line)):
-            prefix_problems.append(
-                f"raw HTML before the required H2 pair at line {index + 1}")
+            problems.append(
+                f"raw HTML before Specification at line {index + 1}")
         h2 = re.match(r"^( {0,3})##(?=[ \t]|\Z)", line) if fence_char is None else None
         if h2 is not None:
-            if len(headings) < 2 and h2.group(1):
-                prefix_problems.append(
-                    f"indented H2 before the required column-zero pair at line {index + 1}")
-            headings.append((index, line))
-        if (len(headings) < 2 and fence_char is None and index > 0
+            if h2.group(1):
+                problems.append(f"indented H2 at line {index + 1}")
+            else:
+                headings.append((index, line))
+        if (fence_char is None and index > 0
                 and lines[index - 1].strip()
                 and re.match(r"^ {0,3}-+[ \t]*$", line)):
-            prefix_problems.append(
-                f"possible setext H2 before the required ATX pair at line {index + 1}")
-    if len(headings) < 2:
-        return headings, [], [], prefix_problems
-    first_end = headings[1][0]
-    second_end = headings[2][0] if len(headings) > 2 else len(lines)
-    return (
-        headings,
-        lines[headings[0][0] + 1:first_end],
-        lines[headings[1][0] + 1:second_end],
-        prefix_problems,
-    )
+            problems.append(f"possible setext H2 at line {index + 1}")
+
+    bodies = []
+    for position, (index, _heading) in enumerate(headings):
+        end = headings[position + 1][0] if position + 1 < len(headings) else len(lines)
+        bodies.append(lines[index + 1:end])
+    prefix = lines[:headings[0][0]] if headings else lines
+    return headings, bodies, prefix, problems
 
 
-def _e6_card_problem(lines):
-    rows = [line for line in lines if line.strip()]
-    header = "| " + " | ".join(field.title() for field in E6_CARD_TOP) + " |"
-    separator = "|" + "|".join("---" for _field in E6_CARD_TOP) + "|"
-    if len(rows) != 4:
-        return f"card has {max(0, len(rows) - 2)} data rows, expected 2"
-    if rows[:2] != [header, separator]:
-        return f"card header must be {header!r} followed by {separator!r}"
-    top = _e6_table_cells(rows[2])
-    bottom = _e6_table_cells(rows[3])
-    if len(top) != len(E6_CARD_TOP) or len(bottom) != len(E6_CARD_BOTTOM):
-        return "card rows must each have three non-empty cells"
-    parsed = dict(zip(E6_CARD_TOP, top))
-    for field, cell in zip(E6_CARD_BOTTOM, bottom):
-        prefix = field.title() + ": "
-        if not cell.startswith(prefix) or not cell[len(prefix):]:
-            return f"card cell must start with {prefix!r}"
-        parsed[field] = cell[len(prefix):]
-    too_long = [
-        field for field in E6_CARD_FIELDS
-        if len(parsed.get(field, "").encode("utf-8")) > E6_CARD_VALUE_MAX
-    ]
-    if too_long:
-        return f"card cells exceed {E6_CARD_VALUE_MAX} UTF-8 bytes: {too_long!r}"
+def _e6_description_problem(prefix):
+    """Validate banner, H1, optional identity line, and exactly one concise description paragraph."""
+    blocks, current = [], []
+    for line in prefix:
+        if line.strip():
+            current.append(line.strip())
+        elif current:
+            blocks.append(current)
+            current = []
+    if current:
+        blocks.append(current)
+
+    if len(blocks) not in (3, 4):
+        return "header must contain banner, H1, optional identity line, and one functional paragraph"
+    if blocks[0] != [BANNER]:
+        return "header must begin with the exact disclaimer banner"
+    if len(blocks[1]) != 1 or re.match(r"^#(?!#)[ \t]+\S", blocks[1][0]) is None:
+        return "header must contain exactly one column-zero H1"
+    if len(blocks) == 4:
+        identity = blocks[2]
+        if len(identity) != 1 or re.search(r"`type:\s*[^`]+`", identity[0]) is None:
+            return "optional identity block must be one line containing `type: ...`"
+
+    block = blocks[-1]
+    if any(re.match(r"^(?:#|[-*+>] |\||```|~~~|<)", line) for line in block):
+        return "functional description must be the final plain Markdown paragraph before Specification"
+    description = " ".join(block)
+    if len(description.encode("utf-8")) > E6_DESCRIPTION_MAX_BYTES:
+        return f"functional description exceeds {E6_DESCRIPTION_MAX_BYTES} UTF-8 bytes"
+    count = len(_E6_SENTENCE_RE.findall(description))
+    if not 1 <= count <= E6_DESCRIPTION_MAX_SENTENCES:
+        return (
+            f"functional description has {count} sentences, expected 1-"
+            f"{E6_DESCRIPTION_MAX_SENTENCES}"
+        )
     return None
 
 
-def _e6_table_cells(line):
-    if not (line.startswith("|") and line.endswith("|")):
-        return []
-    cells = [cell.strip() for cell in line[1:-1].split("|")]
-    return cells if all(cells) else []
+def _e6_card_problem(lines, rel):
+    """Specification is one JSON card, parsed rather than inferred from presentation."""
+    text = "\n".join(lines).strip()
+    match = re.fullmatch(r"```json\n(.*)\n```", text, re.DOTALL)
+    if match is None:
+        return "Specification must contain exactly one fenced json card"
+    raw = match.group(1)
+    if len(raw.encode("utf-8")) > E6_CARD_MAX_BYTES:
+        return f"Specification card exceeds {E6_CARD_MAX_BYTES} UTF-8 bytes"
+    def reject_duplicate_keys(pairs):
+        out = {}
+        for key, value in pairs:
+            if key in out:
+                raise ValueError(f"duplicate key {key!r}")
+            out[key] = value
+        return out
+
+    try:
+        card = json.loads(raw, object_pairs_hook=reject_duplicate_keys)
+    except (json.JSONDecodeError, UnicodeError, ValueError) as exc:
+        return f"Specification card is not JSON: {exc}"
+    if not isinstance(card, dict) or tuple(card) != E6_CARD_FIELDS:
+        return f"Specification card fields must be ordered {E6_CARD_FIELDS!r}"
+    if card["id"] != rel:
+        return f"Specification id {card['id']!r} must equal {rel!r}"
+    for field in ("id", "type", "role"):
+        value = card[field]
+        if (not isinstance(value, str) or not value.strip()
+                or len(value.encode("utf-8")) > E6_CARD_VALUE_MAX):
+            return f"Specification {field!r} must be a non-empty string of at most {E6_CARD_VALUE_MAX} bytes"
+    for field in ("reads", "writes", "must", "check"):
+        value = card[field]
+        if not isinstance(value, list) or (field != "writes" and not value):
+            return f"Specification {field!r} must be a {'possibly empty ' if field == 'writes' else 'non-empty '}array"
+        if any(not isinstance(item, str) or not item.strip()
+               or len(item.encode("utf-8")) > E6_CARD_VALUE_MAX for item in value):
+            return f"Specification {field!r} contains an invalid item"
+    return None
+
+
+def _e6_unfenced_lines(lines):
+    fence_char = None
+    fence_len = 0
+    for line in lines:
+        fence = re.match(r"^ {0,3}(`{3,}|~{3,})(.*)$", line)
+        if fence is not None:
+            marker, rest = fence.group(1), fence.group(2)
+            if fence_char is None:
+                if marker[0] != "`" or "`" not in rest:
+                    fence_char, fence_len = marker[0], len(marker)
+            elif marker[0] == fence_char and len(marker) >= fence_len and not rest.strip():
+                fence_char, fence_len = None, 0
+            continue
+        if fence_char is None:
+            yield line
+
+
+def _e6_algorithm_problem(lines):
+    headings = [
+        line for line in _e6_unfenced_lines(lines)
+        if line in ("### Variables", "### Process")
+    ]
+    if headings != ["### Variables", "### Process"]:
+        return "Algorithm must contain ### Variables then ### Process exactly once"
+    return None
 
 
 def check_document_graph(repo_dir, rep):
-    """E6 [pure-ext]: compact cards and a rooted, single-sink, transitively reduced DAG."""
+    """E6 [pure-ext]: scientific Markdown profile plus a rooted, navigable, reduced DAG."""
     import posixpath
 
     problems = []
@@ -1415,7 +1498,6 @@ def check_document_graph(repo_dir, rep):
 
     declarations = {}
     edges = set()
-    sink_backlink = None
 
     for rel in live:
         path = os.path.join(repo_dir, *rel.split("/"))
@@ -1427,19 +1509,33 @@ def check_document_graph(repo_dir, rep):
         if rel == E6_ROOT and len(text.encode("utf-8")) > E6_ROOT_MAX_BYTES:
             problems.append(
                 f"{rel}: initialization exceeds {E6_ROOT_MAX_BYTES} UTF-8 bytes")
-        headings, graph_lines, card_lines, prefix_problems = _e6_sections(text)
-        problems.extend(f"{rel}: {problem}" for problem in prefix_problems)
-        first_two = tuple(line for _index, line in headings[:2])
-        if first_two != E6_HEADINGS:
-            problems.append(f"{rel}: first two H2 headings are {first_two!r}, expected {E6_HEADINGS!r}")
+        headings, bodies, prefix, profile_problems = _e6_sections(text)
+        problems.extend(f"{rel}: {problem}" for problem in profile_problems)
+        actual_headings = tuple(line for _index, line in headings)
+        if actual_headings != E6_HEADINGS:
+            problems.append(f"{rel}: H2 headings are {actual_headings!r}, expected {E6_HEADINGS!r}")
             continue
 
-        card_problem = _e6_card_problem(card_lines)
+        description_problem = _e6_description_problem(prefix)
+        if description_problem:
+            problems.append(f"{rel}: {description_problem}")
+
+        sections = dict(zip(E6_SECTION_NAMES, bodies))
+        for name, lines in sections.items():
+            if not any(line.strip() for line in lines):
+                problems.append(f"{rel}: {name} section is empty")
+
+        card_problem = _e6_card_problem(sections["Specification"], rel)
         if card_problem:
             problems.append(f"{rel}: {card_problem}")
+        algorithm_problem = _e6_algorithm_problem(sections["Algorithm"])
+        if algorithm_problem:
+            problems.append(f"{rel}: {algorithm_problem}")
+        if sections["Licence"] != ["", "MIT"]:
+            problems.append(f"{rel}: Licence must be one blank line followed by MIT")
 
         local = []
-        for line in graph_lines:
+        for line in sections["Graph"]:
             if not line.strip():
                 continue
             match = _E6_EDGE_RE.fullmatch(line)
@@ -1448,7 +1544,7 @@ def check_document_graph(repo_dir, rep):
                     problems.append(f"{rel}: graph bullet has no edge production: {line!r}")
                     continue
             else:
-                problems.append(f"{rel}: Document graph contains non-edge content: {line!r}")
+                problems.append(f"{rel}: Graph contains non-edge content: {line!r}")
                 continue
             if len(_E6_LINK_RE.findall(line)) != 1:
                 problems.append(f"{rel}: graph edge must contain exactly one Markdown link: {line!r}")
@@ -1463,8 +1559,11 @@ def check_document_graph(repo_dir, rep):
             if target.startswith("../") or target not in live_set:
                 problems.append(f"{rel}: edge target does not resolve to a live Markdown node: {href!r}")
                 continue
-            if label != target:
-                problems.append(f"{rel}: edge label {label!r} must equal resolved path {target!r}")
+            canonical_href = posixpath.relpath(target, posixpath.dirname(rel) or ".")
+            if href != canonical_href:
+                problems.append(f"{rel}: edge path {href!r} must be canonical {canonical_href!r}")
+            if label != href:
+                problems.append(f"{rel}: edge label {label!r} must equal relative path {href!r}")
             if target == rel:
                 problems.append(f"{rel}: self-edge")
                 continue
@@ -1477,22 +1576,14 @@ def check_document_graph(repo_dir, rep):
             edges.add(edge)
             declarations.setdefault(edge, set()).add((rel, arrow))
 
-        if rel == E6_SINK:
-            if len(local) != 1 or local[0][0] != "←":
-                problems.append(f"{rel}: the sink must contain exactly one incoming backlink")
-            else:
-                sink_backlink = (local[0][1], rel)
-        else:
-            if not local or any(arrow != "→" for arrow, _target in local):
-                problems.append(f"{rel}: every non-sink must list one or more outgoing edges only")
-            targets = [target for _arrow, target in local]
-            if targets != sorted(targets):
-                problems.append(f"{rel}: outgoing edges must be path-sorted")
+        if not local:
+            problems.append(f"{rel}: Graph must list every neighboring Markdown node")
+        hrefs = [posixpath.relpath(target, posixpath.dirname(rel) or ".") for _arrow, target in local]
+        if hrefs != sorted(hrefs):
+            problems.append(f"{rel}: Graph paths must be sorted")
 
     for source, target in sorted(edges):
-        expected = {(source, "→")}
-        if (source, target) == sink_backlink:
-            expected.add((target, "←"))
+        expected = {(source, "→"), (target, "←")}
         actual = declarations.get((source, target), set())
         if actual != expected:
             problems.append(
@@ -1511,6 +1602,9 @@ def check_document_graph(repo_dir, rep):
     sinks = sorted(node for node, targets in outgoing.items() if not targets)
     if sinks != [E6_SINK]:
         problems.append(f"document graph sinks are {sinks!r}, expected {[E6_SINK]!r}")
+    roots = sorted(node for node, degree in indegree.items() if degree == 0)
+    if roots != [E6_ROOT]:
+        problems.append(f"document graph roots are {roots!r}, expected {[E6_ROOT]!r}")
 
     seen = {E6_ROOT}
     stack = [E6_ROOT]

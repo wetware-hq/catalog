@@ -4,18 +4,76 @@
 
 `type: resource.procedure` · `spec: agent.skill` · subordinate to `docs/follow-agent-contract.md`, which governs on any conflict.
 
-## Document graph
+Enumerate structured authorities, resolve complete protein triples, and append unclassified candidates to `proposals.json`. This procedure never writes `graph.json` or chooses a clinical versus preclinical study type.
 
-- → [systems/record-traces.md](../systems/record-traces.md)
+## Specification
 
-## Specification card
+```json
+{
+  "id": "skills/propose-pairs.md",
+  "type": "resource.procedure",
+  "role": "prepare evidence candidates for human admission",
+  "reads": ["structured authorities", "pinned graph.json", "existing proposals.json"],
+  "writes": ["proposals.json"],
+  "must": ["emit complete triples only", "never classify study type", "never write graph.json"],
+  "check": ["recall 1.0", "zero false-admits", "E2", "E5", "E6"]
+}
+```
 
-| Role | Does | Must |
+## Graph
+
+- → [../systems/record-traces.md](../systems/record-traces.md)
+- ← [resolve-key.md](resolve-key.md)
+
+## Composition
+
+| Stage | Authority | Product |
 |---|---|---|
-| Catalogue skill | Prepare evidence candidates | Never classify study type |
-| Reads: structured authorities; catalogue | Writes: `proposals.json` | Check: recall 1.0; zero false-admits |
+| enumerate | ChEMBL and Thera-SAbDab | named candidate records |
+| resolve | UniProt and UniParc | canonical binder and target keys |
+| cite | PubMed or Europe PMC | one bare `pmid:` identifier |
+| deduplicate | pinned catalogue and proposals | novel complete triples |
+| serialize | contract merge law | canonical add-only `proposals.json` |
 
-## 0. Objective
+## Indications
+
+- Prepare machine-resolved triples for later paper review.
+- Re-run intake against a pinned catalogue to measure recall.
+- Record explicit refusal counts for incomplete or out-of-scope candidates.
+
+## Contraindications
+
+- Do not crawl prose, infer sequences from names, use approximate matches, or admit a row from metadata alone.
+- Do not classify `pair` versus `preclinical`; that choice is the paper-reading oracle.
+- Do not use DrugBank without re-checking its licence after the dated refusal below.
+- Do not store scores, names, indications, doses, labels, or regulatory status.
+
+## Algorithm
+
+### Variables
+
+| Class | Variable | Definition |
+|---|---|---|
+| independent | authority records and pinned catalogue | candidate records plus existing triples at one revision |
+| dependent | proposal set and refusal ledger | canonical novel triples or named first-failure reasons |
+| controlled | grammar, releases, and serializer | contract predicates, named source snapshots, one writer |
+
+### Process
+
+```mermaid
+flowchart TD
+    E[Enumerate structured records] --> A{Admitted protein payload?}
+    A -->|no| R[Record refusal]
+    A -->|yes| B[Resolve binder]
+    B --> T[Resolve target]
+    T --> P[Resolve PMID]
+    P --> D{Duplicate?}
+    D -->|yes| R
+    D -->|no| W[Single-writer append]
+    W --> V[Read back at commit SHA]
+```
+
+### 0. Objective
 
 Propose `(binder, target)` pairs for `graph.json` by writing them to `proposals.json`. **This procedure never writes `graph.json`**, on any branch (`docs/follow-agent-contract.md` §9). A candidate qualifies when **all** hold:
 
@@ -26,14 +84,14 @@ Propose `(binder, target)` pairs for `graph.json` by writing them to `proposals.
 
 The study-type classification — `pair` versus `preclinical` — is **not yours to make**. It requires reading the paper, and the reader who makes it is the one who moves the row into `graph.json`.
 
-## 1. Non-goals
+### 1. Non-goals
 
 - **Do not crawl prose.** Free-text web search does not resolve binders: it returns the name without the sequence and silently substitutes near-matches (observed once, 2026-10-29: a search on a real human 40-mer returned a non-human Fab). Enumerate records; a page that asserts a pair without a resolvable sequence is not a candidate.
 - **Do not use DrugBank.** Its licence was non-commercial when checked on 2026-10-29, which makes it inadmissible for this repository at any scale. That is an external fact with a date on it: re-check the licence before treating the refusal as permanent, and do not relax it without re-checking.
 - Do not write ranks, scores, grades, names, labels, indications, doses or regulatory status. They are not in the schema.
 - Do not widen the key grammar to admit a molecule you could not resolve. An unresolvable candidate is **dropped**, not approximated.
 
-## 2. Sources
+### 2. Sources
 
 Enumerate structured authorities and follow their cross-references. The reachable universe is bounded and already recorded; the work is resolution, not discovery.
 
@@ -44,7 +102,7 @@ Enumerate structured authorities and follow their cross-references. The reachabl
 
 A source that answers with an error, a timeout, or a rate limit yields **`unavailable`**: retry it, cache nothing, and never record its silence as a negative. A source that answers and holds no match yields **`unresolved`**: that is a final, cacheable answer about the record.
 
-## 3. Per-candidate record
+### 3. Per-candidate record
 
 A candidate is emitted only with all three fields present; a missing field is a drop, never a placeholder.
 
@@ -56,7 +114,7 @@ A candidate is emitted only with all three fields present; a missing field is a 
 
 Store the **canonical** sequence, not the mature chain. Snapshot 2026-10-29 by catalog-systems against the live UniParc service, not reproducible from this checkout: of 33 mature chains, 6 did not resolve at all, and cross-reference collapse put 16 of 27 under 50 residues against canonical ranges — on that evidence a mature-chain key is both less resolvable and silently different from the molecule the record describes.
 
-## 4. Decision procedure
+### 4. Decision procedure
 
 Per candidate, in order. Stop at the first refusal and record which step refused.
 
@@ -66,7 +124,7 @@ Per candidate, in order. Stop at the first refusal and record which step refused
 4. **Resolve target.** Accession must exist and be a protein.
 5. **Duplicate check.** The triple must not already exist in either dictionary of `graph.json`, nor in `proposals.json`; the molecule must not already exist under a different binder key (`docs/follow-agent-contract.md` §8.13).
 
-## 5. Write protocol
+### 5. Write protocol
 
 - **`proposals.json` only.** Never write `graph.json`, on any branch. A branch is a mutable name with no merge law for trust: fencing unverified rows behind a branch dissolves at the first merge and relaunders them as read-verified. A file boundary survives every merge, because `proposals.json` merges into `proposals.json`.
 - **One serialiser.** Workers emit candidates; a single writer applies them. A file is one path and a path is not a merge law — concurrent writers to the same path lose rows silently.
@@ -75,7 +133,7 @@ Per candidate, in order. Stop at the first refusal and record which step refused
 - Add-only (`docs/follow-agent-contract.md` §8.19): no existing proposal is removed or rewritten; removal happens only when a reader admits the row into `graph.json`.
 - Verify the committed bytes by reading them back **through the API pinned to the commit SHA**. CDN mirrors serve stale content and will show you your own intent instead of the file.
 
-## 6. Acceptance
+### 6. Acceptance
 
 A run that cannot reproduce what is already trusted does not get to extend it.
 
@@ -83,6 +141,35 @@ A run that cannot reproduce what is already trusted does not get to extend it.
 2. **False-admit rate.** Of the rows a run would write, the fraction a curator rejects. Report it as a number. Above zero, the oracle step is being manufactured rather than performed, and that is the cost of the gate being skipped.
 3. **Refusal ledger.** Count refusals by step (1–5). A step that never fires is untested, not satisfied.
 
-## 7. What a run does not discharge
+### 7. What a run does not discharge
 
 Condition 16 is an **oracle** predicate: that a paper reports utility for a pair, and in which direction, is not decidable from bytes, from a record, or from a crawl. A passing run proves the pure conditions and nothing more. State what you verified, name what you did not, and leave the claim to the reader who moves the row into `graph.json`. Nothing this procedure writes is ever read as a catalogue.
+
+## Citations
+
+| Source | Use | Pinning note |
+|---|---|---|
+| [UniProt REST API](https://www.uniprot.org/help/api_queries) | protein accessions and sequence identity | live service; record release and retrieval |
+| [ChEMBL web services](https://chembl.gitbook.io/chembl-interface-documentation/web-services) | structured activity and document records | record API release and query |
+| [Thera-SAbDab](https://opig.stats.ox.ac.uk/webapps/sabdab-sabpred/therasabdab/) | therapeutic antibody sequences and targets | live database; snapshot outputs |
+| [NCBI E-utilities](https://www.ncbi.nlm.nih.gov/books/NBK25501/) | PubMed identifier resolution | metadata does not establish paper content |
+| [DrugBank licence](https://go.drugbank.com/legal/academic_license) | dated exclusion check | re-check before changing the 29 Oct 2026 refusal |
+| [`follow-agent-contract.md`](../docs/follow-agent-contract.md) | grammar, proposal schema, and oracle boundary | repository commit is the governing pin |
+
+## Falsification
+
+| Challenge | Failure signal |
+|---|---|
+| Replay against committed catalogue | recall below `1.0` |
+| Curator rejects one emitted row before paper classification | false-admit rate above zero |
+| Remove `pmid`, binder, or target | candidate must be dropped, never padded |
+| Put `[CCO]` in a `PEPTIDE` block | distinct `illegal-payload` refusal |
+| Return 429 from one authority | `unavailable`, with no cached negative |
+| Run two writers against one proposals path | lost update demonstrates the single-writer requirement |
+| Assign `pair` during intake | procedure has crossed predicate 16 without reading the paper |
+
+The refusal ledger must exercise every decision step; a gate with count zero is untested rather than satisfied.
+
+## Licence
+
+MIT
