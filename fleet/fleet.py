@@ -253,6 +253,102 @@ def boltz_design_body(target_sequence: str, num_proteins: int, min_aa: int, max_
     }
 
 
+#: The service's own floor: `POST /protein/design` refuses `num_proteins` below this.
+BOLTZ_MIN_PROTEINS = 10
+#: A polling cadence is transport, not a bound. The time budget is the caller's argument.
+BOLTZ_POLL_SECONDS = 15
+#: Statuses that mean the job has not finished. Anything else is terminal, and only
+#: `succeeded` is a result; this file does not guess at the rest of the vendor's enum.
+BOLTZ_PENDING = ("", "created", "queued", "pending", "running", "in_progress")
+#: What the engine is called where a `model` field wants a name. The panel is advisory;
+#: this is the hosted design engine `systems/run-campaign.md` requires.
+BOLTZ_ENGINE = "boltz/protein-design"
+
+
+def boltz_submit(body: dict) -> str:
+    """POST /protein/design. This is the call that spends, so price the same body first.
+
+    Returns the design run id. The response body is not otherwise read: status comes from
+    `boltz_status`, because a submitted job is not a result.
+    """
+    key = _secret("BOLTZ_API_KEY", "boltz")
+    base = _service_base("BOLTZ_API_BASE", "boltz")
+    data = _http("POST", f"{base}/protein/design",
+                 headers={"x-api-key": key}, body=body, source="boltz")
+    run_id = str((data or {}).get("id") or "")
+    if not re.fullmatch(r"[A-Za-z0-9_.:-]{1,64}", run_id):
+        raise Unavailable("boltz", "design submit returned no run id")
+    return run_id
+
+
+def boltz_status(run_id: str):
+    """GET /protein/design/{id}. Carries `status`, `progress`, and `error` on a failure."""
+    key = _secret("BOLTZ_API_KEY", "boltz")
+    base = _service_base("BOLTZ_API_BASE", "boltz")
+    return _http("GET", f"{base}/protein/design/{urllib.parse.quote(run_id)}",
+                 headers={"x-api-key": key}, source="boltz")
+
+
+def boltz_results(run_id: str, *, page=100):
+    """GET /protein/design/{id}/results. Cursor-paginated: page forward while `has_more`."""
+    key = _secret("BOLTZ_API_KEY", "boltz")
+    base = _service_base("BOLTZ_API_BASE", "boltz")
+    rows, after = [], None
+    while True:
+        url = (f"{base}/protein/design/{urllib.parse.quote(run_id)}/results"
+               f"?limit={int(page)}")
+        if after:
+            url += f"&after_id={urllib.parse.quote(after)}"
+        data = _http("GET", url, headers={"x-api-key": key}, source="boltz")
+        rows.extend(data.get("data") or [])
+        after = data.get("last_id")
+        if not data.get("has_more") or not after:
+            return rows
+
+
+def boltz_candidate(row, target_chain="A"):
+    """One `/results` row as a candidate. The designed chain is the one that is not the target."""
+    chains = [e for e in (row.get("entities") or [])
+              if e.get("type") == "protein" and target_chain not in (e.get("chain_ids") or [])]
+    if not chains:
+        return None
+    metrics = {k: float(v) for k, v in (row.get("metrics") or {}).items()
+               if isinstance(v, (int, float)) and not isinstance(v, bool)}
+    return {
+        "sequence": str(chains[0].get("value") or ""),
+        "scaffold": "custom_protein",
+        "metrics": metrics,
+        "result": str(row.get("id") or ""),
+    }
+
+
+def boltz_designs(body: dict, *, budget_s, poll_s=BOLTZ_POLL_SECONDS, sleep=time.sleep):
+    """Submit the priced request, poll it to a terminal state, and read the designs back.
+
+    Returns `(run_id, [candidate])`. A submitted or running job is not a result: a budget that
+    runs out first is `unavailable`, not an empty design space, and so is a run that ends in any
+    terminal state other than `succeeded`. The caller's halt discipline then applies.
+    """
+    run_id = boltz_submit(body)
+    deadline = time.time() + float(budget_s)
+    while True:
+        status = str((boltz_status(run_id) or {}).get("status") or "")
+        if status not in BOLTZ_PENDING:
+            break
+        left = deadline - time.time()
+        if left <= 0:
+            raise Unavailable("boltz", f"design still {status or 'unstated'} after {int(budget_s)}s")
+        sleep(min(float(poll_s), left))
+    if status != "succeeded":
+        raise Unavailable("boltz", f"design run ended {status}")
+    candidates = [c for c in (boltz_candidate(row) for row in boltz_results(run_id)) if c]
+    if not candidates:
+        # The engine succeeded and returned nothing readable. That is a source that did not
+        # answer, not a specification that admits no candidate.
+        raise Unavailable("boltz", "design run returned no designed chain")
+    return run_id, candidates
+
+
 def openrouter_key():
     return _secret("OPENROUTER_API_KEY", "openrouter")
 
@@ -391,11 +487,36 @@ Target: $target ($organism), length $length aa.
 Indication: $indication
 Target sequence: $sequence
 
-Return $k candidate binders. Breadth is the point: independent scaffolds (minibinder, designed miniprotein, nanobody or single-domain, constrained peptide, repeat protein, or an Fv-derived format), not variations of one. One chain of the 20 standard L-amino acids (ACDEFGHIKLMNPQRSTVWY). An even number of cysteines, or none.
+Return $k candidate binders. Breadth is the point: independent scaffolds (minibinder, designed miniprotein, nanobody or single-domain, constrained peptide, repeat protein, or an Fv-derived format), not variations of one. Each candidate is one chain of between $min_aa and $max_aa residues; a chain outside that window is discarded unread. Use only the twenty standard proteinogenic L-amino acids, written in one-letter code: the ambiguity and non-standard codes B, J, O, U, X and Z are not among them and are refused. An even number of cysteines, or none.
+
+Give the CDR or paratope boundaries you intend as zero-based, end-exclusive index pairs into the sequence you return. Omit `cdrs` where the scaffold has no such window to state: an omitted or out-of-range window leaves the developability screen unrun, which is not a pass.
 
 Return JSON only:
-{"candidates":[{"sequence":"...","scaffold":"...","epitope":"...","rationale":"..."}]}
+{"candidates":[{"sequence":"...","scaffold":"...","epitope":"...","cdrs":[[start,end]],"rationale":"..."}]}
 """
+
+
+def parse_cdrs(value, length: int):
+    """Read a candidate's stated CDR bounds: `[[start, end], ...]`, zero-based, end-exclusive.
+
+    Anything unreadable, out of order or outside the sequence is no bounds at all, so
+    `developability` reports `not-run` rather than screening a window nobody stated.
+    """
+    if not isinstance(value, (list, tuple)) or not value:
+        return ()
+    out = []
+    for item in value:
+        if isinstance(item, dict):
+            item = (item.get("start"), item.get("end"))
+        if not isinstance(item, (list, tuple)) or len(item) != 2:
+            return ()
+        start, end = item
+        if any(isinstance(b, bool) or not isinstance(b, int) for b in (start, end)):
+            return ()
+        if not 0 <= start < end <= length:
+            return ()
+        out.append((start, end))
+    return tuple(out)
 
 
 def parse_candidates(text: str):
@@ -442,6 +563,11 @@ class Run:
         self.bound_tok = int(bound_tok)
         self.models = list(models)
         self.live = live
+        # The hosted engine writes its own worker files. It is not one of the advisory models,
+        # and its designs must not be filed under one of them.
+        self.engine = "boltz" if live else None
+        if self.engine and not _WORKER_RE.match(self.engine):
+            raise ValueError(f"worker basename {self.engine!r} has no production")
         self.trace_core = (
             "%trace-core/1\n"
             f'bound-n:"{self.bound_n}"\n'
@@ -477,7 +603,10 @@ class Run:
         return line
 
     def workers(self):
-        return [self.worker_name(i) for i in range(len(self.models))]
+        names = [self.worker_name(i) for i in range(len(self.models))]
+        if self.engine:
+            names.append(self.engine)
+        return names
 
     def worker_name(self, index):
         name = f"w{index + 1}"
@@ -511,7 +640,7 @@ class Run:
 
 
 def run_fleet(*, target, indication, models, out, live, bound_tok, k, bound_n=None,
-              timeout=None, max_tokens=None, min_aa=None, max_aa=None):
+              timeout=None, max_tokens=None, min_aa=None, max_aa=None, boltz_timeout=None):
     """Execute skills/design-binder.md as one campaign, and record it. Returns the report."""
     spec_sha = repo_head_sha()
     models = list(models)
@@ -590,13 +719,25 @@ def run_fleet(*, target, indication, models, out, live, bound_tok, k, bound_n=No
 
     # Boltz is the design engine, not an optional scorer. Authenticate and price the exact request
     # before the advisory panel runs; OpenRouter must never silently substitute for this step.
+    engine_candidates = []
     if live:
         try:
-            if min_aa is None or max_aa is None or max_tokens is None or timeout is None:
+            if (min_aa is None or max_aa is None or max_tokens is None or timeout is None
+                    or boltz_timeout is None):
                 raise Unavailable("fleet", "run bounds were not supplied")
             boltz_auth()
-            body = boltz_design_body(record["sequence"], bound_n, min_aa, max_aa)
+            # The service refuses a smaller library, so the priced body and the submitted body
+            # carry the same count: estimating one request and submitting another prices nothing.
+            design_n = max(int(bound_n), BOLTZ_MIN_PROTEINS)
+            if design_n != bound_n:
+                run.notes.append(
+                    f"boltz num_proteins raised from {bound_n} to the service floor of {design_n}")
+            body = boltz_design_body(record["sequence"], design_n, min_aa, max_aa)
             report["boltz_estimate"] = boltz_estimate(body)
+            report["boltz_num_proteins"] = design_n
+            boltz_run, engine_candidates = boltz_designs(body, budget_s=boltz_timeout)
+            report["boltz_run"] = boltz_run
+            report["boltz_returned"] = len(engine_candidates)
         except Unavailable as exc:
             run.trace_all("unavailable", pin_parent, _source_fields(target, exc, "generator"))
             run.trace_all("halt", pin_parent, {
@@ -613,7 +754,8 @@ def run_fleet(*, target, indication, models, out, live, bound_tok, k, bound_n=No
             return report
 
     # -- section 5 fan out ------------------------------------------------------------------------
-    results = _fan_out(run, record, k=k, timeout=timeout, max_tokens=max_tokens) if live else []
+    results = _fan_out(run, record, k=k, timeout=timeout, max_tokens=max_tokens,
+                       min_aa=min_aa, max_aa=max_aa) if live else []
     report["workers"] = []
 
     survivors = []
@@ -630,32 +772,17 @@ def run_fleet(*, target, indication, models, out, live, bound_tok, k, bound_n=No
         candidates, usage = outcome
         entry["status"] = "ok"
         entry["proposed"] = len(candidates)
-        entry["screened"] = []
-        design_ids = []
-        for cand in candidates:
-            sequence = re.sub(r"[^A-Z]", "", (cand.get("sequence") or "").upper())
-            key, bad = admit_candidate(sequence)
-            if bad is not None:
-                # `grammar` is a PrePin gate, so the refusal parents the call (systems/record-traces.md, P4).
-                run.trace(worker, "refuse", call_parent, {"gate": "grammar", "subject": bad})
-                entry["screened"].append({"key": key[:40], "screen": "grammar", "result": bad})
-                continue
-            node = run.bench(worker, 2, "^0", {
-                "step": "design", "model": model, "binder": key,
-                "scaffold": str(cand.get("scaffold", "unstated"))[:60], "n": len(sequence)})
-            design_ids.append(node)
-            verdict, reason = developability(sequence)
-            run.bench(worker, 2, f"^{node}", {
-                "step": "screen", "screen": "developability",
-                "verdict": verdict, "reason": reason})
-            if verdict == "exclude":
-                run.trace(worker, "refuse", pin_parent, {"gate": "developability", "subject": reason})
-                entry["screened"].append({"key": key, "screen": "developability", "result": reason})
-                continue
-            survivors.append((worker, model, key, sequence, cand, node))
-            entry["screened"].append({"key": key, "screen": "developability", "result": "pass"})
+        _screen_worker(run, entry, worker, model, candidates, call_parent, pin_parent, survivors)
         entry["usage"] = usage
-        entry["bench_designs"] = len(design_ids)
+        report["workers"].append(entry)
+
+    # The engine's own designs are screened by the same gates as the panel's, under their own
+    # worker. They arrive with the engine's confidence numbers, which are tier-2 predictions.
+    if engine_candidates:
+        entry = {"worker": run.engine, "model": BOLTZ_ENGINE, "status": "ok",
+                 "proposed": len(engine_candidates), "boltz_run": report.get("boltz_run")}
+        _screen_worker(run, entry, run.engine, BOLTZ_ENGINE, engine_candidates,
+                       call_parent, pin_parent, survivors)
         report["workers"].append(entry)
 
     # -- section 6 the screens that need a predictor, and the scorer -------------------------------
@@ -689,11 +816,58 @@ def _halt_unpinned(run, report, out, reason):
     return report
 
 
-def _fan_out(run, record, *, k, timeout, max_tokens):
+def _screen_worker(run, entry, worker, model, candidates, call_parent, pin_parent, survivors):
+    """Admit, record and stage-one screen one worker's candidates.
+
+    Shared by the advisory panel and by the hosted engine, so a design is screened the same way
+    whoever proposed it. Appends the survivors; the caller decides what happens to them.
+    """
+    entry.setdefault("screened", [])
+    designs = 0
+    for cand in candidates:
+        raw = re.sub(r"\s+", "", str(cand.get("sequence") or ""))
+        sequence = re.sub(r"[^A-Z]", "", raw.upper())
+        key, bad = admit_candidate(sequence)
+        if bad is not None:
+            # `grammar` is a PrePin gate, so the refusal parents the call (systems/record-traces.md, P4).
+            run.trace(worker, "refuse", call_parent, {"gate": "grammar", "subject": bad})
+            entry["screened"].append({"key": key[:40], "screen": "grammar", "result": bad})
+            continue
+        node = run.bench(worker, 2, "^0", {
+            "step": "design", "model": model, "binder": key,
+            "scaffold": str(cand.get("scaffold", "unstated"))[:60], "n": len(sequence)})
+        designs += 1
+        metrics = {re.sub(r"[^a-z0-9-]", "-", str(name).lower()): float(value)
+                   for name, value in (cand.get("metrics") or {}).items()
+                   if isinstance(value, (int, float)) and not isinstance(value, bool)}
+        if metrics:
+            # A predictor's confidence is a prediction, never a measurement and never an
+            # experiment, so it is tier 2 and never pooled with either (systems/use-bench.md section 2).
+            run.bench(worker, 2, f"^{node}", dict(metrics, step="score", source="boltz"))
+        # CDR indices address the sequence the worker wrote. Where scrubbing changed its length
+        # the bounds no longer address the admitted chain, so they are not used.
+        cdrs = parse_cdrs(cand.get("cdrs"), len(sequence)) if len(raw) == len(sequence) else ()
+        verdict, reason = developability(sequence, cdrs)
+        run.bench(worker, 2, f"^{node}", {
+            "step": "screen", "screen": "developability", "cdrs": len(cdrs),
+            "verdict": verdict, "reason": reason})
+        if verdict == "exclude":
+            run.trace(worker, "refuse", pin_parent, {"gate": "developability", "subject": reason})
+            entry["screened"].append({"key": key, "screen": "developability", "result": reason})
+            continue
+        survivors.append((worker, model, key, sequence, cand, node))
+        entry["screened"].append({"key": key, "screen": "developability",
+                                  "result": verdict, "reason": reason})
+    entry["bench_designs"] = designs
+    return designs
+
+
+def _fan_out(run, record, *, k, timeout, max_tokens, min_aa, max_aa):
     """One worker per model, in parallel, each carrying the same specification."""
     prompt = Template(WORKER_PROMPT).safe_substitute(
         banner=BANNER, target=run.target, organism=record["organism"],
-        length=record["length"], sequence=record["sequence"], indication=run.indication, k=k)
+        length=record["length"], sequence=record["sequence"], indication=run.indication, k=k,
+        min_aa=min_aa, max_aa=max_aa)
 
     def one(index_model):
         index, model = index_model
@@ -924,6 +1098,8 @@ def main(argv=None):
     run.add_argument("--timeout", type=int)
     run.add_argument("--min-aa", type=int)
     run.add_argument("--max-aa", type=int)
+    run.add_argument("--boltz-timeout", type=int,
+                     help="seconds to wait for the design run to reach a terminal state")
     run.add_argument("--live", action="store_true", help="call the live services")
     run.add_argument("--json", action="store_true")
 
@@ -944,7 +1120,8 @@ def main(argv=None):
         report = run_fleet(target=args.target, indication=args.indication, models=args.models,
                            out=args.out, live=args.live, bound_tok=args.bound_tok, k=args.candidates,
                            max_tokens=args.max_tokens, timeout=args.timeout,
-                           min_aa=args.min_aa, max_aa=args.max_aa)
+                           min_aa=args.min_aa, max_aa=args.max_aa,
+                           boltz_timeout=args.boltz_timeout)
         ok, code, rows = verify_run(Path(args.out))
         report["trace_judgement"] = {"ok": ok, "code": code, "rows": rows}
         print(json.dumps(report, indent=2) if args.json else _format_run(report))
@@ -984,8 +1161,11 @@ def _format_run(report):
     else:
         out.append(f"  catalogue rev {report.get('catalogue_rev', '?')[:12]} "
                    f"verdict {ctx.get('verdict')}")
+    if report.get("boltz_run"):
+        out.append(f"  boltz {report['boltz_run']} returned "
+                   f"{report.get('boltz_returned', 0)} of {report.get('boltz_num_proteins', 0)}")
     for worker in report.get("workers", []):
-        out.append(f"  {worker['worker']:4} {worker['model']:34} {worker['status']:11} "
+        out.append(f"  {worker['worker']:5} {worker['model']:34} {worker['status']:11} "
                    f"proposed={worker.get('proposed', 0)}")
     out.append(f"  emitted {len(report.get('emitted', []))}, "
                f"post-pin refusals {len(report.get('post_pin_refusals', []))}")

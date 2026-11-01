@@ -81,7 +81,7 @@ class FleetTests(unittest.TestCase):
             report = fleet.run_fleet(
                 target="uniprot:P01111", indication="research", models=["test/model"],
                 out=tmp, live=True, bound_tok=100, bound_n=1, k=1,
-                min_aa=45, max_aa=110, max_tokens=100, timeout=1,
+                min_aa=45, max_aa=110, max_tokens=100, timeout=1, boltz_timeout=1,
             )
             self.assertEqual(report["refused"], "boltz-unavailable")
             fan_out.assert_not_called()
@@ -159,13 +159,17 @@ class FleetTests(unittest.TestCase):
                 patch.object(fleet, "pin_catalogue", return_value=("a" * 40, graph)), \
                 patch.object(fleet, "boltz_auth", return_value={"workspace": "test"}), \
                 patch.object(fleet, "boltz_estimate", return_value={"estimated_cost_usd": "0.01"}), \
+                patch.object(fleet, "boltz_designs",
+                             return_value=("prot_des_test", [{"sequence": "K" * 60,
+                                                              "scaffold": "custom_protein",
+                                                              "metrics": {"iptm": 0.5}}])), \
                 patch.object(fleet, "_fan_out", return_value=outcomes) as fan_out, \
                 patch.object(fleet, "_screen_and_emit", return_value=([], [])):
             report = fleet.run_fleet(
                 target="uniprot:P01111", indication="research",
                 models=["test/one", "test/two"], out=tmp, live=True,
                 bound_tok=1000, bound_n=2, k=1,
-                min_aa=45, max_aa=110, max_tokens=100, timeout=1,
+                min_aa=45, max_aa=110, max_tokens=100, timeout=1, boltz_timeout=1,
             )
             self.assertEqual(report["catalogue_context"]["verdict"], "absent")
             fan_out.assert_called_once()
@@ -173,6 +177,14 @@ class FleetTests(unittest.TestCase):
             self.assertTrue(ok, (code, rows))
             self.assertEqual(sorted(p.name for p in Path(tmp).glob("w*.bench")),
                              ["w1.bench", "w2.bench"])
+            # The hosted engine keeps its own worker files; its designs are not filed
+            # under one of the advisory models.
+            self.assertTrue((Path(tmp) / "boltz.bench").exists())
+            self.assertTrue((Path(tmp) / "boltz.trace").exists())
+            engine = [w for w in report["workers"] if w["worker"] == "boltz"][0]
+            self.assertEqual(engine["model"], fleet.BOLTZ_ENGINE)
+            self.assertEqual(engine["bench_designs"], 1)
+            self.assertIn("iptm:0.5", (Path(tmp) / "boltz.bench").read_text(encoding="utf-8"))
             core_bench = (Path(tmp) / "core.bench").read_text(encoding="utf-8")
             self.assertIn(f'trace:"{report["run"]}"', core_bench)
 
@@ -223,6 +235,132 @@ class FleetTests(unittest.TestCase):
             ok, code, rows = fleet.verify_run(Path(tmp))
             self.assertTrue(ok, (code, rows))
 
+
+    def test_worker_prompt_states_the_window_and_cannot_be_pasted_back(self):
+        record = {"organism": "Homo sapiens", "length": 100, "sequence": "A" * 100}
+        run = fleet.Run(target="uniprot:P01111", indication="research", spec_sha="a" * 40,
+                        bound_n=1, bound_tok=100, models=["test/model"], live=True)
+        seen = {}
+
+        def chat(model, prompt, *, max_tokens, timeout):
+            seen["prompt"] = prompt
+            return '{"candidates":[]}', {}
+
+        with patch.object(fleet, "openrouter_chat", side_effect=chat):
+            fleet._fan_out(run, record, k=2, timeout=1, max_tokens=10, min_aa=45, max_aa=110)
+        prompt = seen["prompt"]
+        self.assertIn("between 45 and 110 residues", prompt)
+        self.assertNotIn("$min_aa", prompt)
+        self.assertNotIn("$max_aa", prompt)
+        # The twenty letters never appear as one contiguous run a model can paste as an answer.
+        self.assertNotIn("ACDEFGHIKLMNPQRSTVWY", prompt)
+        self.assertIn('"cdrs"', prompt)
+
+    def test_parse_cdrs_admits_bounds_and_refuses_everything_else(self):
+        self.assertEqual(fleet.parse_cdrs([[0, 3], [5, 9]], 10), ((0, 3), (5, 9)))
+        self.assertEqual(fleet.parse_cdrs([{"start": 1, "end": 4}], 10), ((1, 4),))
+        for bad in (None, [], "0-3", [[0, 11]], [[3, 3]], [[4, 2]], [[-1, 3]],
+                    [[0]], [[True, 3]], [[0, 3.5]]):
+            self.assertEqual(fleet.parse_cdrs(bad, 10), (), bad)
+
+    def test_stated_cdr_bounds_decide_developability_and_absent_ones_do_not(self):
+        run = fleet.Run(target="uniprot:P01111", indication="research", spec_sha="a" * 40,
+                        bound_n=1, bound_tok=100, models=["test/model"], live=False)
+        survivors, entry = [], {}
+        liable = "ANG" + "A" * 42
+        fleet._screen_worker(run, entry, "w1", "test/model", [
+            {"sequence": "EKQ" * 15, "cdrs": [[0, 45]]},
+            {"sequence": liable, "cdrs": [[0, 45]]},
+            {"sequence": liable},
+        ], "^" + run.call_id, "^" + "b" * 64, survivors)
+        self.assertEqual([row["result"] for row in entry["screened"]][0], "pass")
+        self.assertIn("Asn-Gly", entry["screened"][1]["result"])
+        self.assertEqual(entry["screened"][2]["result"], "not-run")
+        self.assertEqual([s[3] for s in survivors], ["EKQ" * 15, liable])
+        self.assertIn("cdrs:1", "".join(run.bench_lines["w1"]))
+        self.assertIn("cdrs:0", "".join(run.bench_lines["w1"]))
+
+    def test_boltz_designs_submits_polls_and_reads_the_designed_chain(self):
+        pages = [
+            {"data": [{"id": "pres_1", "metrics": {"iptm": 0.8},
+                       "entities": [{"type": "protein", "chain_ids": ["B"], "value": "EE"}]}],
+             "has_more": True, "last_id": "pres_1"},
+            {"data": [{"id": "pres_2", "metrics": {},
+                       "entities": [{"type": "protein", "chain_ids": ["A"], "value": "TT"}]}],
+             "has_more": False, "last_id": "pres_2"},
+        ]
+        states = [{"status": "queued"}, {"status": "running"}, {"status": "succeeded"}]
+        with patch.object(fleet, "boltz_submit", return_value="prot_des_1") as submit, \
+                patch.object(fleet, "boltz_status", side_effect=states), \
+                patch.object(fleet, "_http", side_effect=lambda *a, **kw: pages.pop(0)), \
+                patch.dict("os.environ", {"BOLTZ_API_KEY": "k", "BOLTZ_API_BASE": "https://x/v1"}):
+            run_id, candidates = fleet.boltz_designs({"num_proteins": 10}, budget_s=5,
+                                                     poll_s=0, sleep=lambda _s: None)
+        submit.assert_called_once()
+        self.assertEqual(run_id, "prot_des_1")
+        # Only the designed chain comes back; the target chain is not a candidate.
+        self.assertEqual([c["sequence"] for c in candidates], ["EE"])
+        self.assertEqual(candidates[0]["metrics"], {"iptm": 0.8})
+
+    def test_boltz_design_that_never_finishes_is_unavailable_not_an_empty_space(self):
+        with patch.object(fleet, "boltz_submit", return_value="prot_des_1"), \
+                patch.object(fleet, "boltz_status", return_value={"status": "running"}), \
+                patch.object(fleet, "boltz_results") as results:
+            with self.assertRaises(fleet.Unavailable):
+                fleet.boltz_designs({}, budget_s=0, poll_s=0, sleep=lambda _s: None)
+            results.assert_not_called()
+        with patch.object(fleet, "boltz_submit", return_value="prot_des_1"), \
+                patch.object(fleet, "boltz_status", return_value={"status": "failed"}), \
+                patch.object(fleet, "boltz_results") as results:
+            with self.assertRaises(fleet.Unavailable):
+                fleet.boltz_designs({}, budget_s=5, poll_s=0, sleep=lambda _s: None)
+            results.assert_not_called()
+
+    def test_a_design_failure_halts_the_run_before_the_advisory_panel(self):
+        record = {
+            "accession": "P01111", "organism": "Homo sapiens",
+            "sequence": "A" * 100, "length": 100, "type": "protein",
+        }
+        graph = {"version": 2, "pair": {}, "preclinical": {}}
+        with tempfile.TemporaryDirectory() as tmp, \
+                patch.object(fleet, "uniprot_record", return_value=record), \
+                patch.object(fleet, "pin_catalogue", return_value=("a" * 40, graph)), \
+                patch.object(fleet, "boltz_auth", return_value={"workspace": "test"}), \
+                patch.object(fleet, "boltz_estimate",
+                             return_value={"estimated_cost_usd": "0.25"}) as estimate, \
+                patch.object(fleet, "boltz_designs",
+                             side_effect=fleet.Unavailable("boltz", "design run ended failed")), \
+                patch.object(fleet, "_fan_out") as fan_out:
+            report = fleet.run_fleet(
+                target="uniprot:P01111", indication="research", models=["test/model"],
+                out=tmp, live=True, bound_tok=100, bound_n=1, k=1,
+                min_aa=45, max_aa=110, max_tokens=100, timeout=1, boltz_timeout=1,
+            )
+            fan_out.assert_not_called()
+            self.assertEqual(report["refused"], "boltz-unavailable")
+            # The priced body and the submitted body carry the service's floor, not bound_n.
+            self.assertEqual(estimate.call_args[0][0]["num_proteins"], fleet.BOLTZ_MIN_PROTEINS)
+            self.assertEqual(report["boltz_num_proteins"], fleet.BOLTZ_MIN_PROTEINS)
+            ok, code, rows = fleet.verify_run(Path(tmp))
+            self.assertTrue(ok, (code, rows))
+
+    def test_a_live_run_without_a_design_wait_is_a_missing_bound(self):
+        record = {
+            "accession": "P01111", "organism": "Homo sapiens",
+            "sequence": "A" * 100, "length": 100, "type": "protein",
+        }
+        graph = {"version": 2, "pair": {}, "preclinical": {}}
+        with tempfile.TemporaryDirectory() as tmp, \
+                patch.object(fleet, "uniprot_record", return_value=record), \
+                patch.object(fleet, "pin_catalogue", return_value=("a" * 40, graph)), \
+                patch.object(fleet, "boltz_auth") as auth:
+            report = fleet.run_fleet(
+                target="uniprot:P01111", indication="research", models=["test/model"],
+                out=tmp, live=True, bound_tok=100, bound_n=1, k=1,
+                min_aa=45, max_aa=110, max_tokens=100, timeout=1,
+            )
+        auth.assert_not_called()
+        self.assertEqual(report["refused"], "fleet-unavailable")
 
     def test_cli_refuses_a_preflight_without_bounds(self):
         from io import StringIO
