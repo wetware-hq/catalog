@@ -5,7 +5,7 @@ Usage:
     verify.py GRAPH.json                 # pure predicates (8.1-8.15, 8.17, 8.18)
     verify.py --prev OLD.json NEW.json   # the above on NEW, plus relational 8.19 (add-only)
     verify.py --merge A.json B.json      # section 6 merge; writes canonical bytes to stdout
-    verify.py GRAPH.json --repo DIR      # + gating repository predicates E1, E2, E4, E5, E6
+    verify.py GRAPH.json --repo DIR      # + gating repository predicates E1, E2, E4, E5, E6, E7
     verify.py GRAPH.json --online        # + E3 pmid resolution via NCBI E-utilities; NON-BLOCKING, never gates
     verify.py --trace CORE.trace W.trace # TRACES judgements (systems/record-traces.md); hard-coded carrier sets
     verify.py --json ...                 # machine-readable report on stdout
@@ -24,6 +24,11 @@ import re
 import sys
 from dataclasses import dataclass, field
 from datetime import date
+
+try:
+    import tomllib
+except ImportError:  # Python 3.9/3.10; E7 still validates its canonical TOML subset.
+    tomllib = None
 
 DICTS = ("pair", "preclinical")
 ROOT_KEYS = ("version", "pair", "preclinical")
@@ -63,6 +68,7 @@ EXTENSIONS = {
     "E4": ("pure-ext", "System registry (systems/*.md <-> docs/follow-agent-contract.md section 11)"),
     "E5": ("pure-ext", "Identity line (docs/follow-agent-contract.md section 0c)"),
     "E6": ("pure-ext", "Live Markdown scientific profile and navigable DAG"),
+    "E7": ("pure-ext", "Markdown formal language profile"),
 }
 BANNER = "\u26a0\ufe0f ACADEMIC RESEARCH PURPOSES ONLY; NOT FOR MEDICAL USE WITHOUT LICENSED OVERSIGHT"
 
@@ -1502,11 +1508,12 @@ def check_document_graph(repo_dir, rep):
     for rel in live:
         path = os.path.join(repo_dir, *rel.split("/"))
         try:
-            text = open(path, encoding="utf-8").read()
+            raw = open(path, "rb").read()
+            text = raw.decode("utf-8")
         except (OSError, UnicodeError) as exc:
             problems.append(f"{rel}: unreadable ({exc})")
             continue
-        if rel == E6_ROOT and len(text.encode("utf-8")) > E6_ROOT_MAX_BYTES:
+        if rel == E6_ROOT and len(raw) > E6_ROOT_MAX_BYTES:
             problems.append(
                 f"{rel}: initialization exceeds {E6_ROOT_MAX_BYTES} UTF-8 bytes")
         headings, bodies, prefix, profile_problems = _e6_sections(text)
@@ -1656,6 +1663,287 @@ def check_document_graph(repo_dir, rep):
     rep.add("E6", not problems, problems)
 
 
+E7_FENCE_TAGS = frozenset({
+    "bash", "bend", "csv", "dockerfile", "javascript", "json", "lean",
+    "mermaid", "python", "r", "rust", "stl", "svg", "text", "tex",
+    "tla", "toml", "typescript", "wolfram", "yaml",
+})
+E7_MERMAID_KINDS = ("stateDiagram-v2", "flowchart")
+
+
+def _e7_reject_json_constant(value):
+    raise ValueError(f"non-JSON constant {value}")
+
+
+def _e7_html_comment_line(line, active):
+    """Return (still active, line touched) for CommonMark HTML comments outside fences."""
+    cursor = 0
+    touched = active
+    while True:
+        if active:
+            end = line.find("-->", cursor)
+            if end < 0:
+                return True, True
+            active = False
+            cursor = end + 3
+            continue
+        start = line.find("<!--", cursor)
+        if start < 0:
+            return False, touched
+        touched = True
+        active = True
+        cursor = start + 4
+
+
+def _e7_fences(text):
+    """Return fenced blocks, violations, and HTML-comment lines outside those blocks.
+
+    The profile deliberately narrows CommonMark's many equivalent fence spellings to
+    column-zero triple backticks and one lowercase tag. Exact protocol examples therefore
+    cannot silently become an untyped block or be mistaken for an implementation language.
+    """
+    blocks = []
+    problems = []
+    comment_lines = set()
+    in_comment = False
+    opened = None
+    body = []
+    for index, line in enumerate(text.split("\n"), start=1):
+        if opened is None:
+            if not in_comment and line.startswith("```"):
+                match = re.fullmatch(r"```([a-z][a-z0-9-]*)", line)
+                if match is None:
+                    problems.append(
+                        f"line {index}: fence must open with column-zero triple backticks "
+                        "and one canonical lowercase language tag")
+                    opened = (index, "")
+                else:
+                    opened = (index, match.group(1))
+                body = []
+                continue
+
+            in_comment, comment_line = _e7_html_comment_line(line, in_comment)
+            if comment_line:
+                comment_lines.add(index)
+                continue
+            if re.match(r"^(?:[ \t]+`{3,}| {0,3}~{3,})", line):
+                problems.append(
+                    f"line {index}: fence must use column-zero triple backticks")
+            elif re.match(
+                    r"^ {0,3}(?:(?:>\s*)|(?:(?:[-+*]|\d+[.)])\s+))+"
+                    r"(?:`{3,}|~{3,})", line):
+                problems.append(
+                    f"line {index}: fence inside a Markdown container is not column-zero")
+            continue
+
+        if line == "```":
+            start, tag = opened
+            blocks.append((start, index, tag, "\n".join(body) + ("\n" if body else "")))
+            opened = None
+            body = []
+        else:
+            body.append(line)
+
+    if opened is not None:
+        problems.append(f"line {opened[0]}: fenced block is not closed")
+    return blocks, problems, comment_lines
+
+
+def _e7_toml_problem(body):
+    """Return an error unless `body` is the deterministic TOML subset used by live docs."""
+    import math
+
+    section = ""
+    tables = set()
+    keys = set()
+    root_keys = set()
+    assignments = 0
+
+    def valid_value(value):
+        if value is None or isinstance(value, dict):
+            return False
+        if isinstance(value, int) and not isinstance(value, bool):
+            return -(2 ** 63) <= value < 2 ** 63
+        if isinstance(value, float) and not math.isfinite(value):
+            return False
+        if isinstance(value, list):
+            return all(valid_value(item) for item in value)
+        return isinstance(value, (str, int, float, bool))
+
+    for number, line in enumerate(body.split("\n"), start=1):
+        if not line:
+            continue
+        table = re.fullmatch(r"\[([a-z][a-z0-9_]*)\]", line)
+        if table:
+            section = table.group(1)
+            if section in tables:
+                return f"line {number}: duplicate table {section!r}"
+            if section in root_keys:
+                return f"line {number}: table collides with root key {section!r}"
+            tables.add(section)
+            continue
+        pair = re.fullmatch(r"([a-z][a-z0-9_]*) = (.+)", line)
+        if pair is None:
+            return f"line {number}: outside the canonical line-oriented TOML subset"
+        key = (section, pair.group(1))
+        if key in keys:
+            return f"line {number}: duplicate key {pair.group(1)!r}"
+        if not section:
+            if pair.group(1) in tables:
+                return f"line {number}: root key collides with table {pair.group(1)!r}"
+            root_keys.add(pair.group(1))
+        keys.add(key)
+        if "\\" in pair.group(2):
+            return f"line {number}: escapes are outside the canonical TOML subset"
+        try:
+            value = json.loads(
+                pair.group(2), parse_constant=_e7_reject_json_constant)
+        except (TypeError, ValueError) as exc:
+            return f"line {number}: invalid canonical TOML value ({exc})"
+        if not valid_value(value):
+            return f"line {number}: value type is outside the canonical TOML subset"
+        assignments += 1
+
+    if assignments == 0:
+        return "mapping has no assignments"
+    if tomllib is not None:
+        try:
+            tomllib.loads(body)
+        except tomllib.TOMLDecodeError as exc:
+            return str(exc)
+    return None
+
+
+def _e7_section_fences(lines, blocks, comment_lines, heading, level):
+    fenced_lines = {
+        number
+        for first, last, _tag, _body in blocks
+        for number in range(first, last + 1)
+    } | comment_lines
+    starts = [
+        index for index, line in enumerate(lines)
+        if line == heading and index + 1 not in fenced_lines
+    ]
+    ranges = []
+    for start in starts:
+        end = len(lines)
+        boundary = re.compile(r"^ {0,3}#{1," + str(level) + r"}(?:[ \t]|$)")
+        for index in range(start + 1, len(lines)):
+            if index + 1 not in fenced_lines and boundary.match(lines[index]):
+                end = index
+                break
+        ranges.append([
+            block for block in blocks if start + 1 < block[0] <= end
+        ])
+    return starts, ranges
+
+
+def check_markdown_languages(repo_dir, rep):
+    """E7 [pure-ext]: explicit fence languages and canonical live-document TOML maps."""
+    import csv
+    import io
+
+    problems = []
+    live = set(live_markdown_paths(repo_dir))
+    for path in _md_files(repo_dir):
+        rel = _relposix(path, repo_dir)
+        try:
+            text = open(path, "rb").read().decode("utf-8")
+        except (OSError, UnicodeError) as exc:
+            problems.append(f"{rel}: unreadable ({exc})")
+            continue
+
+        lines = text.split("\n")
+        blocks, fence_problems, comment_lines = _e7_fences(text)
+        problems.extend(f"{rel}: {problem}" for problem in fence_problems)
+        fenced_lines = {
+            number
+            for first, last, _tag, _body in blocks
+            for number in range(first, last + 1)
+        } | comment_lines
+        for index, line in enumerate(lines, start=1):
+            if index in fenced_lines:
+                continue
+            if re.match(r"^ {0,3}<(?:/?[A-Za-z]|![A-Z]|\?)", line):
+                problems.append(
+                    f"{rel}: line {index}: raw HTML is outside the formal language profile")
+
+        if rel in live:
+            for index, line in enumerate(lines, start=1):
+                if index in fenced_lines:
+                    continue
+                heading = re.fullmatch(
+                    r"[ \t]*(#{2,3})[ \t]+(composition|variables)"
+                    r"(?:[ \t]+#+)?[ \t]*", line, re.IGNORECASE)
+                if heading is None:
+                    continue
+                expected = (
+                    "## Composition" if heading.group(2).lower() == "composition"
+                    else "### Variables")
+                if line != expected:
+                    problems.append(
+                        f"{rel}: line {index}: heading must be exactly {expected!r}")
+
+            composition_starts, composition_ranges = _e7_section_fences(
+                lines, blocks, comment_lines, "## Composition", 2)
+            if len(composition_starts) != 1:
+                problems.append(
+                    f"{rel}: expected one ## Composition section, found {len(composition_starts)}")
+            elif [block[2] for block in composition_ranges[0]] != ["toml"]:
+                problems.append(f"{rel}: Composition must contain exactly one TOML block")
+
+            variable_starts, variable_ranges = _e7_section_fences(
+                lines, blocks, comment_lines, "### Variables", 3)
+            for index, section_blocks in zip(variable_starts, variable_ranges):
+                if [block[2] for block in section_blocks] != ["toml"]:
+                    problems.append(
+                        f"{rel}: Variables at line {index + 1} must contain exactly one TOML block")
+
+        for line, _last, tag, body in blocks:
+            if not tag:
+                continue
+            if tag not in E7_FENCE_TAGS:
+                problems.append(f"{rel}: line {line}: non-canonical fence tag {tag!r}")
+                continue
+            if tag == "toml":
+                why = _e7_toml_problem(body)
+                if why:
+                    problems.append(f"{rel}: line {line}: invalid TOML ({why})")
+            elif tag == "mermaid":
+                first = next((item.strip() for item in body.splitlines() if item.strip()), "")
+                if not any(first == kind or first.startswith(kind + " ") for kind in E7_MERMAID_KINDS):
+                    problems.append(
+                        f"{rel}: line {line}: Mermaid must start with stateDiagram-v2 or flowchart")
+            elif tag == "json":
+                try:
+                    json.loads(body, parse_constant=_e7_reject_json_constant)
+                except (TypeError, ValueError) as exc:
+                    problems.append(f"{rel}: line {line}: invalid JSON ({exc})")
+            elif tag == "csv":
+                try:
+                    rows = list(csv.reader(io.StringIO(body), strict=True))
+                except csv.Error as exc:
+                    problems.append(f"{rel}: line {line}: invalid CSV ({exc})")
+                else:
+                    widths = {len(row) for row in rows}
+                    if not rows or 0 in widths or len(widths) != 1:
+                        problems.append(
+                            f"{rel}: line {line}: CSV must be non-empty and rectangular")
+                    else:
+                        canonical = io.StringIO(newline="")
+                        csv.writer(canonical, lineterminator="\n").writerows(rows)
+                        if canonical.getvalue() != body:
+                            problems.append(
+                                f"{rel}: line {line}: CSV must use canonical minimal quoting and LF")
+            elif tag == "yaml":
+                if not (re.search(r"(?m)^apiVersion:\s*\S+", body)
+                        and re.search(r"(?m)^kind:\s*\S+", body)):
+                    problems.append(
+                        f"{rel}: line {line}: YAML is reserved for Kubernetes manifests")
+
+    rep.add("E7", not problems, problems)
+
+
 def check_online_pmids(graph_path: str):
     """E3 [online-ext]: every pmid in graph.json resolves via NCBI E-utilities. NON-BLOCKING: never affects exit code.
     Returns (checked, resolved, unresolved_list, unavailable_bool)."""
@@ -1709,7 +1997,7 @@ def main(argv=None):
     ap.add_argument("--prev", metavar="OLD", help="predecessor graph.json for relational 8.19 (add-only)")
     ap.add_argument("--merge", nargs=2, metavar=("A", "B"), help="merge two files per section 6 to stdout")
     ap.add_argument("--repo", metavar="DIR",
-                    help="run gating repository predicates E1, E2, E4, E5, and E6 over DIR")
+                    help="run gating repository predicates E1, E2, E4, E5, E6, and E7 over DIR")
     ap.add_argument("--trace", nargs="+", metavar="FILE",
                     help="decide systems/record-traces.md: CORE.trace followed by worker .trace files")
     ap.add_argument("--online", action="store_true",
@@ -1756,6 +2044,7 @@ def main(argv=None):
         check_system_registry(a.repo, rep)  # E4
         check_identity(a.repo, rep)         # E5
         check_document_graph(a.repo, rep)   # E6
+        check_markdown_languages(a.repo, rep)  # E7
 
     # 16 oracle: always reported as not discharged (only meaningful when a graph was checked)
     oracle_note = "8.16 (oracle) Inclusion and study type: NOT DISCHARGED - requires reading each paper (section 4, 9.3)."

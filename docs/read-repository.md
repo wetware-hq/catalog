@@ -16,7 +16,7 @@ Route a catalogue task through the smallest sufficient path in the documentation
   "reads": ["graph.json", "neighbor Markdown on demand"],
   "writes": [],
   "must": ["load the contract before any procedure", "treat absence as unknown"],
-  "check": ["E1", "E6"]
+  "check": ["E1", "E6", "E7"]
 }
 ```
 
@@ -26,15 +26,11 @@ Route a catalogue task through the smallest sufficient path in the documentation
 
 ## Composition
 
-```mermaid
-flowchart LR
-    R(["Start here"]) --> C["Contract"]
-    C --> P["Pinned evidence"] --> D["Design"] --> T["Trace"] --> X(["Run"])
-    C --> K["Resolve key"] --> I["Propose pair"] --> T
-    C --> B["Bench"] --> X
+```toml
+root = "this file"
+sink = "systems/run-campaign.md"
+stop = "first sufficient route"
 ```
-
-The `Graph` list is canonical; Mermaid is derived.
 
 ## Indications
 
@@ -59,11 +55,19 @@ Rows may stop at their endpoint; design lists the sink closure.
 
 ### Variables
 
-| Class | Variable | Definition |
-|---|---|---|
-| independent | task | requested read, resolution, intake, design, or verification operation |
-| dependent | route | smallest read-before path that supplies the governing rules |
-| controlled | revision | one pinned repository commit for every catalogue read |
+```toml
+objective = "select the smallest sufficient read-before route"
+
+[independent]
+task = "read | resolve | propose | design | verify"
+
+[dependent]
+route = "ordered Markdown path ending at the first sufficient node"
+
+[controlled]
+revision = "one pinned repository commit"
+contract = "docs/follow-agent-contract.md governs every route"
+```
 
 ### Process
 

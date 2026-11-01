@@ -16,7 +16,7 @@ Pin external artifacts, extraction procedures, claim-level read status, and know
   "reads": ["versioned papers", "Git commits", "standards", "rendered figures"],
   "writes": [],
   "must": ["pin versions and retrieval", "state read status", "record contradictions"],
-  "check": ["digest replay", "independent claim read", "E6"]
+  "check": ["digest replay", "independent claim read", "E6", "E7"]
 }
 ```
 
@@ -27,16 +27,11 @@ Pin external artifacts, extraction procedures, claim-level read status, and know
 
 ## Composition
 
-```yaml
-pin:
-  identity: versioned-id | full-git-sha | doi-version | wikidata-revision
-  retrieved: YYYY-MM-DD
-  digest: sha256 | null
-  digest_scope: delivered-bytes | normalized-text | git-object
-  extraction: exact-command-and-tool-version | null
-  location: section | figure | lines
-  claim: one bounded sentence
-  read_status: metadata-only | claim-checked | second-read
+```toml
+rows = 11
+pin = "versioned id + retrieval date + digest or reproducible extraction"
+read_status = ["metadata-only", "claim-checked", "second-read"]
+graph = "Graph section"
 ```
 
 ## Indications
@@ -56,11 +51,21 @@ Do not infer source support from resolution, a digest match, venue acceptance, o
 
 ### Variables
 
-| Class | Variable | Definition |
-|---|---|---|
-| independent | artifact and retrieval | versioned source bytes or Git object obtained on a named date |
-| dependent | pinned claim | bounded statement plus location, digest scope, and read status |
-| controlled | extraction environment | exact command, tool version, normalization, and locale |
+```toml
+objective = "enable a later reader to recompute the recorded digest"
+
+[independent]
+artifact = "versioned source identifier"
+retrieved = "retrieval date"
+
+[dependent]
+digest = "byte SHA-256, normalized-text SHA-256, Git object, or null"
+claim = "bounded statement read at a named location"
+
+[controlled]
+command = "exact extraction command and tool version"
+scope = "delivered bytes | normalized text | git object"
+```
 
 ### Process
 

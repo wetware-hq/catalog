@@ -582,6 +582,15 @@ def test_E6_rejects_heading_card_and_profile_drift():
     assert finding.ok is False
     assert any("initialization exceeds" in row for row in finding.rows), finding.rows
 
+    repo = _e6_two_node_repo("e6_root_crlf_cap")
+    path = os.path.join(repo, "docs", "read-repository.md")
+    text = open(path, encoding="utf-8").read() + "\n## Body\n\n"
+    text += "x" * (V.E6_ROOT_MAX_BYTES - len(text.encode("utf-8")))
+    open(path, "wb").write(text.replace("\n", "\r\n").encode("utf-8"))
+    finding = _e6_finding(repo)
+    assert finding.ok is False
+    assert any("initialization exceeds" in row for row in finding.rows), finding.rows
+
     repo = _e6_two_node_repo("e6_graph_prose")
     path = os.path.join(repo, "docs", "read-repository.md")
     text = open(path, encoding="utf-8").read().replace(
@@ -807,9 +816,203 @@ def test_E6_rejects_unreachable_nodes_and_cycles():
     assert any("cap is" in row for row in finding.rows), finding.rows
 
 
+def _e7_doc(extra=""):
+    return (
+        V.BANNER + "\n\n# language profile\n\n"
+        "## Composition\n\n"
+        "```toml\nname = \"fixture\"\n```\n"
+        "\n## Algorithm\n"
+        + extra
+    )
+
+
+def _e7_finding(repo):
+    rep = V.Report()
+    V.check_markdown_languages(repo, rep)
+    return rep.findings[0]
+
+
+def test_E7_repo_markdown_languages_pass():
+    finding = _e7_finding(REPO_ROOT)
+    assert finding.ok is True, finding.rows
+
+
+def test_E7_canonical_fence_tags_are_pinned():
+    assert V.E7_FENCE_TAGS == {
+        "bash", "bend", "csv", "dockerfile", "javascript", "json", "lean",
+        "mermaid", "python", "r", "rust", "stl", "svg", "text", "tex",
+        "tla", "toml", "typescript", "wolfram", "yaml",
+    }
+
+
+def test_E7_rejects_untyped_and_misclassified_fences():
+    repo = _tmp_repo("e7_untyped", {
+        "doc.md": _e7_doc("\n```\nprotocol bytes\n```\n"),
+    })
+    finding = _e7_finding(repo)
+    assert finding.ok is False
+    assert any("canonical lowercase language tag" in row for row in finding.rows), finding.rows
+
+    repo = _tmp_repo("e7_container_fence", {
+        "doc.md": _e7_doc("\n> ```text\n> protocol bytes\n> ```\n"),
+    })
+    finding = _e7_finding(repo)
+    assert finding.ok is False
+    assert any("Markdown container" in row for row in finding.rows), finding.rows
+
+    repo = _tmp_repo("e7_list_continuation_fence", {
+        "doc.md": _e7_doc("\n10. item\n    ```text\n    bytes\n    ```\n"),
+    })
+    finding = _e7_finding(repo)
+    assert finding.ok is False
+    assert any("column-zero" in row for row in finding.rows), finding.rows
+
+    repo = _tmp_repo("e7_yaml", {
+        "doc.md": _e7_doc("\n```yaml\nkey: value\n```\n"),
+    })
+    finding = _e7_finding(repo)
+    assert finding.ok is False
+    assert any("Kubernetes manifests" in row for row in finding.rows), finding.rows
+
+    fixture = V.E6_FIXTURE_PATHS[0]
+    repo = _tmp_repo("e7_fixture_fence", {
+        fixture: V.BANNER + "\n\n# fixture\n\n```\nprotocol bytes\n```\n",
+    })
+    finding = _e7_finding(repo)
+    assert finding.ok is False
+    assert any("canonical lowercase language tag" in row for row in finding.rows), finding.rows
+    assert not any("composition" in row.lower() for row in finding.rows), finding.rows
+
+
+def test_E7_ignores_headings_inside_fences():
+    repo = _tmp_repo("e7_fenced_heading", {
+        "doc.md": (
+            V.BANNER + "\n\n# spoofed section\n\n"
+            "```text\n## Composition\n```\n"
+            "```toml\nname = \"not in a section\"\n```\n"
+        ),
+    })
+    finding = _e7_finding(repo)
+    assert finding.ok is False
+    assert any("found 0" in row for row in finding.rows), finding.rows
+
+    repo = _tmp_repo("e7_html_comment_heading", {
+        "doc.md": (
+            V.BANNER + "\n\n# hidden section\n\n"
+            "<!--\n## Composition\n```toml\nname = \"hidden\"\n```\n-->\n"
+        ),
+    })
+    finding = _e7_finding(repo)
+    assert finding.ok is False
+    assert any("found 0" in row for row in finding.rows), finding.rows
+
+    repo = _tmp_repo("e7_raw_html_heading", {
+        "doc.md": (
+            V.BANNER + "\n\n# HTML section\n\n"
+            "<script>\n## Composition\n</script>\n"
+            "```toml\nname = \"not in Markdown structure\"\n```\n"
+        ),
+    })
+    finding = _e7_finding(repo)
+    assert finding.ok is False
+    assert any("raw HTML" in row for row in finding.rows), finding.rows
+
+
+def test_E7_parses_toml_mermaid_json_and_csv():
+    repo = _tmp_repo("e7_languages_ok", {
+        "doc.md": _e7_doc(
+            "\n```mermaid\nflowchart LR\nA --> B\n```\n"
+            "\n```json\n{\"from\":\"A\",\"to\":\"B\"}\n```\n"
+            "\n```csv\nname,value\nA,1\n```\n"
+            "\n```yaml\napiVersion: v1\nkind: Pod\n```\n"
+        ),
+    })
+    finding = _e7_finding(repo)
+    assert finding.ok is True, finding.rows
+
+    repo = _tmp_repo("e7_languages_bad", {
+        "doc.md": (
+            V.BANNER + "\n\n# bad\n\n## Composition\n\n"
+            "```toml\nname = [\n```\n"
+            "\n## Algorithm\n\n```toml\nvalue = null\n```\n"
+            "\n```toml\nfoo = 1\n[foo]\nbar = 2\n```\n"
+            "\n```mermaid\nsequenceDiagram\nA->>B: no\n```\n"
+            "\n```json\n{\"value\": NaN}\n```\n"
+            "\n```csv\nname,value\nA\n```\n"
+            "\n```csv\nname,value\nA,foo\"bar\n```\n"
+        ),
+    })
+    finding = _e7_finding(repo)
+    assert finding.ok is False
+    assert any("invalid TOML" in row for row in finding.rows), finding.rows
+    assert any("value type is outside" in row for row in finding.rows), finding.rows
+    assert any("collides with root key" in row for row in finding.rows), finding.rows
+    assert any("Mermaid must start" in row for row in finding.rows), finding.rows
+    assert any("invalid JSON" in row for row in finding.rows), finding.rows
+    assert any("rectangular" in row for row in finding.rows), finding.rows
+    assert any("canonical minimal quoting" in row for row in finding.rows), finding.rows
+
+
+def test_E7_toml_subset_is_stable_without_tomllib():
+    parser = V.tomllib
+    V.tomllib = None
+    try:
+        assert V._e7_toml_problem(
+            'objective = "x"\n\n[independent]\nkey = ["aa:", "helm:"]\n') is None
+        assert "value type is outside" in V._e7_toml_problem("value = null\n")
+        assert "collides with root key" in V._e7_toml_problem(
+            "scope = 1\n[scope]\nvalue = 2\n")
+        assert "non-JSON constant" in V._e7_toml_problem("value = NaN\n")
+    finally:
+        V.tomllib = parser
+
+
+def test_E7_requires_toml_composition_and_variables():
+    repo = _tmp_repo("e7_sections", {
+        "doc.md": (
+            V.BANNER + "\n\n# bad sections\n\n"
+            "## Composition\n\n```text\nnot config\n```\n"
+            "\n## Algorithm\n\n### Variables\n\n```text\nnot config\n```\n"
+        ),
+    })
+    finding = _e7_finding(repo)
+    assert finding.ok is False
+    assert any("Composition must contain exactly one TOML" in row for row in finding.rows), finding.rows
+    assert any("Variables at line" in row for row in finding.rows), finding.rows
+
+    repo = _tmp_repo("e7_noncanonical_heading", {
+        "doc.md": _e7_doc(
+            "\n   ### variables\n\n```toml\nname = \"misplaced\"\n```\n"
+        ),
+    })
+    finding = _e7_finding(repo)
+    assert finding.ok is False
+    assert any("heading must be exactly" in row for row in finding.rows), finding.rows
+
+    repo = _tmp_repo("e7_closing_hash_heading", {
+        "doc.md": _e7_doc(
+            "\n### Variables ###\n\n```text\nnot TOML\n```\n"
+        ),
+    })
+    finding = _e7_finding(repo)
+    assert finding.ok is False
+    assert any("heading must be exactly" in row for row in finding.rows), finding.rows
+
+
+def test_E7_reads_markdown_without_newline_normalization():
+    repo = _tmp_repo("e7_crlf", {"doc.md": _e7_doc()})
+    path = os.path.join(repo, "doc.md")
+    raw = open(path, "rb").read().replace(b"\n", b"\r\n")
+    open(path, "wb").write(raw)
+    finding = _e7_finding(repo)
+    assert finding.ok is False
+    assert any("canonical lowercase language tag" in row for row in finding.rows), finding.rows
+
+
 def _fence_after(label):
-    text = open(os.path.join(REPO_ROOT, "systems", "record-traces.md"), encoding="utf-8").read()
-    start = text.index("```\n", text.index(label)) + 4
+    raw = open(os.path.join(REPO_ROOT, "systems", "record-traces.md"), "rb").read()
+    text = raw.decode("utf-8")
+    start = text.index("```text\n", text.index(label)) + len("```text\n")
     end = text.index("\n```", start)
     return text[start:end] + "\n"
 

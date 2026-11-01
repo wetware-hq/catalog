@@ -16,7 +16,7 @@ Design and screen de novo binder hypotheses only after an indication-aware, comm
   "reads": ["human target", "indication", "pinned catalogue", "pinned method benchmarks"],
   "writes": [],
   "must": ["stop on unread or same-indication evidence", "emit only with two killing assays"],
-  "check": ["trace result", "independent wet-lab measurement", "E2", "E5", "E6"]
+  "check": ["trace result", "independent wet-lab measurement", "E2", "E5", "E6", "E7"]
 }
 ```
 
@@ -27,13 +27,12 @@ Design and screen de novo binder hypotheses only after an indication-aware, comm
 
 ## Composition
 
-| Phase | Input | Output |
-|---|---|---|
-| admit | target and indication | refusal or human-protein brief |
-| catalogue gate | reverse index at a commit | stop, transfer rationale, or absence context |
-| design | pinned methods and bounded budget | canonical sequence hypotheses |
-| screen | hard liabilities then named scorer | excluded set and ordered or unranked survivors |
-| emit | survivor plus assay owners | non-persistent experimental worklist |
+```toml
+class = "special"
+input = ["uniprot accession", "indication"]
+output = "experimental worklist or named refusal"
+graph = "Graph section"
+```
 
 ## Indications
 
@@ -54,11 +53,23 @@ Design and screen de novo binder hypotheses only after an indication-aware, comm
 
 ### Variables
 
-| Class | Variable | Definition |
-|---|---|---|
-| independent | target, indication, method, scaffold | admitted brief and distinct design routes |
-| dependent | survivors and assay worklist | candidates remaining after hard screens and named ordering |
-| controlled | catalogue SHA, kill gates, compute bounds | pre-registered evidence gate, safety thresholds, iterations, tokens, and spend |
+```toml
+objective = "stop before spend on a catalogue hit; otherwise define two killing assays"
+
+[independent]
+target = "human uniprot:"
+indication = "query only; never stored"
+method = "distinct design route"
+
+[dependent]
+binder = "aa: or helm: hypothesis, or no emission"
+verdict = "hit-same-indication | hit-other-indication | hit-unread | absent"
+
+[controlled]
+catalogue_pin = "commit SHA or tag"
+paralogue = "30 percent identity; 50 percent requires a counter-screen"
+selectivity = "two logs weaker on every panel member"
+```
 
 ### Process
 

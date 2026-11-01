@@ -16,7 +16,7 @@ Define the content-addressed act log for one bounded `fleet.campaign` run and th
   "reads": ["core.trace", "worker trace heads", "hard-coded carrier sets"],
   "writes": [".trace files outside the repository"],
   "must": ["derive ids from bytes", "end on one halt", "keep oracle not-discharged"],
-  "check": ["verifier/verify.py --trace", "R1-R10", "E4", "E5", "E6"]
+  "check": ["verifier/verify.py --trace", "R1-R10", "E4", "E5", "E6", "E7"]
 }
 ```
 
@@ -28,12 +28,11 @@ Define the content-addressed act log for one bounded `fleet.campaign` run and th
 
 ## Composition
 
-| Component | Content | Identity |
-|---|---|---|
-| `core.trace` | bounds, skill, spec revision | SHA-256 of exact core bytes |
-| `<worker>.trace` | header plus immutable acts | worker basename and content-derived act ids |
-| head | set union of admitted acts | ids, independent of arrival order |
-| checker | syntax, values, parents, and R1–R10 | `result` or first `partial` code |
+```toml
+files = ["core.trace", "<worker>.trace"]
+answer = ["result", "partial"]
+graph = "Graph section"
+```
 
 ## Indications
 
@@ -52,11 +51,23 @@ Define the content-addressed act log for one bounded `fleet.campaign` run and th
 
 ### Variables
 
-| Class | Variable | Definition |
-|---|---|---|
-| independent | core bytes and worker lines | bounded run declaration plus candidate acts |
-| dependent | admitted head and decision | content-addressed act set and `result` or first failure |
-| controlled | carrier sets and hash function | fixed skills, acts, fields, parents, caps, and SHA-256 |
+```toml
+objective = "pure shape judgement with the paper oracle fixed"
+
+[independent]
+skill = "resolve-key | propose-pairs | design-binder"
+bound_n = "positive integer without a leading zero"
+bound_tok = "positive integer without a leading zero"
+
+[dependent]
+id = "SHA-256 of the act preimage"
+answer = "result | partial"
+
+[controlled]
+run = "SHA-256 of core.trace bytes"
+oracle = "not-discharged"
+disclaimer = "banner bytes inside the emit preimage"
+```
 
 ### Process
 
@@ -79,7 +90,7 @@ A file is UTF-8. A file that is not valid UTF-8, or that contains a NUL or a car
 
 `core.trace` is these four lines, each ending in a newline. The bounds are positive integers with no leading zero. The skill is one of `resolve-key`, `propose-pairs`, `design-binder`. The spec is 40 lowercase hex digits.
 
-```
+```text
 %trace-core/1
 bound-n:"<bound-n>"
 bound-tok:"<bound-tok>"
@@ -235,7 +246,7 @@ Illustration. `spec` is forty `a`s and `rev` is forty `b`s. The proposal `aa:ACD
 
 `core.trace`:
 
-```
+```text
 %trace-core/1
 bound-n:"1"
 bound-tok:"8000"
@@ -247,7 +258,7 @@ spec:"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
 
 `a1.trace`:
 
-```
+```text
 %trace/1 core=d2066050893688b4fc69def4b3c03ffa9ee8b06ef14858786224a7adf2684853 spec=aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
 call 82d0bb98077f59cb3544536e2023d4cf99699408e57250de2ce20d3e0b20a294 ^0 run=d2066050893688b4fc69def4b3c03ffa9ee8b06ef14858786224a7adf2684853 skill=propose-pairs
 pin 2f3f7335675c72766882db3b0dea24b20818183f1934fd10eb131a10ba13fba4 ^82d0bb98077f59cb3544536e2023d4cf99699408e57250de2ce20d3e0b20a294 run=d2066050893688b4fc69def4b3c03ffa9ee8b06ef14858786224a7adf2684853 skill=propose-pairs path:"graph.json" rev:"bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"

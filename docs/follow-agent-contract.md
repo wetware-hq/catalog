@@ -16,7 +16,7 @@ Define the catalogue schema, evidence boundary, canonical bytes, merge law, read
   "reads": ["graph.json", "registered Markdown", "predecessor catalogue", "paper evidence"],
   "writes": ["graph.json under human supersession", "proposals.json under section 9"],
   "must": ["preserve canonical bytes", "separate study types", "leave the paper oracle explicit"],
-  "check": ["predicates 1-19", "E1-E6"]
+  "check": ["predicates 1-19", "E1-E7"]
 }
 ```
 
@@ -29,14 +29,12 @@ Define the catalogue schema, evidence boundary, canonical bytes, merge law, read
 
 ## Composition
 
-| Component | Authority | Function |
-|---|---|---|
-| `graph.json` | normative data | admitted binder–target evidence |
-| `proposals.json` | intake boundary | unclassified candidate triples |
-| `skills/*.md` | subordinate procedures | resolve, propose, or design |
-| `systems/*.md` | subordinate run specs | bench, trace, and campaign machinery |
-| `verifier/` | executable checker | pure, relational, and repository predicates |
-| `docs/pin-references.md` | reproducibility record | versioned claims and read status |
+```toml
+law = ["0", "0b", "0c", "0d", "0e", "1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "11"]
+graph = "Graph section; reciprocal relative paths; read before"
+registry = ["10 Skills", "11 Systems"]
+embeds = ["toml", "mermaid", "json", "GFM structural tables"]
+```
 
 ## Indications
 
@@ -57,11 +55,25 @@ Define the catalogue schema, evidence boundary, canonical bytes, merge law, read
 
 ### Variables
 
-| Class | Variable | Definition |
-|---|---|---|
-| independent | input bytes and cited artifacts | catalogue, predecessor, proposal, key, or paper supplied to an operation |
-| dependent | decision and output bytes | admission, refusal, canonical merge, resolution, or run result |
-| controlled | schema and revision | version `2`, one pinned commit, fixed grammars, and named source releases |
+```toml
+objective = "canonical rows whose paper reports utility for that pair"
+
+[independent]
+binder = "aa: chains or helm: PEPTIDE payload"
+target = "uniprot: accession, optional isoform"
+citation = "pmid:<digits>"
+dictionary = "pair | preclinical"
+
+[dependent]
+admitted = "boolean after the paper is read"
+bytes = "canonical UTF-8 of version, pair, preclinical"
+
+[controlled]
+version = 2
+segment_order = "non-decreasing UTF-8"
+helm_scope = "every block PEPTIDE"
+oracle = "not discharged by automation"
+```
 
 ### Process
 
@@ -119,6 +131,45 @@ Every edge is declared at both endpoints, so each file lists all and only its in
 The initialization file is at most 4,096 UTF-8 bytes. JSON cards and graph lists are canonical routing data; Mermaid, tables, figures, statecharts, and other fenced languages are derived explanatory views and never override prose law.
 
 E6 checks the functional paragraph, H2 profile, JSON card, variable/process headings, MIT name, relative reciprocal links, single root and sink, reachability, acyclicity, edge budget, and transitive reduction. Representation sources are in `docs/pin-references.md`.
+
+### 0e. Formal language profile
+
+The profile selects a language when that artifact exists; it does not require placeholder code. Extensions below name standalone artifacts. Inside Markdown, use the canonical lowercase fence tag for that language. Exact `.trace` and `.bench` protocol bytes are `text`; terminal command wrappers are `bash`.
+
+```toml
+[preferred]
+tools = ".py"
+browser_templates = ".js"
+interfaces = ".ts"
+tracers = ".rs"
+falsifiers = ".bend"
+theories = ".lean"
+machines = ".tla"
+
+[images]
+agents = "Dockerfile"
+fleets = "Kubernetes"
+swarms = "Kubernetes"
+
+[embedded]
+math = ".wl"
+diagrams = ".mermaid"
+flows = ".json"
+analyses = ".R"
+tables = ".csv"
+config = ".toml"
+
+[prettification]
+equations = ".tex"
+blueprints_2d = ".svg"
+blueprints_3d = ".stl"
+code_demos = "Marimo (.py)"
+animations = "Three.js"
+```
+
+Canonical fence tags are `python`, `javascript`, `typescript`, `rust`, `bend`, `lean`, `tla`, `dockerfile`, `yaml` for Kubernetes manifests only, `wolfram`, `mermaid`, `json`, `r`, `csv`, `toml`, `tex`, `svg`, `stl`, `text`, and `bash`. GFM cards, registries, and comparison tables are Markdown structure; machine-consumed embedded tables use `csv`.
+
+Every repository Markdown fence is a column-zero triple backtick fence with one explicit canonical tag; raw HTML is not a language escape. In live Markdown, `Composition` and `Variables` each contain exactly one mapping in the line-oriented, JSON-value subset of TOML 1.1.0: lowercase bare keys, single-component tables, no escapes, and no duplicate table or key. Mermaid starts with `stateDiagram-v2` or `flowchart`; CSV uses minimal quoting and LF. E7 enforces those rules across all Markdown, parses TOML, JSON, and CSV, checks Mermaid kind, and admits YAML only for Kubernetes manifests. It does not compile the remaining preferred languages or discharge §8.16.
 
 ### 1. Purpose
 
@@ -245,7 +296,7 @@ Implement from this section alone. Tags: **pure** = decidable from one file's by
 3. **File boundary.** Autonomous intake writes `proposals.json` only, and never writes `graph.json` on any branch. Admission is the act of reading the paper, and that act is what moves bytes from `proposals.json` into `graph.json`, choosing the dictionary per §4. **Trust is carried by the file, not by a branch:** a branch name is mutable and has no merge law, so a fence of the form "unverified rows live on branch X" dissolves at the first merge and relaunders those rows as verified, while `proposals.json` merges into `proposals.json` on every branch. Condition 16 is therefore discharged at the file move, by a reader, and never by the run that proposed the row.
 4. **`proposals.json`.** Root: a non-array object with exactly `version` (the number `2`) and `proposal` (an array). Each element has exactly `binder`, `target`, `pmid`, each satisfying §3. A proposal carries **no dictionary assignment**: `pair` versus `preclinical` is part of the oracle and is chosen when the paper is read. Serialise per §5; add-only per §8.19. It is not catalogue-shaped and must not be read as one.
 5. Intake procedure: [`skills/propose-pairs.md`](../skills/propose-pairs.md). It enumerates structured authorities; it does not crawl prose, and its own acceptance test is rediscovery of the rows already committed.
-6. This repository ships no updater and no cron. It does ship a verifier (`verifier/`) and a workflow (`.github/workflows/validate.yml`) that runs it, and neither writes `graph.json` or `proposals.json`: a passing run proves only the pure conditions (§8) and the repository extension predicates E1, E2, E4, E5, and E6, which are not §8 predicates and do not renumber them (E3, pmid resolution, is non-blocking and gates nothing). It never proves §8.16. Compliance is your behaviour against this contract, not a green check.
+6. This repository ships no updater and no cron. It does ship a verifier (`verifier/`) and a workflow (`.github/workflows/validate.yml`) that runs it, and neither writes `graph.json` or `proposals.json`: a passing run proves only the pure conditions (§8) and the repository extension predicates E1, E2, E4, E5, E6, and E7, which are not §8 predicates and do not renumber them (E3, pmid resolution, is non-blocking and gates nothing). It never proves §8.16. Compliance is your behaviour against this contract, not a green check.
 
 A proposed row failing any rule above is **refused**, naming the condition that failed.
 

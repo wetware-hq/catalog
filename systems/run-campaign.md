@@ -16,7 +16,7 @@ Preflight and execute one bounded `fleet.campaign`, materialize BENCH and TRACES
   "reads": ["target", "indication", "explicit bounds", "pinned graph.json", "required services"],
   "writes": [".bench and .trace files outside the repository"],
   "must": ["stop on catalogue hit", "fail closed on required services", "verify every trace"],
-  "check": ["fleet tests", "trace result", "E4", "E5", "E6"]
+  "check": ["fleet tests", "trace result", "E4", "E5", "E6", "E7"]
 }
 ```
 
@@ -27,15 +27,11 @@ Preflight and execute one bounded `fleet.campaign`, materialize BENCH and TRACES
 
 ## Composition
 
-| Component | Responsibility |
-|---|---|
-| `fleet/fleet.py preflight` | pin inputs, probe services, price named models, enforce spend cap |
-| `fleet/fleet.py run` | apply admission and catalogue gates, invoke bounded generation, write worker artifacts |
-| BENCH | run-scoped tiered partial work |
-| TRACES | content-addressed acts ending in one halt |
-| verifier handoff | decide trace shape as `result` or `partial` |
-
-One run has one trace core, one campaign hash, explicit bounds, and one halt. Workers are campaign members; `agent.swarm` and `agent.fleet` are not local specs.
+```toml
+commands = ["preflight", "run", "verify"]
+stores = [".bench", ".trace"]
+graph = "Graph section; this file is the sink"
+```
 
 ## Indications
 
@@ -54,11 +50,25 @@ One run has one trace core, one campaign hash, explicit bounds, and one halt. Wo
 
 ### Variables
 
-| Class | Variable | Definition |
-|---|---|---|
-| independent | target, indication, models, services | caller brief and explicitly named execution dependencies |
-| dependent | launch, artifacts, and trace verdict | fail-closed decision plus bounded run outputs |
-| controlled | SHA, candidates, tokens, timeout, spend | pinned catalogue and pre-registered resource limits |
+```toml
+objective = "halt before paid design when pair already cites the target"
+
+[independent]
+budget_usd = "caller argument"
+target = "uniprot:"
+models = "caller argument"
+candidates = "caller argument"
+length_window = "min-aa and max-aa on the Boltz request only"
+
+[dependent]
+launch = "true only when services and projection are inside the cap"
+context = "hit-unread | absent"
+
+[controlled]
+pin = "checkout HEAD SHA, never a branch name"
+oracle = "not-discharged"
+organism = "Homo sapiens"
+```
 
 ### Process
 

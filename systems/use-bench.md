@@ -16,7 +16,7 @@ Provide one run-scoped, append-only commons where workers exchange immutable par
   "reads": ["core.bench", "worker heads", "one explicit evidence tier"],
   "writes": [".bench files outside the repository"],
   "must": ["merge by set union", "never pool tiers", "bind every node to one core"],
-  "check": ["fleet tests", "content hashes", "E4", "E5", "E6"]
+  "check": ["fleet tests", "content hashes", "E4", "E5", "E6", "E7"]
 }
 ```
 
@@ -27,13 +27,11 @@ Provide one run-scoped, append-only commons where workers exchange immutable par
 
 ## Composition
 
-| Component | Function | Persistence |
-|---|---|---|
-| immutable core | pre-register run parameters and trace id | run lifetime |
-| worker file | append tiered content-addressed nodes | run lifetime |
-| head | set of admitted node ids | monotone, mergeable |
-| local index | derived search acceleration | rebuildable |
-| query result | value plus exact head | reproducible only at that head |
+```toml
+files = ["core.bench", "<worker>.bench"]
+merge = "set union on content hashes"
+graph = "Graph section"
+```
 
 ## Indications
 
@@ -53,11 +51,22 @@ Provide one run-scoped, append-only commons where workers exchange immutable par
 
 ### Variables
 
-| Class | Variable | Definition |
-|---|---|---|
-| independent | incoming nodes and local heads | immutable tiered records observed by each worker |
-| dependent | merged head and query answer | set union plus a result evaluated at that exact head |
-| controlled | core hash, tier, canonical bytes | one run identity, one evidence class, and content-derived ids |
+```toml
+objective = "join-semilattice merge and tier-pure answers at a named head"
+
+[independent]
+tier = "1 measurement | 2 prediction | 3 experiment"
+payload = "key-value fields"
+parents = "zero or more earlier ids"
+
+[dependent]
+id = "prefix of SHA-256 of the canonical line"
+head = "set of admitted ids"
+
+[controlled]
+run = "SHA-256 of core.bench bytes"
+order = "keys sorted; numbers in shortest round-trip form"
+```
 
 ### Process
 
@@ -131,7 +140,7 @@ Canonical bytes, which `H` is taken over: the line with fields sorted by key, si
 
 Worked example:
 
-```
+```text
 %bench/1 core=9f2a1b7c4d
 1 a3f1c0 ^0 w:a1 s:12 obs:0.712 sd:0.041 unit:uM dev:inst-4 ts:1761790001
 2 b7c2e9 ^a3f1c0 w:a2 s:13 score:0.883 model:mx-7 pose:M(0.92388,0.0,0.0,0.38268,0.0,1.5,-0.25,0.0)
@@ -179,7 +188,7 @@ A run whose core changed is not a tainted run to be discarded by policy; it is a
 
 Per worker, local, derived, rebuildable, never shared: an inverted index over `key:value` terms, sorted arrays per numeric key, and the DAG adjacency. All three are **add-only**, which is the only reason concurrent search works — the node set only grows, so the index only gains postings, with no tombstones and no reader invalidation. Segments merge on a size ladder.
 
-```
+```text
 at <head>                                every query is evaluated at a head
 where tier=T and <key> <op> <value>      op ∈ { =, !=, <, <=, >, >=, ~ }
 ancestors(<id>) / descendants(<id>)

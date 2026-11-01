@@ -16,7 +16,7 @@ Enumerate structured authorities, resolve complete protein triples, and append u
   "reads": ["structured authorities", "pinned graph.json", "existing proposals.json"],
   "writes": ["proposals.json"],
   "must": ["emit complete triples only", "never classify study type", "never write graph.json"],
-  "check": ["recall 1.0", "zero false-admits", "E2", "E5", "E6"]
+  "check": ["recall 1.0", "zero false-admits", "E2", "E5", "E6", "E7"]
 }
 ```
 
@@ -27,13 +27,11 @@ Enumerate structured authorities, resolve complete protein triples, and append u
 
 ## Composition
 
-| Stage | Authority | Product |
-|---|---|---|
-| enumerate | ChEMBL and Thera-SAbDab | named candidate records |
-| resolve | UniProt and UniParc | canonical binder and target keys |
-| cite | PubMed or Europe PMC | one bare `pmid:` identifier |
-| deduplicate | pinned catalogue and proposals | novel complete triples |
-| serialize | contract merge law | canonical add-only `proposals.json` |
+```toml
+steps = ["admit", "resolve payload", "resolve binder", "resolve target", "deduplicate"]
+output = "proposals.json"
+graph = "Graph section"
+```
 
 ## Indications
 
@@ -52,11 +50,22 @@ Enumerate structured authorities, resolve complete protein triples, and append u
 
 ### Variables
 
-| Class | Variable | Definition |
-|---|---|---|
-| independent | authority records and pinned catalogue | candidate records plus existing triples at one revision |
-| dependent | proposal set and refusal ledger | canonical novel triples or named first-failure reasons |
-| controlled | grammar, releases, and serializer | contract predicates, named source snapshots, one writer |
+```toml
+objective = "recall committed rows while counting false admissions"
+
+[independent]
+record = "structured authority row"
+catalogue = "graph.json pinned to a commit SHA"
+
+[dependent]
+proposal = "binder, target, pmid"
+refusal = "first failed intake step"
+
+[controlled]
+serializer = "contract section 5"
+merge = "contract section 6 and add-only predicate 19"
+drugbank = "refused; licence re-check dated 2026-10-29"
+```
 
 ### Process
 
