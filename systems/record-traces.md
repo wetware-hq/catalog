@@ -14,9 +14,10 @@ One thing in the format is free: the worker's basename. The checker's answer is 
 
 ## Specification card
 
-| role | does | reads | writes | must | check |
-|---|---|---|---|---|---|
-| campaign system | content-address run acts | core; worker traces | `.trace` outside repo | `oracle=not-discharged`; no scores | `verify.py --trace` |
+| Role | Does | Must |
+|---|---|---|
+| Campaign system | Content-address run acts | `oracle=not-discharged`; no scores |
+| Reads: core; worker traces | Writes: `.trace` outside repo | Check: `verify.py --trace` |
 
 ## 0. Lines
 

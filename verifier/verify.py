@@ -1307,6 +1307,8 @@ E6_ROOT_MAX_BYTES = 2048
 E6_EDGE_SURPLUS_MAX = 2
 E6_HEADINGS = ("## Document graph", "## Specification card")
 E6_CARD_FIELDS = ("role", "does", "reads", "writes", "must", "check")
+E6_CARD_TOP = ("role", "does", "must")
+E6_CARD_BOTTOM = ("reads", "writes", "check")
 E6_CARD_VALUE_MAX = 96
 _E6_EDGE_RE = re.compile(r"^- ([←→]) \[([^\]]+)\]\(([^)]+\.md)\)$")
 _E6_LINK_RE = re.compile(r"\[[^\]\r\n]+\]\([^)]+\)")
@@ -1367,25 +1369,36 @@ def _e6_sections(text):
 
 def _e6_card_problem(lines):
     rows = [line for line in lines if line.strip()]
-    header = "| " + " | ".join(E6_CARD_FIELDS) + " |"
-    separator = "|" + "|".join("---" for _field in E6_CARD_FIELDS) + "|"
-    if len(rows) != 3:
-        return f"card has {max(0, len(rows) - 2)} data rows, expected 1"
+    header = "| " + " | ".join(field.title() for field in E6_CARD_TOP) + " |"
+    separator = "|" + "|".join("---" for _field in E6_CARD_TOP) + "|"
+    if len(rows) != 4:
+        return f"card has {max(0, len(rows) - 2)} data rows, expected 2"
     if rows[:2] != [header, separator]:
         return f"card header must be {header!r} followed by {separator!r}"
-    line = rows[2]
-    if not (line.startswith("|") and line.endswith("|")):
-        return f"card data is not a table row: {line!r}"
-    cells = [cell.strip() for cell in line[1:-1].split("|")]
-    if len(cells) != len(E6_CARD_FIELDS) or any(not cell for cell in cells):
-        return f"card data must have {len(E6_CARD_FIELDS)} non-empty cells"
+    top = _e6_table_cells(rows[2])
+    bottom = _e6_table_cells(rows[3])
+    if len(top) != len(E6_CARD_TOP) or len(bottom) != len(E6_CARD_BOTTOM):
+        return "card rows must each have three non-empty cells"
+    parsed = dict(zip(E6_CARD_TOP, top))
+    for field, cell in zip(E6_CARD_BOTTOM, bottom):
+        prefix = field.title() + ": "
+        if not cell.startswith(prefix) or not cell[len(prefix):]:
+            return f"card cell must start with {prefix!r}"
+        parsed[field] = cell[len(prefix):]
     too_long = [
-        field for field, cell in zip(E6_CARD_FIELDS, cells)
-        if len(cell.encode("utf-8")) > E6_CARD_VALUE_MAX
+        field for field in E6_CARD_FIELDS
+        if len(parsed.get(field, "").encode("utf-8")) > E6_CARD_VALUE_MAX
     ]
     if too_long:
         return f"card cells exceed {E6_CARD_VALUE_MAX} UTF-8 bytes: {too_long!r}"
     return None
+
+
+def _e6_table_cells(line):
+    if not (line.startswith("|") and line.endswith("|")):
+        return []
+    cells = [cell.strip() for cell in line[1:-1].split("|")]
+    return cells if all(cells) else []
 
 
 def check_document_graph(repo_dir, rep):

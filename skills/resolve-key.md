@@ -15,9 +15,10 @@ Nucleic-acid rows are out of scope and are refused at the door, never classified
 
 ## Specification card
 
-| role | does | reads | writes | must | check |
-|---|---|---|---|---|---|
-| read-only skill | map protein key to identity | key; named release | none | `unresolved` ≠ `unavailable` | key predicates; trace |
+| Role | Does | Must |
+|---|---|---|
+| Read-only skill | Map protein key to identity | `unresolved` ≠ `unavailable` |
+| Reads: key; named release | Writes: none | Check: key predicates; trace |
 
 ## Folder contract (all skills here)
 

@@ -12,9 +12,10 @@ BENCH is working space, not a record. It is where several agents in one run put 
 
 ## Specification card
 
-| role | does | reads | writes | must | check |
-|---|---|---|---|---|---|
-| campaign system | merge tiered run work | core; worker heads | `.bench` outside repo | never pool tiers or enter catalogue | fleet tests |
+| Role | Does | Must |
+|---|---|---|
+| Campaign system | Merge tiered run work | Never pool tiers or enter catalogue |
+| Reads: core; worker heads | Writes: `.bench` outside repo | Check: fleet tests |
 
 ## 0. Scope
 

@@ -457,9 +457,12 @@ def _e6_card():
         "check": "E6",
     }
     return "\n".join([
-        "| " + " | ".join(V.E6_CARD_FIELDS) + " |",
-        "|" + "|".join("---" for _field in V.E6_CARD_FIELDS) + "|",
-        "| " + " | ".join(values[field] for field in V.E6_CARD_FIELDS) + " |",
+        "| " + " | ".join(field.title() for field in V.E6_CARD_TOP) + " |",
+        "|" + "|".join("---" for _field in V.E6_CARD_TOP) + "|",
+        "| " + " | ".join(values[field] for field in V.E6_CARD_TOP) + " |",
+        "| " + " | ".join(
+            field.title() + ": " + values[field] for field in V.E6_CARD_BOTTOM
+        ) + " |",
     ])
 
 
@@ -525,7 +528,7 @@ def test_E6_rejects_heading_and_card_schema_drift():
     assert finding.ok is False
     assert any("first two H2" in row for row in finding.rows), finding.rows
 
-    bad_card = _e6_card().replace("| role |", "| kind |", 1)
+    bad_card = _e6_card().replace("| Role |", "| Kind |", 1)
     repo = _e6_two_node_repo("e6_card", root_card=bad_card)
     finding = _e6_finding(repo)
     assert finding.ok is False
@@ -564,8 +567,8 @@ def test_E6_rejects_heading_and_card_schema_drift():
     repo = _e6_two_node_repo("e6_indented_card")
     path = os.path.join(repo, "docs", "read-repository.md")
     text = open(path, encoding="utf-8").read().replace(
-        "| role | does | reads | writes | must | check |",
-        "    | role | does | reads | writes | must | check |", 1)
+        "| Role | Does | Must |",
+        "    | Role | Does | Must |", 1)
     open(path, "w", encoding="utf-8").write(text)
     finding = _e6_finding(repo)
     assert finding.ok is False

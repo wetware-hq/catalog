@@ -18,9 +18,10 @@ A binder this procedure returns is a hypothesis, not a therapy, and carries no e
 
 ## Specification card
 
-| role | does | reads | writes | must | check |
-|---|---|---|---|---|---|
-| special skill | design and screen binder hypotheses | target; indication; pinned catalogue and methods | none | catalogue hit stops; assay-gated hypothesis only | trace result; wet-lab oracle |
+| Role | Does | Must |
+|---|---|---|
+| Special skill | Design and screen binder hypotheses | Catalogue hit stops; assay-gated hypothesis only |
+| Reads: target; indication; pinned catalogue and methods | Writes: none | Check: trace result; wet-lab oracle |
 
 ## 0. Objective
 

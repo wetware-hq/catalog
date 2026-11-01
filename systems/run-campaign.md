@@ -17,9 +17,10 @@ one hash, bounds, one halt.
 
 ## Specification card
 
-| role | does | reads | writes | must | check |
-|---|---|---|---|---|---|
-| campaign system | preflight and run `design-binder` | bounds; pinned catalogue; services | `.bench`, `.trace` outside repo | catalogue hit stops before spend | fleet tests; trace `result` |
+| Role | Does | Must |
+|---|---|---|
+| Campaign system | Preflight and run `design-binder` | Catalogue hit stops before spend |
+| Reads: bounds; pinned catalogue; services | Writes: `.bench`, `.trace` outside repo | Check: fleet tests; trace `result` |
 
 ## preflight
 

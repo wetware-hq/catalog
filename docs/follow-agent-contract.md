@@ -12,9 +12,10 @@
 
 ## Specification card
 
-| role | does | reads | writes | must | check |
-|---|---|---|---|---|---|
-| normative reference | define schema, evidence, merge, read, and write law | catalogue; registered specs | authorized paths under §9 | §8.16 requires paper review | `verifier/verify.py` |
+| Role | Does | Must |
+|---|---|---|
+| Normative reference | Define schema, evidence, merge, read, and write law | §8.16 requires paper review |
+| Reads: catalogue; registered specs | Writes: authorized paths under §9 | Check: `verifier/verify.py` |
 
 ## 0. Scope
 
@@ -59,7 +60,7 @@ The document graph is a directed read-before DAG rooted at `docs/read-repository
 
 Every non-sink lists all and only its outgoing edges, path-sorted. The graph has one sink, `systems/run-campaign.md`; that file lists one incoming edge as a navigation backlink. This backlink is the only duplicated edge declaration. Labels are repository-relative paths. The graph is root-reachable, acyclic, transitively reduced, and has at most `|V| + 1` edges — two above the rooted reachability minimum. Self-edges, broken or external targets, annotations, and duplicate local items are invalid. Links elsewhere are not graph edges.
 
-The specification card is one GFM table row under this exact six-column header: `role`, `does`, `reads`, `writes`, `must`, `check`. Each non-empty cell is at most 96 UTF-8 bytes. Use `none` explicitly. The card routes work; it never weakens the body. The Mermaid overview is derived, not a second registry. The initialization file is at most 2,048 UTF-8 bytes.
+Cards use three GFM columns: `Role`, `Does`, `Must`; row two is `Reads:`, `Writes:`, `Check:`. Values are non-empty and at most 96 UTF-8 bytes; write `none` explicitly. Cards route but never override. Mermaid is derived. Initialization is at most 2,048 bytes.
 
 E6 checks the H2 profile, card shape and cap, links, single sink/backlink, reachability, acyclicity, and transitive reduction. Representation sources are in `docs/pin-references.md`.
 

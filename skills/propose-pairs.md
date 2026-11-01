@@ -10,9 +10,10 @@
 
 ## Specification card
 
-| role | does | reads | writes | must | check |
-|---|---|---|---|---|---|
-| catalogue skill | prepare evidence candidates | structured authorities; catalogue | `proposals.json` | never classify study type | recall 1.0; zero false-admits |
+| Role | Does | Must |
+|---|---|---|
+| Catalogue skill | Prepare evidence candidates | Never classify study type |
+| Reads: structured authorities; catalogue | Writes: `proposals.json` | Check: recall 1.0; zero false-admits |
 
 ## 0. Objective
 

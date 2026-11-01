@@ -18,9 +18,10 @@ Repo: `wetware-hq/catalog` · Compiled 30 Oct 2026 (Australia/Sydney) · Every P
 
 ## Specification card
 
-| role | does | reads | writes | must | check |
-|---|---|---|---|---|---|
-| reference | pin method claims and read status | versioned external artifacts | none | resolved is not read | hash replay; marked second reads |
+| Role | Does | Must |
+|---|---|---|
+| Reference | Pin method claims and read status | Resolved is not read |
+| Reads: versioned external artifacts | Writes: none | Check: hash replay; marked second reads |
 
 ## Documentation graph basis
 
