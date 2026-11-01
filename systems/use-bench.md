@@ -17,10 +17,10 @@
 
 ## composition
 
-```yaml
-files: ["core.bench", "<worker>.bench"]
-merge: "set union on content hashes"
-graph: "Document graph above"
+```toml
+files = ["core.bench", "<worker>.bench"]
+merge = "set union on content hashes"
+graph = "Document graph above"
 ```
 
 ## indications
@@ -38,18 +38,21 @@ Workers of one `fleet.campaign` run, sharing partial measurements, predictions, 
 
 ### variables
 
-```yaml
-independent:
-  tier: "1 measurement | 2 prediction | 3 experiment"
-  payload: "key value fields"
-  parents: "^0 or earlier ids"
-dependent:
-  id: "prefix of SHA-256 of the canonical line"
-  head: "set of admitted ids"
-controlled:
-  run: "SHA-256 of core.bench bytes"
-  order: "keys sorted; numbers in shortest round-trip form"
-objective: "join-semilattice merge and tier-pure answers at a named head"
+```toml
+objective = "join-semilattice merge and tier-pure answers at a named head"
+
+[independent]
+tier = "1 measurement | 2 prediction | 3 experiment"
+payload = "key value fields"
+parents = "^0 or earlier ids"
+
+[dependent]
+id = "prefix of SHA-256 of the canonical line"
+head = "set of admitted ids"
+
+[controlled]
+run = "SHA-256 of core.bench bytes"
+order = "keys sorted; numbers in shortest round-trip form"
 ```
 
 ### processes
@@ -135,7 +138,7 @@ Canonical bytes, which `H` is taken over: the line with fields sorted by key, si
 
 Worked example:
 
-```
+```text
 %bench/1 core=9f2a1b7c4d
 1 a3f1c0 ^0 w:a1 s:12 obs:0.712 sd:0.041 unit:uM dev:inst-4 ts:1761790001
 2 b7c2e9 ^a3f1c0 w:a2 s:13 score:0.883 model:mx-7 pose:M(0.92388,0.0,0.0,0.38268,0.0,1.5,-0.25,0.0)
@@ -158,13 +161,25 @@ A tier-1 measurement rooted at the core; two tier-2 predictions derived from it 
 
 ### 5. Merge
 
-Let `N` be the set of all possible nodes. Merge is `A ⊔ B = A ∪ B` on `(P(N), ⊆)`.
+Let `N` be the set of all possible nodes. The agent-facing computation is:
 
-- **Associative** — `(A ∪ B) ∪ C = A ∪ (B ∪ C)`.
-- **Commutative** — `A ∪ B = B ∪ A`.
-- **Idempotent** — `A ∪ A = A`.
+```wolfram
+benchMerge[a_, b_] := Union[a, b]
+```
 
-So merge is a join on a complete join-semilattice with bottom `∅`, and the induced partial order is exactly `A ⊑ B ⟺ A ⊆ B`: "B has seen everything A has seen". **What converges** is each worker's head, monotonically, to the union of all appended nodes, in any merge order, with duplicates and reordering. **What does not converge** is anything computed over the set; two readers at different heads give different correct answers, which is why §1 requires the head on every answer.
+The human-readable laws, on the complete join-semilattice `(𝒫(N), ⊆)`, are:
+
+```tex
+\begin{aligned}
+A \sqcup B &= A \cup B, \\
+(A \cup B) \cup C &= A \cup (B \cup C), \\
+A \cup B &= B \cup A, \\
+A \cup A &= A, \\
+A \sqsubseteq B &\Longleftrightarrow A \subseteq B.
+\end{aligned}
+```
+
+The bottom is `∅`; the order says "B has seen everything A has seen". **What converges** is each worker's head, monotonically, to the union of all appended nodes, in any merge order, with duplicates and reordering. **What does not converge** is anything computed over the set; two readers at different heads give different correct answers, which is why §1 requires the head on every answer.
 
 Hash naming is what makes this work without identity metadata: "same node" is decidable from the bytes.
 
@@ -183,7 +198,7 @@ A run whose core changed is not a tainted run to be discarded by policy; it is a
 
 Per worker, local, derived, rebuildable, never shared: an inverted index over `key:value` terms, sorted arrays per numeric key, and the DAG adjacency. All three are **add-only**, which is the only reason concurrent search works — the node set only grows, so the index only gains postings, with no tombstones and no reader invalidation. Segments merge on a size ladder.
 
-```
+```text
 at <head>                                every query is evaluated at a head
 where tier=T and <key> <op> <value>      op ∈ { =, !=, <, <=, >, >=, ~ }
 ancestors(<id>) / descendants(<id>)
@@ -195,7 +210,13 @@ No joins, no subqueries, no cross-tier aggregate, no "latest". Appending costs o
 
 ### 8. Pose, and the one place geometric algebra earns its place
 
-A record may carry a rigid-body transform as `pose:M(...)`: a **motor** in 3D projective geometric algebra `Cl(3,0,1)`, eight coefficients, composing rotation and translation in one object, compared by `d(M,N) = ‖log(M̃N)‖` over the screw parameters — rotation angle about the screw axis, translation along it. It earns its place because workers produce transforms independently and the system must compare them, and this comparison is invariant under a change of either frame. The numbers in this section come from a run made outside this repository on 2026-10-30: a standard-library Python script, seed `20261030`, which is not in this tree because agents may not commit scripts here (`docs/follow-agent-contract.md` §0). Treat them as a dated snapshot, not a check this repository can re-run. Over 20,000 random pairs it reported `max |d(AM,AN) - d(M,N)| = 4.663e-15` and `max |d(MA,NA) - d(M,N)| = 4.177e-15`, while the obvious alternative — comparing rotation angle and translation vector separately — drifts by `2.301e+00` and `3.201e+00` under the same change of frame. An earlier draft of this file quoted `1e-13` and `5e-3` for these; that run did not reproduce `5e-3`, and the figures above are what it actually printed.
+A record may carry a rigid-body transform as `pose:M(...)`: a **motor** in 3D projective geometric algebra `Cl(3,0,1)`, eight coefficients, composing rotation and translation in one object. Its comparison over the screw parameters is:
+
+```tex
+d(M,N) = \left\lVert \log\!\left(\widetilde{M}N\right) \right\rVert
+```
+
+Those parameters are rotation angle about the screw axis and translation along it. The comparison earns its place because workers produce transforms independently and must compare them invariantly under a change of either frame. The numbers in this section come from a run made outside this repository on 2026-10-30: a standard-library Python script, seed `20261030`, which is not in this tree because agents may not commit scripts here (`docs/follow-agent-contract.md` §0). Treat them as a dated snapshot, not a check this repository can re-run. Over 20,000 random pairs it reported `max |d(AM,AN) - d(M,N)| = 4.663e-15` and `max |d(MA,NA) - d(M,N)| = 4.177e-15`, while the obvious alternative — comparing rotation angle and translation vector separately — drifts by `2.301e+00` and `3.201e+00` under the same change of frame. An earlier draft of this file quoted `1e-13` and `5e-3` for these; that run did not reproduce `5e-3`, and the figures above are what it actually printed.
 
 Two findings that must travel with it:
 

@@ -17,10 +17,10 @@
 
 ## composition
 
-```yaml
-files: ["core.trace", "<worker>.trace"]
-answer: ["result", "partial"]
-graph: "Document graph above"
+```toml
+files = ["core.trace", "<worker>.trace"]
+answer = ["result", "partial"]
+graph = "Document graph above"
 ```
 
 ## indications
@@ -37,19 +37,22 @@ One `fleet.campaign` run recording pin, call, refusal, proposal, emission, and h
 
 ### variables
 
-```yaml
-independent:
-  skill: "resolve-key | propose-pairs | design-binder"
-  bound_n: "positive integer, no leading zero"
-  bound_tok: "positive integer, no leading zero"
-dependent:
-  id: "SHA-256 of the preimage"
-  answer: "result | partial"
-controlled:
-  run: "SHA-256 of core.trace bytes"
-  oracle: "not-discharged"
-  disclaimer: "banner byte string, inside the emit preimage"
-objective: "a pure shape judgement with the oracle fixed"
+```toml
+objective = "a pure shape judgement with the oracle fixed"
+
+[independent]
+skill = "resolve-key | propose-pairs | design-binder"
+bound_n = "positive integer, no leading zero"
+bound_tok = "positive integer, no leading zero"
+
+[dependent]
+id = "SHA-256 of the preimage"
+answer = "result | partial"
+
+[controlled]
+run = "SHA-256 of core.trace bytes"
+oracle = "not-discharged"
+disclaimer = "banner byte string, inside the emit preimage"
 ```
 
 ### processes
@@ -83,7 +86,7 @@ A file is UTF-8. A file that is not valid UTF-8, or that contains a NUL or a car
 
 `core.trace` is these four lines, each ending in a newline. The bounds are positive integers with no leading zero. The skill is one of `resolve-key`, `propose-pairs`, `design-binder`. The spec is 40 lowercase hex digits.
 
-```
+```text
 %trace-core/1
 bound-n:"<bound-n>"
 bound-tok:"<bound-tok>"
@@ -239,7 +242,7 @@ Illustration. `spec` is forty `a`s and `rev` is forty `b`s. The proposal `aa:ACD
 
 `core.trace`:
 
-```
+```text
 %trace-core/1
 bound-n:"1"
 bound-tok:"8000"
@@ -251,7 +254,7 @@ spec:"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
 
 `a1.trace`:
 
-```
+```text
 %trace/1 core=d2066050893688b4fc69def4b3c03ffa9ee8b06ef14858786224a7adf2684853 spec=aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
 call 82d0bb98077f59cb3544536e2023d4cf99699408e57250de2ce20d3e0b20a294 ^0 run=d2066050893688b4fc69def4b3c03ffa9ee8b06ef14858786224a7adf2684853 skill=propose-pairs
 pin 2f3f7335675c72766882db3b0dea24b20818183f1934fd10eb131a10ba13fba4 ^82d0bb98077f59cb3544536e2023d4cf99699408e57250de2ce20d3e0b20a294 run=d2066050893688b4fc69def4b3c03ffa9ee8b06ef14858786224a7adf2684853 skill=propose-pairs path:"graph.json" rev:"bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"

@@ -17,11 +17,11 @@ This file pins external artefacts used as method or representation evidence. A p
 
 ## composition
 
-```yaml
-rows: 11
-pin: "versioned id + retrieval date + byte hash or reproducible text-layer command"
-read_status: ["resolved, not read", "second-read"]
-graph: "Document graph above"
+```toml
+rows = 11
+pin = "versioned id + retrieval date + byte hash or reproducible text-layer command"
+read_status = ["resolved, not read", "second-read"]
+graph = "Document graph above"
 ```
 
 ## indications
@@ -38,17 +38,20 @@ Use a row when a method, cost, or failure-mode claim needs a reproducible artefa
 
 ### variables
 
-```yaml
-independent:
-  artefact: "versioned id"
-  retrieved: "date"
-dependent:
-  hash: "byte sha256, text-layer sha256, or none"
-  claim: "sentence read off that artefact"
-controlled:
-  command: "exact extraction command and tool version, when bytes are regenerated"
-  url: "URL downloaded"
-objective: "a later reader recomputes the recorded hash"
+```toml
+objective = "a later reader recomputes the recorded hash"
+
+[independent]
+artefact = "versioned id"
+retrieved = "date"
+
+[dependent]
+hash = "byte sha256, text-layer sha256, or none"
+claim = "sentence read off that artefact"
+
+[controlled]
+command = "exact extraction command and tool version, when bytes are regenerated"
+url = "URL downloaded"
 ```
 
 ### processes
@@ -121,9 +124,9 @@ The table is the citation record.
 
 ### Documentation graph basis
 
-[CommonMark 0.31.2](https://spec.commonmark.org/0.31.2/) supplies headings, lists, and links; [GFM 0.29](https://github.github.com/gfm/#tables-extension-) supplies cards; [AgentKit v2](https://arxiv.org/pdf/2404.11483v2), byte sha256 `029ebd4f7d8cec7b611a97b640ae33f2eafd6b9294f712bf6e2dc10cd3b2f351`, supplies natural-language dependency DAGs; [AGENTS.md](https://agents.md/) supplies path-local disclosure; [Mermaid](https://mermaid.ai/open-source/syntax/flowchart.html) supplies the derived view. Retrieved 1 Nov 2026 (Australia/Sydney). These are representation sources, not clinical evidence.
+[CommonMark 0.31.2](https://spec.commonmark.org/0.31.2/) supplies headings, lists, and links; [GFM 0.29](https://github.github.com/gfm/#tables-extension-) supplies cards; [TOML 1.1.0](https://toml.io/en/v1.1.0) supplies configuration mappings; [AgentKit v2](https://arxiv.org/pdf/2404.11483v2), byte sha256 `029ebd4f7d8cec7b611a97b640ae33f2eafd6b9294f712bf6e2dc10cd3b2f351`, supplies natural-language dependency DAGs; [AGENTS.md](https://agents.md/) supplies path-local disclosure; [Mermaid](https://mermaid.ai/open-source/syntax/flowchart.html) supplies the derived view. Retrieved 1 Nov 2026 (Australia/Sydney). These are representation sources, not clinical evidence.
 
-Statecharts in this tree are Mermaid `stateDiagram-v2` (https://mermaid.ai/open-source/syntax/stateDiagram.html). Variable blocks are fenced YAML mappings. Both were retrieved 1 Nov 2026 (Australia/Sydney). No byte hash was taken for those syntax pages.
+Statecharts in this tree are Mermaid `stateDiagram-v2` (https://mermaid.ai/open-source/syntax/stateDiagram.html). Composition and variable blocks are fenced TOML 1.1.0 mappings. Both syntax pages were retrieved 1 Nov 2026 (Australia/Sydney). No byte hash was taken for them.
 
 ### Table
 
