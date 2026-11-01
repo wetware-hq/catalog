@@ -17,10 +17,10 @@
 
 ## composition
 
-```yaml
-steps: ["1 admit", "2 payload", "3 binder", "4 target", "5 duplicate"]
-output: proposals.json
-graph: "Document graph above"
+```toml
+steps = ["1 admit", "2 payload", "3 binder", "4 target", "5 duplicate"]
+output = "proposals.json"
+graph = "Document graph above"
 ```
 
 ## indications
@@ -38,18 +38,21 @@ Biological protein binder, protein target, canonical sequence, UniProt accession
 
 ### variables
 
-```yaml
-independent:
-  record: "structured authority row"
-  catalogue: "graph.json pinned to a commit SHA"
-dependent:
-  proposal: "binder, target, pmid"
-  refusal: "step 1-5"
-controlled:
-  serialiser: "contract §5"
-  merge: "contract §6, add-only §8.19"
-  drugbank: "refused; licence re-check dated 2026-10-29"
-objective: "recall 1.0 on committed rows and a counted false-admit rate"
+```toml
+objective = "recall 1.0 on committed rows and a counted false-admit rate"
+
+[independent]
+record = "structured authority row"
+catalogue = "graph.json pinned to a commit SHA"
+
+[dependent]
+proposal = "binder, target, pmid"
+refusal = "step 1-5"
+
+[controlled]
+serialiser = "contract §5"
+merge = "contract §6, add-only §8.19"
+drugbank = "refused; licence re-check dated 2026-10-29"
 ```
 
 ### processes

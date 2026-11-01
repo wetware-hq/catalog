@@ -17,11 +17,11 @@
 
 ## composition
 
-```yaml
-class: special
-input: ["uniprot accession", "indication"]
-output: "worklist or named refusal"
-graph: "Document graph above"
+```toml
+class = "special"
+input = ["uniprot accession", "indication"]
+output = "worklist or named refusal"
+graph = "Document graph above"
 ```
 
 ## indications
@@ -39,19 +39,22 @@ A native human protein target and a clinical or research indication, after the p
 
 ### variables
 
-```yaml
-independent:
-  target: "human uniprot:"
-  indication: "query only; not stored"
-dependent:
-  binder: "aa: or helm: hypothesis, or no emission"
-  verdict: "hit-same-indication | hit-other-indication | hit-unread | absent"
-controlled:
-  paralogue: "30 percent identity panel; 50 percent forces a counter-screen"
-  tissue_bar: "medium or high in myocardium, alveolar epithelium, haematopoietic progenitors"
-  selectivity: "two logs weaker on every panel member"
-  catalogue_pin: "commit SHA or tag"
-objective: "stop before spend when pair already cites the target; otherwise two named killing assays"
+```toml
+objective = "stop before spend when pair already cites the target; otherwise two named killing assays"
+
+[independent]
+target = "human uniprot:"
+indication = "query only; not stored"
+
+[dependent]
+binder = "aa: or helm: hypothesis, or no emission"
+verdict = "hit-same-indication | hit-other-indication | hit-unread | absent"
+
+[controlled]
+paralogue = "30 percent identity panel; 50 percent forces a counter-screen"
+tissue_bar = "medium or high in myocardium, alveolar epithelium, haematopoietic progenitors"
+selectivity = "two logs weaker on every panel member"
+catalogue_pin = "commit SHA or tag"
 ```
 
 ### processes
@@ -176,13 +179,23 @@ A weighted sum cannot do this job: a total can be high for the wrong reason, and
 
 The screen above has a published success rate, and the report carries it (§7). Source: Figure 3, panel E of the ipSAE preprint, read off the rendered panel at 600 dpi — row 9 of [`docs/pin-references.md`](../docs/pin-references.md), which is where the pin and the read status live. The x-axis groups are **`Recall = 0.2`**, **`Recall = 0.4`** and **`Max F1`**; the Figure 3 legend's "0.6" is an error in the source and the Results prose is the correct one. The rows below are in the panel's legend order, which is also the bar order in all three groups.
 
-| discriminator | legend AP | Recall = 0.2 | Recall = 0.4 | Max F1 |
-|---|---|---|---|---|
-| LIS × input_interface_sc | 0.58 | 54% | 50% | 44% |
-| ipSAE_min × interface_ΔG/ΔSASA | 0.56 | 61% | 53% | 36% |
-| ipSAE_min | 0.54 | 29% | 48% | 47% |
-| ipTM | 0.51 | 60% | 38% | 31% |
-| AF2 pAE interaction | 0.38 | 12% | 20% | 29% |
+```csv
+discriminator,legend_ap,recall_0_2_percent,recall_0_4_percent,max_f1_percent
+LIS × input_interface_sc,0.58,54,50,44
+ipSAE_min × interface_ΔG/ΔSASA,0.56,61,53,36
+ipSAE_min,0.54,29,48,47
+ipTM,0.51,60,38,31
+AF2 pAE interaction,0.38,12,20,29
+```
+
+After loading that CSV as `screen`, the ranking disagreement is this R assertion:
+
+```r
+stopifnot(!identical(
+  order(screen$legend_ap, decreasing = TRUE),
+  order(screen$recall_0_2_percent, decreasing = TRUE)
+))
+```
 
 Each cell is a **median experimental success rate across 15 targets**, and the error bars are the **inter-quartile range**, which is enormous: at recall 0.2 the widest whiskers in the panel run from roughly **9% to 90%**, and ipSAE_min's own run from roughly **9% to 66%** around its 29% median. Those bounds are estimated off the axis and are approximate; only the bar labels are printed values. **Read the spread for what it is.** It is a spread **across the 15 benchmark targets**, not across repeated orders against one target: it says how much the success rate depends on which protein you picked, and says nothing about the variation you would see ordering twice against the same protein. An order of N carries both — the across-target spread, and the sampling noise of N draws on top of it. A third caution compounds both: the source states its targets were not drawn at random, so the across-target spread is a **lower bound** on what an unseen target can do. A median drawn from a spread that wide is a weak summary of any single target, including yours.
 

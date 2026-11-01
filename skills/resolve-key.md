@@ -17,10 +17,10 @@
 
 ## composition
 
-```yaml
-stages: ["0 admit", "1 resolve", "2 enrich"]
-graph: "Document graph above"
-writes: none
+```toml
+stages = ["0 admit", "1 resolve", "2 enrich"]
+graph = "Document graph above"
+writes = "none"
 ```
 
 ## indications
@@ -38,18 +38,21 @@ Protein keys only: `aa:`, `helm:` whose blocks are all `PEPTIDE`, and `uniprot:`
 
 ### variables
 
-```yaml
-independent:
-  key: "aa: | helm: | uniprot:"
-  release: "named service release"
-dependent:
-  identity: "accession or inn_name, source, release, retrieved"
-  verdict: "unresolved | unavailable | refused"
-controlled:
-  polynomial: "CRC64 ISO 0xD800000000000000"
-  path: "one exact lookup; no alignment"
-  monomers: "one flat PROTEIN_MONOMERS set"
-objective: "one identity, or one typed failure"
+```toml
+objective = "one identity, or one typed failure"
+
+[independent]
+key = "aa: | helm: | uniprot:"
+release = "named service release"
+
+[dependent]
+identity = "accession or inn_name, source, release, retrieved"
+verdict = "unresolved | unavailable | refused"
+
+[controlled]
+polynomial = "CRC64 ISO 0xD800000000000000"
+path = "one exact lookup; no alignment"
+monomers = "one flat PROTEIN_MONOMERS set"
 ```
 
 ### processes
@@ -83,7 +86,7 @@ Grammar --> Refuse
 
 Notation: one per folder. Blocks below are formal algorithms, not sample programs.
 
-```
+```text
 skill   : input -> output | failure
 total   : every input returns; no undefined case
 pure    : output depends on input + named release only
@@ -92,7 +95,7 @@ no-write: output goes to the caller, never into the database
 
 ### Types
 
-```
+```text
 Key       = "aa:" Residues | "helm:" Helm | "uniprot:" Accession
 Identity  = { accession | inn_name , source , release , retrieved }
 Failure   = unresolved        -- record answered, says nothing. final. cacheable.
@@ -105,7 +108,7 @@ No tier is computed and none is stored. A key is an admissible protein or it is 
 
 ### Stage 0 - intrinsic
 
-```
+```text
 admit : Key -> { length, composition, shape } | refused
 total. no network. never fails. intrinsic: reads the bytes, needs no library and no date.
 
@@ -144,7 +147,7 @@ vectors:
 
 ### Stage 1 - resolve
 
-```
+```text
 resolve : Key -> Identity | unresolved | unavailable
 total. deterministic. no free-text search. single path, never fanned out.
 
@@ -185,7 +188,7 @@ shard unit: a BATCH of keys, never one key per worker.
 
 ### Stage 2 - enrich
 
-```
+```text
 enrich : Identity -> Findings        -- note the domain: Identity, NOT Key
 campaign. open. parallel. no coordinator. no shared mutable state.
 

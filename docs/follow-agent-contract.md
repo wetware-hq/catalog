@@ -19,11 +19,11 @@
 
 ## composition
 
-```yaml
-law: ["0", "0b", "0c", "0d", "1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "11"]
-graph: "Document graph above; relative paths; read before"
-registry_h2: ["## 10. Skills", "## 11. Systems"]
-embeds: [yaml, "mermaid stateDiagram-v2", "mermaid flowchart", "gfm table"]
+```toml
+law = ["0", "0b", "0c", "0d", "0e", "1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "11"]
+graph = "Document graph above; relative paths; read before"
+registry_h2 = ["## 10. Skills", "## 11. Systems"]
+embeds = ["toml", "mermaid", "GFM structural tables"]
 ```
 
 - §§0–9 below are inside this algorithm. §§10–11 stay H2 headings so the registries parse.
@@ -46,22 +46,25 @@ embeds: [yaml, "mermaid stateDiagram-v2", "mermaid flowchart", "gfm table"]
 
 ### variables
 
-```yaml
-independent:
-  binder: "aa: chains or helm: PEPTIDE payload"
-  target: "uniprot: accession, optional isoform"
-  citation: "pmid:<digits>"
-  dictionary: "pair | preclinical"
-dependent:
-  admitted: "boolean after the paper is read"
-  bytes: "canonical UTF-8 of version, pair, preclinical"
-controlled:
-  version: 2
-  segment_order: "non-decreasing UTF-8"
-  helm_scope: "every block PEPTIDE"
-  helm_monomer: "standard residue or bracketed symbol; [CCO] fails monomer"
-  oracle: "not discharged by automation"
-objective: "canonical rows whose paper reports utility for that pair"
+```toml
+objective = "canonical rows whose paper reports utility for that pair"
+
+[independent]
+binder = "aa: chains or helm: PEPTIDE payload"
+target = "uniprot: accession, optional isoform"
+citation = "pmid:<digits>"
+dictionary = "pair | preclinical"
+
+[dependent]
+admitted = "boolean after the paper is read"
+bytes = "canonical UTF-8 of version, pair, preclinical"
+
+[controlled]
+version = 2
+segment_order = "non-decreasing UTF-8"
+helm_scope = "every block PEPTIDE"
+helm_monomer = "standard residue or bracketed symbol; [CCO] fails monomer"
+oracle = "not discharged by automation"
 ```
 
 ### processes
@@ -136,7 +139,46 @@ Cards use three GFM columns: `Role`, `Does`, `Must`; row two is `Reads:`, `Write
 
 E6 checks the H2 profile, card shape and cap, links, single sink/backlink, reachability, acyclicity, and transitive reduction. Representation sources are in `docs/pin-references.md`.
 
-After the card, each live file has `composition`, `indications`, `contraindications`, and `algorithm`, then its procedure, then `citations`, `falsification`, and `licence`. This file keeps `## 10. Skills` and `## 11. Systems` as column-zero H2 headings so E2 and E4 can parse them; §§0–9 sit inside `algorithm`. Fenced `yaml` holds variables. Fenced `mermaid` `stateDiagram-v2` is the statechart. Fenced `mermaid` flowcharts are diagrams. GFM tables are tables. These headings are not graph edges and do not renumber §8.
+After the card, each live file has `composition`, `indications`, `contraindications`, and `algorithm`, then its procedure, then `citations`, `falsification`, and `licence`. This file keeps `## 10. Skills` and `## 11. Systems` as column-zero H2 headings so E2 and E4 can parse them; §§0–9 sit inside `algorithm`. Language selection is §0e. These headings are not graph edges and do not renumber §8.
+
+### 0e. Formal language profile
+
+The profile selects a language when that artefact exists; it does not require placeholder code. Extensions below name standalone artefacts. Inside Markdown, use the canonical lowercase fence tag for that language. Do not relabel exact `.trace` or `.bench` protocol bytes as Rust or JSON: their literal surface language is `text`. Terminal command wrappers are `bash`; the tool they invoke remains Python.
+
+```toml
+[preferred]
+tools = ".py"
+browser_templates = ".js"
+interfaces = ".ts"
+tracers = ".rs"
+falsifiers = ".bend"
+theories = ".lean"
+machines = ".tla"
+
+[images]
+agents = "Dockerfile"
+fleets = "Kubernetes"
+swarms = "Kubernetes"
+
+[embedded]
+math = ".wl"
+diagrams = ".mermaid"
+flows = ".json"
+analyses = ".R"
+tables = ".csv"
+config = ".toml"
+
+[prettification]
+equations = ".tex"
+blueprints_2d = ".svg"
+blueprints_3d = ".stl"
+code_demos = "Marimo (.py)"
+animations = "Three.js"
+```
+
+The canonical fence tags are `python`, `javascript`, `typescript`, `rust`, `bend`, `lean`, `tla`, `dockerfile`, `yaml` for Kubernetes manifests only, `wolfram`, `mermaid`, `json`, `r`, `csv`, `toml`, `tex`, `svg`, and `stl`. GFM cards, registries, and comparison tables are Markdown structure rather than embedded table artefacts; a table embedded as machine-consumed data uses `csv`. A `text` fence is reserved for exact protocol bytes or a named domain notation, and `bash` for terminal invocations.
+
+Every repository Markdown fence is column-zero triple backticks with one explicit canonical tag; raw HTML is not a language escape. In live Markdown, every `composition` and `variables` mapping uses the line-oriented, JSON-value subset of TOML 1.1.0: lowercase bare keys, single-component tables, no escapes, and no duplicate table or key. Every Mermaid body starts with `stateDiagram-v2` or `flowchart`; CSV uses minimal quoting and LF. E7 checks canonical fence form across all `*.md`, applies the section rules to E6's exact live-document set, parses that TOML subset (and cross-checks it with `tomllib` when available), parses JSON and CSV, checks the Mermaid kind, and rejects YAML unless it identifies a Kubernetes manifest. It does not compile or fully parse the other preferred languages and, like every extension predicate, does not discharge §8.16.
 
 ### 1. Purpose
 
@@ -263,7 +305,7 @@ Implement from this section alone. Tags: **pure** = decidable from one file's by
 3. **File boundary.** Autonomous intake writes `proposals.json` only, and never writes `graph.json` on any branch. Admission is the act of reading the paper, and that act is what moves bytes from `proposals.json` into `graph.json`, choosing the dictionary per §4. **Trust is carried by the file, not by a branch:** a branch name is mutable and has no merge law, so a fence of the form "unverified rows live on branch X" dissolves at the first merge and relaunders those rows as verified, while `proposals.json` merges into `proposals.json` on every branch. Condition 16 is therefore discharged at the file move, by a reader, and never by the run that proposed the row.
 4. **`proposals.json`.** Root: a non-array object with exactly `version` (the number `2`) and `proposal` (an array). Each element has exactly `binder`, `target`, `pmid`, each satisfying §3. A proposal carries **no dictionary assignment**: `pair` versus `preclinical` is part of the oracle and is chosen when the paper is read. Serialise per §5; add-only per §8.19. It is not catalogue-shaped and must not be read as one.
 5. Intake procedure: [`skills/propose-pairs.md`](../skills/propose-pairs.md). It enumerates structured authorities; it does not crawl prose, and its own acceptance test is rediscovery of the rows already committed.
-6. This repository ships no updater and no cron. It does ship a verifier (`verifier/`) and a workflow (`.github/workflows/validate.yml`) that runs it, and neither writes `graph.json` or `proposals.json`: a passing run proves only the pure conditions (§8) and the repository extension predicates E1, E2, E4, E5, and E6, which are not §8 predicates and do not renumber them (E3, pmid resolution, is non-blocking and gates nothing). It never proves §8.16. Compliance is your behaviour against this contract, not a green check.
+6. This repository ships no updater and no cron. It does ship a verifier (`verifier/`) and a workflow (`.github/workflows/validate.yml`) that runs it, and neither writes `graph.json` or `proposals.json`: a passing run proves only the pure conditions (§8) and the repository extension predicates E1, E2, E4, E5, E6, and E7, which are not §8 predicates and do not renumber them (E3, pmid resolution, is non-blocking and gates nothing). It never proves §8.16. Compliance is your behaviour against this contract, not a green check.
 
 A proposed row failing any rule above is **refused**, naming the condition that failed.
 
@@ -335,7 +377,7 @@ A procedure of this contract is an `agent.skill`. A run of this contract is one 
 
 ## citations
 
-Ordinary-word pins and the three PDF byte hashes are in §11. Representation pins are in `docs/pin-references.md`: CommonMark 0.31.2, GFM 0.29, AgentKit v2 with its recorded sha256, AGENTS.md, and Mermaid flowcharts. On 1 Nov 2026 (Australia/Sydney) the HTML of arXiv:2602.12430v4 was opened at `https://arxiv.org/html/2602.12430v4`. That HTML is not a pin: no PDF byte hash was taken. It describes a skill directory whose front matter is preloaded and whose body loads on trigger. `agent.skill` in §11 remains the procedure spec of this contract.
+Ordinary-word pins and the three PDF byte hashes are in §11. Representation pins are in `docs/pin-references.md`: CommonMark 0.31.2, GFM 0.29, TOML 1.1.0, AgentKit v2 with its recorded sha256, AGENTS.md, and Mermaid. On 1 Nov 2026 (Australia/Sydney) the HTML of arXiv:2602.12430v4 was opened at `https://arxiv.org/html/2602.12430v4`. That HTML is not a pin: no PDF byte hash was taken. It describes a skill directory whose front matter is preloaded and whose body loads on trigger. `agent.skill` in §11 remains the procedure spec of this contract.
 
 ## falsification
 

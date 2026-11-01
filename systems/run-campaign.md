@@ -17,10 +17,10 @@
 
 ## composition
 
-```yaml
-commands: ["preflight", "run", "verify"]
-stores: [".bench", ".trace"]
-graph: "Document graph above; this file is the sink"
+```toml
+commands = ["preflight", "run", "verify"]
+stores = [".bench", ".trace"]
+graph = "Document graph above; this file is the sink"
 ```
 
 ## indications
@@ -38,21 +38,24 @@ One run with explicit bounds, a human UniProt target, a pinned catalogue SHA, an
 
 ### variables
 
-```yaml
-independent:
-  budget_usd: "caller argument"
-  target: "uniprot:"
-  models: "caller argument"
-  candidates: "caller argument"
-  length_window: "min-aa and max-aa on the Boltz request only"
-dependent:
-  launch: "true only when services and projection are inside the cap"
-  context: "hit-unread | absent"
-controlled:
-  pin: "checkout HEAD sha, never a branch name"
-  oracle: "not-discharged"
-  organism: "Homo sapiens"
-objective: "halt before paid design when pair already cites the target"
+```toml
+objective = "halt before paid design when pair already cites the target"
+
+[independent]
+budget_usd = "caller argument"
+target = "uniprot:"
+models = "caller argument"
+candidates = "caller argument"
+length_window = "min-aa and max-aa on the Boltz request only"
+
+[dependent]
+launch = "true only when services and projection are inside the cap"
+context = "hit-unread | absent"
+
+[controlled]
+pin = "checkout HEAD sha, never a branch name"
+oracle = "not-discharged"
+organism = "Homo sapiens"
 ```
 
 ### processes

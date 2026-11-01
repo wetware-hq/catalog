@@ -13,14 +13,14 @@
 | Role | Does | Must |
 |---|---|---|
 | Initialization | Route each task to its smallest sufficient spec | Contract wins; absence is not negative |
-| Reads: `graph.json`; linked docs on demand | Writes: none | Check: E1, E6 |
+| Reads: `graph.json`; linked docs on demand | Writes: none | Check: E1, E6, E7 |
 
 ## composition
 
-```yaml
-root: docs/read-repository.md
-sink: systems/run-campaign.md
-stop: first sufficient row
+```toml
+root = "this file"
+sink = "systems/run-campaign.md"
+stop = "first sufficient row"
 ```
 
 ## indications
