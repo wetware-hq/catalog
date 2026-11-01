@@ -2,15 +2,7 @@
 
 # `design-binder` — de novo binder design
 
-`type: resource.procedure` · `class: special` · `spec: agent.skill` · subordinate to `docs/follow-agent-contract.md`, which governs on any conflict.
-
-**This is not a catalogue procedure.** It needs no directory of its own: it writes nothing (§1), so there is no output boundary left to erode — the same contract `resolve-key` already has.
-
-The other two procedures here are **conservative**: `resolve-key` and `propose-pairs` only relocate facts that already exist somewhere — a key's names, a paper's pair. Neither ever manufactures a claim, and the worst either can do is produce a wrong row. This one **originates**: it creates a sequence no source has ever reported and asserts it might bind. Its worst failure is not a wrong row; it is someone treating a hypothesis as a therapy. That asymmetry is the whole reason for the `special` class.
-
-It writes no file in this repository and its output can never become a row (§1). Its oracle is a wet-lab measurement, not a read paper. Read §1 before running it.
-
-A binder this procedure returns is a hypothesis, not a therapy, and carries no evidence of benefit, safety or activity in any system. **Nothing this procedure returns has been shown to help anyone.**
+`type: resource.procedure` · `class: special` · `spec: agent.skill`. Design binder hypotheses for one human protein and return an assay-gated worklist that writes no file. A returned sequence carries no evidence of benefit, safety, or activity.
 
 ## Document graph
 
@@ -23,13 +15,82 @@ A binder this procedure returns is a hypothesis, not a therapy, and carries no e
 | Special skill | Design and screen binder hypotheses | Catalogue hit stops; assay-gated hypothesis only |
 | Reads: target; indication; pinned catalogue and methods | Writes: none | Check: trace result; wet-lab oracle |
 
-## 0. Objective
+## composition
+
+```yaml
+class: special
+input: ["uniprot accession", "indication"]
+output: "worklist or named refusal"
+graph: "Document graph above"
+```
+
+## indications
+
+A native human protein target and a clinical or research indication, after the pinned catalogue has been read for that target.
+
+## contraindications
+
+- Writes nothing. Output cannot enter `graph.json` or `proposals.json`.
+- No design when a `pair` row exists and its paper is unread (`hit-unread`) or matches this indication.
+- Orthologues, non-proteins, and a missing indication are refusals.
+- No computable score is a clinical-utility score. Benchmarks here score structure and affinity prediction.
+
+## algorithm
+
+### variables
+
+```yaml
+independent:
+  target: "human uniprot:"
+  indication: "query only; not stored"
+dependent:
+  binder: "aa: or helm: hypothesis, or no emission"
+  verdict: "hit-same-indication | hit-other-indication | hit-unread | absent"
+controlled:
+  paralogue: "30 percent identity panel; 50 percent forces a counter-screen"
+  tissue_bar: "medium or high in myocardium, alveolar epithelium, haematopoietic progenitors"
+  selectivity: "two logs weaker on every panel member"
+  catalogue_pin: "commit SHA or tag"
+objective: "stop before spend when pair already cites the target; otherwise two named killing assays"
+```
+
+### processes
+
+Control is the catalogue lookup before any generator call. Design fans out once over distinct scaffolds; methods are chosen from a pinned benchmark, cheapest-first. Transport keeps the disclaimer on the same block as every sequence. Stopping: a pre-registered bar, an iteration bound, and a token bound, or the run is a hypothesis pump. Search reads fleet and design literature as dated measurements. Filters are stage-one screens and they exclude; they do not penalise. Recovery is a wet-lab Kd plus a paralogue and tissue counter-screen, run by somebody named in the report.
+
+```mermaid
+stateDiagram-v2
+[*] --> Lookup
+Lookup --> Stop: hit-unread or hit-same-indication
+Lookup --> Design: absent, or hit-other after the paper is read
+Design --> Screen
+Screen --> Drop: stage-one fail
+Screen --> Emit: two assays named
+Screen --> Unranked: prediction alone separates the top two
+Stop --> [*]
+Emit --> [*]
+Unranked --> [*]
+Drop --> [*]
+```
+
+```mermaid
+flowchart LR
+Pin[graph.json at SHA] --> Index[reverse index]
+Index --> Hit{pair row}
+Hit -->|yes| Halt[stop before Boltz]
+Hit -->|no| Workers
+Workers --> Stage1[hard screens]
+Stage1 --> Stage2[named scorer]
+Stage2 --> Worklist
+```
+
+### 0. Objective
 
 Given a **native human protein target** and a **clinical or research indication**, design candidate synthetic binders, screen them, and return the survivors **ordered by a named scorer** — or, where only prediction separates them, as **unranked candidates**.
 
 Input: `(uniprot:<accession>, indication)`. Output: the surviving binder keys — `aa:` or `helm:`, canonical per `docs/follow-agent-contract.md` §3 — each labelled **by the criterion that selected it**, with the design rationale that produced it. A specification admitting no candidate returns none and names the constraint that emptied the space (§7).
 
-## 1. Write scope: none
+### 1. Write scope: none
 
 **This procedure writes nothing in this repository.** Not `graph.json`, not `proposals.json`, on any branch.
 
@@ -37,7 +98,7 @@ The reason is structural, not a restriction to be relaxed later. `graph.json` ad
 
 Returning the candidate to the requester is the whole output. A run that wrote a row would be asserting evidence it does not have.
 
-## 2. Specification
+### 2. Specification
 
 The query carries three things. Only the first is a key.
 
@@ -52,7 +113,7 @@ The query carries three things. Only the first is a key.
 
 These are conventions from developability and selectivity practice, **not cutoffs validated against patient outcome**. They exclude what is predictably unsafe or undevelopable. None of them predicts clinical benefit.
 
-## 3. Target admission
+### 3. Target admission
 
 Refuse before designing, naming the condition that failed:
 
@@ -61,7 +122,7 @@ Refuse before designing, naming the condition that failed:
 - Target is not a protein → refuse (`docs/follow-agent-contract.md` §3, §8.8). Nucleic acids and small molecules are out of scope by design.
 - Indication absent → refuse. It is not stored anywhere, and it is not decoration: it sets the required modality, route, residence time and off-target tolerance, which select the scaffold in §5.
 
-## 4. Look it up before designing it
+### 4. Look it up before designing it
 
 **Design does not fire until the catalogue has been asked and has come back empty for this target in this indication.** A campaign invented to find a molecule for a target that already has one sitting in the file is pure waste.
 
@@ -73,7 +134,7 @@ Build the reverse index for the target per `docs/follow-agent-contract.md` §7 �
 - **No hit:** design fires, but a target with no evidenced binder is **not** open ground. **Absence is not a negative** (`docs/follow-agent-contract.md` §7): it means no qualifying paper has been entered. At present coverage it says nothing about whether a binder exists.
 - `uniprot:` cannot express an epitope. Two binders against distinct sites on one protein collapse to one target key, so the catalogue cannot tell you which site is taken. Resolve the epitope from structure, not from this file.
 
-## 5. Design
+### 5. Design
 
 The campaign fans its workers out over the design space in parallel, each carrying the same specification — target, epitope, indication-derived constraints — and reporting candidates in a common schema. Breadth is the point: independent scaffolds and independent methods, so the ordering in §6 compares genuinely different hypotheses rather than variations of one.
 
@@ -81,7 +142,7 @@ Scaffold follows the indication, never the other way round. Minibinders and desi
 
 Every candidate is carried as its **sequence**. A design has no name to drift, which is why the catalogue's sequence-keying costs this procedure nothing.
 
-### Method selection — `EVOLVE`
+#### Method selection — `EVOLVE`
 
 The design methods are not fixed in this file, because they move faster than it does. Before fanning out, the campaign reads the current state of the art and chooses from it, under three constraints.
 
@@ -95,7 +156,7 @@ The design methods are not fixed in this file, because they move faster than it 
 
 **The auto-loop needs a stopping condition or it is a hypothesis pump.** Looping `EVOLVE` is admissible only with all of: a bar stated before the loop starts, in the axes above; a bounded iteration count and token budget; and a requirement that each iteration either crosses the bar or names what it learned that changed the next one. A loop that generates candidates at zero marginal cost and never terminates is the cheapest possible way to look productive, and every candidate it emits still owes §7 two killing assays and somebody who could run them. That obligation, not the loop, is what bounds this procedure.
 
-## 6. Screen, then order
+### 6. Screen, then order
 
 Two stages, and they are different operations. The ordering is **computed per run and never stored** (`docs/follow-agent-contract.md` §7), and it is **not** the catalogue's ordering: `docs/follow-agent-contract.md` §7 ranks evidenced binders by citation count within one dictionary, and a designed candidate and a `pair` row are no more comparable than a `preclinical` row and a `pair` row.
 
@@ -111,7 +172,7 @@ A weighted sum cannot do this job: a total can be high for the wrong reason, and
 
 **There is no computable score for clinical utility.** Affinity, developability and epitope content are computable, and not one of them predicts patient benefit. That is the oracle, and no campaign closes it. Where the top two are separated only by prediction, the honest output is **unranked candidates**, not a confident first place; a run returning a #1 with no stated scorer is manufacturing the oracle step.
 
-### Screen performance, as the source reports it
+#### Screen performance, as the source reports it
 
 The screen above has a published success rate, and the report carries it (§7). Source: Figure 3, panel E of the ipSAE preprint, read off the rendered panel at 600 dpi — row 9 of [`docs/pin-references.md`](../docs/pin-references.md), which is where the pin and the read status live. The x-axis groups are **`Recall = 0.2`**, **`Recall = 0.4`** and **`Max F1`**; the Figure 3 legend's "0.6" is an error in the source and the Results prose is the correct one. The rows below are in the panel's legend order, which is also the bar order in all three groups.
 
@@ -129,7 +190,7 @@ Each cell is a **median experimental success rate across 15 targets**, and the e
 
 **Average precision and median success rate disagree, and the disagreement is the finding.** ipSAE_min is the best *single* feature on AP — 0.54 against ipTM's 0.51 and the AF2 pAE interaction baseline's 0.38, which is the comparison the 1.4-fold claim is made against, and the gap to ipTM is small — yet it returns **29% at recall 0.2**, below ipTM's 60% at the same stringency, and below every feature in the panel there except the AF2 baseline. The two measures answer different questions: AP scores the **whole ranking**, median success rate scores only **what you actually order at a stated stringency**. A run that quotes AP and then orders at low recall has quoted the wrong number. Report both, name the operating point, and carry the inter-quartile range beside the median.
 
-## 7. Output
+### 7. Output
 
 Report, and write nothing. A single binder is emitted only when §6 earns it, and then it is labelled **by the criterion that chose it**, never as *best*.
 
@@ -153,6 +214,18 @@ Two refusals, two verdicts, as `docs/follow-agent-contract.md` §7 requires them
 
 Nobody in this room can run a binding assay. So the output is a **worklist for an experiment**, not a database, and a candidate without both named assays, their thresholds, and somebody who could run them is not emitted at all — a hypothesis accumulated at zero cost is the cheapest way to look productive. That obligation is what makes the output falsifiable, and it is why nothing persists here: a worklist belongs where the experiment is run.
 
-## 8. Acceptance
+### 8. Acceptance
 
 This procedure asserts nothing about patients and is therefore not acceptance-tested by rediscovery, as `propose-pairs` is. It passes when, for a target whose evidenced binders are already in `graph.json`, a run that is **blind to those rows** returns a candidate engaging the same epitope by an independent route. That is a test of the design process, not of the catalogue, and failing it bars no row — it tells you the ordering in §6 is not yet measuring what it claims to.
+
+## citations
+
+Catalogue law: `docs/follow-agent-contract.md` §7 and §10. Screen medians are Figure 3 panel E of pin-table row 9 in `docs/pin-references.md`, read off the rendered panel. Average precision and median success rate are both reported because they rank the same features differently.
+
+## falsification
+
+The across-target claim is tested by two different targets at the same small N, not by repeating one target. A report that quotes one confident percentage has already failed. The naive benchmark treats average precision as the fraction of an order that will bind.
+
+## licence
+
+MIT
