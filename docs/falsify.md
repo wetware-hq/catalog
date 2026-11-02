@@ -89,6 +89,27 @@ flowchart LR
     V --> F[Falsified]
 ```
 
+```mermaid
+stateDiagram-v2
+    [*] --> Premise
+    Premise --> Mutant
+    Mutant --> Corroborated: named predicate fails
+    Mutant --> Falsified: mutant survives
+    Corroborated --> [*]
+    Falsified --> [*]
+```
+
+```csv
+operator,law
+controls,oracle stays not-discharged
+design,each worker names one forbidden observation
+transport,hand the mutant to verifier/verify.py
+stopping,exit 1 when a survivor remains
+search,attack only the premise that worker names
+filters,a different predicate is not corroboration
+recovery,record the survivor and do not edit the verifier
+```
+
 The verifier asks whether the checked assertions hold. The falsifier inverts the question. Each premise forbids an observation. A worker builds that observation and hands it to `verifier/verify.py`. If the named predicate fails, the prediction is corroborated. If the mutant is accepted, or if a different predicate is the only failure, the prediction is falsified and the survivor stands. Corroboration is not a probability of clinical truth.
 
 Workers run concurrently and share no verdict. The run reports the set of verdicts. There is no majority.
@@ -110,7 +131,7 @@ Exit `0` means every named prediction was corroborated. Exit `1` means at least 
 
 | Pin | Claim used | Boundary |
 |---|---|---|
-| Popper, falsifiability, no edition pin | a claim is tested by an observation incompatible with it; survival corroborates and does not prove | no page, no PDF hash, and no quotation |
+| [Falsifiability](https://en.wikipedia.org/wiki/Falsifiability) | lead: the language must be able to describe a contradicting observation; a verification has no value in itself. Survival here corroborates and does not prove | lead read 3 Nov 2026 (Australia/Sydney); living page; no Popper edition; not clinical proof |
 | [NIST conformance guidance](https://www.nist.gov/itl/ai/applied-ai-research-group/what-thing-called-conformance) | a failed falsification proves nonconformance; a pass proves only checked assertions | same URL as the contract; this file did not re-download it |
 | [`follow-agent-contract.md`](follow-agent-contract.md) | predicates 1–19, E1–E7, and `agent.swarm` as this file's spec | governs on any conflict with this file |
 

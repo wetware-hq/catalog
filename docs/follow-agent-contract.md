@@ -33,7 +33,7 @@ Define the catalogue schema, evidence boundary, canonical bytes, merge law, read
 law = ["0", "0b", "0c", "0d", "0e", "1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "11"]
 graph = "Graph section; reciprocal relative paths; read before"
 registry = ["10 Skills", "11 Systems"]
-embeds = ["toml", "mermaid", "json", "GFM structural tables"]
+embeds = ["toml", "json", "csv", "stateDiagram-v2", "flowchart", "GFM tables"]
 ```
 
 ## Indications
@@ -88,6 +88,29 @@ flowchart LR
     C --> A[Add-only successor]
 ```
 
+```mermaid
+stateDiagram-v2
+    [*] --> Pure
+    Pure --> Refuse: predicate fails
+    Pure --> Oracle: paper required
+    Pure --> Canonical: checks hold
+    Oracle --> Canonical: human reads
+    Oracle --> Refuse: study type unknown
+    Canonical --> [*]
+    Refuse --> [*]
+```
+
+```csv
+operator,law
+controls,version 2 and canonical bytes stay fixed
+design,separate pair from preclinical by study type
+transport,proposals.json then a reader into graph.json
+stopping,halt when a predicate fails or the oracle is required
+search,resolve keys and rank inside one dictionary
+filters,refuse bad grammar scope and duplicate triples
+recovery,retry unavailable and never cache it as unresolved
+```
+
 ### 0. Scope
 
 - **Read:** `graph.json`, `docs/*.md`, `skills/*.md`, `systems/*.md` (§11), `verifier/`, `.github/workflows/`, `LICENSE`.
@@ -121,6 +144,10 @@ The header has exactly the banner block, one column-zero H1, an optional one-lin
 
 `Specification` contains one fenced JSON object of at most 2,048 UTF-8 bytes with these unique ordered fields: `id`, `type`, `role`, `reads`, `writes`, `must`, `check`. `id` is the repository-relative path; scalar values and array items are non-empty and at most 128 UTF-8 bytes, while `writes` may be an empty array. Outside fenced content, `Algorithm` contains `### Variables` followed by `### Process`, each exactly once. Every section is non-empty; the exact `Licence` body is one blank line followed by `MIT`.
 
+`Variables` names three TOML tables. `independent` is a factor the procedure sets. `dependent` is an outcome it records. `controlled` is a condition held fixed so it is not confounded with the factors. Each table has at least one assignment. `Process` carries one CSV law table with header `operator,law` and exactly these rows, in order: `controls`, `design`, `transport`, `stopping`, `search`, `filters`, `recovery`. Those operators are the fixed limits, the configuration chosen before the outcome, the movement of artifacts, the halt rule, the place searched, the hard exclusions, and the failure return. The same `Algorithm` section embeds one `stateDiagram-v2` statechart and one `flowchart` diagram. Those two Mermaid fences are the inline figures. JSON, TOML, and that CSV are the serialization. GFM tables compare rows for a reader. A derived view that only repeats the card or the neighbor list does not earn its tokens. None of these views overrides prose.
+
+`Falsification` names an observation that would contradict the claim. A pass, one stochastic sample, or a green check of a different predicate is not such an observation.
+
 The document graph is a directed read-before DAG rooted at `docs/read-repository.md`. `Graph` contains only a column-zero unordered list of relative neighbor links:
 
 - `← [relative.md](relative.md)` declares `neighbor → this file`.
@@ -128,7 +155,7 @@ The document graph is a directed read-before DAG rooted at `docs/read-repository
 
 Every edge is declared at both endpoints, so each file lists all and only its incoming and outgoing neighbors; labels equal canonical paths relative to that file and are path-sorted. The graph has one root and one sink, `systems/run-campaign.md`; it is root-reachable, acyclic, transitively reduced, and has at most `|V| + 1` edges. Self-edges, broken or external targets, annotations, duplicate local items, and one-sided declarations are invalid. Links elsewhere are not graph edges.
 
-The initialization file is at most 4,096 UTF-8 bytes. JSON cards and graph lists are canonical routing data; Mermaid, tables, figures, statecharts, and other fenced languages are derived explanatory views and never override prose law.
+The initialization file is at most 4,096 UTF-8 bytes. JSON cards and graph lists are canonical routing data. The CSV laws, statechart, and diagram are derived views and never override prose law.
 
 E6 checks the functional paragraph, H2 profile, JSON card, variable/process headings, MIT name, relative reciprocal links, single root and sink, reachability, acyclicity, edge budget, and transitive reduction. Representation sources are in `docs/pin-references.md`.
 
@@ -159,6 +186,13 @@ analyses = ".R"
 tables = ".csv"
 config = ".toml"
 
+[inline]
+serialization = ["json", "toml", "csv"]
+statecharts = "stateDiagram-v2"
+diagrams = "flowchart"
+figures = "mermaid"
+tables = ["gfm", "csv"]
+
 [prettification]
 equations = ".tex"
 blueprints_2d = ".svg"
@@ -169,7 +203,7 @@ animations = "Three.js"
 
 Canonical fence tags are `python`, `javascript`, `typescript`, `rust`, `bend`, `lean`, `tla`, `dockerfile`, `yaml` for Kubernetes manifests only, `wolfram`, `mermaid`, `json`, `r`, `csv`, `toml`, `tex`, `svg`, `stl`, `text`, and `bash`. GFM cards, registries, and comparison tables are Markdown structure; machine-consumed embedded tables use `csv`.
 
-Every repository Markdown fence is a column-zero triple backtick fence with one explicit canonical tag; raw HTML is not a language escape. In live Markdown, `Composition` and `Variables` each contain exactly one mapping in the line-oriented, JSON-value subset of TOML 1.1.0: lowercase bare keys, single-component tables, no escapes, and no duplicate table or key. Mermaid starts with `stateDiagram-v2` or `flowchart`; CSV uses minimal quoting and LF. E7 enforces those rules across all Markdown, parses TOML, JSON, and CSV, checks Mermaid kind, and admits YAML only for Kubernetes manifests. It does not compile the remaining preferred languages or discharge §8.16.
+Every repository Markdown fence is a column-zero triple backtick fence with one explicit canonical tag; raw HTML is not a language escape. In live Markdown, `Composition` and `Variables` each contain exactly one mapping in the line-oriented, JSON-value subset of TOML 1.1.0: lowercase bare keys, single-component tables, no escapes, and no duplicate table or key. Mermaid starts with `stateDiagram-v2` or `flowchart`; CSV uses minimal quoting and LF. Where live Markdown contains `### Process`, E7 requires the three variable tables, that seven-row CSV inside `Process`, and both Mermaid kinds inside `Algorithm`. E7 enforces fence tags across all Markdown, parses TOML, JSON, and CSV, checks Mermaid kind, and admits YAML only for Kubernetes manifests. It does not compile the remaining preferred languages or discharge §8.16.
 
 ### 1. Purpose
 
@@ -375,9 +409,12 @@ A procedure of this contract is an `agent.skill`. A run of this contract is one 
 | [MCP `2026-07-28` at `5f5440b`](https://github.com/modelcontextprotocol/modelcontextprotocol/tree/5f5440bb26a62e2cf3440b92da5a667efa03b267) | MCP separates host, client, server, tools, resources, and prompts | MCP does not define this internal campaign topology |
 | [A2A `v1.0.1` at `3303592`](https://github.com/a2aproject/A2A/tree/3303592588e388e62e0f69f701af531d2f4e3991) | Agent Cards describe services; Tasks carry state; Artifacts carry outputs | A2A `AgentSkill` metadata is not an Agent Skills package |
 | [MAST, arXiv:2503.13657v3](https://arxiv.org/abs/2503.13657v3) | observed multi-agent failures include system design, inter-agent, and verification failures | its taxonomy is not exhaustive or biomedical validation |
-| [NIST conformance guidance](https://www.nist.gov/itl/ai/applied-ai-research-group/what-thing-called-conformance) | a failed falsification proves nonconformance; passing tests prove only checked assertions | supports, but does not widen, predicates 1–19 and E1–E6 |
+| [NIST conformance guidance](https://www.nist.gov/itl/ai/applied-ai-research-group/what-thing-called-conformance) | a failed falsification proves nonconformance; passing tests prove only checked assertions | supports, but does not widen, predicates 1–19 and E1–E7 |
+| [Swarm Skills, arXiv:2605.10052v2 HTML](https://arxiv.org/abs/2605.10052v2) | a portable skill can describe a workflow DAG, including with Mermaid, apart from a runtime | HTML of §5.1.2 read 3 Nov 2026 (Australia/Sydney); no PDF hash; does not define this `agent.swarm` |
+| [Sequential stopping, arXiv:2509.21734v3 HTML](https://arxiv.org/abs/2509.21734v3) | stop when terminal reward meets expected continuation value; a fixed threshold is myopic | abstract read from HTML the same day; no PDF hash; not a clinical protocol and not this halt rule |
+| [Falsifiability](https://en.wikipedia.org/wiki/Falsifiability) | a claim is falsifiable when its language can describe a contradicting observation | lead read 3 Nov 2026 (Australia/Sydney); living page; no Popper edition; verification is not corroboration |
 
-Retrieved 1 Nov 2026 (Australia/Sydney). Exact artifact pins, hashes, extraction commands, and read status live in [`pin-references.md`](pin-references.md); external terminology never overrides the local definitions above.
+Rows that do not name 3 Nov 2026 were retrieved 1 Nov 2026 (Australia/Sydney). Exact artifact pins otherwise live in [`pin-references.md`](pin-references.md). External terminology never overrides the local definitions above.
 
 ## Falsification
 

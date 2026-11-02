@@ -36,21 +36,21 @@ stop = "first sufficient route"
 
 | Task | Minimum read |
 |---|---|
-| read or rank catalogue rows | [`follow-agent-contract.md`](follow-agent-contract.md) |
+| read or rank rows | [`contract`](follow-agent-contract.md) |
 | resolve a key | contract → [`resolve-key`](../skills/resolve-key.md) |
-| propose an evidenced pair | contract → [`resolve-key`](../skills/resolve-key.md) → [`propose-pairs`](../skills/propose-pairs.md) |
-| run de novo design | contract → [`falsify`](falsify.md) → [`pin-references`](pin-references.md) → [`design-binder`](../skills/design-binder.md) → [`record-traces`](../systems/record-traces.md); [`use-bench`](../systems/use-bench.md) → [`run-campaign`](../systems/run-campaign.md) |
-| verify catalogue | contract → `python3 verifier/verify.py` |
-| falsify a claim | contract → [`falsify`](falsify.md) |
-| verify traces | contract + [`record-traces`](../systems/record-traces.md) → `python3 verifier/verify.py --trace` |
+| propose a pair | contract → [`resolve-key`](../skills/resolve-key.md) → [`propose-pairs`](../skills/propose-pairs.md) |
+| design | contract → [`falsify`](falsify.md) → [`pins`](pin-references.md) → [`design`](../skills/design-binder.md) → [`traces`](../systems/record-traces.md); [`bench`](../systems/use-bench.md) → [`run`](../systems/run-campaign.md) |
+| verify | contract → `python3 verifier/verify.py` |
+| falsify | contract → [`falsify`](falsify.md) |
+| traces | contract + [`traces`](../systems/record-traces.md) → `python3 verifier/verify.py --trace` |
 
-Rows may stop at their endpoint; design lists the sink closure.
+Stop at the row's endpoint. Design continues to the sink.
 
 ## Contraindications
 
-- **Scope:** `graph.json` is evidence metadata—not a formulary, prescription, ranking, or recommendation.
-- **Separation:** `pair` and `preclinical` never pool; absence is not evidence of no binder.
-- **Oracle:** automation never discharges §8.16; an unread `pair` hit stops design before paid compute.
+- `graph.json` is evidence metadata, not a formulary, prescription, or ranking.
+- `pair` and `preclinical` never pool. Absence is not evidence of no binder.
+- Automation never discharges §8.16. An unread `pair` hit stops design.
 
 ## Algorithm
 
@@ -72,6 +72,17 @@ contract = "docs/follow-agent-contract.md governs every route"
 
 ### Process
 
+```csv
+operator,law
+controls,one pinned commit
+design,smallest task row
+transport,next neighbor only
+stopping,first sufficient node
+search,task table match
+filters,contract before any procedure
+recovery,a refusal returns to the contract
+```
+
 ```mermaid
 stateDiagram-v2
     [*] --> Contract
@@ -91,29 +102,32 @@ stateDiagram-v2
     Run --> [*]
 ```
 
-- Pin the repository revision.
-- Read the contract.
-- Follow only the graph branch selected by the task table.
-- Stop at a refusal, oracle boundary, or the branch sink.
+```mermaid
+flowchart LR
+    Rev[Pin] --> Contract
+    Contract --> Next
+    Next --> Stop
+```
 
 ## Citations
 
 | Pin | Supports |
 |---|---|
-| [CommonMark 0.31.2](https://spec.commonmark.org/0.31.2/) | Markdown parsing primitives |
-| [AgentKit, arXiv:2404.11483v2](https://arxiv.org/abs/2404.11483v2) | dependency-DAG execution |
-| [AGENTS.md commit `d001185`](https://github.com/agentsmd/agents.md/tree/d001185d792eb6402a58e4cbef1c228b309ec25d) | path-local progressive disclosure; no required heading schema |
+| [CommonMark 0.31.2](https://spec.commonmark.org/0.31.2/) | headings, lists, and links |
+| [AgentKit, arXiv:2404.11483v2](https://arxiv.org/abs/2404.11483v2) | dependency DAGs |
+| [AGENTS.md `d001185`](https://github.com/agentsmd/agents.md/tree/d001185d792eb6402a58e4cbef1c228b309ec25d) | path-local disclosure |
 
-Retrieved 1 Nov 2026 (Australia/Sydney); these sources justify representation, not catalogue evidence.
+Retrieved 1 Nov 2026 (Australia/Sydney). Representation only, not catalogue evidence.
 
 ## Falsification
 
 | Challenge | Failure signal |
 |---|---|
-| Delete or reverse one graph edge | E6 rejects reachability or reciprocity |
-| Route design without reading the contract | the catalogue gate and oracle boundary are absent |
-| Read a moving branch twice | returned bytes can differ under one unstated revision |
-| Treat a missing row as a negative | the consumer asserts information not present in the file |
+| Delete or reverse one graph edge | E6 rejects the route |
+| Skip the contract | the oracle boundary is absent |
+| Read a branch twice | bytes can differ |
+| Treat a missing row as a negative | the file does not say that |
+| Treat one green run as confirmation | a pass is not a contradicting observation |
 
 ## Licence
 
