@@ -530,14 +530,16 @@ TRACE_SKILLS = ("resolve-key", "propose-pairs", "design-binder")
 TRACE_ACTS = {
     "resolve-key": frozenset({"call", "refuse", "unresolved", "unavailable", "halt"}),
     "propose-pairs": frozenset({"call", "pin", "refuse", "unresolved", "unavailable", "propose", "halt"}),
-    "design-binder": frozenset({"call", "pin", "context", "refuse", "unresolved", "unavailable", "emit", "halt"}),
+    "design-binder": frozenset({
+        "call", "pin", "context", "control", "refuse", "unresolved", "unavailable", "emit", "halt",
+    }),
 }
 TRACE_GATES = {
     "resolve-key": frozenset({"grammar", "scope", "ascii"}),
     "propose-pairs": frozenset({"out-of-scope", "illegal-payload", "duplicate-triple", "duplicate-molecule"}),
     "design-binder": frozenset({
         "grammar", "species", "not-protein", "indication-absent",
-        "selectivity", "immunogenicity", "developability", "no-assay",
+        "positive-control", "selectivity", "immunogenicity", "developability", "no-assay",
     }),
 }
 TRACE_PRE_PIN = frozenset({"grammar", "species", "not-protein", "indication-absent"})
@@ -550,6 +552,7 @@ TRACE_STEPS = {
 TRACE_FIELDS = {
     "call": (),
     "pin": ("path", "rev"),
+    "control": ("target", "verdict"),
     "refuse": ("gate", "subject"),
     "unresolved": ("key", "release", "retrieved", "source", "step"),
     "unavailable": ("key", "release", "retrieved", "source", "step"),
@@ -675,6 +678,12 @@ def _trace_value_code(skill, act, fields, bound_n, bound_tok):
             return "value:path"
         if not re.fullmatch(r"[0-9a-f]{40}", fields.get("rev", "")):
             return "value:rev"
+        return None
+    if act == "control":
+        if not _trace_target_ok(fields.get("target", "")):
+            return "value:target"
+        if fields.get("verdict") != "pass":
+            return "value:verdict"
         return None
     if act == "refuse":
         if fields.get("gate") not in TRACE_GATES[skill]:
@@ -977,17 +986,31 @@ def check_trace(core_path, worker_paths):
             contexts = by_act.get("context", [])
             if len(contexts) != 1 or contexts[0]["parent"] != "^" + pins[0]["id"]:
                 return _trace_fail("R10", ["context"])
+            context_verdict = contexts[0]["fields"]["verdict"]
+            controls = by_act.get("control", [])
+            if len(controls) > 1:
+                return _trace_fail("R10", ["control count"])
+            if controls and context_verdict not in ("absent", "hit-other-indication"):
+                return _trace_fail("R10", ["control on hit"])
             if halt["parent"] != "^" + pins[0]["id"]:
                 return _trace_fail("R10", ["halt"])
-            for node in by_act.get("emit", []):
+            emits = by_act.get("emit", [])
+            for node in emits:
                 if node["parent"] != "^" + pins[0]["id"]:
                     return _trace_fail("R10", ["emit parent"])
                 if node["fields"].get("kind") != "hypothesis" or node["fields"].get("disclaimer") != BANNER:
                     return _trace_fail("R10", ["disclaimer"])
-            for node in by_act.get("refuse", []):
+            refuses = by_act.get("refuse", [])
+            for node in refuses:
                 if node["fields"]["gate"] not in TRACE_PRE_PIN and node["parent"] != "^" + pins[0]["id"]:
                     return _trace_fail("R10", ["refuse parent"])
-            if contexts[0]["fields"]["verdict"] in ("hit-same-indication", "hit-unread") and by_act.get("emit"):
+            control_failed = any(
+                node["fields"]["gate"] == "positive-control" for node in refuses)
+            if control_failed and (controls or emits):
+                return _trace_fail("R10", ["emit on failed control"])
+            if emits and len(controls) != 1:
+                return _trace_fail("R10", ["control absent"])
+            if context_verdict in ("hit-same-indication", "hit-unread") and (controls or emits):
                 return _trace_fail("R10", ["emit on hit"])
         else:
             return _trace_fail("R10", ["pins"])

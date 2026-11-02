@@ -4,7 +4,7 @@
 
 `type: agent.system` · `spec: fleet.campaign` · subordinate to `docs/follow-agent-contract.md`, which governs on any conflict.
 
-Preflight and execute one bounded `fleet.campaign`, materialize BENCH and TRACES outside the repository, and return the trace to the verifier. A catalogue hit or unavailable required service stops the run before unnecessary compute.
+Specify one bounded design campaign in Markdown, from catalogue gate through positive-control calibration, epitope-conditioned generation, reporting, and trace verification. Agents execute this file directly; no repository-local fleet program supplies hidden defaults or request bodies.
 
 ## Specification
 
@@ -12,11 +12,11 @@ Preflight and execute one bounded `fleet.campaign`, materialize BENCH and TRACES
 {
   "id": "systems/run-campaign.md",
   "type": "agent.system",
-  "role": "preflight and execute one bounded design campaign",
-  "reads": ["target", "indication", "explicit bounds", "pinned graph.json", "required services"],
+  "role": "execute one calibrated epitope-conditioned design campaign",
+  "reads": ["caller manifest", "pinned graph.json", "target structures", "current provider schema"],
   "writes": [".bench and .trace files outside the repository"],
-  "must": ["stop on catalogue hit", "fail closed on required services", "verify every trace"],
-  "check": ["fleet tests", "trace result", "E4", "E5", "E6", "E7"]
+  "must": ["calibrate before novel design", "condition on a mapped epitope", "halt when the binding control fails"],
+  "check": ["positive-control verdict", "trace result", "E4", "E5", "E6", "E7"]
 }
 ```
 
@@ -28,7 +28,8 @@ Preflight and execute one bounded `fleet.campaign`, materialize BENCH and TRACES
 ## Composition
 
 ```toml
-commands = ["preflight", "run", "verify"]
+authority = "this Markdown file; no repository-local fleet executable"
+phases = ["preflight", "catalogue gate", "target preparation", "positive control", "design", "screen", "verify"]
 stores = [".bench", ".trace"]
 graph = "Graph section; this file is the sink"
 ```
@@ -36,53 +37,58 @@ graph = "Graph section; this file is the sink"
 ## Indications
 
 - Execute `design-binder` for an admitted human target and explicit indication.
-- Prove before launch that required services and the caller's spend/token bounds are available.
-- Exercise the catalogue-stop behavior and trace/bench formats under hermetic tests.
+- Compare a new design configuration only after the same configuration passes a blinded positive control with a known target structure and interface.
+- Materialize predictions and acts in disposable BENCH and TRACES stores outside this repository.
 
 ## Contraindications
 
-- Do not launch with a missing bound, moving catalogue branch, unread `pair` hit, or unavailable required generator.
-- The advisory panel never substitutes for the hosted design engine.
-- Workers in this harness do not read one another's BENCH lines; do not call this centralized bounded run a swarm.
-- A verified trace proves format, not service execution, paper inclusion, molecular binding, safety, or benefit.
+- Do not launch novel-target generation with a missing bound, moving catalogue read, unread `pair` hit, unavailable required service, or failed positive control.
+- Do not represent an available structured epitope as a template-free full-length target. A whole-receptor `no_template` request with no epitope or hotspot restriction is a configuration failure, not a broad search.
+- Do not substitute sequence validity, length compliance, structure generation, `structure_confidence`, `iptm`, or interface PAE for the pre-registered binding-control criterion.
+- Language-model workers may inspect evidence, choose methods, and audit outputs; text they invent is not a designed sequence. Candidate sequences must come from the named design engine.
+- A verified trace proves format, not service execution, molecular binding, safety, paper inclusion, or benefit.
 
 ## Algorithm
 
 ### Variables
 
 ```toml
-objective = "halt before paid design when pair already cites the target"
+objective = "recover a known interface before spending on an unknown one"
 
 [independent]
-budget_usd = "caller argument"
-target = "uniprot:"
-models = "caller argument"
-candidates = "caller argument"
-length_window = "min-aa and max-aa on the Boltz request only"
+target = "human uniprot:"
+indication = "explicit caller input"
+target_basis = "immutable structure artifact when available, otherwise a documented sequence construct"
+epitope = "non-empty mapped target-residue set"
+positive_control = "known co-structure hidden from the generator as a binder"
+bounds = "spend, tokens, calls, candidates, length, wall time, and iterations"
 
 [dependent]
-launch = "true only when services and projection are inside the cap"
-context = "hit-unread | absent"
+launch = "true only after preflight, catalogue gate, and positive-control pass"
+control_verdict = "pass | positive-control-failed | unavailable"
+candidates = "engine-produced hypotheses that cross the registered binding gate"
 
 [controlled]
-pin = "checkout HEAD SHA, never a branch name"
+catalogue_pin = "40-hex commit SHA; resolve a tag before the run"
+provider_request = "priced bytes equal submitted bytes"
+primary_control_metric = "binding criterion fixed before generation"
 oracle = "not-discharged"
-organism = "Homo sapiens"
 ```
 
 ### Process
 
 ```mermaid
 stateDiagram-v2
-    [*] --> Preflight
-    Preflight --> Refuse: missing bound, unavailable service, or over budget
-    Preflight --> Admit
-    Admit --> Refuse: grammar, species, or indication
-    Admit --> Catalogue
-    Catalogue --> Halt: unread pair hit
-    Catalogue --> Generate: absent
-    Generate --> Halt: generator unavailable
-    Generate --> Screen
+    [*] --> Manifest
+    Manifest --> Refuse: missing bound, target basis, epitope, or control bar
+    Manifest --> Catalogue
+    Catalogue --> Halt: unread or same-indication pair hit
+    Catalogue --> PrepareTarget: design is permitted
+    PrepareTarget --> Refuse: construct or residue map is invalid
+    PrepareTarget --> Calibrate
+    Calibrate --> Halt: unavailable or positive-control-failed
+    Calibrate --> Design: binding control passes
+    Design --> Screen
     Screen --> Materialize
     Materialize --> VerifyTrace
     VerifyTrace --> [*]
@@ -90,90 +96,149 @@ stateDiagram-v2
     Refuse --> VerifyTrace
 ```
 
-### Preflight
+#### 0. Markdown is the runtime authority
+
+The caller supplies a run manifest; the executing agent reads this file at a pinned commit and follows it. There is no repository-local fleet executable, generated configuration module, default model panel, default length range, or vendor request body. A runtime may use any current client or tool that can satisfy the semantics below, but it may not weaken them because a provider schema differs.
+
+The manifest fixes before any paid call:
+
+| class | required value |
+|---|---|
+| identity | target key, indication, pinned specification commit, and catalogue revision |
+| target | selected construct and canonical sequence map; structure artifact, digest, chain, crop, and structure-residue map when available; epitope residues and any non-binding surface |
+| control | co-structure, hidden reference binder, interface-contact rule, primary binding metric and pass bar |
+| generation | provider, engine and version, modality, candidate count, sequence-length range, random seeds where exposed |
+| bounds | spend, tokens, calls, wall time, polling time, iterations, and worker count |
+| output | external run directory, BENCH heads, TRACE workers, and assay owners required by `design-binder` |
+
+A missing item is a refusal. Defaults exposed by a provider are copied into the manifest before pricing; an omitted field is not an invisible choice.
+
+#### 1. Preflight and catalogue gate
+
+Pin `graph.json` to the specification commit or another explicit 40-hex commit SHA. Resolve a tag to that SHA before creating the run core; never put a tag or branch name in the trace. Admit the target and indication under `skills/design-binder.md`, build the reverse index, and stop on an unread or same-indication `pair` hit before any design call. A different-indication branch opens only after the paper is read. Catalogue absence remains `absent`, never a negative.
+
+Resolve the current provider schema, authentication, quota, and model version. Build the complete epitope-conditioned control request, then estimate the exact request that would be submitted. Redact credentials, but retain the request, provider response identifiers, schema retrieval date, and cost estimate in the run report. If estimate and submission differ in any design-bearing field, stop and re-price.
+
+#### 2. Prepare the target construct and epitope
+
+The catalogue target remains the whole `uniprot:` key; the design target is a documented construct of that protein. When a structure is available, map every selected structure residue back to the canonical sequence, record missing residues and index conventions, and reject ambiguous mappings. Crop to the smallest independently folded construct that contains the intended epitope and required structural context. Without a suitable structure, record the sequence interval and canonical-residue map that define the construct. Do not send signal peptide, transmembrane, cytosolic, or unrelated extracellular sequence merely because it occurs under the same accession.
+
+The epitope is non-empty and structural:
+
+1. derive its target residues from a pinned co-structure, competition data, or a separately justified hotspot analysis;
+2. record the derivation, contact cutoff or other rule, chain, author residue ids, insertion codes, and provider indices;
+3. prove every epitope index lies in the selected crop and no index also appears in the non-binding set;
+4. inspect the materialized request and fail if the epitope field disappeared during client serialization.
+
+Template-free target mode is admissible only when no suitable structure exists and the provider can still encode the mapped epitope. If the provider cannot express the required epitope, record `unavailable`; never fall back to unconstrained whole-target design.
+
+#### 3. Calibrate with a blinded positive control
+
+Every engine, modality, target-preparation rule, and scoring configuration must first run against a positive control chosen before the novel target. The generator receives the control target construct and epitope but not the reference binder sequence, binder chains, or catalogue answer. Use the same candidate count, length window, modality, filters, scoring path, and compute bounds proposed for the novel run. This tests independent recovery of an interface, not sequence rediscovery.
+
+The regression control that prompted this revision is human IL-4Rα (`uniprot:P24394`) with the dupilumab Fab co-structure PDB `6WGL`. Use receptor chain C from the structure, not the reported 825-residue full-length receptor sequence. Derive the epitope from contacts between receptor chain C and Fab chains A/B, convert those receptor residues through an explicit structure-to-provider index map, and omit A/B from the generator input. The structure proves where to condition; it is not a binder template.
+
+For the Boltz binder schema retrieved 2 Nov 2026 (Australia/Sydney), the semantic mapping is:
+
+| requirement | documented request concept |
+|---|---|
+| binder-design mode | top-level `type: "binder"` |
+| structured target | `from_template` on an immutable structure template |
+| domain-sized construct | selected chain plus `crop_residues` |
+| desired interface | non-empty `epitope_residues` |
+| discouraged surface | `non_binding_residues` where justified |
+| de novo binder | a binder specification that does not include the reference Fab chains |
+| library size | `num_proteins` inside the provider range, copied into the manifest before pricing |
+
+Target annotations index the original template chain. They do not index positions inside `crop_residues`. A crop-relative epitope is a different request and fails the materialized-request audit. These names are not a permanent API pin: reconcile them at execution and preserve the semantics. While PDB `6WGL` is available, a legacy `{target: {type: "no_template"}}` body over the 825-residue receptor does not satisfy this section, whether or not a sequence-index epitope is attached to that full-length chain. Template-free mode remains admissible only for a target with no suitable structure, and only when the mapped epitope is present on both the priced bytes and the submitted bytes.
+
+The control passes only if at least one engine-generated candidate:
+
+- crosses the pre-registered primary binding-confidence bar;
+- satisfies the pre-registered geometric contact rule on the mapped epitope;
+- stays inside all sequence, modality, and developability constraints; and
+- is not selected by a supporting fold metric in place of either condition above.
+
+A missing binding metric is not zero and is not a pass; it is `unavailable`. A completed control with no candidate across the bar is `positive-control-failed`, a specification refusal parented to the catalogue pin. Halt before the novel target and report the configuration as uncalibrated.
+
+#### 4. Interpret the failed IL-4Rα run correctly
+
+The reported 30-design run is a fixed regression case. All sequences being 88–108 residues inside a requested 45–110 window, avoiding alphabet echoes and 18-mers, and producing structures establishes only that transport, length control, and generation worked.
+
+Its binding result is negative: reported `binding_confidence` had maximum `0.011` and was `0.000` for 20 of 30 designs. The best-folded candidate is this 88-residue helical bundle:
+
+`MLEEMEEQFKKFAEALAKSKAPSLGADAAHELAQLGRVLSQDPAFRGLGLGLLNLAHATFDRYAPENLEVARALGLMRRYAELLLAEK`
+
+Reported scores for that chain were `structure_confidence=0.429`, `iptm=0.754`, and interface PAE `5.14`. Under the registered primary criterion it is a folded non-binder, so it is not emitted and it is not a seed for the next request. Three other candidates cluster with it on fold quality (`iptm` 0.70–0.73, interface PAE 5.3–5.9) and do not change the verdict. The remaining low-confidence extended beta predictions, with interface PAE 11–23, are noise. The current binder metric names include `binding_confidence`, `structure_confidence`, `iptm`, and `min_interaction_pae`. Store the field name the provider actually returned. Do not rename a missing field onto one of these reported numbers, and do not fill an absent `binding_confidence` with zero.
+
+This run must therefore materialize `positive-control-failed`, emit no binder, and halt before any novel-target spend. The first configuration change to test is the one isolated by the request audit: replace the full-length template-free target with the 6WGL chain-C construct and explicit epitope conditioning. Do not call the run successful because its sequence and structure plumbing passed.
+
+#### 5. Generate, screen, and report
+
+Only a passed control opens the novel-target design call. Fan out over genuinely distinct design methods or scaffold families while preserving the same target construct, residue map, epitope, non-binding surface, and registered gates. A language-model panel may recommend or criticize those choices, but its literal sequences are excluded unread.
+
+Record every returned candidate, not only the apparent winner. Validate the caller's length and alphabet constraints, then preserve the provider's binding and structural metrics as tier-2 predictions in BENCH. Apply `design-binder` stage-one exclusions. The primary binding metric decides whether the control and candidate binding claims survive; supporting metrics diagnose fold and interface geometry but do not overrule it. When prediction alone separates surviving candidates, report them unranked.
+
+The report carries:
+
+- the exact redacted control and novel-target requests, response ids, provider/model versions, prices, and timestamps;
+- structure artifact digests, chain/crop choices, both residue-numbering systems, and the mapped epitope;
+- every sequence with every returned metric and no silent zero-filling;
+- separate operational, fold, interface, and binding verdicts;
+- the positive-control result before the novel-target result;
+- every refusal and unavailable source;
+- the two killing assays and owners required by `design-binder`; and
+- BENCH heads, TRACE files, and the final trace judgement.
+
+Every sequence that leaves the run carries the repository disclaimer in its own block. No candidate is emitted without both killing assays, regardless of prediction.
+
+#### 6. Materialize and verify
+
+Write `core.bench`, `core.trace`, and one worker head per participating worker outside the repository under `systems/use-bench.md` and `systems/record-traces.md`. A failed control records a `refuse` act with gate `positive-control`, then one `halt`; an unavailable provider records `unavailable` at `generator`. Verify every completed trace with:
 
 ```bash
-python3 fleet/fleet.py preflight \
-  --budget-usd 2.00 \
-  --target uniprot:P01111 \
-  --models vendor/model \
-  --candidates 3 \
-  --min-aa 45 --max-aa 110 \
-  --prompt-tokens 700 --completion-tokens 1400
+python3 verifier/verify.py --trace /path/to/core.trace /path/to/worker.trace
 ```
 
-Every flag above is an argument. None of them has a default: a missing bound is a refusal, not a standing policy. The model id is the caller's. Preflight is read-only and submits no compute. It pins `graph.json` at a commit SHA — the checkout's HEAD, never a branch name — checks UniProt and NCBI, authenticates Boltz and Modal, reads the OpenRouter key budget, prices the models named on the command, and returns `launch=false` when any required service is unavailable or the projection crosses the cap. Boltz is required. OpenRouter is an advisory panel and never substitutes for the hosted Boltz design engine. NCBI is probed with a pmid taken from the pinned catalogue. Vendor bases and the Modal app name come from the environment; the harness embeds none.
-
-### Run
+Run repository conformance checks with:
 
 ```bash
-python3 fleet/fleet.py run \
-  --target uniprot:P01111 \
-  --indication "research" \
-  --out /tmp/catalog-fleet \
-  --models vendor/model \
-  --candidates 3 \
-  --bound-tok 60000 \
-  --max-tokens 2600 \
-  --timeout 180 \
-  --min-aa 45 --max-aa 110 \
-  --live
-python3 fleet/fleet.py verify /tmp/catalog-fleet
-```
-
-`--min-aa` and `--max-aa` are sent only on the Boltz design request. They are not a grammar gate: `docs/follow-agent-contract.md` §3 bounds the alphabet, not the length. The harness admits the target when UniProt names the organism *Homo sapiens* and pins `graph.json` to the checkout SHA. It builds the target reverse index. If `pair` has any binder for that target, the context verdict is `hit-unread` and the run halts. The paper was not read, so the harness does not record `hit-same-indication` or `hit-other-indication`, and it does not call Boltz or the advisory panel. The context line carries the §7 rank winner and that binder's first `pmid`. The report lists every `pair` row in that order, and any `preclinical` rows under `preclinical_rows`. If `pair` has no binder for the target, the context verdict is `absent`. Only then does the harness authenticate and estimate the Boltz request and fan out the advisory panel. A failed Boltz authentication records `unavailable` with `step:"generator"` and halts before that panel. Candidate sequences are hypotheses; nothing writes `graph.json` or `proposals.json`.
-
-A `grammar` refusal parents the call. For `design-binder`, grammar, species, not-protein, and indication-absent parent the call even when the candidate was produced after the pin (`systems/record-traces.md`).
-
-A service failure records the source and the status. It does not record a response body.
-
-`core.trace` and one `<worker>.trace` per worker implement TRACES. `core.bench` and one
-`<worker>.bench` per worker implement BENCH; even an empty worker head is represented by a
-header-only file. The core bench file is `%bench-core/1`, because its hash is the bench-store id and so
-cannot appear inside itself (`systems/use-bench.md`). The campaign id is the hash of `core.trace`. The bench
-core records that hash as `trace`. Every trace is decided at the end of the run.
-`result` proves only trace shape, not that an event occurred, not paper inclusion, and not patient benefit.
-
-### Tests
-
-```bash
-python3 fleet/tests/test_fleet.py
 python3 verifier/tests/test_verify.py
 python3 verifier/verify.py graph.json --repo .
 ```
 
-The harness suite is hermetic. It covers content-addressed BENCH lines, tier refusal, binder admission,
-the named developability motifs, JSON parsing, pre-pin refusal, Boltz fail-closed behaviour, budget
-preflight, full worker-file materialization, an unread `pair` hit that halts before Boltz and before
-the advisory panel, and an end-to-end `result` trace with live calls faked.
+There is intentionally no fleet-runtime unit suite: the runtime is this Markdown contract, and provider execution is evidenced by its materialized requests, responses, control result, and trace rather than by mocks of a removed hardcoded client.
 
 ## Citations
 
 | Pin | Claim used | Boundary |
 |---|---|---|
-| [Multi-Agent Coordination, arXiv:2502.14743v2](https://arxiv.org/abs/2502.14743v2) | a multi-agent system can contain multiple independent interactive decision-makers | does not define this campaign |
-| [Signalling and Social Learning in Swarms of Robots, arXiv:2411.11616v2](https://arxiv.org/abs/2411.11616v2) | the adopted swarm definition uses decentralized local coordination | this harness is centrally bounded and is not a swarm |
-| [RobotFleet, arXiv:2510.10379v1](https://arxiv.org/abs/2510.10379v1) | one fleet architecture uses a centralized fleet manager | does not standardize `agent.fleet` |
-| [MAST, arXiv:2503.13657v3](https://arxiv.org/abs/2503.13657v3) | multi-agent traces expose system-design, coordination, and verification failures | benchmark domains are not binder design |
-| [`pin-references.md`](../docs/pin-references.md) | hashes, retrieval dates, and read status for these claims | local terms still govern |
+| [Boltz protein-design guide](https://api.boltz.com/docs/api/guides/protein-design/) retrieved 2 Nov 2026 (Australia/Sydney) | binder mode separates target and binder; structured targets expose crop, epitope, and non-binding residues; those target annotations index the original template chain | mutable vendor documentation; reconcile and date the schema at every run |
+| [PDB 6WGL](https://doi.org/10.2210/pdb6wgl/pdb) | dupilumab Fab chains A/B are co-structured with human IL-4Rα chain C | a structure does not establish that this pipeline can design another binder |
+| [Lieu et al., PLOS ONE 15:e0232311](https://doi.org/10.1371/journal.pone.0232311) | primary citation for the Crystal Kappa Fab-complex structures including 6WGL | crystallization method, not a de novo-design benchmark |
+| [Overath et al., bioRxiv v2](https://doi.org/10.1101/2025.08.14.670059) | interface-focused metrics and operating-point performance vary strongly by target | unrefereed; no universal control threshold |
+| [`pin-references.md` row 9](../docs/pin-references.md) | exact extraction, metric reads, and uncertainty limits | no clinical outcome and no substitute for this run's control |
 
-The three arXiv versions and recorded PDF digests were re-checked 1 Nov 2026 (Australia/Sydney). MCP and A2A describe external tool/context and agent-to-agent protocols respectively; this harness claims conformance with neither.
+The 30-design IL-4Rα metrics in §4 are the runtime feedback supplied 2 Nov 2026 (Australia/Sydney). They are a regression observation, not an independently reproduced benchmark, and the original result bundle must accompany any later quantitative comparison.
 
 ## Falsification
 
 | Challenge | Expected break |
 |---|---|
-| omit any CLI bound | preflight refuses |
-| project spend above `--budget-usd` | `launch=false`, no compute |
-| inject an unread `pair` target | no Boltz or advisory-panel call |
-| fail Boltz authentication | `unavailable` at `generator`, panel not called |
-| return a non-human UniProt organism | pre-pin species refusal |
-| append an untiered BENCH line | receiver refuses it |
-| remove one worker file | full materialization test fails |
-| alter a trace line after hashing | trace decision is `partial` |
-| fake all live calls but preserve bytes | trace may be `result`, demonstrating that shape is not occurrence |
+| submit full-length IL-4Rα as `no_template` with no epitope | preflight refuses before pricing |
+| omit or ambiguously map one epitope residue | target preparation refuses |
+| let the client drop `epitope_residues` | materialized-request audit fails |
+| index epitope residues inside the crop instead of the original template chain | materialized-request audit fails |
+| emit or reseed the reported 88-residue helical bundle | positive control stays failed and no binder is emitted |
+| pass the control on length compliance or structure generation | verdict remains `positive-control-failed` |
+| replace failed `binding_confidence` with high `iptm` or low interface PAE | metric-substitution check fails |
+| repeat the reported 30-design metrics | no binder is emitted and novel-target generation does not start |
+| cross the control bar but miss the mapped epitope | positive control fails |
+| generate a candidate in prose rather than the design engine | candidate is excluded unread |
+| add a repository-local fleet executable or hidden default | Markdown ceases to be the sole runtime authority |
+| preserve trace shape while faking provider calls | trace may be `result`, exposing why requests and control outputs must also be retained |
 
-Run `python3 fleet/tests/test_fleet.py`, `python3 verifier/tests/test_verify.py`, and `python3 verifier/verify.py graph.json --repo .`. The hermetic end-to-end case must finish with one halt and a `result` trace while every fail-closed case proves that downstream calls did not occur.
+The strongest break remains experimental: failure of the measured binding assay or binding to the pre-registered counter-screen panel kills the hypothesis even after a calibrated computational run.
 
 ## Licence
 

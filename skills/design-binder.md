@@ -15,7 +15,7 @@ Design and screen de novo binder hypotheses only after an indication-aware, comm
   "role": "generate assay-gated binder hypotheses",
   "reads": ["human target", "indication", "pinned catalogue", "pinned method benchmarks"],
   "writes": [],
-  "must": ["stop on unread or same-indication evidence", "emit only with two killing assays"],
+  "must": ["stop on unread or same-indication evidence", "calibrate on a blinded structured positive control", "emit only with two killing assays"],
   "check": ["trace result", "independent wet-lab measurement", "E2", "E5", "E6", "E7"]
 }
 ```
@@ -38,6 +38,7 @@ graph = "Graph section"
 
 - Native human protein target with an explicit clinical or research indication.
 - No unread `pair` hit and no read same-indication binder at the pinned catalogue revision.
+- A design configuration that has passed a blinded, epitope-conditioned positive control under the same modality and bounds.
 - A requester who can name owners for a binding assay and a pre-registered counter-screen.
 - A bounded campaign whose cheapest Pareto-minimal method is tried first.
 
@@ -47,6 +48,7 @@ graph = "Graph section"
 - It writes no file, cannot write `graph.json` or `proposals.json`, and cannot assign a PMID.
 - A returned sequence has no demonstrated benefit, safety, or activity and must not be called a therapy.
 - An unread `pair` hit, absent indication, non-human target, unsafe healthy-tissue profile, or missing assay owner stops the run.
+- An absent or failed positive control stops the run before novel-target generation; valid lengths and plausible folds do not substitute for binding recovery.
 - Prediction cannot rank clinical utility; where prediction alone separates candidates, report them unranked.
 
 ## Algorithm
@@ -67,6 +69,8 @@ verdict = "hit-same-indication | hit-other-indication | hit-unread | absent"
 
 [controlled]
 catalogue_pin = "commit SHA or tag"
+positive_control = "blinded known co-structure under the same design configuration"
+epitope_conditioning = "mapped structural residues; never an unconstrained whole target when a structure exists"
 paralogue = "30 percent identity; 50 percent requires a counter-screen"
 selectivity = "two logs weaker on every panel member"
 ```
@@ -79,7 +83,9 @@ stateDiagram-v2
     Admit --> Refuse: grammar, species, protein, or indication fails
     Admit --> Catalogue
     Catalogue --> Stop: same-indication or unread pair hit
-    Catalogue --> Design: absent or read non-transfer
+    Catalogue --> Calibrate: absent or read non-transfer
+    Calibrate --> Refuse: control unavailable or fails binding
+    Calibrate --> Design: control recovers mapped interface
     Design --> HardScreen
     HardScreen --> Exclude: liability
     HardScreen --> Order: survives
@@ -142,7 +148,13 @@ Build the reverse index for the target per `docs/follow-agent-contract.md` §7 �
 
 ### 5. Design
 
-The campaign fans its workers out over the design space in parallel, each carrying the same specification — target, epitope, indication-derived constraints — and reporting candidates in a common schema. Breadth is the point: independent scaffolds and independent methods, so the ordering in §6 compares genuinely different hypotheses rather than variations of one.
+**Calibrate before novelty.** Before a new target is designed, the same engine, modality, target-preparation rule, length window, filters, scorer and compute bounds must recover a blinded positive control with a known co-structure. The generator receives the positive-control target construct and mapped epitope, but not the reference binder sequence or binder chains. Passing means crossing a pre-registered binding-confidence bar and contacting the mapped epitope; sequence validity, length compliance, structure generation, fold confidence, `iptm`, and interface PAE are supporting checks and cannot replace either condition. A failed control records gate `positive-control`, emits nothing, and stops the novel-target run. `systems/run-campaign.md` specifies the control protocol and the IL-4Rα/6WGL regression case.
+
+**Condition the actual interface.** The catalogue key names a whole protein, but a design request names a structural construct. Map a pinned structure chain to the UniProt sequence, crop to the independently folded epitope-bearing domain, and send a non-empty residue-level epitope or hotspot set. Where a suitable structure exists, an unconstrained full-length `no_template` target is refused. Where no structure exists, template-free design is admissible only if the provider can still carry the justified epitope; lack of that capability is `unavailable`, not permission to design against the whole surface.
+
+The routine catalogue gate does not open on a known same-indication binder. Positive-control calibration is a separate blinded validation mode: it withholds the known binder from the generator, cannot emit a worklist or catalogue row, and exists only to decide whether the design configuration is credible enough to spend on a novel target.
+
+After calibration, the campaign fans its workers out over the design space in parallel, each carrying the same specification — target construct, mapped epitope, indication-derived constraints — and reporting candidates in a common schema. Breadth is the point: independent scaffolds and independent methods, so the ordering in §6 compares genuinely different hypotheses rather than variations of one. Language-model text may propose or audit these choices; literal sequences invented in prose are excluded. Candidate sequences come from the named design engine.
 
 Scaffold follows the indication, never the other way round. Minibinders and designed miniproteins, nanobodies and single-domain formats, constrained peptides and macrocycles, designed ankyrin and other repeat proteins, and conventional Fv-derived formats are all admissible; a molecule needing non-standard residues, terminal caps or an explicit disulfide pattern must be written `helm:` (`docs/follow-agent-contract.md` §3, §8.8), and one expressible as plain L-chains must be written `aa:` (`docs/follow-agent-contract.md` §8.13c).
 
@@ -174,7 +186,7 @@ Two stages, and they are different operations. The ordering is **computed per ru
 
 A weighted sum cannot do this job: a total can be high for the wrong reason, and a liability that kills a molecule does not trade off against affinity.
 
-**Stage two — order the survivors, and name the scorer.** No candidate is ordered above another without the computable quantity that chose it stated outright, with its value and its uncertainty: predicted binding free energy or interface score, structural confidence, agreement between independent predictors. Every signal is labelled **prediction** or **measurement**.
+**Stage two — apply the registered binding gate, then order the survivors and name the scorer.** A candidate that does not cross the pre-registered primary binding criterion is not rescued by fold quality or another interface metric. Among candidates that do cross it, no candidate is ordered above another without the computable quantity that chose it stated outright, with its value and its uncertainty: predicted binding free energy or interface score, structural confidence, agreement between independent predictors. Every signal is labelled **prediction** or **measurement**.
 
 **There is no computable score for clinical utility.** Affinity, developability and epitope content are computable, and not one of them predicts patient benefit. That is the oracle, and no campaign closes it. Where the top two are separated only by prediction, the honest output is **unranked candidates**, not a confident first place; a run returning a #1 with no stated scorer is manufacturing the oracle step.
 
@@ -213,7 +225,7 @@ Report, and write nothing. A single binder is emitted only when §6 earns it, an
 | scorer | the quantity that produced the order, with values and uncertainty |
 | expected success rate | for an exact discriminator and operating-point match in §6, the published across-target median and IQR, explicitly not an N-order estimate or new-target prediction; otherwise `not established`. Never transfer a cell to a composite screen or different scorer. |
 | killing assays | **two**, with thresholds and who could run each. A binding assay kills the affinity claim with a measured Kd. A counter-screen against the pre-registered paralogue panel and the healthy-tissue expression bar kills the safety claim even when the Kd is perfect — a binder that binds beautifully and also binds something in the myocardium is the failure mode that reaches patients. |
-| generator | what produced the sequence, standing in for the citation it does not have: the run, the design and scoring models with versions, the inputs, the date, and the catalogue PMIDs that justified choosing this target |
+| generator | what produced the sequence, standing in for the citation it does not have: the run, design and scoring models with versions, target structure digest, construct and residue map, epitope, materialized request, positive-control verdict, inputs, date, and catalogue PMIDs that justified choosing this target |
 | catalogue context | evidenced binders against this target at the pinned SHA with the indication read from each paper, or `hit-unread` naming every `pair` row when the papers were not read, or the explicit statement that none are entered and that this is not a negative. `preclinical` rows stay a separate list |
 
 Two refusals, two verdicts, as `docs/follow-agent-contract.md` §7 requires them kept apart: a source that does not answer yields `unavailable` — retry, cache nothing; a specification admitting no candidate yields no binder and names the constraint that emptied the space. Neither is catalogue absence, and neither is reported as a resolve failure.
@@ -222,7 +234,9 @@ Nobody in this room can run a binding assay. So the output is a **worklist for a
 
 ### 8. Acceptance
 
-This procedure asserts nothing about patients and is therefore not acceptance-tested by rediscovery, as `propose-pairs` is. It passes when, for a target whose evidenced binders are already in `graph.json`, a run that is **blind to those rows** returns a candidate engaging the same epitope by an independent route. That is a test of the design process, not of the catalogue, and failing it bars no row — it tells you the ordering in §6 is not yet measuring what it claims to.
+This procedure asserts nothing about patients and is therefore not acceptance-tested by sequence rediscovery, as `propose-pairs` is. Its design configuration is admitted only when, for a target with a known co-structure and evidenced binder, a calibration run that is **blind to the binder sequence and catalogue answer** returns an independently generated candidate that crosses the registered binding bar and engages the mapped epitope. The control uses the same modality, bounds, target-preparation rule and scoring path as the proposed novel run. A failure records `positive-control`, emits nothing, and rejects the configuration rather than a catalogue row.
+
+The IL-4Rα/dupilumab control in `systems/run-campaign.md` is a standing regression for the configuration that produced it. Thirty sequences inside the requested length window and a confidently folded candidate do not pass when reported `binding_confidence` tops out at `0.011`; that observation rejects the unconstrained full-length target request and motivates a structure-cropped, epitope-conditioned rerun.
 
 ## Citations
 
@@ -244,11 +258,14 @@ Method selection at runtime must add its own versioned primary sources and bench
 | Reveal a same-indication evidenced binder | design continues instead of stopping |
 | Remove indication or use a non-human accession | any candidate is produced |
 | Omit either killing assay or its owner | any binder is emitted |
+| Omit the blinded positive control, its binding bar, or its epitope map | novel-target generation starts |
+| Send an available structured target as full-length `no_template` without hotspots | preflight admits the request |
+| Fail the primary binding metric but pass on `iptm`, interface PAE, or fold confidence | metric substitution manufactures a positive control |
 | Copy a sequence without its exact disclaimer | trace hash or output contract fails |
 | Change the named scorer and keep the same order | ranking is not caused by its stated variable |
 | Treat the across-target IQR as a new-target prediction interval | the source reports no such interval |
 | Run one target twice and call the difference target variability | the test measures sampling noise instead |
-| Blind the process to a known binder | failure to recover the epitope by an independent route rejects the design ordering, not a catalogue row |
+| Blind the process to a known binder | failure to cross the binding bar at the mapped epitope rejects the design configuration, not a catalogue row |
 
 The strongest break remains a wet-lab one: measured affinity above the stated threshold kills the binding claim; counter-screen binding or a disqualifying healthy-tissue profile kills the safety claim even when target affinity is excellent.
 

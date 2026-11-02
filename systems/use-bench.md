@@ -16,7 +16,7 @@ Provide one run-scoped, append-only commons where workers exchange immutable par
   "reads": ["core.bench", "worker heads", "one explicit evidence tier"],
   "writes": [".bench files outside the repository"],
   "must": ["merge by set union", "never pool tiers", "bind every node to one core"],
-  "check": ["fleet tests", "content hashes", "E4", "E5", "E6", "E7"]
+  "check": ["content hashes", "tier refusal", "run binding", "E4", "E5", "E6", "E7"]
 }
 ```
 
@@ -85,7 +85,7 @@ flowchart LR
 
 - **Read:** this file, `docs/follow-agent-contract.md`, the run's own `.bench` files.
 - **Write:** `.bench` files inside a run directory, which lives outside this repository.
-- **Refuse:** `graph.json`, `proposals.json`, and every other file in this repository. This directory holds the `fleet.campaign` specifications. This file's write scope is `.bench` files inside a run directory. The harness code that appends them lives under `fleet/` and is specified by `systems/run-campaign.md`; it is outside this file's write scope (§11).
+- **Refuse:** `graph.json`, `proposals.json`, and every other file in this repository. This directory holds the `fleet.campaign` specifications. This file's write scope is `.bench` files inside a run directory. Campaign executors append them from this Markdown format under `systems/run-campaign.md`; no repository-local fleet program widens that scope (§11).
 
 **`systems/` and `skills/`.** `skills/*.md` are *procedures*: a named thing an agent does, registered in `docs/follow-agent-contract.md` §10, each with a signature and a write scope. `systems/*.md` are the `fleet.campaign` specifications registered in §11. This file is a substrate: a format, a merge law and an invariant list. A system is not a skill, declares no signature over catalogue keys, and is not registered in §10. A skill may use a system; a system never discharges a skill's obligations, and neither widens `docs/follow-agent-contract.md` §0.
 
@@ -241,11 +241,11 @@ Stated here rather than in a design note, because a reader of this file is the p
 
 Licensed oversight is required for any use of this system; none has been performed to date.
 
-Implemented by [`fleet/fleet.py`](../fleet/fleet.py) as a run-directory writer: immutable core, one
-worker file per configured worker, tier-first records, content-derived ids, parent edges and the run
-hash on every node. Its hermetic tests include canonical field ordering and refusal of an
-untiered line. The query index, replication protocol, pose distance and garbage collection remain
-unimplemented. The off-repo TLA+ report from 2026-10-29 (§9) remains unreproducible here.
+This Markdown file is the BENCH format authority. A campaign executor materializes an immutable
+core and one head per participating worker under `systems/run-campaign.md`; this repository ships
+no BENCH writer, query index, replication daemon, pose index, or garbage collector. Receivers must
+recompute content ids, refuse untiered or foreign-run records, and retain the resulting heads with
+the campaign report. The off-repo TLA+ report from 2026-10-29 (§9) remains unreproducible here.
 
 ## Citations
 
@@ -273,7 +273,7 @@ Retrieved or re-checked 1 Nov 2026 (Australia/Sydney). The measured token ratio,
 | label a prediction as tier `1` | syntax passes, exposing the truthfulness limit |
 | run forever waiting for quiescence | no local termination predicate exists |
 
-The hermetic implementation tests cover canonical ordering, tier refusal, and run binding. Claims about replication, indexing, pose distance, and the off-repo TLA+ model remain falsification targets until executable fixtures are committed.
+Canonical ordering, tier refusal, and run binding are obligations on every executor and receiver. Claims about replication, indexing, pose distance, and the off-repo TLA+ model remain falsification targets until executable fixtures are committed.
 
 ## Licence
 

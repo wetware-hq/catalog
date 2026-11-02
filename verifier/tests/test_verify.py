@@ -403,7 +403,7 @@ def test_E5_spec_outside_skills_and_systems_is_an_orphan():
     line = "`type: agent.system` · `spec: fleet.campaign` · subordinate.\n"
     repo = _tmp_repo("e5_orphan_spec", {
         "docs/follow-agent-contract.md": V.BANNER + "\n\n# contract\n\n`type: resource.reference`\n\n## 0\n\n",
-        "fleet/read-fleet.md": V.BANNER + "\n\n# run\n\n" + line + "\n## 0\n\n",
+        "runtime/run-campaign.md": V.BANNER + "\n\n# run\n\n" + line + "\n## 0\n\n",
     })
     rep = V.Report(); V.check_identity(repo, rep)
     assert rep.findings[0].ok is False
@@ -1045,6 +1045,62 @@ def test_trace_carrier_sets_exclude_scores():
     ) is None
     assert "pair" not in V.TRACE_ACTS["propose-pairs"]
     assert "preclinical" not in V.TRACE_ACTS["propose-pairs"]
+
+
+def test_trace_positive_control_refusal_is_a_result_after_the_pin():
+    import hashlib
+    core = (
+        "%trace-core/1\n"
+        'bound-n:"30"\n'
+        'bound-tok:"8000"\n'
+        'skill:"design-binder"\n'
+        'spec:"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"\n'
+    )
+    run = hashlib.sha256(core.encode("utf-8")).hexdigest()
+    skill = "design-binder"
+    call = V.trace_emit("call", run, skill, "^0", {})
+    pin = V.trace_emit("pin", run, skill, "^" + V.trace_call_id(run, skill),
+                       {"path": "graph.json", "rev": "b" * 40})
+    parent = "^" + pin.split(" ", 2)[1]
+    context = V.trace_emit("context", run, skill, parent, {
+        "gloss": "not-a-negative", "target": "uniprot:P24394", "verdict": "absent",
+    })
+    refuse = V.trace_emit("refuse", run, skill, parent, {
+        "gate": "positive-control", "subject": "binding criterion not crossed",
+    })
+    halt = V.trace_emit("halt", run, skill, parent, {
+        "bound-n": "30", "bound-tok": "8000", "oracle": "not-discharged",
+    })
+    header = f"%trace/1 core={run} spec={'a' * 40}\n"
+    body = header + "\n".join([call, pin, context, refuse, halt]) + "\n"
+    core_path, paths = _write_trace("trace_positive_control", core, [("control.trace", body)])
+    ok, code, rows = V.check_trace(core_path, paths)
+    assert ok and code == "result" and rows == [run], (ok, code, rows)
+
+    emitted = V.trace_emit("emit", run, skill, parent, {
+        "binder": "aa:ACD", "disclaimer": V.BANNER,
+        "kind": "hypothesis", "target": "uniprot:P24394",
+    })
+    failed_emit = header + "\n".join([call, pin, context, refuse, emitted, halt]) + "\n"
+    core_path, paths = _write_trace(
+        "trace_positive_control_emit", core, [("control.trace", failed_emit)])
+    ok, code, rows = V.check_trace(core_path, paths)
+    assert ok is False and code == "R10", (ok, code, rows)
+
+    no_control = header + "\n".join([call, pin, context, emitted, halt]) + "\n"
+    core_path, paths = _write_trace(
+        "trace_missing_positive_control", core, [("control.trace", no_control)])
+    ok, code, rows = V.check_trace(core_path, paths)
+    assert ok is False and code == "R10", (ok, code, rows)
+
+    control = V.trace_emit("control", run, skill, parent, {
+        "target": "uniprot:P24394", "verdict": "pass",
+    })
+    passed = header + "\n".join([call, pin, context, control, emitted, halt]) + "\n"
+    core_path, paths = _write_trace(
+        "trace_passed_positive_control", core, [("control.trace", passed)])
+    ok, code, rows = V.check_trace(core_path, paths)
+    assert ok and code == "result" and rows == [run], (ok, code, rows)
 
 
 def test_trace_witness_is_result_and_matches_emit():

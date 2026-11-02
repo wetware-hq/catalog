@@ -36,7 +36,7 @@ graph = "Graph section"
 
 ## Indications
 
-- Audit calls, pins, refusals, proposals, context verdicts, emissions, and halt for one run.
+- Audit calls, pins, control passes, refusals, proposals, context verdicts, emissions, and halt for one run.
 - Merge independently written worker traces without a coordinator.
 - Recompute run and act identities from exact bytes.
 
@@ -104,7 +104,7 @@ A worker file is one header and then one act per line. The header is `%trace/1 c
 
 | piece | what it is |
 |---|---|
-| act | `call`, `pin`, `refuse`, `unresolved`, `unavailable`, `propose`, `context`, `emit`, or `halt` |
+| act | `call`, `pin`, `control`, `refuse`, `unresolved`, `unavailable`, `propose`, `context`, `emit`, or `halt` |
 | id | 64 lowercase hex digits |
 | parent | `^0`, or `^` plus 64 lowercase hex digits |
 | key | a lowercase letter, then lowercase letters, digits, or hyphens, in ascending byte order on the line |
@@ -122,13 +122,13 @@ The checker hard-codes these lists. A token that is not in its list is refused.
 |---|---|
 | `resolve-key` | `call`, `refuse`, `unresolved`, `unavailable`, `halt` |
 | `propose-pairs` | `call`, `pin`, `refuse`, `unresolved`, `unavailable`, `propose`, `halt` |
-| `design-binder` | `call`, `pin`, `context`, `refuse`, `unresolved`, `unavailable`, `emit`, `halt` |
+| `design-binder` | `call`, `pin`, `context`, `control`, `refuse`, `unresolved`, `unavailable`, `emit`, `halt` |
 
 | skill | gates |
 |---|---|
 | `resolve-key` | `grammar`, `scope`, `ascii` |
 | `propose-pairs` | `out-of-scope`, `illegal-payload`, `duplicate-triple`, `duplicate-molecule` |
-| `design-binder` | `grammar`, `species`, `not-protein`, `indication-absent`, `selectivity`, `immunogenicity`, `developability`, `no-assay` |
+| `design-binder` | `grammar`, `species`, `not-protein`, `indication-absent`, `positive-control`, `selectivity`, `immunogenicity`, `developability`, `no-assay` |
 
 For `design-binder`, the gates `grammar`, `species`, `not-protein`, and `indication-absent` parent the call. The other gates parent the pin.
 
@@ -145,6 +145,7 @@ For `design-binder`, the gates `grammar`, `species`, `not-protein`, and `indicat
 |---|---|
 | `call` | none |
 | `pin` | `path`, `rev` |
+| `control` | `target`, `verdict` |
 | `refuse` | `gate`, `subject` |
 | `unresolved` | `key`, `release`, `retrieved`, `source`, `step` |
 | `unavailable` | `key`, `release`, `retrieved`, `source`, `step` |
@@ -159,7 +160,7 @@ For `design-binder`, the gates `grammar`, `species`, `not-protein`, and `indicat
 | `hit-unread` | `not-read` | `binder`, `gloss`, `pmid`, `target`, `verdict` |
 | `absent` | `not-a-negative` | `gloss`, `target`, `verdict` |
 
-`gloss` and `verdict` belong to the context row they are written on, and to no other row. `path` is `graph.json`. `oracle` is `not-discharged`. `kind` is `hypothesis`. `disclaimer` is the first non-blank line of this file, byte for byte.
+`gloss` belongs only to its context row. A context `verdict` is one of the four rows above. A `control` verdict is only `pass`, and its target is the admitted control target. `path` is `graph.json`. `oracle` is `not-discharged`. `kind` is `hypothesis`. `disclaimer` is the first non-blank line of this file, byte for byte.
 
 `binder` holds when the value satisfies `docs/follow-agent-contract.md` §8.7 and §8.8. `target` holds when it satisfies §8.9. `pmid` holds when it satisfies §8.10. The checker calls those predicates. It does not restate them. `subject` is not sent through them.
 
@@ -222,7 +223,7 @@ On a head whose file is well formed:
 
 **`design-binder`, no pin.** At least one refusal whose gate is `grammar`, `species`, `not-protein`, or `indication-absent`. No context and no emit. Every line that is not the call parents the call.
 
-**`design-binder`, one pin.** Exactly one context, and it parents the pin. The halt parents the pin. Every emit parents the pin. Every refusal whose gate is not one of those four parents the pin. A verdict of `hit-same-indication` or `hit-unread` means there is no emit. Every emit has kind `hypothesis` and the disclaimer. `hit-unread` means `pair` already cites the target and the paper was not read. The binder on that line is one key. It is not a claim that the indication matches, and it is not a claim that the binder fails to transfer.
+**`design-binder`, one pin.** Exactly one context, and it parents the pin. The halt parents the pin. Every control, emit, and post-pin refusal parents the pin. A control line is allowed only after verdict `absent` or `hit-other-indication`, and at most one exists. Every emit requires exactly one control line with verdict `pass`. A `positive-control` refusal means there is no control line and no emit. A context verdict of `hit-same-indication` or `hit-unread` also means there is no control line and no emit. Every emit has kind `hypothesis` and the disclaimer. `hit-unread` means `pair` already cites the target and the paper was not read. The binder on that line is one key. It is not a claim that the indication matches, and it is not a claim that the binder fails to transfer.
 
 The head is a result when the file is well formed and R1 through R10 all hold. The checker prints `result` and the run, or `partial` and the first code. It does not print a fraction.
 
@@ -273,11 +274,11 @@ halt 9d2001abc00391ea2c66714740c2ba9ec5c279405495498f51a72db31be4d6a3 ^2f3f73356
 
 Licensed oversight is required for any use of this system; none has been performed to date.
 
-`verifier/verify.py --trace` decides this file. `fleet/fleet.py` writes the lines through the
-verifier's own `trace_emit`, then hands every completed run back to that checker. Extension
-predicate E4 decides the bijection between `docs/follow-agent-contract.md` §11 and the files
-`systems/*.md`. The identity line above is extension predicate E5
-(`docs/follow-agent-contract.md` §0c). Neither decision is §8.16.
+`verifier/verify.py --trace` decides this file. A campaign executor writes lines from this
+Markdown grammar and hands every completed run to that checker; no repository-local fleet
+program owns the write path. Extension predicate E4 decides the bijection between
+`docs/follow-agent-contract.md` §11 and the files `systems/*.md`. The identity line above is
+extension predicate E5 (`docs/follow-agent-contract.md` §0c). Neither decision is §8.16.
 
 ## Citations
 
@@ -301,6 +302,9 @@ Retrieved 1 Nov 2026 (Australia/Sydney). These sources explain adjacent intercha
 | add `score`, `tier`, or `study-type` | `fields` |
 | use two pins or two halts | R5 |
 | omit the design disclaimer | `value:disclaimer` |
+| use an unregistered control failure instead of gate `positive-control` | `value:gate` |
+| emit without one `control` line whose verdict is `pass` | R10 |
+| emit beside a `positive-control` refusal | R10 |
 | claim `oracle=discharged` | `value:oracle` |
 | duplicate one molecule under `aa:` and plain-chain HELM | R9 |
 | copy a valid trace and assert its events occurred | no checker predicate supports the assertion |
