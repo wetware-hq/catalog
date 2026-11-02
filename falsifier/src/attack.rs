@@ -1,8 +1,8 @@
 //! Independent workers. They share no verdict and do not vote.
 //!
 //! Each attack names a premise and the observation that premise forbids, then asks the
-//! committed verifier. `agent.swarm` is not a spec of this run. A header that says so is
-//! one of the attacks.
+//! committed verifier. `agent.swarm` is the spec of docs/falsify.md only. A header
+//! anywhere else that says so is one of the attacks.
 
 use std::collections::BTreeMap;
 use std::fs;
@@ -735,8 +735,8 @@ fn document(root: &Path) -> Vec<AttackResult> {
         finish(
             worker,
             "swarm-spec-refused",
-            "agent.swarm is not a spec and not a type",
-            "E5 names that refusal",
+            "agent.swarm is the falsifier spec and no other header may carry it",
+            "E5 refuses the spec outside docs/falsify.md",
             repo_edit(
                 root,
                 "swarm",
@@ -749,8 +749,41 @@ fn document(root: &Path) -> Vec<AttackResult> {
                 },
                 &[Expect::fail_row(
                     "E5",
-                    "agent.swarm is not a spec and not a type",
+                    "agent.swarm is the falsifier spec and is not valid here",
                 )],
+                &[],
+            ),
+        ),
+        finish(
+            worker,
+            "falsifier-spec-required",
+            "the falsifier header carries spec agent.swarm",
+            "dropping the spec fails E5",
+            repo_edit(
+                root,
+                "drop-swarm",
+                |repo| replace_in(repo, "docs/falsify.md", " · `spec: agent.swarm`", ""),
+                &[Expect::fail_row("E5", "falsifier spec")],
+                &[],
+            ),
+        ),
+        finish(
+            worker,
+            "swarm-as-type",
+            "agent.swarm is a spec, not a type",
+            "putting it in the type slot fails E5",
+            repo_edit(
+                root,
+                "swarm-type",
+                |repo| {
+                    replace_in(
+                        repo,
+                        "docs/falsify.md",
+                        "`type: resource.reference` · `spec: agent.swarm`",
+                        "`type: agent.swarm`",
+                    )
+                },
+                &[Expect::fail_row("E5", "agent.swarm is a spec, not a type")],
                 &[],
             ),
         ),
@@ -1351,6 +1384,15 @@ fn spec_header(type_name: &str, spec: &str) -> String {
     format!(
         "{BANNER}\n\n# attack\n\n`type: {type_name}` · `spec: {spec}`\n\nThis header is the attack.\n\n## Specification\n\nnot a card\n"
     )
+}
+
+fn replace_in(repo: &Path, rel: &str, from: &str, to: &str) -> Result<(), String> {
+    let path = repo.join(rel);
+    let text = fs::read_to_string(&path).map_err(|err| format!("harness: {err}"))?;
+    if !text.contains(from) {
+        return Err(format!("harness: {from:?} missing from {rel}"));
+    }
+    fs::write(path, text.replacen(from, to, 1)).map_err(|err| format!("harness: {err}"))
 }
 
 fn write_rel(repo: &Path, rel: &str, body: &str) -> Result<(), String> {

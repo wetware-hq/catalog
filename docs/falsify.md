@@ -2,7 +2,7 @@
 
 # falsify the system
 
-`type: resource.reference` · attacks premises and predictions. Subordinate to `docs/follow-agent-contract.md`.
+`type: resource.reference` · `spec: agent.swarm` · subordinate to `docs/follow-agent-contract.md`.
 
 Independent workers attack the premises and predictions of this agentic catalogue. A caught attack corroborates that prediction. It is not clinical proof.
 
@@ -32,7 +32,7 @@ method = "Popper"
 instrument = "falsifier"
 language = ".rs"
 run_unit = "fleet.campaign"
-swarm = "not a spec"
+swarm = "agent.swarm"
 
 [workers]
 bytes = "canonical bytes and the committed catalogue"
@@ -48,12 +48,12 @@ trace = "act-log refusals"
 
 - Attack a premise before treating a verifier pass as evidence.
 - Keep a `PEPTIDE` scope failure distinct from a monomer failure.
-- Show that a header carrying `agent.swarm` or `agent.fleet` is refused.
+- Carry `spec: agent.swarm` on this file, and show that any other header carrying it is refused.
 
 ## Contraindications
 
 - This is not a formulary, a prescription, or a design campaign. Grammar fixtures such as `aa:ACD` are not binder designs.
-- The seven workers are members of one falsification run. They do not vote. `agent.swarm` is not a spec and not a type, and `agent.fleet` is not either. The profile name `swarms = "Kubernetes"` does not schedule a cluster.
+- The seven workers are members of one falsification run. They do not vote. `spec: agent.swarm` is valid on this file only. `agent.fleet` is not a spec. The profile name `swarms = "Kubernetes"` does not schedule a cluster.
 - A corroborated attack is not predicate 16, not a measurement, and not permission to write `graph.json` or `proposals.json`.
 - `falsifier/` is a human-directed instrument beside `verifier/`. It does not widen §0 for a catalogue agent.
 - The profile maps falsifiers to `.bend` and tracers to `.rs`. This instrument is Rust. No Bend program is claimed.
@@ -112,7 +112,7 @@ Exit `0` means every named prediction was corroborated. Exit `1` means at least 
 |---|---|---|
 | Popper, falsifiability, no edition pin | a claim is tested by an observation incompatible with it; survival corroborates and does not prove | no page, no PDF hash, and no quotation |
 | [NIST conformance guidance](https://www.nist.gov/itl/ai/applied-ai-research-group/what-thing-called-conformance) | a failed falsification proves nonconformance; a pass proves only checked assertions | same URL as the contract; this file did not re-download it |
-| [`follow-agent-contract.md`](follow-agent-contract.md) | predicates 1–19, E1–E7, and the refusal of `agent.swarm` | governs on any conflict with this file |
+| [`follow-agent-contract.md`](follow-agent-contract.md) | predicates 1–19, E1–E7, and `agent.swarm` as this file's spec | governs on any conflict with this file |
 
 Stated 3 Nov 2026 (Australia/Sydney).
 
@@ -135,7 +135,9 @@ Stated 3 Nov 2026 (Australia/Sydney).
 | Delete a citation, or move it to the other dictionary | predicate 19 fails; the move does not trip 15 |
 | Bump `version` and keep every row | predicate 4 fails; predicate 19 passes |
 | Merge two catalogues in both orders | bytes match; unequal versions are refused |
-| Declare `spec: agent.swarm` or `spec: agent.fleet` in a header | E5 |
+| Declare `spec: agent.swarm` outside this file | E5 |
+| Declare `agent.swarm` as a type, or drop the spec from this file | E5 |
+| Declare `spec: agent.fleet` | E5 |
 | Add an unregistered skill or system | E2 or E4 |
 | Delete one side of a Markdown edge | E6 |
 | Remove the banner | E1 |

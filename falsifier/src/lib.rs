@@ -40,6 +40,6 @@ mod tests {
         }
         ids.sort();
         assert!(bad.is_empty(), "{bad}\nids: {ids:?}");
-        assert_eq!(results.len(), 70, "{ids:?}");
+        assert_eq!(results.len(), 72, "{ids:?}");
     }
 }

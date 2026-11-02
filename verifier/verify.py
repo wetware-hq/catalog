@@ -1223,16 +1223,25 @@ def check_system_registry(repo_dir, rep):
     rep.add("E4", not problems, problems)
 
 
-# Header lines named in docs/follow-agent-contract.md section 0c. agent.swarm and agent.fleet are
-# refused as a spec or a type. The markdown may use either word when it says that string is neither.
+# Header lines named in docs/follow-agent-contract.md section 0c.
+# agent.swarm is the falsifier spec, and only the exact paths in E5_SWARM_PATHS may carry it.
+# agent.fleet is refused as a spec or a type. The markdown may still name either string
+# when it says what that string is.
 _IDENTITY_TYPE_RE = re.compile(r"`type:\s*([^`]+?)`")
 _IDENTITY_SPEC_RE = re.compile(r"`spec:\s*([^`]+?)`")
 _IDENTITY_CLASS_RE = re.compile(r"`class:\s*([^`]+?)`")
-_REJECTED_RUN_UNITS = ("agent.swarm", "agent.fleet")
+_SWARM_SPEC = "agent.swarm"
+_FLEET_TOKEN = "agent.fleet"
 _SPEC_FOLDER = {
     "agent.skill": "skills",
     "fleet.campaign": "systems",
 }
+# The falsifier switch is one path, not a directory. A directory prefix would let any
+# file parked there declare the spec. test_E5_agent_swarm_is_only_the_falsifier fails
+# when this tuple drifts from the headers that actually declare agent.swarm.
+E5_SWARM_PATHS = (
+    "docs/falsify.md",
+)
 # Registry fixtures declare a live spec on purpose, outside skills/ and systems/. Exact paths.
 # test_E5_spec_allowlist_is_the_only_outside_specs fails when an entry no longer declares one,
 # and when any other markdown declares one.
@@ -1251,8 +1260,8 @@ def check_identity(repo_dir, rep):
 
     skills/ are resource.procedure with spec agent.skill. systems/ are agent.system with spec
     fleet.campaign. A header outside those two directories that carries either spec is an orphan,
-    except the exact paths in E5_SPEC_ALLOWLIST. agent.swarm and agent.fleet are refused as a spec
-    or a type.
+    except the exact paths in E5_SPEC_ALLOWLIST. agent.swarm is the falsifier spec on
+    E5_SWARM_PATHS only. agent.fleet is refused as a spec or a type.
     """
     problems = []
 
@@ -1264,10 +1273,18 @@ def check_identity(repo_dir, rep):
             problems.append(f"{rel}: unreadable ({exc})")
             return ""
 
-    def reject_run_unit(rel, types, specs):
-        for token in _REJECTED_RUN_UNITS:
-            if token in types or token in specs:
-                problems.append(f"{rel}: {token} is not a spec and not a type")
+    def reject_scope(rel, types, specs):
+        if _FLEET_TOKEN in types or _FLEET_TOKEN in specs:
+            problems.append(f"{rel}: agent.fleet is not a spec and not a type")
+        if rel in E5_SWARM_PATHS:
+            if _SWARM_SPEC in types:
+                problems.append(f"{rel}: agent.swarm is a spec, not a type")
+            if specs != [_SWARM_SPEC]:
+                problems.append(
+                    f"{rel}: falsifier spec {specs!r}, expected ['agent.swarm']")
+        elif _SWARM_SPEC in types or _SWARM_SPEC in specs:
+            problems.append(
+                f"{rel}: agent.swarm is the falsifier spec and is not valid here")
 
     for folder, expect_type, expect_spec in (("skills", "resource.procedure", "agent.skill"),
                                              ("systems", "agent.system", "fleet.campaign")):
@@ -1285,7 +1302,7 @@ def check_identity(repo_dir, rep):
             types = [t.strip() for t in _IDENTITY_TYPE_RE.findall(header)]
             specs = [s.strip() for s in _IDENTITY_SPEC_RE.findall(header)]
             classes = [c.strip() for c in _IDENTITY_CLASS_RE.findall(header)]
-            reject_run_unit(rel, types, specs)
+            reject_scope(rel, types, specs)
             if types != [expect_type]:
                 problems.append(f"{rel}: type {types!r}, expected {[expect_type]!r}")
             if specs != [expect_spec]:
@@ -1311,7 +1328,7 @@ def check_identity(repo_dir, rep):
         header = _identity_header(text)
         types = [t.strip() for t in _IDENTITY_TYPE_RE.findall(header)]
         specs = [s.strip() for s in _IDENTITY_SPEC_RE.findall(header)]
-        reject_run_unit(rel, types, specs)
+        reject_scope(rel, types, specs)
         for spec in specs:
             home = _SPEC_FOLDER.get(spec)
             if home:
