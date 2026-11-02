@@ -13,7 +13,7 @@ Define the content-addressed act log for one bounded `fleet.campaign` run and th
   "id": "systems/record-traces.md",
   "type": "agent.system",
   "role": "content-address campaign acts and decide trace shape",
-  "reads": ["core.trace", "worker trace heads", "hard-coded carrier sets"],
+  "reads": ["core.trace", "worker trace heads", "carrier block in this file"],
   "writes": [".trace files outside the repository"],
   "must": ["derive ids from bytes", "end on one halt", "keep oracle not-discharged"],
   "check": ["verifier/verify.py --trace", "R1-R10", "E4", "E5", "E6", "E7"]
@@ -134,7 +134,229 @@ The preimage of a line is that line with the id and the final newline removed. `
 
 ### 1. Allowed values
 
-The checker hard-codes these lists. A token that is not in its list is refused.
+The carrier block is the closed list. `verifier/verify.py` loads it and does not restate it. A model that writes a checker at runtime loads the same block. A token that is not in the block is refused.
+
+### Carrier sets
+
+```json
+{
+  "skills": [
+    "resolve-key",
+    "propose-pairs",
+    "design-binder"
+  ],
+  "acts": {
+    "resolve-key": [
+      "call",
+      "refuse",
+      "unresolved",
+      "unavailable",
+      "halt"
+    ],
+    "propose-pairs": [
+      "call",
+      "pin",
+      "refuse",
+      "unresolved",
+      "unavailable",
+      "propose",
+      "halt"
+    ],
+    "design-binder": [
+      "call",
+      "pin",
+      "context",
+      "control",
+      "refuse",
+      "unresolved",
+      "unavailable",
+      "emit",
+      "halt"
+    ]
+  },
+  "gates": {
+    "resolve-key": [
+      "grammar",
+      "scope",
+      "ascii"
+    ],
+    "propose-pairs": [
+      "out-of-scope",
+      "illegal-payload",
+      "duplicate-triple",
+      "duplicate-molecule"
+    ],
+    "design-binder": [
+      "grammar",
+      "species",
+      "not-protein",
+      "indication-absent",
+      "positive-control",
+      "selectivity",
+      "immunogenicity",
+      "developability",
+      "no-assay"
+    ]
+  },
+  "pre_pin_gates": [
+    "grammar",
+    "species",
+    "not-protein",
+    "indication-absent"
+  ],
+  "steps": {
+    "resolve-key": [
+      "resolve"
+    ],
+    "propose-pairs": [
+      "3",
+      "4"
+    ],
+    "design-binder": [
+      "catalogue",
+      "generator",
+      "model"
+    ]
+  },
+  "fields": {
+    "call": [],
+    "pin": [
+      "path",
+      "rev"
+    ],
+    "control": [
+      "target",
+      "verdict"
+    ],
+    "refuse": [
+      "gate",
+      "subject"
+    ],
+    "unresolved": [
+      "key",
+      "release",
+      "retrieved",
+      "source",
+      "step"
+    ],
+    "unavailable": [
+      "key",
+      "release",
+      "retrieved",
+      "source",
+      "step"
+    ],
+    "propose": [
+      "binder",
+      "pmid",
+      "target"
+    ],
+    "emit": [
+      "binder",
+      "disclaimer",
+      "kind",
+      "target"
+    ],
+    "halt": [
+      "bound-n",
+      "bound-tok",
+      "oracle"
+    ]
+  },
+  "context": {
+    "hit-same-indication": {
+      "gloss": "stop",
+      "fields": [
+        "binder",
+        "gloss",
+        "pmid",
+        "target",
+        "verdict"
+      ]
+    },
+    "hit-other-indication": {
+      "gloss": "transfers-not",
+      "fields": [
+        "binder",
+        "gloss",
+        "pmid",
+        "target",
+        "verdict"
+      ]
+    },
+    "hit-unread": {
+      "gloss": "not-read",
+      "fields": [
+        "binder",
+        "gloss",
+        "pmid",
+        "target",
+        "verdict"
+      ]
+    },
+    "absent": {
+      "gloss": "not-a-negative",
+      "fields": [
+        "gloss",
+        "target",
+        "verdict"
+      ]
+    }
+  },
+  "value_max_bytes": 4096,
+  "subject_max_bytes": 1024,
+  "forbidden_fields": [
+    "auc",
+    "auroc",
+    "dict",
+    "dictionary",
+    "grade",
+    "kd",
+    "pair",
+    "pose",
+    "preclinical",
+    "rank",
+    "score",
+    "scores",
+    "tier",
+    "utility"
+  ],
+  "literals": {
+    "path": "graph.json",
+    "oracle": "not-discharged",
+    "kind": "hypothesis",
+    "control_verdict": "pass",
+    "subject_sentinels": [
+      "unencodable",
+      "unquotable"
+    ]
+  },
+  "shape": {
+    "control_after": [
+      "absent",
+      "hit-other-indication"
+    ],
+    "no_control_on": [
+      "hit-same-indication",
+      "hit-unread"
+    ],
+    "failed_control_gate": "positive-control"
+  },
+  "patterns": {
+    "core": "%trace-core/1\\nbound-n:\"([1-9][0-9]*)\"\\nbound-tok:\"([1-9][0-9]*)\"\\nskill:\"(resolve-key|propose-pairs|design-binder)\"\\nspec:\"([0-9a-f]{40})\"\\n\\Z",
+    "header": "%trace/1 core=([0-9a-f]{64}) spec=([0-9a-f]{40})\\Z",
+    "worker": "^[a-z][a-z0-9-]{0,31}\\.trace\\Z",
+    "hex64": "^[0-9a-f]{64}\\Z",
+    "token64": "^[A-Za-z0-9._:/-]{1,64}\\Z",
+    "day": "^[0-9]{4}-[0-9]{2}-[0-9]{2}\\Z",
+    "parent": "^\\^[0-9a-f]{64}\\Z",
+    "rev": "[0-9a-f]{40}",
+    "bound": "[1-9][0-9]*"
+  }
+}
+```
+
+The tables below are the same lists. Acts, gates, and steps are sets. Field arrays and context rows are ordered.
 
 | skill | acts |
 |---|---|
@@ -177,6 +399,8 @@ For `design-binder`, the gates `grammar`, `species`, `not-protein`, and `indicat
 | `hit-other-indication` | `transfers-not` | `binder`, `gloss`, `pmid`, `target`, `verdict` |
 | `hit-unread` | `not-read` | `binder`, `gloss`, `pmid`, `target`, `verdict` |
 | `absent` | `not-a-negative` | `gloss`, `target`, `verdict` |
+
+These field names have no production: `auc`, `auroc`, `dict`, `dictionary`, `grade`, `kd`, `pair`, `pose`, `preclinical`, `rank`, `score`, `scores`, `tier`, `utility`.
 
 `gloss` belongs only to its context row. A context `verdict` is one of the four rows above. A `control` verdict is only `pass`, and its target is the admitted control target. `path` is `graph.json`. `oracle` is `not-discharged`. `kind` is `hypothesis`. `disclaimer` is the first non-blank line of this file, byte for byte.
 
@@ -292,8 +516,8 @@ halt 9d2001abc00391ea2c66714740c2ba9ec5c279405495498f51a72db31be4d6a3 ^2f3f73356
 
 Licensed oversight is required for any use of this system; none has been performed to date.
 
-`verifier/verify.py --trace` decides this file. A campaign executor writes lines from this
-Markdown grammar and hands every completed run to that checker; no repository-local fleet
+`verifier/verify.py --trace` decides this file and loads the carrier block in §1. It does not keep a second list.
+A campaign executor writes lines from this Markdown grammar and hands every completed run to that checker; no repository-local fleet
 program owns the write path. Extension predicate E4 decides the bijection between
 `docs/follow-agent-contract.md` §11 and the files `systems/*.md`. The identity line above is
 extension predicate E5 (`docs/follow-agent-contract.md` §0c). Neither decision is §8.16.

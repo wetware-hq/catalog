@@ -7,7 +7,7 @@ Usage:
     verify.py --merge A.json B.json      # section 6 merge; writes canonical bytes to stdout
     verify.py GRAPH.json --repo DIR      # + gating repository predicates E1, E2, E4, E5, E6, E7
     verify.py GRAPH.json --online        # + E3 pmid resolution via NCBI E-utilities; NON-BLOCKING, never gates
-    verify.py --trace CORE.trace W.trace # TRACES judgements (systems/record-traces.md); hard-coded carrier sets
+    verify.py --trace CORE.trace W.trace # TRACES judgements (systems/record-traces.md); carrier block in that file
     verify.py --json ...                 # machine-readable report on stdout
 
 Exit status: 0 = every evaluated pure/relational predicate passed; 1 = a violation/refusal; 2 = usage/IO error.
@@ -30,59 +30,148 @@ try:
 except ImportError:  # Python 3.9/3.10; E7 still validates its canonical TOML subset.
     tomllib = None
 
-DICTS = ("pair", "preclinical")
-ROOT_KEYS = ("version", "pair", "preclinical")
-EMPTY_CATALOGUE = b'{\n  "version": 2,\n  "pair": {},\n  "preclinical": {}\n}\n'
+# Closed lists and normative patterns are loaded from the parent Markdown.
+# docs/follow-agent-contract.md section 0f and systems/record-traces.md section 1.
+# A model that writes a checker at runtime reads those blocks and does not copy them here.
+_REPO = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+_CONTRACT_REL = "docs/follow-agent-contract.md"
+_TRACE_REL = "systems/record-traces.md"
 
-# Predicate registry (docs/follow-agent-contract.md section 8). The two HELM refusals are kept as distinct sub-predicates (8.8).
-PREDICATES = {
-    "1": ("pure", "UTF-8"),
-    "2": ("pure", "Final newline"),
-    "3": ("pure", "Root"),
-    "4": ("pure", "version"),
-    "5": ("pure", "Dictionary shape"),
-    "6": ("pure", "Canonical bytes"),
-    "7": ("pure", "aa: grammar and order"),
-    "8": ("pure", "helm: well-formedness"),
-    "8-scope": ("pure", "helm: block-type scope (PEPTIDE only)"),
-    "8-monomer": ("pure", "helm: monomer"),
-    "9": ("pure", "uniprot:"),
-    "10": ("pure", "pmid:"),
-    "11": ("pure", "Binder rows"),
-    "12": ("pure", "Target rows"),
-    "13": ("pure", "One molecule, one key"),
-    "14": ("pure", "Cross-prefix hygiene"),
-    "15": ("pure", "No duplicate triple"),
-    "16": ("oracle", "Inclusion and study type"),
-    "17": ("pure", "Forbidden writes"),
-    "18": ("pure", "Empty catalogue"),
-    "19": ("relational", "Add-only"),
+
+def _load_fenced_json(rel, marker):
+    """Object in the first ```json fence after a column-zero heading."""
+    path = os.path.join(_REPO, *rel.split("/"))
+    with open(path, encoding="utf-8") as handle:
+        body = handle.read()
+    at = body.find("\n" + marker + "\n")
+    if at < 0:
+        raise SystemExit(f"verify: {rel} has no {marker}")
+    fence = body.find("\n```json\n", at)
+    if fence < 0:
+        raise SystemExit(f"verify: {rel} {marker} has no json block")
+    start = fence + len("\n```json\n")
+    stop = body.find("\n```", start)
+    if stop < 0:
+        raise SystemExit(f"verify: {rel} {marker} json block is not closed")
+    try:
+        value = json.loads(body[start:stop])
+    except json.JSONDecodeError as exc:
+        raise SystemExit(f"verify: {rel} {marker} is not JSON ({exc})") from exc
+    if not isinstance(value, dict):
+        raise SystemExit(f"verify: {rel} {marker} must be a JSON object")
+    return value
+
+
+def _first_nonblank(rel):
+    path = os.path.join(_REPO, *rel.split("/"))
+    with open(path, encoding="utf-8") as handle:
+        for line in handle:
+            if line.strip():
+                return line.rstrip("\n")
+    raise SystemExit(f"verify: {rel} has no banner line")
+
+
+def _labeled(obj):
+    return {key: (row[0], row[1]) for key, row in obj.items()}
+
+
+_LIT = _load_fenced_json(_CONTRACT_REL, "### 0f. Checker literals")
+_TRACE = _load_fenced_json(_TRACE_REL, "### Carrier sets")
+if f"[{_LIT['residues']}]" not in _LIT["patterns"]["aa"]:
+    raise SystemExit("verify: residues and the aa pattern disagree")
+VERSION = _LIT["version"]
+if not (isinstance(VERSION, int) and not isinstance(VERSION, bool) and VERSION == 2):
+    raise SystemExit("verify: checker literals version must be the number 2")
+
+BANNER = _first_nonblank(_CONTRACT_REL)
+DICTS = tuple(_LIT["dictionaries"])
+ROOT_KEYS = tuple(_LIT["root_keys"])
+PREDICATES = _labeled(_LIT["predicates"])
+EXTENSIONS = _labeled(_LIT["extensions"])
+AA_RE = re.compile(_LIT["patterns"]["aa"])
+UNIPROT_RE = re.compile(_LIT["patterns"]["uniprot"])
+PMID_RE = re.compile(_LIT["patterns"]["pmid"])
+BLOCK_RE = re.compile(_LIT["patterns"]["helm_block"])
+HELM_VERSION_RE = re.compile(_LIT["patterns"]["helm_version"])
+HELM_INDEX_RE = re.compile(_LIT["patterns"]["helm_index_normalise"])
+MONOMER_SYMBOL_RE = re.compile(_LIT["patterns"]["monomer_symbol"])
+MONOMER_UPPER_MIN = _LIT["monomer_uppercase_run_min_length"]
+BINDER_PREFIXES = tuple(_LIT["prefixes"]["binder"])
+TARGET_PREFIXES = tuple(_LIT["prefixes"]["target"])
+CITATION_PREFIXES = tuple(_LIT["prefixes"]["citation"])
+STD_RESIDUES = set(_LIT["residues"])
+FORBIDDEN_ROOT_EXTRA = set(_LIT["forbidden_root_keys"])
+_SPECIAL_CLASS = _LIT["special_class"]
+_SPECIAL_RE = re.compile(
+    r"(?:\b(?:class|type|spec)\b\s*[:=]\s*[`\"']?" + re.escape(_SPECIAL_CLASS) + r"\b)",
+    re.I,
+)
+_FOLDERS = tuple((row["folder"], row["type"], row["spec"]) for row in _LIT["folders"])
+_SPEC_FOLDER = {spec: folder for folder, _typ, spec in _FOLDERS}
+_SKILLS_DIR = _SPEC_FOLDER["agent.skill"]
+_SYSTEMS_DIR = _SPEC_FOLDER["fleet.campaign"]
+_SYSTEM_PATH_RE = re.compile(rf"{re.escape(_SYSTEMS_DIR)}/[A-Za-z0-9._-]+\.md")
+_FLEET_TOKEN = _LIT["fleet_token"]
+_SWARM_SPEC = _LIT["swarm_spec"]
+E5_SWARM_PATHS = tuple(_LIT["e5_swarm_paths"])
+E1_ALLOWLIST = tuple(_LIT["e1_allowlist"])
+_UNTRACKED_DIRS = tuple(_LIT["untracked_dirs"])
+E5_SPEC_ALLOWLIST = tuple(_LIT["e5_spec_allowlist"])
+_E6 = _LIT["e6"]
+E6_FIXTURE_PATHS = tuple(_E6["fixture_paths"])
+E6_ROOT = _E6["root"]
+E6_SINK = _E6["sink"]
+E6_ROOT_MAX_BYTES = _E6["root_max_bytes"]
+E6_EDGE_SURPLUS_MAX = _E6["edge_surplus_max"]
+E6_SECTION_NAMES = tuple(_E6["section_names"])
+E6_HEADINGS = tuple(f"## {name}" for name in E6_SECTION_NAMES)
+E6_CARD_FIELDS = tuple(_E6["card_fields"])
+E6_CARD_VALUE_MAX = _E6["card_value_max_bytes"]
+E6_CARD_MAX_BYTES = _E6["card_max_bytes"]
+E6_DESCRIPTION_MAX_SENTENCES = _E6["description_max_sentences"]
+E6_DESCRIPTION_MAX_BYTES = _E6["description_max_bytes"]
+E7_FENCE_TAGS = frozenset(_LIT["e7"]["fence_tags"])
+E7_MERMAID_KINDS = tuple(_LIT["e7"]["mermaid_kinds"])
+E7_VARIABLE_TABLES = tuple(_LIT["e7"]["variable_tables"])
+E7_PROCESS_OPERATORS = tuple(_LIT["e7"]["process_operators"])
+
+TRACE_SKILLS = tuple(_TRACE["skills"])
+TRACE_ACTS = {key: frozenset(items) for key, items in _TRACE["acts"].items()}
+TRACE_GATES = {key: frozenset(items) for key, items in _TRACE["gates"].items()}
+TRACE_PRE_PIN = frozenset(_TRACE["pre_pin_gates"])
+TRACE_STEPS = {key: frozenset(items) for key, items in _TRACE["steps"].items()}
+TRACE_FIELDS = {key: tuple(items) for key, items in _TRACE["fields"].items()}
+TRACE_CONTEXT = {
+    key: (row["gloss"], tuple(row["fields"]))
+    for key, row in _TRACE["context"].items()
 }
-
-# Extension predicates: documentation/repository invariants BEYOND docs/follow-agent-contract.md section 8's nineteen.
-# They are NOT part of the normative predicate list and never renumber it; ids are prefixed "E".
-EXTENSIONS = {
-    "E1": ("pure-ext", "Disclaimer banner (every .md first non-blank line)"),
-    "E2": ("pure-ext", "Skill registry (skills <-> docs/follow-agent-contract.md section 10)"),
-    "E3": ("online-ext", "pmid: resolves via NCBI E-utilities (non-blocking)"),
-    "E4": ("pure-ext", "System registry (systems/*.md <-> docs/follow-agent-contract.md section 11)"),
-    "E5": ("pure-ext", "Identity line (docs/follow-agent-contract.md section 0c)"),
-    "E6": ("pure-ext", "Live Markdown scientific profile and navigable DAG"),
-    "E7": ("pure-ext", "Markdown formal language profile"),
-}
-BANNER = "\u26a0\ufe0f ACADEMIC RESEARCH PURPOSES ONLY; NOT FOR MEDICAL USE WITHOUT LICENSED OVERSIGHT"
-
-# section 3 grammar
-AA_RE = re.compile(r"^aa:[ACDEFGHIKLMNPQRSTVWY]+(/[ACDEFGHIKLMNPQRSTVWY]+)*$")
-UNIPROT_RE = re.compile(
-    r"^uniprot:((?:[OPQ][0-9][A-Z0-9]{3}[0-9])|(?:[A-NR-Z][0-9](?:[A-Z][A-Z0-9]{2}[0-9]){1,2}))(?:-[1-9]\d*)?$")
-PMID_RE = re.compile(r"^pmid:(?:0|[1-9]\d*)$")
-BINDER_PREFIXES = ("aa:", "helm:")
-TARGET_PREFIXES = ("uniprot:",)
-CITATION_PREFIXES = ("pmid:",)
-STD_RESIDUES = set("ACDEFGHIKLMNPQRSTVWY")
-# Keys the spec says are absent by design / forbidden (section 2, 8.17).
-FORBIDDEN_ROOT_EXTRA = {"status", "ref", "rank", "ranks", "score", "scores", "grade", "grades"}
+TRACE_VALUE_MAX = _TRACE["value_max_bytes"]
+TRACE_SUBJECT_MAX = _TRACE["subject_max_bytes"]
+TRACE_FORBIDDEN_FIELDS = frozenset(_TRACE["forbidden_fields"])
+TRACE_PATH = _TRACE["literals"]["path"]
+TRACE_ORACLE = _TRACE["literals"]["oracle"]
+TRACE_KIND = _TRACE["literals"]["kind"]
+TRACE_CONTROL_VERDICT = _TRACE["literals"]["control_verdict"]
+TRACE_SUBJECT_SENTINELS = frozenset(_TRACE["literals"]["subject_sentinels"])
+TRACE_CONTROL_AFTER = frozenset(_TRACE["shape"]["control_after"])
+TRACE_NO_CONTROL_ON = frozenset(_TRACE["shape"]["no_control_on"])
+TRACE_FAILED_CONTROL_GATE = _TRACE["shape"]["failed_control_gate"]
+_TRACE_CORE_RE = re.compile(_TRACE["patterns"]["core"])
+_TRACE_HEADER_RE = re.compile(_TRACE["patterns"]["header"])
+_TRACE_WORKER_RE = re.compile(_TRACE["patterns"]["worker"])
+_TRACE_HEX64 = re.compile(_TRACE["patterns"]["hex64"])
+_TRACE_TOKEN64 = re.compile(_TRACE["patterns"]["token64"])
+_TRACE_DAY = re.compile(_TRACE["patterns"]["day"])
+_TRACE_PARENT = re.compile(_TRACE["patterns"]["parent"])
+TRACE_REV_RE = re.compile(_TRACE["patterns"]["rev"])
+TRACE_BOUND_RE = re.compile(_TRACE["patterns"]["bound"])
+_carrier_names = set()
+for _keys in TRACE_FIELDS.values():
+    _carrier_names.update(_keys)
+for _gloss, _keys in TRACE_CONTEXT.values():
+    _carrier_names.update(_keys)
+if _carrier_names & TRACE_FORBIDDEN_FIELDS:
+    raise SystemExit("verify: carrier block lists a forbidden field")
 
 
 @dataclass
@@ -145,6 +234,9 @@ def canonical_bytes(obj) -> bytes:
     return (dump(obj, 0) + "\n").encode("utf-8")
 
 
+EMPTY_CATALOGUE = canonical_bytes({"version": VERSION, "pair": {}, "preclinical": {}})
+
+
 def canonical_citation_arrays(obj):
     """Return a copy with citation arrays sorted+deduped, for the #6 re-render comparison."""
     if not isinstance(obj, dict):
@@ -167,9 +259,6 @@ def canonical_citation_arrays(obj):
 # ---------------------------------------------------------------------------------------------------------------
 # HELM parsing (section 8.8)
 # ---------------------------------------------------------------------------------------------------------------
-BLOCK_RE = re.compile(r"^([A-Z]+)([0-9]+)\{(.*)\}$")
-
-
 def parse_helm(payload: str):
     """Return (ok, scope_ok, monomer_ok, msg). scope_ok/monomer_ok only meaningful when structure parses."""
     if any(ord(c) < 0x20 or ord(c) == 0x7f for c in payload):
@@ -182,7 +271,7 @@ def parse_helm(payload: str):
     # rest must be conn$group$ext$ (-> 4 pieces, last empty) optionally followed by a version token.
     if len(parts) != 4:
         return False, True, True, "malformed $connections$groupings$ext$ section"
-    if parts[3] != "" and not re.fullmatch(r"V[0-9]+\.[0-9]+", parts[3]):
+    if parts[3] != "" and not HELM_VERSION_RE.fullmatch(parts[3]):
         return False, True, True, f"bad trailing token after sections: {parts[3]!r}"
     if not poly:
         return False, True, True, "empty polymer section"
@@ -221,12 +310,11 @@ def parse_helm(payload: str):
 
 
 def valid_monomer_symbol(inner: str) -> bool:
-    """Heuristic separating a HELM monomer code (e.g. dF, Nle, ac, am, Thi, Hyp) from inline SMILES (e.g. CCO).
-    Decidable from bytes; see README 'Spec ambiguities'. Rule: alphanumeric token that is NOT an all-uppercase
-    multi-letter run (which is read as SMILES/non-monomer, per the [CCO] example in 8.8)."""
-    if not re.fullmatch(r"[A-Za-z0-9]+", inner):
+    """Bracketed HELM symbol from the checker-literals block: monomer_symbol, refusing an
+    all-uppercase run at least monomer_uppercase_run_min_length long (§8.8, [CCO])."""
+    if not MONOMER_SYMBOL_RE.fullmatch(inner):
         return False
-    if len(inner) > 1 and inner.isupper():
+    if len(inner) >= MONOMER_UPPER_MIN and inner.isupper():
         return False
     return True
 
@@ -261,7 +349,7 @@ def aa_multiset(key: str):
 def helm_identity(key: str):
     # normalise polymer index digits only
     payload = key[len("helm:"):]
-    return re.sub(r"([A-Za-z\]])([0-9]+)", lambda m: m.group(1) + "#", payload)
+    return re.sub(HELM_INDEX_RE, lambda m: m.group(1) + "#", payload)
 
 
 # ---------------------------------------------------------------------------------------------------------------
@@ -306,8 +394,8 @@ def check_pure(path: str, rep: Report):
 
     # 4 version
     v = obj.get("version")
-    rep.add("4", v == 2 and isinstance(v, int) and not isinstance(v, bool),
-            [] if v == 2 else [f"version = {v!r} (want number 2)"])
+    rep.add("4", v == VERSION and isinstance(v, int) and not isinstance(v, bool),
+            [] if v == VERSION else [f"version = {v!r} (want number {VERSION})"])
 
     # 5 dictionary shape
     bad5 = [d for d in DICTS if not (d in obj and isinstance(obj[d], dict))]
@@ -510,7 +598,8 @@ def do_merge(a_path: str, b_path: str):
     if A.get("version") != B.get("version"):
         print(f"refuse: versions differ ({A.get('version')} vs {B.get('version')})", file=sys.stderr)
         sys.exit(1)
-    M = {"version": A["version"], "pair": {}, "preclinical": {}}
+    M = {key: {} for key in DICTS}
+    M["version"] = A["version"]
     for d in DICTS:
         out = M[d]
         for src in (A.get(d, {}), B.get(d, {})):
@@ -523,70 +612,9 @@ def do_merge(a_path: str, b_path: str):
 
 
 # ---------------------------------------------------------------------------------------------------------------
-# TRACES judgements (systems/record-traces.md). Carrier sets are literals. They are not read from the markdown.
+# TRACES judgements (systems/record-traces.md). Carrier sets are the block in that file, loaded above.
 # decide() is total: the first failure in the order R1, R3, admit, R2, R4..R10, else result.
 # ---------------------------------------------------------------------------------------------------------------
-TRACE_SKILLS = ("resolve-key", "propose-pairs", "design-binder")
-TRACE_ACTS = {
-    "resolve-key": frozenset({"call", "refuse", "unresolved", "unavailable", "halt"}),
-    "propose-pairs": frozenset({"call", "pin", "refuse", "unresolved", "unavailable", "propose", "halt"}),
-    "design-binder": frozenset({
-        "call", "pin", "context", "control", "refuse", "unresolved", "unavailable", "emit", "halt",
-    }),
-}
-TRACE_GATES = {
-    "resolve-key": frozenset({"grammar", "scope", "ascii"}),
-    "propose-pairs": frozenset({"out-of-scope", "illegal-payload", "duplicate-triple", "duplicate-molecule"}),
-    "design-binder": frozenset({
-        "grammar", "species", "not-protein", "indication-absent",
-        "positive-control", "selectivity", "immunogenicity", "developability", "no-assay",
-    }),
-}
-TRACE_PRE_PIN = frozenset({"grammar", "species", "not-protein", "indication-absent"})
-TRACE_STEPS = {
-    "resolve-key": frozenset({"resolve"}),
-    "propose-pairs": frozenset({"3", "4"}),
-    "design-binder": frozenset({"catalogue", "generator", "model"}),
-}
-# Sorted key order. context is TRACE_CONTEXT, not this table.
-TRACE_FIELDS = {
-    "call": (),
-    "pin": ("path", "rev"),
-    "control": ("target", "verdict"),
-    "refuse": ("gate", "subject"),
-    "unresolved": ("key", "release", "retrieved", "source", "step"),
-    "unavailable": ("key", "release", "retrieved", "source", "step"),
-    "propose": ("binder", "pmid", "target"),
-    "emit": ("binder", "disclaimer", "kind", "target"),
-    "halt": ("bound-n", "bound-tok", "oracle"),
-}
-TRACE_CONTEXT = {
-    "hit-same-indication": ("stop", ("binder", "gloss", "pmid", "target", "verdict")),
-    "hit-other-indication": ("transfers-not", ("binder", "gloss", "pmid", "target", "verdict")),
-    "hit-unread": ("not-read", ("binder", "gloss", "pmid", "target", "verdict")),
-    "absent": ("not-a-negative", ("gloss", "target", "verdict")),
-}
-TRACE_VALUE_MAX = 4096
-TRACE_SUBJECT_MAX = 1024
-# Field names with no production. Pinned by test_trace_carrier_sets_exclude_scores.
-TRACE_FORBIDDEN_FIELDS = frozenset({
-    "auc", "auroc", "dict", "dictionary", "grade", "kd", "pair", "pose",
-    "preclinical", "rank", "score", "scores", "tier", "utility",
-})
-_TRACE_CORE_RE = re.compile(
-    r"%trace-core/1\n"
-    r'bound-n:"([1-9][0-9]*)"\n'
-    r'bound-tok:"([1-9][0-9]*)"\n'
-    r'skill:"(resolve-key|propose-pairs|design-binder)"\n'
-    r'spec:"([0-9a-f]{40})"\n\Z')
-_TRACE_HEADER_RE = re.compile(r"%trace/1 core=([0-9a-f]{64}) spec=([0-9a-f]{40})\Z")
-_TRACE_WORKER_RE = re.compile(r"^[a-z][a-z0-9-]{0,31}\.trace\Z")
-_TRACE_HEX64 = re.compile(r"^[0-9a-f]{64}\Z")
-_TRACE_TOKEN64 = re.compile(r"^[A-Za-z0-9._:/-]{1,64}\Z")
-_TRACE_DAY = re.compile(r"^[0-9]{4}-[0-9]{2}-[0-9]{2}\Z")
-_TRACE_PARENT = re.compile(r"^\^[0-9a-f]{64}\Z")
-
-
 def trace_emit(act, run, skill, parent, fields):
     """Wire line. fields maps key -> raw value. Key order is sorted. Id is H(preimage)."""
     body = " ".join(f'{k}:"{v}"' for k, v in sorted(fields.items()))
@@ -674,22 +702,22 @@ def _trace_parse_fields(text):
 
 def _trace_value_code(skill, act, fields, bound_n, bound_tok):
     if act == "pin":
-        if fields.get("path") != "graph.json":
+        if fields.get("path") != TRACE_PATH:
             return "value:path"
-        if not re.fullmatch(r"[0-9a-f]{40}", fields.get("rev", "")):
+        if not TRACE_REV_RE.fullmatch(fields.get("rev", "")):
             return "value:rev"
         return None
     if act == "control":
         if not _trace_target_ok(fields.get("target", "")):
             return "value:target"
-        if fields.get("verdict") != "pass":
+        if fields.get("verdict") != TRACE_CONTROL_VERDICT:
             return "value:verdict"
         return None
     if act == "refuse":
         if fields.get("gate") not in TRACE_GATES[skill]:
             return "value:gate"
         subject = fields.get("subject", "")
-        if subject in ("unencodable", "unquotable"):
+        if subject in TRACE_SUBJECT_SENTINELS:
             return None
         raw = subject.encode("utf-8")
         if not raw or len(raw) > TRACE_SUBJECT_MAX or any(c < 32 or c == 127 for c in raw):
@@ -732,7 +760,7 @@ def _trace_value_code(skill, act, fields, bound_n, bound_tok):
             return "value:binder"
         if not _trace_target_ok(fields["target"]):
             return "value:target"
-        if fields.get("kind") != "hypothesis":
+        if fields.get("kind") != TRACE_KIND:
             return "value:kind"
         if fields.get("disclaimer") != BANNER:
             return "value:disclaimer"
@@ -751,13 +779,13 @@ def _trace_value_code(skill, act, fields, bound_n, bound_tok):
             return "value:pmid"
         return None
     if act == "halt":
-        if not re.fullmatch(r"[1-9][0-9]*", fields.get("bound-n", "")):
+        if not TRACE_BOUND_RE.fullmatch(fields.get("bound-n", "")):
             return "value:bound-n"
-        if not re.fullmatch(r"[1-9][0-9]*", fields.get("bound-tok", "")):
+        if not TRACE_BOUND_RE.fullmatch(fields.get("bound-tok", "")):
             return "value:bound-tok"
         if fields["bound-n"] != bound_n or fields["bound-tok"] != bound_tok:
             return "value:bound"
-        if fields.get("oracle") != "not-discharged":
+        if fields.get("oracle") != TRACE_ORACLE:
             return "value:oracle"
         return None
     if act == "call":
@@ -919,7 +947,7 @@ def check_trace(core_path, worker_paths):
     halt = halts[0]
     if halt["fields"]["bound-n"] != bound_n or halt["fields"]["bound-tok"] != bound_tok:
         return _trace_fail("R5", ["bounds"])
-    if halt["fields"]["oracle"] != "not-discharged":
+    if halt["fields"]["oracle"] != TRACE_ORACLE:
         return _trace_fail("R5", ["oracle"])
     if len(pins) > 1:
         return _trace_fail("R5", [f"pin count {len(pins)}"])
@@ -990,7 +1018,7 @@ def check_trace(core_path, worker_paths):
             controls = by_act.get("control", [])
             if len(controls) > 1:
                 return _trace_fail("R10", ["control count"])
-            if controls and context_verdict not in ("absent", "hit-other-indication"):
+            if controls and context_verdict not in TRACE_CONTROL_AFTER:
                 return _trace_fail("R10", ["control on hit"])
             if halt["parent"] != "^" + pins[0]["id"]:
                 return _trace_fail("R10", ["halt"])
@@ -998,19 +1026,19 @@ def check_trace(core_path, worker_paths):
             for node in emits:
                 if node["parent"] != "^" + pins[0]["id"]:
                     return _trace_fail("R10", ["emit parent"])
-                if node["fields"].get("kind") != "hypothesis" or node["fields"].get("disclaimer") != BANNER:
+                if node["fields"].get("kind") != TRACE_KIND or node["fields"].get("disclaimer") != BANNER:
                     return _trace_fail("R10", ["disclaimer"])
             refuses = by_act.get("refuse", [])
             for node in refuses:
                 if node["fields"]["gate"] not in TRACE_PRE_PIN and node["parent"] != "^" + pins[0]["id"]:
                     return _trace_fail("R10", ["refuse parent"])
             control_failed = any(
-                node["fields"]["gate"] == "positive-control" for node in refuses)
+                node["fields"]["gate"] == TRACE_FAILED_CONTROL_GATE for node in refuses)
             if control_failed and (controls or emits):
                 return _trace_fail("R10", ["emit on failed control"])
             if emits and len(controls) != 1:
                 return _trace_fail("R10", ["control absent"])
-            if context_verdict in ("hit-same-indication", "hit-unread") and (controls or emits):
+            if context_verdict in TRACE_NO_CONTROL_ON and (controls or emits):
                 return _trace_fail("R10", ["emit on hit"])
         else:
             return _trace_fail("R10", ["pins"])
@@ -1038,10 +1066,7 @@ def check_trace(core_path, worker_paths):
 # scanned like any other file. The one blind spot that remains - a real document moved to exactly an allowlisted
 # path is skipped - is itself pinned, by `test_E1_real_file_at_an_allowlisted_path_is_skipped`, so the hole is a
 # passing test rather than a paragraph in a comment that someone can delete.
-E1_ALLOWLIST = (
-    "verifier/tests/fixtures/ext_disclaimer_fail/skip-disclaimer-banner.md",
-)
-
+# The paths themselves are e1_allowlist in the checker-literals block.
 
 def _relposix(path: str, repo_dir: str) -> str:
     """Repo-relative path with forward slashes, which is the form E1_ALLOWLIST is written in."""
@@ -1053,8 +1078,6 @@ def _relposix(path: str, repo_dir: str) -> str:
 # tools and absent from a fresh clone. They hold no repository documentation, so they are not repository content
 # to exclude - the walk simply never descends into them. Every exclusion of actual repository content is in
 # E1_ALLOWLIST above, where a test pins it.
-_UNTRACKED_DIRS = (".git", ".pytest_cache", "__pycache__", ".mypy_cache", ".ruff_cache")
-
 
 def _md_files(repo_dir: str):
     """Every .md under repo_dir, untracked tool directories aside. Exclusion is E1's business, by path."""
@@ -1106,8 +1129,6 @@ def check_disclaimer(repo_dir: str, rep: "Report"):
 
 # A skill is "special" iff its header block (text before the first '## ') declares class/type/spec `special`.
 # Every skill carries spec `agent.skill`; that is not the special marker.
-_SPECIAL_RE = re.compile(r"(?:\b(?:class|type|spec)\b\s*[:=]\s*[`\"']?special\b)", re.I)
-
 
 def _skill_is_special(path: str) -> bool:
     try:
@@ -1139,12 +1160,12 @@ def _parse_section10(agents_text: str):
     for ln in _numbered_section_lines(agents_text, 10, "skills"):
         if not ln.lstrip().startswith("|"):
             continue
-        m = re.search(r"\((?:\.\./)?skills/([A-Za-z0-9._\-]+\.md)\)", ln)
+        m = re.search(rf"\((?:\.\./)?{re.escape(_SKILLS_DIR)}/([A-Za-z0-9._\-]+\.md)\)", ln)
         if not m:
             continue
         cells = [c.strip() for c in ln.strip().strip("|").split("|")]
         write_scope = cells[-1] if cells else ""
-        rows.append(("skills/" + m.group(1), write_scope))
+        rows.append((_SKILLS_DIR + "/" + m.group(1), write_scope))
     return rows
 
 
@@ -1153,8 +1174,8 @@ def check_skill_registry(repo_dir: str, rep: "Report"):
     import os
     problems = []
     disk = {os.path.relpath(p0, repo_dir).replace(os.sep, "/") for p0 in _md_files(repo_dir)
-            if os.path.relpath(p0, repo_dir).replace(os.sep, "/").startswith("skills/")}
-    agents_path = os.path.join(repo_dir, "docs", "follow-agent-contract.md")
+            if os.path.relpath(p0, repo_dir).replace(os.sep, "/").startswith(_SKILLS_DIR + "/")}
+    agents_path = os.path.join(repo_dir, *_CONTRACT_REL.split("/"))
     if not os.path.exists(agents_path):
         rep.add("E2", False, ["docs/follow-agent-contract.md not found; cannot check the registry"]); return
     rows = _parse_section10(open(agents_path, encoding="utf-8").read())
@@ -1175,8 +1196,6 @@ def check_skill_registry(repo_dir: str, rep: "Report"):
     rep.add("E2", not problems, problems)
 
 
-_SYSTEM_PATH_RE = re.compile(r"systems/[A-Za-z0-9._-]+\.md")
-
 
 def parse_section11(agents_text):
     """Markdown paths linked from docs/follow-agent-contract.md section 11, in order.
@@ -1192,13 +1211,14 @@ def parse_section11(agents_text):
 def check_system_registry(repo_dir, rep):
     """E4 [pure-ext]: systems/*.md <-> docs/follow-agent-contract.md section 11 are in bijection.
 
-    The directory is hard-coded. A markdown link in section 11 that is not systems/<file>.md is not a row
-    this check accepts. A file in systems/ that section 11 does not name is an orphan.
+    The directory is the fleet.campaign folder in the checker-literals block. A markdown link in
+    section 11 that is not under that folder is not a row this check accepts. A file there that
+    section 11 does not name is an orphan.
     """
     problems = []
-    agents_path = os.path.join(repo_dir, "docs", "follow-agent-contract.md")
+    agents_path = os.path.join(repo_dir, *_CONTRACT_REL.split("/"))
     if not os.path.exists(agents_path):
-        rep.add("E4", False, ["docs/follow-agent-contract.md not found; cannot check the system registry"])
+        rep.add("E4", False, [f"{_CONTRACT_REL} not found; cannot check the system registry"])
         return
     found = parse_section11(open(agents_path, encoding="utf-8").read())
     if len(found) != len(set(found)):
@@ -1208,14 +1228,14 @@ def check_system_registry(repo_dir, rep):
         if _SYSTEM_PATH_RE.fullmatch(path):
             listed.add(path)
         else:
-            problems.append(f"{path}: section 11 row is not under systems/")
+            problems.append(f"{path}: section 11 row is not under {_SYSTEMS_DIR}/")
     disk = set()
-    directory = os.path.join(repo_dir, "systems")
+    directory = os.path.join(repo_dir, _SYSTEMS_DIR)
     if os.path.isdir(directory):
         for fn in sorted(os.listdir(directory)):
             full = os.path.join(directory, fn)
             if fn.endswith(".md") and os.path.isfile(full):
-                disk.add("systems/" + fn)
+                disk.add(_SYSTEMS_DIR + "/" + fn)
     for path in sorted(disk - listed):
         problems.append(f"{path}: system file present but not listed in docs/follow-agent-contract.md section 11")
     for path in sorted(listed - disk):
@@ -1230,25 +1250,11 @@ def check_system_registry(repo_dir, rep):
 _IDENTITY_TYPE_RE = re.compile(r"`type:\s*([^`]+?)`")
 _IDENTITY_SPEC_RE = re.compile(r"`spec:\s*([^`]+?)`")
 _IDENTITY_CLASS_RE = re.compile(r"`class:\s*([^`]+?)`")
-_SWARM_SPEC = "agent.swarm"
-_FLEET_TOKEN = "agent.fleet"
-_SPEC_FOLDER = {
-    "agent.skill": "skills",
-    "fleet.campaign": "systems",
-}
-# The falsifier switch is one path, not a directory. A directory prefix would let any
-# file parked there declare the spec. test_E5_agent_swarm_is_only_the_falsifier fails
-# when this tuple drifts from the headers that actually declare agent.swarm.
-E5_SWARM_PATHS = (
-    "docs/falsify.md",
-)
-# Registry fixtures declare a live spec on purpose, outside skills/ and systems/. Exact paths.
+# Swarm paths, the fleet token, and registry fixtures are loaded from the checker-literals block.
+# test_E5_agent_swarm_is_only_the_falsifier fails when the swarm path drifts from the header
+# that actually declares agent.swarm.
 # test_E5_spec_allowlist_is_the_only_outside_specs fails when an entry no longer declares one,
 # and when any other markdown declares one.
-E5_SPEC_ALLOWLIST = (
-    "verifier/tests/fixtures/ext_registry_fail/skills/exercise-special-scope.md",
-    "verifier/tests/fixtures/ext_registry_ok/skills/exercise-special-scope.md",
-)
 
 
 def _identity_header(text):
@@ -1286,8 +1292,7 @@ def check_identity(repo_dir, rep):
             problems.append(
                 f"{rel}: agent.swarm is the falsifier spec and is not valid here")
 
-    for folder, expect_type, expect_spec in (("skills", "resource.procedure", "agent.skill"),
-                                             ("systems", "agent.system", "fleet.campaign")):
+    for folder, expect_type, expect_spec in _FOLDERS:
         directory = os.path.join(repo_dir, folder)
         if not os.path.isdir(directory):
             continue
@@ -1307,12 +1312,12 @@ def check_identity(repo_dir, rep):
                 problems.append(f"{rel}: type {types!r}, expected {[expect_type]!r}")
             if specs != [expect_spec]:
                 problems.append(f"{rel}: spec {specs!r}, expected {[expect_spec]!r}")
-            if folder == "skills":
-                declared = classes == ["special"]
-                if classes not in ([], ["special"]):
+            if folder == _SKILLS_DIR:
+                declared = classes == [_SPECIAL_CLASS]
+                if classes not in ([], [_SPECIAL_CLASS]):
                     problems.append(f"{rel}: class {classes!r}")
                 elif declared != _skill_is_special(os.path.join(repo_dir, rel)):
-                    problems.append(f"{rel}: class special and the special-skill marker disagree")
+                    problems.append(f"{rel}: class {_SPECIAL_CLASS} and the special-skill marker disagree")
             elif classes:
                 problems.append(f"{rel}: agent.system declares no class, found {classes!r}")
 
@@ -1320,7 +1325,7 @@ def check_identity(repo_dir, rep):
     for path in _md_files(repo_dir):
         rel = _relposix(path, repo_dir)
         folder = rel.split("/", 1)[0]
-        if folder in ("skills", "systems") or rel in allow:
+        if folder in {name for name, _typ, _spec in _FOLDERS} or rel in allow:
             continue
         text = read(rel)
         if not text:
@@ -1339,38 +1344,7 @@ def check_identity(repo_dir, rep):
 
 # Exact manifest: tests require this to equal every fixture Markdown path and require every entry
 # to lack the live-document headings. A directory prefix would hide a real document parked there.
-E6_FIXTURE_PATHS = (
-    "verifier/tests/fixtures/ext_disclaimer_fail/docs/follow-agent-contract.md",
-    "verifier/tests/fixtures/ext_disclaimer_fail/skip-disclaimer-banner.md",
-    "verifier/tests/fixtures/ext_disclaimer_ok/docs/follow-agent-contract.md",
-    "verifier/tests/fixtures/ext_disclaimer_ok/record-fixture-notes.md",
-    "verifier/tests/fixtures/ext_registry_fail/docs/follow-agent-contract.md",
-    "verifier/tests/fixtures/ext_registry_fail/skills/exercise-special-scope.md",
-    "verifier/tests/fixtures/ext_registry_fail/skills/leave-unregistered.md",
-    "verifier/tests/fixtures/ext_registry_ok/docs/follow-agent-contract.md",
-    "verifier/tests/fixtures/ext_registry_ok/skills/exercise-special-scope.md",
-)
-E6_ROOT = "docs/read-repository.md"
-E6_SINK = "systems/run-campaign.md"
-E6_ROOT_MAX_BYTES = 4096
-E6_EDGE_SURPLUS_MAX = 2
-E6_SECTION_NAMES = (
-    "Specification",
-    "Graph",
-    "Composition",
-    "Indications",
-    "Contraindications",
-    "Algorithm",
-    "Citations",
-    "Falsification",
-    "Licence",
-)
-E6_HEADINGS = tuple(f"## {name}" for name in E6_SECTION_NAMES)
-E6_CARD_FIELDS = ("id", "type", "role", "reads", "writes", "must", "check")
-E6_CARD_VALUE_MAX = 128
-E6_CARD_MAX_BYTES = 2048
-E6_DESCRIPTION_MAX_SENTENCES = 3
-E6_DESCRIPTION_MAX_BYTES = 384
+# Fixture paths, profile bounds, and headings are loaded from the checker-literals block.
 _E6_EDGE_RE = re.compile(r"^- ([←→]) \[([^\]]+)\]\(([^)]+\.md)\)$")
 _E6_LINK_RE = re.compile(r"\[[^\]\r\n]+\]\([^)]+\)")
 _E6_SENTENCE_RE = re.compile(r"""[.!?](?:["'”’)]*)?(?=\s|\Z)""")
@@ -1701,20 +1675,6 @@ def check_document_graph(repo_dir, rep):
         problems.append(f"document graph is not transitively reduced: {redundant!r}")
 
     rep.add("E6", not problems, problems)
-
-
-E7_FENCE_TAGS = frozenset({
-    "bash", "bend", "csv", "dockerfile", "javascript", "json", "lean",
-    "mermaid", "python", "r", "rust", "stl", "svg", "text", "tex",
-    "tla", "toml", "typescript", "wolfram", "yaml",
-})
-E7_MERMAID_KINDS = ("stateDiagram-v2", "flowchart")
-# Scientific variable roles and the seven process operators. docs/follow-agent-contract.md §0d.
-# Order of the operators is part of the law table so a fleet can compare rows by position.
-E7_VARIABLE_TABLES = ("independent", "dependent", "controlled")
-E7_PROCESS_OPERATORS = (
-    "controls", "design", "transport", "stopping", "search", "filters", "recovery",
-)
 
 
 def _e7_reject_json_constant(value):

@@ -1359,6 +1359,85 @@ def test_trace_same_molecule_is_R9_and_hit_emit_is_R10():
     assert ok and code == "result", (code, rows)
 
 
+def _md_ticks(cell):
+    import re
+    return re.findall(r"`([^`]+)`", cell)
+
+
+def _md_table(text, header):
+    lines = text.splitlines()
+    for index, line in enumerate(lines):
+        if line == header:
+            rows = []
+            for row in lines[index + 2:]:
+                if not row.startswith("|"):
+                    break
+                rows.append([cell.strip() for cell in row.strip().strip("|").split("|")])
+            return rows
+    raise AssertionError(header)
+
+
+def test_hard_code_is_loaded_from_markdown_blocks():
+    """Carrier sets and catalogue literals live in the parent Markdown, not a second copy."""
+    import re
+    src = open(os.path.join(REPO_ROOT, "verifier", "verify.py"), encoding="utf-8").read()
+    for banned in (
+        "TRACE_SKILLS = (",
+        "E7_FENCE_TAGS = frozenset({",
+        "E1_ALLOWLIST = (",
+        "E6_FIXTURE_PATHS = (",
+        'AA_RE = re.compile(r"',
+        'BANNER = "',
+    ):
+        assert banned not in src, banned
+    contract = open(os.path.join(REPO_ROOT, "docs", "follow-agent-contract.md"), encoding="utf-8").read()
+    traces = open(os.path.join(REPO_ROOT, "systems", "record-traces.md"), encoding="utf-8").read()
+    assert "\n### 0f. Checker literals\n" in contract
+    assert "\n### Carrier sets\n" in traces
+    assert V.AA_RE.pattern == re.search(r"`(\^aa:[^`]+)`", contract).group(1)
+    assert V.UNIPROT_RE.pattern == re.search(r"`(\^uniprot:[^`]+)`", contract).group(1)
+    assert V.PMID_RE.pattern == re.search(r"`(\^pmid:[^`]+)`", contract).group(1)
+    order = re.search(r"in order: ([^\n]+)", contract).group(1)
+    assert tuple(re.findall(r"`([^`]+)`", order)) == V.E6_SECTION_NAMES
+    fence_line = next(line for line in contract.splitlines() if line.startswith("Canonical fence tags are "))
+    assert set(re.findall(r"`([a-z0-9-]+)`", fence_line)) == set(V.E7_FENCE_TAGS)
+    mermaid_clause = re.search(r"Mermaid starts with ([^;]+)", contract).group(1)
+    assert set(re.findall(r"`([^`]+)`", mermaid_clause)) == set(V.E7_MERMAID_KINDS)
+    assert V.EMPTY_CATALOGUE == b'{\n  "version": 2,\n  "pair": {},\n  "preclinical": {}\n}\n'
+    assert V.E6_DESCRIPTION_MAX_BYTES == 384 and "384" in contract
+    assert V.E6_CARD_MAX_BYTES == 2048 and "2,048" in contract
+    assert V.E6_CARD_VALUE_MAX == 128 and "128" in contract
+    assert V.E6_ROOT_MAX_BYTES == 4096 and "4,096" in contract
+    assert V.E6_EDGE_SURPLUS_MAX == 2 and "|V| + 1" in contract
+    first = next(line for line in contract.splitlines() if line.strip())
+    assert V.BANNER == first
+
+    acts = _md_table(traces, "| skill | acts |")
+    assert tuple(_md_ticks(row[0])[0] for row in acts) == V.TRACE_SKILLS
+    for row in acts:
+        assert set(_md_ticks(row[1])) == set(V.TRACE_ACTS[_md_ticks(row[0])[0]])
+    for row in _md_table(traces, "| skill | gates |"):
+        assert set(_md_ticks(row[1])) == set(V.TRACE_GATES[_md_ticks(row[0])[0]])
+    fields = {}
+    for row in _md_table(traces, "| act | fields, in this order |"):
+        act = _md_ticks(row[0])[0]
+        fields[act] = tuple(_md_ticks(row[1])) if row[1] != "none" else ()
+    assert fields == V.TRACE_FIELDS
+    for row in _md_table(traces, "| verdict | gloss | fields, in this order |"):
+        gloss, keys = V.TRACE_CONTEXT[_md_ticks(row[0])[0]]
+        assert gloss == _md_ticks(row[1])[0]
+        assert keys == tuple(_md_ticks(row[2]))
+    steps = {}
+    for row in _md_table(traces, "| skill | step | the `key` field is |"):
+        steps.setdefault(_md_ticks(row[0])[0], set()).add(_md_ticks(row[1])[0])
+    assert steps == {skill: set(values) for skill, values in V.TRACE_STEPS.items()}
+    pre_pin = next(line for line in traces.splitlines() if "parent the call" in line)
+    assert set(re.findall(r"`([^`]+)`", pre_pin)) - {"design-binder"} == set(V.TRACE_PRE_PIN)
+    forbidden = next(line for line in traces.splitlines() if line.startswith("These field names have no production:"))
+    assert tuple(re.findall(r"`([^`]+)`", forbidden)) == tuple(sorted(V.TRACE_FORBIDDEN_FIELDS))
+    assert V.TRACE_VALUE_MAX == 4096 and "at most 4096 bytes" in traces
+    assert V.TRACE_SUBJECT_MAX == 1024 and "at most 1024 bytes" in traces
+
 
 if __name__ == "__main__":
     fns = [v for k, v in sorted(globals().items()) if k.startswith("test_")]
