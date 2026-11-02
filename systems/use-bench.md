@@ -81,6 +81,28 @@ flowchart LR
     U --> Q[Tier-pure query at head]
 ```
 
+```mermaid
+stateDiagram-v2
+    [*] --> Core
+    Core --> Append
+    Append --> Refuse: bad tier or run
+    Append --> Union: admitted
+    Union --> Query
+    Query --> [*]
+    Refuse --> [*]
+```
+
+```csv
+operator,law
+controls,bind every node to the core hash and one tier
+design,grow a content-addressed Merkle DAG
+transport,ship nodes and merge by set union
+stopping,end by an external bound and not by local quiescence
+search,query only at a recorded head
+filters,refuse an untiered line and any cross-tier aggregate
+recovery,a correction is a new node and the old node stays
+```
+
 ### 0. Scope
 
 - **Read:** this file, `docs/follow-agent-contract.md`, the run's own `.bench` files.

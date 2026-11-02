@@ -82,6 +82,28 @@ flowchart TD
     W --> V[Read back at commit SHA]
 ```
 
+```mermaid
+stateDiagram-v2
+    [*] --> Enumerate
+    Enumerate --> Refuse: out of scope
+    Enumerate --> Resolve
+    Resolve --> Refuse: field missing
+    Resolve --> Append: complete triple
+    Append --> [*]
+    Refuse --> [*]
+```
+
+```csv
+operator,law
+controls,one pinned catalogue SHA and one serializer
+design,emit a triple only when binder target and pmid resolve
+transport,one writer appends proposals.json
+stopping,stop at the first failed step and record it
+search,enumerate structured authorities and not prose
+filters,refuse scope illegal payload and duplicate molecules
+recovery,retry an unavailable source and never store its silence
+```
+
 ### 0. Objective
 
 Propose `(binder, target)` pairs for `graph.json` by writing them to `proposals.json`. **This procedure never writes `graph.json`**, on any branch (`docs/follow-agent-contract.md` §9). A candidate qualifies when **all** hold:

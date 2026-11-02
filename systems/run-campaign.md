@@ -99,6 +99,25 @@ stateDiagram-v2
     Refuse --> VerifyTrace
 ```
 
+```mermaid
+flowchart LR
+    Manifest[Manifest] --> Gate[Catalogue gate]
+    Gate --> Control[Blinded control]
+    Control --> Novel[Novel target]
+    Novel --> Trace[Trace check]
+```
+
+```csv
+operator,law
+controls,take target composition epitope and bar from the manifest
+design,calibrate that same composition on a blinded known interface
+transport,submit only the priced epitope-conditioned request
+stopping,halt before novelty when the binding control fails
+search,read the provider schema and the pinned reverse index
+filters,drop advisory sequences and unconstrained full-length targets
+recovery,record unavailable or positive-control and still verify the trace
+```
+
 #### 0. The manifest supplies the target and the composition
 
 The caller supplies a run manifest; the executing agent reads this file at a pinned commit and follows it. There is no repository-local fleet executable, generated configuration module, default target, default model composition, default length range, or vendor request body. A runtime may use any current client or tool that can satisfy the semantics below. It may not weaken them because a provider schema differs, and it may not fill a blank with a target or a component this file once mentioned.

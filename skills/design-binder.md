@@ -96,6 +96,24 @@ stateDiagram-v2
     Refuse --> [*]
 ```
 
+```mermaid
+flowchart LR
+    Gate[Catalogue gate] --> Control[Blinded control]
+    Control --> Screen[Hard screens]
+    Screen --> Worklist[Assays or refusal]
+```
+
+```csv
+operator,law
+controls,hide the known binder and the catalogue answer
+design,condition on a mapped epitope and one pre-registered bar
+transport,carry the disclaimer on every emitted sequence
+stopping,stop on an unread or same-indication hit or a failed control
+search,read the pinned reverse index before any generator call
+filters,exclude selectivity immunogenicity and developability failures
+recovery,name unavailable apart from an empty specification
+```
+
 ### 0. Objective
 
 Given a **native human protein target** and a **clinical or research indication**, design candidate synthetic binders, screen them, and return the survivors **ordered by a named scorer** — or, where only prediction separates them, as **unranked candidates**.

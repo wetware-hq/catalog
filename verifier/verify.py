@@ -1709,6 +1709,12 @@ E7_FENCE_TAGS = frozenset({
     "tla", "toml", "typescript", "wolfram", "yaml",
 })
 E7_MERMAID_KINDS = ("stateDiagram-v2", "flowchart")
+# Scientific variable roles and the seven process operators. docs/follow-agent-contract.md §0d.
+# Order of the operators is part of the law table so a fleet can compare rows by position.
+E7_VARIABLE_TABLES = ("independent", "dependent", "controlled")
+E7_PROCESS_OPERATORS = (
+    "controls", "design", "transport", "stopping", "search", "filters", "recovery",
+)
 
 
 def _e7_reject_json_constant(value):
@@ -1878,8 +1884,54 @@ def _e7_section_fences(lines, blocks, comment_lines, heading, level):
     return starts, ranges
 
 
+def _e7_toml_assignment_counts(body):
+    """Count assignments per table in the line-oriented TOML subset. Empty string is the root."""
+    counts = {}
+    section = ""
+    for line in body.split("\n"):
+        if not line:
+            continue
+        table = re.fullmatch(r"\[([a-z][a-z0-9_]*)\]", line)
+        if table:
+            section = table.group(1)
+            counts.setdefault(section, 0)
+            continue
+        if re.fullmatch(r"[a-z][a-z0-9_]* = .+", line):
+            counts[section] = counts.get(section, 0) + 1
+    return counts
+
+
+def _e7_process_csv_problem(body):
+    """The process law table is header operator,law and the seven operators in order."""
+    import csv
+    import io
+
+    try:
+        rows = list(csv.reader(io.StringIO(body), strict=True))
+    except csv.Error as exc:
+        return str(exc)
+    if not rows or rows[0] != ["operator", "law"]:
+        return "header must be operator,law"
+    got = []
+    for row in rows[1:]:
+        if len(row) != 2 or not row[1].strip():
+            return f"row {row!r} is not a non-empty law"
+        got.append(row[0])
+    if got != list(E7_PROCESS_OPERATORS):
+        return f"operators are {got!r}"
+    return None
+
+
+def _e7_mermaid_kind(body):
+    first = next((item.strip() for item in body.splitlines() if item.strip()), "")
+    for kind in E7_MERMAID_KINDS:
+        if first == kind or first.startswith(kind + " "):
+            return kind
+    return None
+
+
 def check_markdown_languages(repo_dir, rep):
-    """E7 [pure-ext]: explicit fence languages and canonical live-document TOML maps."""
+    """E7 [pure-ext]: fence languages, TOML maps, variable roles, and process figures."""
     import csv
     import io
 
@@ -1938,6 +1990,44 @@ def check_markdown_languages(repo_dir, rep):
                 if [block[2] for block in section_blocks] != ["toml"]:
                     problems.append(
                         f"{rel}: Variables at line {index + 1} must contain exactly one TOML block")
+                elif _e7_toml_problem(section_blocks[0][3]) is None:
+                    counts = _e7_toml_assignment_counts(section_blocks[0][3])
+                    missing = [name for name in E7_VARIABLE_TABLES if counts.get(name, 0) < 1]
+                    if missing:
+                        problems.append(
+                            f"{rel}: Variables at line {index + 1} must assign {missing!r}")
+
+            process_starts, process_ranges = _e7_section_fences(
+                lines, blocks, comment_lines, "### Process", 3)
+            if len(process_starts) > 1:
+                problems.append(
+                    f"{rel}: expected one ### Process section, found {len(process_starts)}")
+            elif len(process_starts) == 1:
+                csv_blocks = [block for block in process_ranges[0] if block[2] == "csv"]
+                if len(csv_blocks) != 1:
+                    problems.append(f"{rel}: Process must contain exactly one CSV law table")
+                else:
+                    why = _e7_process_csv_problem(csv_blocks[0][3])
+                    if why:
+                        problems.append(
+                            f"{rel}: line {csv_blocks[0][0]}: process laws ({why})")
+                algorithm_starts, algorithm_ranges = _e7_section_fences(
+                    lines, blocks, comment_lines, "## Algorithm", 2)
+                if len(algorithm_starts) != 1:
+                    problems.append(
+                        f"{rel}: expected one ## Algorithm section, found {len(algorithm_starts)}")
+                else:
+                    kinds = set()
+                    for block in algorithm_ranges[0]:
+                        if block[2] != "mermaid":
+                            continue
+                        kind = _e7_mermaid_kind(block[3])
+                        if kind:
+                            kinds.add(kind)
+                    missing = [kind for kind in E7_MERMAID_KINDS if kind not in kinds]
+                    if missing:
+                        problems.append(
+                            f"{rel}: Algorithm must embed mermaid kinds {missing!r}")
 
         for line, _last, tag, body in blocks:
             if not tag:
