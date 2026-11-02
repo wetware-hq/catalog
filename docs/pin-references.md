@@ -39,7 +39,6 @@ graph = "Graph section"
 - Reproducing an external claim used by a skill or system.
 - Selecting an orchestration method while preserving benchmark scope.
 - Reading the binder-screen operating points and uncertainty used by `design-binder`.
-- Auditing the structure and provider-schema claims used by the campaign positive control.
 - Auditing title, venue, version, or figure drift.
 
 ## Contraindications
@@ -113,7 +112,7 @@ A bare arXiv or DOI identifier is not a pin. Record a versioned identifier, retr
 | 10 | FrugalGPT: How to Use Large Language Models While Reducing Cost and Improving Performance | Lingjiao Chen, Matei Zaharia, James Zou | arXiv:2305.05176v1 (only arXiv version) **and** the later TMLR version (OpenReview `cSimKw5p6R`, "Accepted by TMLR", Featured Certification) | arXiv v1 9 May 2023; TMLR version undated in the metadata retrieved | 30 Oct 2026 | arXiv: https://arxiv.org/pdf/2305.05176v1 · TMLR: https://openreview.net/pdf?id=cSimKw5p6R (**could not be downloaded**, see below) | arXiv v1 byte sha256 `035ae8b90333dad8b7817fc8f55e7c4cbca435368c5c1a4dbf7bba9e5db87473`. **No hash for the TMLR version** — the file could not be retrieved, so nothing is pinned for it beyond the OpenReview id. | arXiv v1: **UNREFEREED PREPRINT**. TMLR version: **REFEREED** per the OpenReview record `cSimKw5p6R` (venueid `TMLR`, venue "Accepted by TMLR", certifications: Featured Certification). An earlier ICLR 2024 submission of the same paper (`XUZ2S0JVJP`) is recorded as rejected. No TMLR issue/date confirmed — **date unestablished**. | resolved, not read | Worked example row; see "Worked example: a bare arXiv id is not a pin" below. LLM cascades for cost reduction on news classification, reading comprehension and scientific QA. | ⚠️ Cost/accuracy on text tasks only — nothing about binder quality |
 | 11 | Large Language Monkeys: Scaling Inference Compute with Repeated Sampling | Bradley Brown, Jordan Juravsky, Ryan Ehrlich, Ronald Clark, Quoc V. Le, Christopher Ré, Azalia Mirhoseini | arXiv:2407.21787v3 | v1 31 Jul 2024 / v3 30 Dec 2024 | 30 Oct 2026 | https://arxiv.org/pdf/2407.21787v3 | byte sha256 `33889c6cb265ae11ed67e50070d3a31cd894036d8c9b404212a38df1783e8884` | **UNREFEREED PREPRINT — status unestablished.** arXiv journal-ref: NONE, comment: NONE. An ICLR 2025 submission exists (OpenReview `0xUEBQV54B`) and is recorded as **rejected**; the authors' own lab page lists the work as "Preprint, 2024". No peer-reviewed venue found as of 30 Oct 2026. | resolved, not read | Repeated sampling: coverage (fraction of problems solved by any sample) scales log-linearly with sample count over four orders of magnitude. Abstract: on SWE-bench Lite, DeepSeek-Coder-V2-Instruct goes from 15.9% with one sample to 56% with 250 samples, against a single-sample state of the art of 43%. Without automatic verifiers, majority voting and reward models plateau. | ⚠️ Coding/formal-proof/maths benchmarks only — nothing about binder quality |
 
-### Agent-system and campaign conventions retrieved 1–2 Nov 2026
+### Agent-system conventions retrieved 1 Nov 2026
 
 | Artifact pin | Claim checked | Read status | Scope limit |
 |---|---|---|---|
@@ -128,9 +127,6 @@ A bare arXiv or DOI identifier is not a pin. Record a versioned identifier, retr
 | [MP-Bench, arXiv:2603.25001v1](https://arxiv.org/abs/2603.25001v1) | failure attribution can admit multiple plausible step-level perspectives | claim-checked (abstract and comparison table) | 289 expert-annotated examples |
 | [NIST.AI.200-3](https://doi.org/10.6028/NIST.AI.200-3) | evaluation plans can combine automated tests, red teaming, and realistic user tests | claim-checked (abstract and §3) | planning framework, not one conformance score |
 | [NIST conformance guidance](https://www.nist.gov/itl/ai/applied-ai-research-group/what-thing-called-conformance) | falsification can prove nonconformance while passing tests prove only checked assertions | claim-checked (falsification section) | does not discharge semantic or clinical oracles |
-| [Boltz protein-design guide](https://api.boltz.com/docs/api/guides/protein-design/) | binder mode exposes structured target selection, crop residues, epitope residues, and non-binding residues; target annotations index the original template chain | claim-checked (binder-mode guide, 2 Nov 2026) | mutable vendor documentation; every run must date and retain the effective schema |
-| [PDB 6WGL](https://doi.org/10.2210/pdb6wgl/pdb) | human IL-4Rα chain C is co-structured with dupilumab Fab chains A/B; the receptor entity has 218 residues | claim-checked (entry metadata and chain table, 2 Nov 2026) | a co-structure locates a control epitope but does not validate de novo design |
-| [UniProt P24394](https://www.uniprot.org/uniprotkb/P24394/entry) | canonical human IL-4Rα is 825 residues | claim-checked (sequence record, 2 Nov 2026) | the whole accession remains the catalogue key; it is not the required design construct |
 
 
 ### Row 9 — supported claims from the binder meta-analysis

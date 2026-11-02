@@ -1063,7 +1063,7 @@ def test_trace_positive_control_refusal_is_a_result_after_the_pin():
                        {"path": "graph.json", "rev": "b" * 40})
     parent = "^" + pin.split(" ", 2)[1]
     context = V.trace_emit("context", run, skill, parent, {
-        "gloss": "not-a-negative", "target": "uniprot:P24394", "verdict": "absent",
+        "gloss": "not-a-negative", "target": "uniprot:P12345", "verdict": "absent",
     })
     refuse = V.trace_emit("refuse", run, skill, parent, {
         "gate": "positive-control", "subject": "binding criterion not crossed",
@@ -1079,7 +1079,7 @@ def test_trace_positive_control_refusal_is_a_result_after_the_pin():
 
     emitted = V.trace_emit("emit", run, skill, parent, {
         "binder": "aa:ACD", "disclaimer": V.BANNER,
-        "kind": "hypothesis", "target": "uniprot:P24394",
+        "kind": "hypothesis", "target": "uniprot:P12345",
     })
     failed_emit = header + "\n".join([call, pin, context, refuse, emitted, halt]) + "\n"
     core_path, paths = _write_trace(
@@ -1094,7 +1094,7 @@ def test_trace_positive_control_refusal_is_a_result_after_the_pin():
     assert ok is False and code == "R10", (ok, code, rows)
 
     control = V.trace_emit("control", run, skill, parent, {
-        "target": "uniprot:P24394", "verdict": "pass",
+        "target": "uniprot:P12345", "verdict": "pass",
     })
     passed = header + "\n".join([call, pin, context, control, emitted, halt]) + "\n"
     core_path, paths = _write_trace(
