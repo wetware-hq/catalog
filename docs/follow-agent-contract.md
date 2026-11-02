@@ -24,7 +24,7 @@ Define the catalogue schema, evidence boundary, canonical bytes, merge law, read
 
 - → [../skills/resolve-key.md](../skills/resolve-key.md)
 - → [../systems/use-bench.md](../systems/use-bench.md)
-- → [pin-references.md](pin-references.md)
+- → [falsify.md](falsify.md)
 - ← [read-repository.md](read-repository.md)
 
 ## Composition
@@ -390,8 +390,9 @@ Retrieved 1 Nov 2026 (Australia/Sydney). Exact artifact pins, hashes, extraction
 | Add an unregistered skill or system | E2 or E4 fails |
 | Label a prediction as a paper-backed row | pure checks may pass; predicate 16 remains explicitly undischarged |
 | Re-run a stochastic agent once and call it reliable | no contract predicate supports that inference |
+| Run the workers in [`falsify.md`](falsify.md) | a survivor falsifies that prediction; a catch is not clinical proof |
 
-Run `python3 verifier/tests/test_verify.py`, `python3 verifier/verify.py graph.json --repo .`, and—when a predecessor exists—`python3 verifier/verify.py --prev OLD.json graph.json`. A green result is scoped evidence, never proof of clinical truth.
+Run `python3 verifier/tests/test_verify.py`, `python3 verifier/verify.py graph.json --repo .`, and—when a predecessor exists—`python3 verifier/verify.py --prev OLD.json graph.json`. The falsifier is `cargo run --manifest-path falsifier/Cargo.toml --locked`. A green result is scoped evidence, never proof of clinical truth.
 
 ## Licence
 
