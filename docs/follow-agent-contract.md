@@ -111,11 +111,11 @@ Every file in `skills/` and `systems/` names itself once, in the header, before 
 | `skills/` | a `resource.procedure`, spec `agent.skill`. The one skill §10 marks `special` also says so. The others do not. |
 | `systems/` | an `agent.system`, spec `fleet.campaign`. No class. |
 
-`agent.skill` is the spec of a procedure. `fleet.campaign` is the spec of one run. `agent.swarm` and `agent.fleet` are not specs and not types. A header outside these two directories that carries either spec fails E5: that file is an orphan. The checker skips exactly two registry fixtures, `verifier/tests/fixtures/ext_registry_fail/skills/exercise-special-scope.md` and `verifier/tests/fixtures/ext_registry_ok/skills/exercise-special-scope.md`. They declare the skill spec so E2 can be tested, and they are not skills of this contract. The campaign runtime is the Markdown specification [`systems/run-campaign.md`](../systems/run-campaign.md); no repository-local fleet executable is a hidden second contract. The four strings, and the ordinary words next to them, are set out in §11.
+`agent.skill` is the spec of a procedure. `fleet.campaign` is the spec of one run. `agent.swarm` and `agent.fleet` are not specs and not types. A header outside these two directories that carries either spec fails E5: that file is an orphan. The checker skips exactly two registry fixtures, `verifier/tests/fixtures/ext_registry_fail/skills/exercise-special-scope.md` and `verifier/tests/fixtures/ext_registry_ok/skills/exercise-special-scope.md`. They declare the skill spec so E2 can be tested, and they are not skills of this contract. Those two paths are `e5_spec_allowlist` in §0f, which is what the checker loads. The campaign runtime is the Markdown specification [`systems/run-campaign.md`](../systems/run-campaign.md); no repository-local fleet executable is a hidden second contract. The four strings, and the ordinary words next to them, are set out in §11.
 
 ### 0d. Scientific Markdown profile and documentation DAG
 
-**Live Markdown** is every repository `*.md` except the exact fixture paths in `verifier/verify.py`'s `E6_FIXTURE_PATHS`. Each excluded file is a deliberately incomplete or invalid verifier input under `verifier/tests/fixtures/`, not documentation; tests require the manifest to equal the fixture Markdown set and require every entry to lack the live-document headings. E1 still checks every bannered fixture and its exact one-path allowlist is unchanged.
+**Live Markdown** is every repository `*.md` except the exact fixture paths in the checker-literals block (§0f). Each excluded file is a deliberately incomplete or invalid verifier input under `verifier/tests/fixtures/`, not documentation; tests require the manifest to equal the fixture Markdown set and require every entry to lack the live-document headings. E1 still checks every bannered fixture and its exact one-path allowlist is unchanged.
 
 The header has exactly the banner block, one column-zero H1, an optional one-line block containing `` `type: ...` ``, and one functional-description paragraph; no other pre-H2 prose is allowed. The description has one to three sentences and at most 384 UTF-8 bytes. It is followed by exactly these column-zero H2 headings, in order: `Specification`, `Graph`, `Composition`, `Indications`, `Contraindications`, `Algorithm`, `Citations`, `Falsification`, `Licence`. Fenced content never supplies headings; indented or setext H2s are refused.
 
@@ -170,6 +170,283 @@ animations = "Three.js"
 Canonical fence tags are `python`, `javascript`, `typescript`, `rust`, `bend`, `lean`, `tla`, `dockerfile`, `yaml` for Kubernetes manifests only, `wolfram`, `mermaid`, `json`, `r`, `csv`, `toml`, `tex`, `svg`, `stl`, `text`, and `bash`. GFM cards, registries, and comparison tables are Markdown structure; machine-consumed embedded tables use `csv`.
 
 Every repository Markdown fence is a column-zero triple backtick fence with one explicit canonical tag; raw HTML is not a language escape. In live Markdown, `Composition` and `Variables` each contain exactly one mapping in the line-oriented, JSON-value subset of TOML 1.1.0: lowercase bare keys, single-component tables, no escapes, and no duplicate table or key. Mermaid starts with `stateDiagram-v2` or `flowchart`; CSV uses minimal quoting and LF. E7 enforces those rules across all Markdown, parses TOML, JSON, and CSV, checks Mermaid kind, and admits YAML only for Kubernetes manifests. It does not compile the remaining preferred languages or discharge §8.16.
+
+### 0f. Checker literals
+
+Closed lists and normative patterns live in the block below. `verifier/verify.py` loads that block and does not restate it. A model that writes a checker, a merger, or a trace tool at runtime loads the same block and writes the procedure from it. The generated procedure is not a second copy of the lists.
+
+| class | parent | where the list lives |
+|---|---|---|
+| catalogue grammar, predicate labels, profile bounds, allowlists | this file | the block in this section |
+| trace carrier sets | [`systems/record-traces.md`](../systems/record-traces.md) | `### Carrier sets` |
+| bench line grammar | [`systems/use-bench.md`](../systems/use-bench.md) | section 3; this repository stores no bench program |
+| campaign runtime | [`systems/run-campaign.md`](../systems/run-campaign.md) | the manifest table; this repository stores no fleet program |
+
+The banner a checker compares is the first non-blank line of this file. E1 skips exactly `verifier/tests/fixtures/ext_disclaimer_fail/skip-disclaimer-banner.md`. The edge cap in §0d is `|V| + 1`, stored here as `edge_surplus_max` of 2 because a tree has `|V| - 1` edges. A bracketed HELM symbol matches `monomer_symbol` and is refused when it is an all-uppercase run of length at least `monomer_uppercase_run_min_length`. Polymer-index normalisation applies `helm_index_normalise` and replaces each matched digit run with `#`.
+
+```json
+{
+  "version": 2,
+  "root_keys": [
+    "version",
+    "pair",
+    "preclinical"
+  ],
+  "dictionaries": [
+    "pair",
+    "preclinical"
+  ],
+  "residues": "ACDEFGHIKLMNPQRSTVWY",
+  "prefixes": {
+    "binder": [
+      "aa:",
+      "helm:"
+    ],
+    "target": [
+      "uniprot:"
+    ],
+    "citation": [
+      "pmid:"
+    ]
+  },
+  "patterns": {
+    "aa": "^aa:[ACDEFGHIKLMNPQRSTVWY]+(/[ACDEFGHIKLMNPQRSTVWY]+)*$",
+    "uniprot": "^uniprot:((?:[OPQ][0-9][A-Z0-9]{3}[0-9])|(?:[A-NR-Z][0-9](?:[A-Z][A-Z0-9]{2}[0-9]){1,2}))(?:-[1-9]\\d*)?$",
+    "pmid": "^pmid:(?:0|[1-9]\\d*)$",
+    "helm_block": "^([A-Z]+)([0-9]+)\\{(.*)\\}$",
+    "helm_version": "V[0-9]+\\.[0-9]+",
+    "helm_index_normalise": "([A-Za-z\\]])([0-9]+)",
+    "monomer_symbol": "[A-Za-z0-9]+"
+  },
+  "monomer_uppercase_run_min_length": 2,
+  "forbidden_root_keys": [
+    "grade",
+    "grades",
+    "rank",
+    "ranks",
+    "ref",
+    "score",
+    "scores",
+    "status"
+  ],
+  "special_class": "special",
+  "folders": [
+    {
+      "folder": "skills",
+      "type": "resource.procedure",
+      "spec": "agent.skill"
+    },
+    {
+      "folder": "systems",
+      "type": "agent.system",
+      "spec": "fleet.campaign"
+    }
+  ],
+  "rejected_run_units": [
+    "agent.swarm",
+    "agent.fleet"
+  ],
+  "predicates": {
+    "1": [
+      "pure",
+      "UTF-8"
+    ],
+    "2": [
+      "pure",
+      "Final newline"
+    ],
+    "3": [
+      "pure",
+      "Root"
+    ],
+    "4": [
+      "pure",
+      "version"
+    ],
+    "5": [
+      "pure",
+      "Dictionary shape"
+    ],
+    "6": [
+      "pure",
+      "Canonical bytes"
+    ],
+    "7": [
+      "pure",
+      "aa: grammar and order"
+    ],
+    "8": [
+      "pure",
+      "helm: well-formedness"
+    ],
+    "8-scope": [
+      "pure",
+      "helm: block-type scope (PEPTIDE only)"
+    ],
+    "8-monomer": [
+      "pure",
+      "helm: monomer"
+    ],
+    "9": [
+      "pure",
+      "uniprot:"
+    ],
+    "10": [
+      "pure",
+      "pmid:"
+    ],
+    "11": [
+      "pure",
+      "Binder rows"
+    ],
+    "12": [
+      "pure",
+      "Target rows"
+    ],
+    "13": [
+      "pure",
+      "One molecule, one key"
+    ],
+    "14": [
+      "pure",
+      "Cross-prefix hygiene"
+    ],
+    "15": [
+      "pure",
+      "No duplicate triple"
+    ],
+    "16": [
+      "oracle",
+      "Inclusion and study type"
+    ],
+    "17": [
+      "pure",
+      "Forbidden writes"
+    ],
+    "18": [
+      "pure",
+      "Empty catalogue"
+    ],
+    "19": [
+      "relational",
+      "Add-only"
+    ]
+  },
+  "extensions": {
+    "E1": [
+      "pure-ext",
+      "Disclaimer banner (every .md first non-blank line)"
+    ],
+    "E2": [
+      "pure-ext",
+      "Skill registry (skills <-> docs/follow-agent-contract.md section 10)"
+    ],
+    "E3": [
+      "online-ext",
+      "pmid: resolves via NCBI E-utilities (non-blocking)"
+    ],
+    "E4": [
+      "pure-ext",
+      "System registry (systems/*.md <-> docs/follow-agent-contract.md section 11)"
+    ],
+    "E5": [
+      "pure-ext",
+      "Identity line (docs/follow-agent-contract.md section 0c)"
+    ],
+    "E6": [
+      "pure-ext",
+      "Live Markdown scientific profile and navigable DAG"
+    ],
+    "E7": [
+      "pure-ext",
+      "Markdown formal language profile"
+    ]
+  },
+  "e1_allowlist": [
+    "verifier/tests/fixtures/ext_disclaimer_fail/skip-disclaimer-banner.md"
+  ],
+  "untracked_dirs": [
+    ".git",
+    ".pytest_cache",
+    "__pycache__",
+    ".mypy_cache",
+    ".ruff_cache"
+  ],
+  "e5_spec_allowlist": [
+    "verifier/tests/fixtures/ext_registry_fail/skills/exercise-special-scope.md",
+    "verifier/tests/fixtures/ext_registry_ok/skills/exercise-special-scope.md"
+  ],
+  "e6": {
+    "fixture_paths": [
+      "verifier/tests/fixtures/ext_disclaimer_fail/docs/follow-agent-contract.md",
+      "verifier/tests/fixtures/ext_disclaimer_fail/skip-disclaimer-banner.md",
+      "verifier/tests/fixtures/ext_disclaimer_ok/docs/follow-agent-contract.md",
+      "verifier/tests/fixtures/ext_disclaimer_ok/record-fixture-notes.md",
+      "verifier/tests/fixtures/ext_registry_fail/docs/follow-agent-contract.md",
+      "verifier/tests/fixtures/ext_registry_fail/skills/exercise-special-scope.md",
+      "verifier/tests/fixtures/ext_registry_fail/skills/leave-unregistered.md",
+      "verifier/tests/fixtures/ext_registry_ok/docs/follow-agent-contract.md",
+      "verifier/tests/fixtures/ext_registry_ok/skills/exercise-special-scope.md"
+    ],
+    "root": "docs/read-repository.md",
+    "sink": "systems/run-campaign.md",
+    "root_max_bytes": 4096,
+    "edge_surplus_max": 2,
+    "section_names": [
+      "Specification",
+      "Graph",
+      "Composition",
+      "Indications",
+      "Contraindications",
+      "Algorithm",
+      "Citations",
+      "Falsification",
+      "Licence"
+    ],
+    "card_fields": [
+      "id",
+      "type",
+      "role",
+      "reads",
+      "writes",
+      "must",
+      "check"
+    ],
+    "card_value_max_bytes": 128,
+    "card_max_bytes": 2048,
+    "description_max_sentences": 3,
+    "description_max_bytes": 384
+  },
+  "e7": {
+    "fence_tags": [
+      "bash",
+      "bend",
+      "csv",
+      "dockerfile",
+      "javascript",
+      "json",
+      "lean",
+      "mermaid",
+      "python",
+      "r",
+      "rust",
+      "stl",
+      "svg",
+      "tex",
+      "text",
+      "tla",
+      "toml",
+      "typescript",
+      "wolfram",
+      "yaml"
+    ],
+    "mermaid_kinds": [
+      "stateDiagram-v2",
+      "flowchart"
+    ]
+  }
+}
+```
 
 ### 1. Purpose
 
@@ -272,7 +549,7 @@ Implement from this section alone. Tags: **pure** = decidable from one file's by
 8. **[pure] `helm:` well-formedness.** Payload is bare HELM1/HELM2, optionally with a version suffix such as `V2.0` after the `$…$` sections.
    - Polymer blocks separated by `|`, each `<TYPE><index>{<monomers>}`; `index` a positive integer without leading zeros.
    - `TYPE` is `PEPTIDE`, the only admissible block type. **Per block, not per molecule:** `PEPTIDE1|PEPTIDE2|PEPTIDE3|PEPTIDE4` is valid; one non-`PEPTIDE` block invalidates the key.
-   - `{<monomers>}` non-empty, dot-separated; each monomer one uppercase standard residue or a bracketed symbol `[...]`.
+   - `{<monomers>}` non-empty, dot-separated; each monomer one uppercase standard residue or a bracketed symbol `[...]`. A bracketed inner token is a monomer when it matches §0f `monomer_symbol` and is not an all-uppercase run of length at least `monomer_uppercase_run_min_length`. `[CCO]` fails that rule.
    - After the polymer section: `$<connections>$<groupings>$<ext>$`. `$` opens connections; it is not a polymer separator.
    - **Invalid:** `{}`; SMILES or other non-monomer text inside `PEPTIDE{…}`; ASCII control characters or NUL anywhere; a wholly non-HELM payload.
    - Two refusals, two predicates: a non-`PEPTIDE` block fails **scope**; `[CCO]` inside `PEPTIDE1{…}` fails **monomer**. Do not collapse them.
@@ -281,7 +558,7 @@ Implement from this section alone. Tags: **pure** = decidable from one file's by
 10. **[pure] `pmid:`.** Every citation matches §3.
 11. **[pure] Binder rows.** In each dictionary, every binder maps to a non-empty object with ≥1 target key.
 12. **[pure] Target rows.** Inner keys satisfy §3; values are non-empty arrays, sorted, duplicate-free, elements satisfying condition 10.
-13. **[pure] One molecule, one key.** Across both dictionaries. Decidable identity: (a) two `aa:` keys are the same molecule iff their sorted chain multisets are equal; (b) two `helm:` keys iff their payloads are equal after normalising polymer index digits only; (c) an `aa:` and a `helm:` key denoting the same plain L-chain sequence are the same molecule and only the `aa:` form is valid. No two distinct binder keys in `pair` or `preclinical` may share a molecule.
+13. **[pure] One molecule, one key.** Across both dictionaries. Decidable identity: (a) two `aa:` keys are the same molecule iff their sorted chain multisets are equal; (b) two `helm:` keys iff their payloads are equal after normalising polymer index digits only (§0f `helm_index_normalise`, each matched digit run replaced by `#`); (c) an `aa:` and a `helm:` key denoting the same plain L-chain sequence are the same molecule and only the `aa:` form is valid. No two distinct binder keys in `pair` or `preclinical` may share a molecule.
 14. **[pure] Cross-prefix hygiene.** No role's prefix on another role's key; citations only inside citation arrays.
 15. **[pure] No duplicate triple.** No `(binder, target, pmid)` triple appears in both `pair` and `preclinical`.
 16. **[oracle] Inclusion and study type.** Every `(binder, target, pmid)` triple satisfies §4, in the dictionary it occupies. Requires reading the paper. **No verifier run and no automated intake discharges this condition.**
