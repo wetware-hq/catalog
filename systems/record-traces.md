@@ -84,6 +84,24 @@ stateDiagram-v2
     Partial --> [*]
 ```
 
+```mermaid
+flowchart LR
+    Core[core.trace] --> Lines[Worker lines]
+    Lines --> Head[Admitted head]
+    Head --> Decide[First failure or result]
+```
+
+```csv
+operator,law
+controls,keep oracle not-discharged and bounds equal to the core
+design,admit a line only when hash fields and parent match
+transport,merge worker files by set union on id
+stopping,return the first failure from R1 through R10
+search,resolve each parent inside the admitted head
+filters,reject scores tiers and unknown acts
+recovery,partial refuses the line and result does not repair it
+```
+
 ### 0. Lines
 
 A file is UTF-8. A file that is not valid UTF-8, or that contains a NUL or a carriage return, is refused. No byte is rewritten as U+FFFD.

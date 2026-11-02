@@ -24,7 +24,7 @@ Define the catalogue schema, evidence boundary, canonical bytes, merge law, read
 
 - → [../skills/resolve-key.md](../skills/resolve-key.md)
 - → [../systems/use-bench.md](../systems/use-bench.md)
-- → [pin-references.md](pin-references.md)
+- → [falsify.md](falsify.md)
 - ← [read-repository.md](read-repository.md)
 
 ## Composition
@@ -33,7 +33,7 @@ Define the catalogue schema, evidence boundary, canonical bytes, merge law, read
 law = ["0", "0b", "0c", "0d", "0e", "1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "11"]
 graph = "Graph section; reciprocal relative paths; read before"
 registry = ["10 Skills", "11 Systems"]
-embeds = ["toml", "mermaid", "json", "GFM structural tables"]
+embeds = ["toml", "json", "csv", "stateDiagram-v2", "flowchart", "GFM tables"]
 ```
 
 ## Indications
@@ -88,6 +88,29 @@ flowchart LR
     C --> A[Add-only successor]
 ```
 
+```mermaid
+stateDiagram-v2
+    [*] --> Pure
+    Pure --> Refuse: predicate fails
+    Pure --> Oracle: paper required
+    Pure --> Canonical: checks hold
+    Oracle --> Canonical: human reads
+    Oracle --> Refuse: study type unknown
+    Canonical --> [*]
+    Refuse --> [*]
+```
+
+```csv
+operator,law
+controls,version 2 and canonical bytes stay fixed
+design,separate pair from preclinical by study type
+transport,proposals.json then a reader into graph.json
+stopping,halt when a predicate fails or the oracle is required
+search,resolve keys and rank inside one dictionary
+filters,refuse bad grammar scope and duplicate triples
+recovery,retry unavailable and never cache it as unresolved
+```
+
 ### 0. Scope
 
 - **Read:** `graph.json`, `docs/*.md`, `skills/*.md`, `systems/*.md` (§11), `verifier/`, `.github/workflows/`, `LICENSE`.
@@ -111,7 +134,7 @@ Every file in `skills/` and `systems/` names itself once, in the header, before 
 | `skills/` | a `resource.procedure`, spec `agent.skill`. The one skill §10 marks `special` also says so. The others do not. |
 | `systems/` | an `agent.system`, spec `fleet.campaign`. No class. |
 
-`agent.skill` is the spec of a procedure. `fleet.campaign` is the spec of one run. `agent.swarm` and `agent.fleet` are not specs and not types. A header outside these two directories that carries either spec fails E5: that file is an orphan. The checker skips exactly two registry fixtures, `verifier/tests/fixtures/ext_registry_fail/skills/exercise-special-scope.md` and `verifier/tests/fixtures/ext_registry_ok/skills/exercise-special-scope.md`. They declare the skill spec so E2 can be tested, and they are not skills of this contract. Those two paths are `e5_spec_allowlist` in §0f, which is what the checker loads. The campaign runtime is the Markdown specification [`systems/run-campaign.md`](../systems/run-campaign.md); no repository-local fleet executable is a hidden second contract. The four strings, and the ordinary words next to them, are set out in §11.
+`agent.skill` is the spec of a procedure. `fleet.campaign` is the spec of one run. `agent.swarm` is the spec of the falsifier [`falsify.md`](falsify.md), and of no other file. A header on any other path that carries `agent.swarm` fails E5. `agent.fleet` is not a spec and not a type. A header that carries it fails E5. A header outside `skills/` and `systems/` that carries `agent.skill` or `fleet.campaign` fails E5: that file is an orphan. The checker skips exactly two registry fixtures, `verifier/tests/fixtures/ext_registry_fail/skills/exercise-special-scope.md` and `verifier/tests/fixtures/ext_registry_ok/skills/exercise-special-scope.md`. They declare the skill spec so E2 can be tested, and they are not skills of this contract. Those two paths are `e5_spec_allowlist` in §0f, and `docs/falsify.md` is `e5_swarm_paths` in that same block, which is what the checker loads. The campaign runtime is the Markdown specification [`systems/run-campaign.md`](../systems/run-campaign.md); no repository-local fleet executable is a hidden second contract. The four strings, and the ordinary words next to them, are set out in §11.
 
 ### 0d. Scientific Markdown profile and documentation DAG
 
@@ -121,6 +144,10 @@ The header has exactly the banner block, one column-zero H1, an optional one-lin
 
 `Specification` contains one fenced JSON object of at most 2,048 UTF-8 bytes with these unique ordered fields: `id`, `type`, `role`, `reads`, `writes`, `must`, `check`. `id` is the repository-relative path; scalar values and array items are non-empty and at most 128 UTF-8 bytes, while `writes` may be an empty array. Outside fenced content, `Algorithm` contains `### Variables` followed by `### Process`, each exactly once. Every section is non-empty; the exact `Licence` body is one blank line followed by `MIT`.
 
+`Variables` names three TOML tables. `independent` is a factor the procedure sets. `dependent` is an outcome it records. `controlled` is a condition held fixed so it is not confounded with the factors. Each table has at least one assignment. `Process` carries one CSV law table with header `operator,law` and exactly these rows, in order: `controls`, `design`, `transport`, `stopping`, `search`, `filters`, `recovery`. Those operators are the fixed limits, the configuration chosen before the outcome, the movement of artifacts, the halt rule, the place searched, the hard exclusions, and the failure return. The same `Algorithm` section embeds one `stateDiagram-v2` statechart and one `flowchart` diagram. Those two Mermaid fences are the inline figures. JSON, TOML, and that CSV are the serialization. GFM tables compare rows for a reader. A derived view that only repeats the card or the neighbor list does not earn its tokens. None of these views overrides prose.
+
+`Falsification` names an observation that would contradict the claim. A pass, one stochastic sample, or a green check of a different predicate is not such an observation.
+
 The document graph is a directed read-before DAG rooted at `docs/read-repository.md`. `Graph` contains only a column-zero unordered list of relative neighbor links:
 
 - `← [relative.md](relative.md)` declares `neighbor → this file`.
@@ -128,7 +155,7 @@ The document graph is a directed read-before DAG rooted at `docs/read-repository
 
 Every edge is declared at both endpoints, so each file lists all and only its incoming and outgoing neighbors; labels equal canonical paths relative to that file and are path-sorted. The graph has one root and one sink, `systems/run-campaign.md`; it is root-reachable, acyclic, transitively reduced, and has at most `|V| + 1` edges. Self-edges, broken or external targets, annotations, duplicate local items, and one-sided declarations are invalid. Links elsewhere are not graph edges.
 
-The initialization file is at most 4,096 UTF-8 bytes. JSON cards and graph lists are canonical routing data; Mermaid, tables, figures, statecharts, and other fenced languages are derived explanatory views and never override prose law.
+The initialization file is at most 4,096 UTF-8 bytes. JSON cards and graph lists are canonical routing data. The CSV laws, statechart, and diagram are derived views and never override prose law.
 
 E6 checks the functional paragraph, H2 profile, JSON card, variable/process headings, MIT name, relative reciprocal links, single root and sink, reachability, acyclicity, edge budget, and transitive reduction. Representation sources are in `docs/pin-references.md`.
 
@@ -159,6 +186,13 @@ analyses = ".R"
 tables = ".csv"
 config = ".toml"
 
+[inline]
+serialization = ["json", "toml", "csv"]
+statecharts = "stateDiagram-v2"
+diagrams = "flowchart"
+figures = "mermaid"
+tables = ["gfm", "csv"]
+
 [prettification]
 equations = ".tex"
 blueprints_2d = ".svg"
@@ -169,7 +203,7 @@ animations = "Three.js"
 
 Canonical fence tags are `python`, `javascript`, `typescript`, `rust`, `bend`, `lean`, `tla`, `dockerfile`, `yaml` for Kubernetes manifests only, `wolfram`, `mermaid`, `json`, `r`, `csv`, `toml`, `tex`, `svg`, `stl`, `text`, and `bash`. GFM cards, registries, and comparison tables are Markdown structure; machine-consumed embedded tables use `csv`.
 
-Every repository Markdown fence is a column-zero triple backtick fence with one explicit canonical tag; raw HTML is not a language escape. In live Markdown, `Composition` and `Variables` each contain exactly one mapping in the line-oriented, JSON-value subset of TOML 1.1.0: lowercase bare keys, single-component tables, no escapes, and no duplicate table or key. Mermaid starts with `stateDiagram-v2` or `flowchart`; CSV uses minimal quoting and LF. E7 enforces those rules across all Markdown, parses TOML, JSON, and CSV, checks Mermaid kind, and admits YAML only for Kubernetes manifests. It does not compile the remaining preferred languages or discharge §8.16.
+Every repository Markdown fence is a column-zero triple backtick fence with one explicit canonical tag; raw HTML is not a language escape. In live Markdown, `Composition` and `Variables` each contain exactly one mapping in the line-oriented, JSON-value subset of TOML 1.1.0: lowercase bare keys, single-component tables, no escapes, and no duplicate table or key. Mermaid starts with `stateDiagram-v2` or `flowchart`; CSV uses minimal quoting and LF. Where live Markdown contains `### Process`, E7 requires the three variable tables, that seven-row CSV inside `Process`, and both Mermaid kinds inside `Algorithm`. E7 enforces fence tags across all Markdown, parses TOML, JSON, and CSV, checks Mermaid kind, and admits YAML only for Kubernetes manifests. It does not compile the remaining preferred languages or discharge §8.16.
 
 ### 0f. Checker literals
 
@@ -242,9 +276,10 @@ The banner a checker compares is the first non-blank line of this file. E1 skips
       "spec": "fleet.campaign"
     }
   ],
-  "rejected_run_units": [
-    "agent.swarm",
-    "agent.fleet"
+  "fleet_token": "agent.fleet",
+  "swarm_spec": "agent.swarm",
+  "e5_swarm_paths": [
+    "docs/falsify.md"
   ],
   "predicates": {
     "1": [
@@ -443,6 +478,20 @@ The banner a checker compares is the first non-blank line of this file. E1 skips
     "mermaid_kinds": [
       "stateDiagram-v2",
       "flowchart"
+    ],
+    "variable_tables": [
+      "independent",
+      "dependent",
+      "controlled"
+    ],
+    "process_operators": [
+      "controls",
+      "design",
+      "transport",
+      "stopping",
+      "search",
+      "filters",
+      "recovery"
     ]
   }
 }
@@ -609,13 +658,13 @@ The reader-facing warning is therefore not carried by a path either. It is carri
 
 #### Terms
 
-`agent.skill`, `fleet.campaign`, `agent.swarm`, and `agent.fleet` are four strings. This contract uses the first as the spec of a procedure and the second as the spec of one run. Retrieved 31 Oct 2026 (Australia/Sydney). Re-checked 1 Nov 2026 (Australia/Sydney): Wikidata last revisions Q529909 `2516060604`, Q863960 `2515886205`, Q47311934 `2520618032`, Q205961 `2541591399`, and Q831663 `2552201427` were unchanged. `wbsearchentities` for `agent.skill`, `fleet.campaign`, `agent.fleet`, and `agent.swarm`, language `en`, limit 10, each returned an empty `search` array. arXiv:2502.14743 was still v2, arXiv:2411.11616 was still v2, and arXiv:2510.10379 was still v1. The three PDF byte hashes matched the pins below. The ten arXiv ids in `docs/pin-references.md` were still at the versions pinned there; those PDFs were not re-downloaded. The Wikidata items are live entities, pinned by last revision, with no byte hash. Each arXiv row is pinned by versioned id plus the SHA-256 of the PDF bytes downloaded that day from `https://arxiv.org/pdf/<id>`. A quoted sentence was read off that PDF's text layer (`pdftotext -layout`, poppler 24.02.0). The remainder of each paper was not read for this repository. These records describe the ordinary words. They do not replace the sentences below.
+`agent.skill`, `fleet.campaign`, `agent.swarm`, and `agent.fleet` are four strings. This contract uses the first as the spec of a procedure, the second as the spec of one run, and `agent.swarm` as the spec of the falsifier `docs/falsify.md`. Retrieved 31 Oct 2026 (Australia/Sydney). Re-checked 1 Nov 2026 (Australia/Sydney): Wikidata last revisions Q529909 `2516060604`, Q863960 `2515886205`, Q47311934 `2520618032`, Q205961 `2541591399`, and Q831663 `2552201427` were unchanged. `wbsearchentities` for `agent.skill`, `fleet.campaign`, `agent.fleet`, and `agent.swarm`, language `en`, limit 10, each returned an empty `search` array. arXiv:2502.14743 was still v2, arXiv:2411.11616 was still v2, and arXiv:2510.10379 was still v1. The three PDF byte hashes matched the pins below. The ten arXiv ids in `docs/pin-references.md` were still at the versions pinned there; those PDFs were not re-downloaded. The Wikidata items are live entities, pinned by last revision, with no byte hash. Each arXiv row is pinned by versioned id plus the SHA-256 of the PDF bytes downloaded that day from `https://arxiv.org/pdf/<id>`. A quoted sentence was read off that PDF's text layer (`pdftotext -layout`, poppler 24.02.0). The remainder of each paper was not read for this repository. These records describe the ordinary words. They do not replace the sentences below.
 
 **`agent.skill` is a procedure.** It is the spec on every skill in §10. It is not a run. Wikidata `wbsearchentities` for `agent.skill`, language `en`, limit 5, returned an empty `search` array on this retrieval. The ordinary word is [Q205961](https://www.wikidata.org/wiki/Q205961), English label "skill", English description "learned ability and competence to carry out an action", last revision 2541591399, modified 2026-09-07T08:25:55Z.
 
 **`fleet.campaign` is one run.** It is the spec on every system in the table below. The run has one core. `run` is the SHA-256 of `core.trace`. That file carries `bound-n` and `bound-tok`. The run ends on one `halt`. `core.bench` hashes its own bytes, and the executor writes this `run` into that file as the parameter `trace`. Workers that append bench lines or trace lines are members of that run. Set-union merge with no coordinator is a property of the bench store inside the run. Wikidata `wbsearchentities` for `fleet.campaign`, language `en`, limit 5, returned an empty `search` array on this retrieval.
 
-**`agent.swarm` is not a spec and not a type.** No header in this tree names it as either. A run of this contract is a `fleet.campaign`.
+**`agent.swarm` is the spec of a falsifier.** The only header that carries it is `docs/falsify.md`. It is not a run and not a type. A run of this contract is a `fleet.campaign`. A header on any other path that carries `agent.swarm` fails E5. Dropping the spec from the falsifier fails E5.
 
 **`agent.fleet` is not a spec and not a type.** The folder sort retired it. A header that carries it fails E5. The name of the run is `fleet.campaign`. The members of that run are its workers. Wikidata `wbsearchentities` for `agent.fleet`, language `en`, limit 10, returned an empty `search` array on this retrieval, the same result as the query for `agent.swarm`.
 
@@ -628,7 +677,7 @@ The reader-facing warning is therefore not carried by a path either. It is carri
 - [Q47311934](https://www.wikidata.org/wiki/Q47311934), English label "fleet", English description "group of vehicles operated by an organization", last revision 2520618032, modified 2026-07-21T11:05:03Z. Subclass of [Q16887380](https://www.wikidata.org/wiki/Q16887380) "group". arXiv:2510.10379v1 (Gupta, Asbery, Merchant, Anwar, Thomason), byte sha256 `e6494d40cf75e7cdc60cd7713960f58e30b515b144b243d580feb690148e79d8`. System Design, read off that PDF: "At its core, the system employs a centralized fleet manager that orchestrates robot operations through a planning and allocation framework."
 - [Q831663](https://www.wikidata.org/wiki/Q831663), English label "military campaign", English alias "campaign", English description "large scale, long duration, significant military strategy plan", last revision 2552201427, modified 2026-10-02T15:17:09Z.
 
-A procedure of this contract is an `agent.skill`. A run of this contract is one `fleet.campaign`: one core, one hash, bounds, one halt. Q205961 is a learned ability. Q863960 is collective behaviour of decentralized, self-organized systems, in the item's own spelling. Q47311934 is a group of vehicles operated by an organization. Q831663 is a military campaign. arXiv:2510.10379v1 describes a centralized fleet manager. Those items remain different objects from the procedure and from the run.
+A procedure of this contract is an `agent.skill`. A run of this contract is one `fleet.campaign`: one core, one hash, bounds, one halt. A falsifier of this contract is `docs/falsify.md`, spec `agent.swarm`. Q205961 is a learned ability. Q863960 is collective behaviour of decentralized, self-organized systems, in the item's own spelling. Q47311934 is a group of vehicles operated by an organization. Q831663 is a military campaign. arXiv:2510.10379v1 describes a centralized fleet manager. Those items remain different objects from the procedure, from the run, and from the falsifier.
 
 | system | what it holds | write scope |
 |---|---|---|
@@ -652,9 +701,12 @@ A procedure of this contract is an `agent.skill`. A run of this contract is one 
 | [MCP `2026-07-28` at `5f5440b`](https://github.com/modelcontextprotocol/modelcontextprotocol/tree/5f5440bb26a62e2cf3440b92da5a667efa03b267) | MCP separates host, client, server, tools, resources, and prompts | MCP does not define this internal campaign topology |
 | [A2A `v1.0.1` at `3303592`](https://github.com/a2aproject/A2A/tree/3303592588e388e62e0f69f701af531d2f4e3991) | Agent Cards describe services; Tasks carry state; Artifacts carry outputs | A2A `AgentSkill` metadata is not an Agent Skills package |
 | [MAST, arXiv:2503.13657v3](https://arxiv.org/abs/2503.13657v3) | observed multi-agent failures include system design, inter-agent, and verification failures | its taxonomy is not exhaustive or biomedical validation |
-| [NIST conformance guidance](https://www.nist.gov/itl/ai/applied-ai-research-group/what-thing-called-conformance) | a failed falsification proves nonconformance; passing tests prove only checked assertions | supports, but does not widen, predicates 1–19 and E1–E6 |
+| [NIST conformance guidance](https://www.nist.gov/itl/ai/applied-ai-research-group/what-thing-called-conformance) | a failed falsification proves nonconformance; passing tests prove only checked assertions | supports, but does not widen, predicates 1–19 and E1–E7 |
+| [Swarm Skills, arXiv:2605.10052v2 HTML](https://arxiv.org/abs/2605.10052v2) | a portable skill can describe a workflow DAG, including with Mermaid, apart from a runtime | HTML of §5.1.2 read 3 Nov 2026 (Australia/Sydney); no PDF hash; does not define this `agent.swarm` |
+| [Sequential stopping, arXiv:2509.21734v3 HTML](https://arxiv.org/abs/2509.21734v3) | stop when terminal reward meets expected continuation value; a fixed threshold is myopic | abstract read from HTML the same day; no PDF hash; not a clinical protocol and not this halt rule |
+| [Falsifiability](https://en.wikipedia.org/wiki/Falsifiability) | a claim is falsifiable when its language can describe a contradicting observation | lead read 3 Nov 2026 (Australia/Sydney); living page; no Popper edition; verification is not corroboration |
 
-Retrieved 1 Nov 2026 (Australia/Sydney). Exact artifact pins, hashes, extraction commands, and read status live in [`pin-references.md`](pin-references.md); external terminology never overrides the local definitions above.
+Rows that do not name 3 Nov 2026 were retrieved 1 Nov 2026 (Australia/Sydney). Exact artifact pins otherwise live in [`pin-references.md`](pin-references.md). External terminology never overrides the local definitions above.
 
 ## Falsification
 
@@ -667,8 +719,9 @@ Retrieved 1 Nov 2026 (Australia/Sydney). Exact artifact pins, hashes, extraction
 | Add an unregistered skill or system | E2 or E4 fails |
 | Label a prediction as a paper-backed row | pure checks may pass; predicate 16 remains explicitly undischarged |
 | Re-run a stochastic agent once and call it reliable | no contract predicate supports that inference |
+| Run the workers in [`falsify.md`](falsify.md) | a survivor falsifies that prediction; a catch is not clinical proof |
 
-Run `python3 verifier/tests/test_verify.py`, `python3 verifier/verify.py graph.json --repo .`, and—when a predecessor exists—`python3 verifier/verify.py --prev OLD.json graph.json`. A green result is scoped evidence, never proof of clinical truth.
+Run `python3 verifier/tests/test_verify.py`, `python3 verifier/verify.py graph.json --repo .`, and—when a predecessor exists—`python3 verifier/verify.py --prev OLD.json graph.json`. The falsifier is `cargo run --manifest-path falsifier/Cargo.toml --locked`. A green result is scoped evidence, never proof of clinical truth.
 
 ## Licence
 

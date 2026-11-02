@@ -111,7 +111,9 @@ _SPEC_FOLDER = {spec: folder for folder, _typ, spec in _FOLDERS}
 _SKILLS_DIR = _SPEC_FOLDER["agent.skill"]
 _SYSTEMS_DIR = _SPEC_FOLDER["fleet.campaign"]
 _SYSTEM_PATH_RE = re.compile(rf"{re.escape(_SYSTEMS_DIR)}/[A-Za-z0-9._-]+\.md")
-_REJECTED_RUN_UNITS = tuple(_LIT["rejected_run_units"])
+_FLEET_TOKEN = _LIT["fleet_token"]
+_SWARM_SPEC = _LIT["swarm_spec"]
+E5_SWARM_PATHS = tuple(_LIT["e5_swarm_paths"])
 E1_ALLOWLIST = tuple(_LIT["e1_allowlist"])
 _UNTRACKED_DIRS = tuple(_LIT["untracked_dirs"])
 E5_SPEC_ALLOWLIST = tuple(_LIT["e5_spec_allowlist"])
@@ -130,6 +132,8 @@ E6_DESCRIPTION_MAX_SENTENCES = _E6["description_max_sentences"]
 E6_DESCRIPTION_MAX_BYTES = _E6["description_max_bytes"]
 E7_FENCE_TAGS = frozenset(_LIT["e7"]["fence_tags"])
 E7_MERMAID_KINDS = tuple(_LIT["e7"]["mermaid_kinds"])
+E7_VARIABLE_TABLES = tuple(_LIT["e7"]["variable_tables"])
+E7_PROCESS_OPERATORS = tuple(_LIT["e7"]["process_operators"])
 
 TRACE_SKILLS = tuple(_TRACE["skills"])
 TRACE_ACTS = {key: frozenset(items) for key, items in _TRACE["acts"].items()}
@@ -1239,12 +1243,16 @@ def check_system_registry(repo_dir, rep):
     rep.add("E4", not problems, problems)
 
 
-# Header lines named in docs/follow-agent-contract.md section 0c. agent.swarm and agent.fleet are
-# refused as a spec or a type. The markdown may use either word when it says that string is neither.
+# Header lines named in docs/follow-agent-contract.md section 0c.
+# agent.swarm is the falsifier spec, and only the exact paths in E5_SWARM_PATHS may carry it.
+# agent.fleet is refused as a spec or a type. The markdown may still name either string
+# when it says what that string is.
 _IDENTITY_TYPE_RE = re.compile(r"`type:\s*([^`]+?)`")
 _IDENTITY_SPEC_RE = re.compile(r"`spec:\s*([^`]+?)`")
 _IDENTITY_CLASS_RE = re.compile(r"`class:\s*([^`]+?)`")
-# Registry fixtures and rejected run units are loaded from the checker-literals block.
+# Swarm paths, the fleet token, and registry fixtures are loaded from the checker-literals block.
+# test_E5_agent_swarm_is_only_the_falsifier fails when the swarm path drifts from the header
+# that actually declares agent.swarm.
 # test_E5_spec_allowlist_is_the_only_outside_specs fails when an entry no longer declares one,
 # and when any other markdown declares one.
 
@@ -1258,8 +1266,8 @@ def check_identity(repo_dir, rep):
 
     skills/ are resource.procedure with spec agent.skill. systems/ are agent.system with spec
     fleet.campaign. A header outside those two directories that carries either spec is an orphan,
-    except the exact paths in E5_SPEC_ALLOWLIST. agent.swarm and agent.fleet are refused as a spec
-    or a type.
+    except the exact paths in E5_SPEC_ALLOWLIST. agent.swarm is the falsifier spec on
+    E5_SWARM_PATHS only. agent.fleet is refused as a spec or a type.
     """
     problems = []
 
@@ -1271,10 +1279,18 @@ def check_identity(repo_dir, rep):
             problems.append(f"{rel}: unreadable ({exc})")
             return ""
 
-    def reject_run_unit(rel, types, specs):
-        for token in _REJECTED_RUN_UNITS:
-            if token in types or token in specs:
-                problems.append(f"{rel}: {token} is not a spec and not a type")
+    def reject_scope(rel, types, specs):
+        if _FLEET_TOKEN in types or _FLEET_TOKEN in specs:
+            problems.append(f"{rel}: agent.fleet is not a spec and not a type")
+        if rel in E5_SWARM_PATHS:
+            if _SWARM_SPEC in types:
+                problems.append(f"{rel}: agent.swarm is a spec, not a type")
+            if specs != [_SWARM_SPEC]:
+                problems.append(
+                    f"{rel}: falsifier spec {specs!r}, expected ['agent.swarm']")
+        elif _SWARM_SPEC in types or _SWARM_SPEC in specs:
+            problems.append(
+                f"{rel}: agent.swarm is the falsifier spec and is not valid here")
 
     for folder, expect_type, expect_spec in _FOLDERS:
         directory = os.path.join(repo_dir, folder)
@@ -1291,7 +1307,7 @@ def check_identity(repo_dir, rep):
             types = [t.strip() for t in _IDENTITY_TYPE_RE.findall(header)]
             specs = [s.strip() for s in _IDENTITY_SPEC_RE.findall(header)]
             classes = [c.strip() for c in _IDENTITY_CLASS_RE.findall(header)]
-            reject_run_unit(rel, types, specs)
+            reject_scope(rel, types, specs)
             if types != [expect_type]:
                 problems.append(f"{rel}: type {types!r}, expected {[expect_type]!r}")
             if specs != [expect_spec]:
@@ -1317,7 +1333,7 @@ def check_identity(repo_dir, rep):
         header = _identity_header(text)
         types = [t.strip() for t in _IDENTITY_TYPE_RE.findall(header)]
         specs = [s.strip() for s in _IDENTITY_SPEC_RE.findall(header)]
-        reject_run_unit(rel, types, specs)
+        reject_scope(rel, types, specs)
         for spec in specs:
             home = _SPEC_FOLDER.get(spec)
             if home:
@@ -1661,7 +1677,6 @@ def check_document_graph(repo_dir, rep):
     rep.add("E6", not problems, problems)
 
 
-
 def _e7_reject_json_constant(value):
     raise ValueError(f"non-JSON constant {value}")
 
@@ -1829,8 +1844,54 @@ def _e7_section_fences(lines, blocks, comment_lines, heading, level):
     return starts, ranges
 
 
+def _e7_toml_assignment_counts(body):
+    """Count assignments per table in the line-oriented TOML subset. Empty string is the root."""
+    counts = {}
+    section = ""
+    for line in body.split("\n"):
+        if not line:
+            continue
+        table = re.fullmatch(r"\[([a-z][a-z0-9_]*)\]", line)
+        if table:
+            section = table.group(1)
+            counts.setdefault(section, 0)
+            continue
+        if re.fullmatch(r"[a-z][a-z0-9_]* = .+", line):
+            counts[section] = counts.get(section, 0) + 1
+    return counts
+
+
+def _e7_process_csv_problem(body):
+    """The process law table is header operator,law and the seven operators in order."""
+    import csv
+    import io
+
+    try:
+        rows = list(csv.reader(io.StringIO(body), strict=True))
+    except csv.Error as exc:
+        return str(exc)
+    if not rows or rows[0] != ["operator", "law"]:
+        return "header must be operator,law"
+    got = []
+    for row in rows[1:]:
+        if len(row) != 2 or not row[1].strip():
+            return f"row {row!r} is not a non-empty law"
+        got.append(row[0])
+    if got != list(E7_PROCESS_OPERATORS):
+        return f"operators are {got!r}"
+    return None
+
+
+def _e7_mermaid_kind(body):
+    first = next((item.strip() for item in body.splitlines() if item.strip()), "")
+    for kind in E7_MERMAID_KINDS:
+        if first == kind or first.startswith(kind + " "):
+            return kind
+    return None
+
+
 def check_markdown_languages(repo_dir, rep):
-    """E7 [pure-ext]: explicit fence languages and canonical live-document TOML maps."""
+    """E7 [pure-ext]: fence languages, TOML maps, variable roles, and process figures."""
     import csv
     import io
 
@@ -1889,6 +1950,44 @@ def check_markdown_languages(repo_dir, rep):
                 if [block[2] for block in section_blocks] != ["toml"]:
                     problems.append(
                         f"{rel}: Variables at line {index + 1} must contain exactly one TOML block")
+                elif _e7_toml_problem(section_blocks[0][3]) is None:
+                    counts = _e7_toml_assignment_counts(section_blocks[0][3])
+                    missing = [name for name in E7_VARIABLE_TABLES if counts.get(name, 0) < 1]
+                    if missing:
+                        problems.append(
+                            f"{rel}: Variables at line {index + 1} must assign {missing!r}")
+
+            process_starts, process_ranges = _e7_section_fences(
+                lines, blocks, comment_lines, "### Process", 3)
+            if len(process_starts) > 1:
+                problems.append(
+                    f"{rel}: expected one ### Process section, found {len(process_starts)}")
+            elif len(process_starts) == 1:
+                csv_blocks = [block for block in process_ranges[0] if block[2] == "csv"]
+                if len(csv_blocks) != 1:
+                    problems.append(f"{rel}: Process must contain exactly one CSV law table")
+                else:
+                    why = _e7_process_csv_problem(csv_blocks[0][3])
+                    if why:
+                        problems.append(
+                            f"{rel}: line {csv_blocks[0][0]}: process laws ({why})")
+                algorithm_starts, algorithm_ranges = _e7_section_fences(
+                    lines, blocks, comment_lines, "## Algorithm", 2)
+                if len(algorithm_starts) != 1:
+                    problems.append(
+                        f"{rel}: expected one ## Algorithm section, found {len(algorithm_starts)}")
+                else:
+                    kinds = set()
+                    for block in algorithm_ranges[0]:
+                        if block[2] != "mermaid":
+                            continue
+                        kind = _e7_mermaid_kind(block[3])
+                        if kind:
+                            kinds.add(kind)
+                    missing = [kind for kind in E7_MERMAID_KINDS if kind not in kinds]
+                    if missing:
+                        problems.append(
+                            f"{rel}: Algorithm must embed mermaid kinds {missing!r}")
 
         for line, _last, tag, body in blocks:
             if not tag:

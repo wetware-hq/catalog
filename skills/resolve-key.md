@@ -84,6 +84,24 @@ stateDiagram-v2
     Enrich --> [*]
 ```
 
+```mermaid
+flowchart LR
+    Key[Key bytes] --> Admit[Admit]
+    Admit --> Lookup[Exact lookup]
+    Lookup --> Answer[Identity or verdict]
+```
+
+```csv
+operator,law
+controls,one named release and the CRC64 ISO polynomial
+design,admit on bytes before any lookup
+transport,one exact GET and no alignment
+stopping,refuse an ungrammatical key before the network
+search,checksum or accession equality only
+filters,drop non-protein monomers and non-ASCII keys
+recovery,return unavailable on 429 or 5xx and cache nothing
+```
+
 ### Folder contract (all skills here)
 
 Notation: one per folder. Blocks below are formal algorithms, not sample programs.
@@ -235,6 +253,7 @@ Live-service observations in the algorithm were retrieved 29 Oct 2026 (Australia
 | HTTP 429, timeout, or 5xx | `unavailable`; cache nothing |
 | multiple exact records | `unresolved`, never an arbitrary first hit |
 | catalogue has no row for a resolved target | catalogue absence, not resolve failure |
+| Treat the 29 Oct 2026 timing snapshot as a benchmark | those seconds are one path, not a standing rate |
 
 Break the implementation by collapsing `unresolved` and `unavailable`; the resulting cache writes outages as facts. Break it again by adding approximate alignment; the resolver can then return a different molecule than the key.
 

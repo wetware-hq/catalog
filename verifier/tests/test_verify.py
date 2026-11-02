@@ -385,7 +385,46 @@ def test_E5_rejects_agent_swarm_as_a_spec():
     })
     rep = V.Report(); V.check_identity(repo, rep)
     assert rep.findings[0].ok is False
-    assert any("agent.swarm is not a spec and not a type" in row for row in rep.findings[0].rows), rep.findings[0].rows
+    assert any("agent.swarm is the falsifier spec and is not valid here" in row for row in rep.findings[0].rows), rep.findings[0].rows
+
+
+def test_E5_agent_swarm_is_only_the_falsifier():
+    assert V.E5_SWARM_PATHS == ("docs/falsify.md",)
+    declared = []
+    for path in V._md_files(REPO_ROOT):
+        rel = V._relposix(path, REPO_ROOT)
+        header = V._identity_header(open(path, encoding="utf-8").read())
+        specs = [s.strip() for s in V._IDENTITY_SPEC_RE.findall(header)]
+        types = [t.strip() for t in V._IDENTITY_TYPE_RE.findall(header)]
+        if "agent.swarm" in specs or "agent.swarm" in types:
+            declared.append(rel)
+    assert declared == list(V.E5_SWARM_PATHS)
+    text = open(os.path.join(REPO_ROOT, "docs/falsify.md"), encoding="utf-8").read()
+    header = V._identity_header(text)
+    assert [s.strip() for s in V._IDENTITY_SPEC_RE.findall(header)] == ["agent.swarm"]
+    assert "agent.swarm" not in [t.strip() for t in V._IDENTITY_TYPE_RE.findall(header)]
+
+    repo = _tmp_repo("e5_swarm_ok", {"docs/falsify.md": text})
+    rep = V.Report(); V.check_identity(repo, rep)
+    assert rep.findings[0].ok is True, rep.findings[0].rows
+
+    repo = _tmp_repo("e5_swarm_copy", {"docs/other.md": text})
+    rep = V.Report(); V.check_identity(repo, rep)
+    assert rep.findings[0].ok is False
+    assert any("not valid here" in row for row in rep.findings[0].rows), rep.findings[0].rows
+
+    dropped = text.replace(" · `spec: agent.swarm`", "", 1)
+    repo = _tmp_repo("e5_swarm_drop", {"docs/falsify.md": dropped})
+    rep = V.Report(); V.check_identity(repo, rep)
+    assert rep.findings[0].ok is False
+    assert any("falsifier spec" in row for row in rep.findings[0].rows), rep.findings[0].rows
+
+    typed = text.replace(
+        "`type: resource.reference` · `spec: agent.swarm`", "`type: agent.swarm`", 1)
+    repo = _tmp_repo("e5_swarm_type", {"docs/falsify.md": typed})
+    rep = V.Report(); V.check_identity(repo, rep)
+    assert rep.findings[0].ok is False
+    assert any("agent.swarm is a spec, not a type" in row for row in rep.findings[0].rows), rep.findings[0].rows
 
 
 def test_E5_rejects_agent_fleet_as_a_spec():
@@ -997,6 +1036,81 @@ def test_E7_requires_toml_composition_and_variables():
     finding = _e7_finding(repo)
     assert finding.ok is False
     assert any("heading must be exactly" in row for row in finding.rows), finding.rows
+
+
+def _e7_profile_doc(csv_body, *, variables=None, mermaid=None):
+    if variables is None:
+        variables = (
+            'objective = "decide"\n\n'
+            '[independent]\nfactor = "set"\n\n'
+            '[dependent]\noutcome = "recorded"\n\n'
+            '[controlled]\nbound = "fixed"\n'
+        )
+    if mermaid is None:
+        mermaid = (
+            "```mermaid\nstateDiagram-v2\n[*] --> A\n```\n\n"
+            "```mermaid\nflowchart LR\nA --> B\n```\n"
+        )
+    return (
+        V.BANNER + "\n\n# profile\n\n"
+        "## Composition\n\n```toml\nname = \"fixture\"\n```\n\n"
+        "## Algorithm\n\n### Variables\n\n```toml\n" + variables + "```\n\n"
+        "### Process\n\n```csv\n" + csv_body + "```\n\n"
+        + mermaid
+    )
+
+
+_E7_LAWS = (
+    "operator,law\n"
+    "controls,hold\n"
+    "design,choose\n"
+    "transport,move\n"
+    "stopping,halt\n"
+    "search,look\n"
+    "filters,drop\n"
+    "recovery,retry\n"
+)
+
+
+def test_E7_requires_variable_roles_and_process_figures():
+    repo = _tmp_repo("e7_profile_ok", {"doc.md": _e7_profile_doc(_E7_LAWS)})
+    finding = _e7_finding(repo)
+    assert finding.ok is True, finding.rows
+
+    bare = (
+        'objective = "decide"\n\n'
+        '[independent]\nfactor = "set"\n\n'
+        '[dependent]\noutcome = "recorded"\n'
+    )
+    repo = _tmp_repo("e7_profile_vars", {"doc.md": _e7_profile_doc(_E7_LAWS, variables=bare)})
+    finding = _e7_finding(repo)
+    assert finding.ok is False
+    assert any("must assign ['controlled']" in row for row in finding.rows), finding.rows
+
+    swapped = _E7_LAWS.replace("filters,drop\nrecovery,retry\n", "recovery,retry\nfilters,drop\n")
+    repo = _tmp_repo("e7_profile_order", {"doc.md": _e7_profile_doc(swapped)})
+    finding = _e7_finding(repo)
+    assert finding.ok is False
+    assert any("operators are" in row for row in finding.rows), finding.rows
+
+    repo = _tmp_repo("e7_profile_law", {"doc.md": _e7_profile_doc(_E7_LAWS.replace("hold", ""))})
+    finding = _e7_finding(repo)
+    assert finding.ok is False
+    assert any("non-empty law" in row for row in finding.rows), finding.rows
+
+    repo = _tmp_repo("e7_profile_state", {
+        "doc.md": _e7_profile_doc(_E7_LAWS, mermaid="```mermaid\nflowchart LR\nA --> B\n```\n"),
+    })
+    finding = _e7_finding(repo)
+    assert finding.ok is False
+    assert any("stateDiagram-v2" in row for row in finding.rows), finding.rows
+
+    doubled = _e7_profile_doc(_E7_LAWS).replace(
+        "### Process\n", "### Process\n\n### Process\n", 1)
+    repo = _tmp_repo("e7_profile_two", {"doc.md": doubled})
+    finding = _e7_finding(repo)
+    assert finding.ok is False
+    assert any("one ### Process" in row for row in finding.rows), finding.rows
 
 
 def test_E7_reads_markdown_without_newline_normalization():

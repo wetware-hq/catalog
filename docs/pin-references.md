@@ -23,7 +23,7 @@ Pin external artifacts, extraction procedures, claim-level read status, and know
 ## Graph
 
 - → [../skills/design-binder.md](../skills/design-binder.md)
-- ← [follow-agent-contract.md](follow-agent-contract.md)
+- ← [falsify.md](falsify.md)
 
 ## Composition
 
@@ -43,9 +43,9 @@ graph = "Graph section"
 
 ## Contraindications
 
-All LLM and orchestration references below except row 9 measure reasoning, coding, chat, mathematics, or constructed agent tasks. They say nothing about molecular quality or clinical utility, and no cited source establishes a clinical benchmark for de novo binder design.
+Numbered rows below, except row 9, measure reasoning, coding, chat, mathematics, or constructed agent tasks. They say nothing about molecular quality or clinical utility, and no cited source establishes a clinical benchmark for de novo binder design.
 
-Do not infer source support from resolution, a digest match, venue acceptance, or an LLM summary. Do not treat a concept DOI, moving branch, unversioned arXiv identifier, or regenerated PDF byte hash as an exact claim pin.
+Do not infer source support from resolution, a digest match, venue acceptance, or an LLM summary. Do not treat a concept DOI, moving branch, unversioned arXiv identifier, or regenerated PDF byte hash as an exact claim pin. Sources read 3 Nov 2026 are documentation and stopping-rule conventions. They are not medical guidance, and none of them is a treatment protocol.
 
 ## Algorithm
 
@@ -80,6 +80,25 @@ stateDiagram-v2
     ReadClaim --> Record: ordinary claim
     SecondRead --> Record
     Record --> [*]
+```
+
+```mermaid
+flowchart LR
+    Id[Versioned id] --> Fetch[Retrieve]
+    Fetch --> Digest[Digest]
+    Digest --> Locus[Named locus]
+    Locus --> Claim[Bounded claim]
+```
+
+```csv
+operator,law
+controls,fix the extractor command and tool version
+design,pin version date and digest scope before a claim
+transport,carry the claim with its location and read status
+stopping,stop when the artifact or the hash cannot be reproduced
+search,resolve the versioned id then read only the named locus
+filters,reject unversioned ids and unread numbers
+recovery,re-pin on drift instead of repairing a hash
 ```
 
 #### Pinning rule
@@ -127,6 +146,9 @@ A bare arXiv or DOI identifier is not a pin. Record a versioned identifier, retr
 | [MP-Bench, arXiv:2603.25001v1](https://arxiv.org/abs/2603.25001v1) | failure attribution can admit multiple plausible step-level perspectives | claim-checked (abstract and comparison table) | 289 expert-annotated examples |
 | [NIST.AI.200-3](https://doi.org/10.6028/NIST.AI.200-3) | evaluation plans can combine automated tests, red teaming, and realistic user tests | claim-checked (abstract and §3) | planning framework, not one conformance score |
 | [NIST conformance guidance](https://www.nist.gov/itl/ai/applied-ai-research-group/what-thing-called-conformance) | falsification can prove nonconformance while passing tests prove only checked assertions | claim-checked (falsification section) | does not discharge semantic or clinical oracles |
+| [Swarm Skills, arXiv:2605.10052v2](https://arxiv.org/abs/2605.10052v2) | §5.1.2: workflow.md may describe the task DAG in Mermaid; the format is not a runtime | claim-checked (HTML §5.1.2) on 3 Nov 2026; no PDF hash | does not define this repository's `agent.swarm` |
+| [Sequential stopping, arXiv:2509.21734v3](https://arxiv.org/abs/2509.21734v3) | abstract: stop when terminal reward is at least expected continuation value; a fixed threshold is myopic | claim-checked (HTML abstract) on 3 Nov 2026; no PDF hash | not a clinical protocol and not a halt rule of this repository |
+| [Falsifiability](https://en.wikipedia.org/wiki/Falsifiability) | lead: falsifiable means the language can describe a contradicting observation; verification has no value in itself | claim-checked (lead) on 3 Nov 2026; living page | no Popper edition pin; not medical guidance |
 
 
 ### Row 9 — supported claims from the binder meta-analysis
@@ -223,13 +245,13 @@ Every row's refereed status was re-derived on 30 Oct 2026 from the arXiv API `jo
 - **Rows 3 and 4 are different papers and are now separate rows.** "Inverse Scaling in Test-Time Compute" (Gema et al., arXiv:2507.14417, TMLR 12/2025) finds that *extending* reasoning length *degrades* accuracy. "Scaling LLM Test-Time Compute Optimally…" (Snell et al., arXiv:2408.03314, ICLR 2025 Oral) finds that *optimally allocated* test-time compute beats a 14× larger model. The findings point in opposite directions, the titles are a page apart in any search, and the venues (TMLR 12/2025 vs ICLR 2025 Oral) are easily swapped. They were confused in an earlier draft of this table; they are not confused here.
 - **Statuses corrected in this revision:** row 3 is refereed (TMLR 12/2025, Featured + J2C Certification), not an unrefereed preprint. Row 11 (Large Language Monkeys) is **not** refereed — its ICLR 2025 submission is recorded as rejected, so "status unestablished" beyond preprint. Row 9 is an unrefereed bioRxiv preprint.
 - **Where a format or date could not be confirmed it is written as unestablished rather than guessed:** row 1's presentation format (spotlight vs poster, sources disagree), row 10's TMLR issue date, row 11's venue.
-- No row in this file asserts a venue, date, author, number or hash that was not read off a source retrieved on 30 Oct 2026.
+- No numbered row asserts a venue, date, author, number or hash that was not read off a source retrieved on 30 Oct 2026. Later agent-system rows name their own retrieval and do not borrow that date.
 
 ### Status
 
 This table was compiled and verified by **automated retrieval**. Each row's resolution, version and hash is machine-checkable: the ids resolve, the versions are explicit, the arXiv byte hashes reproduce on re-download, and the one text-layer hash reproduces across two independent downloads under the exact command recorded beside it.
 
-The numbered table preserves its 30 Oct 2026 READ STATUS: **no human read those papers for this repo**, except row 9's marked second-read claims. The compact agent-system table records later, 1 Nov 2026 agent-assisted checks at explicit abstract, definition, table, or specification locations; those checks update the bounded documentation claims only and do not satisfy a human paper oracle.
+The numbered table preserves its 30 Oct 2026 READ STATUS: **no human read those papers for this repo**, except row 9's marked second-read claims. The compact agent-system table records 1 Nov 2026 agent-assisted checks at explicit abstract, definition, table, or specification locations, plus three HTML reads on 3 Nov 2026 that have no PDF byte hash. Those checks update bounded documentation claims only. They do not satisfy a human paper oracle, and they are not clinical guidance.
 
 Nothing in this file has had the oracle/admission step that `graph.json` entries require. **The existence of this file does not imply that step has happened.** A citation that resolves is not a citation that says what the citing text claims it says — this repo has already produced one worked example of exactly that failure, an attributed AUROC figure that was repeated three times and became load-bearing under a falsifier before anyone opened the paper, and which the source does not report.
 
