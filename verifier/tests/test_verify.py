@@ -385,7 +385,46 @@ def test_E5_rejects_agent_swarm_as_a_spec():
     })
     rep = V.Report(); V.check_identity(repo, rep)
     assert rep.findings[0].ok is False
-    assert any("agent.swarm is not a spec and not a type" in row for row in rep.findings[0].rows), rep.findings[0].rows
+    assert any("agent.swarm is the falsifier spec and is not valid here" in row for row in rep.findings[0].rows), rep.findings[0].rows
+
+
+def test_E5_agent_swarm_is_only_the_falsifier():
+    assert V.E5_SWARM_PATHS == ("docs/falsify.md",)
+    declared = []
+    for path in V._md_files(REPO_ROOT):
+        rel = V._relposix(path, REPO_ROOT)
+        header = V._identity_header(open(path, encoding="utf-8").read())
+        specs = [s.strip() for s in V._IDENTITY_SPEC_RE.findall(header)]
+        types = [t.strip() for t in V._IDENTITY_TYPE_RE.findall(header)]
+        if "agent.swarm" in specs or "agent.swarm" in types:
+            declared.append(rel)
+    assert declared == list(V.E5_SWARM_PATHS)
+    text = open(os.path.join(REPO_ROOT, "docs/falsify.md"), encoding="utf-8").read()
+    header = V._identity_header(text)
+    assert [s.strip() for s in V._IDENTITY_SPEC_RE.findall(header)] == ["agent.swarm"]
+    assert "agent.swarm" not in [t.strip() for t in V._IDENTITY_TYPE_RE.findall(header)]
+
+    repo = _tmp_repo("e5_swarm_ok", {"docs/falsify.md": text})
+    rep = V.Report(); V.check_identity(repo, rep)
+    assert rep.findings[0].ok is True, rep.findings[0].rows
+
+    repo = _tmp_repo("e5_swarm_copy", {"docs/other.md": text})
+    rep = V.Report(); V.check_identity(repo, rep)
+    assert rep.findings[0].ok is False
+    assert any("not valid here" in row for row in rep.findings[0].rows), rep.findings[0].rows
+
+    dropped = text.replace(" · `spec: agent.swarm`", "", 1)
+    repo = _tmp_repo("e5_swarm_drop", {"docs/falsify.md": dropped})
+    rep = V.Report(); V.check_identity(repo, rep)
+    assert rep.findings[0].ok is False
+    assert any("falsifier spec" in row for row in rep.findings[0].rows), rep.findings[0].rows
+
+    typed = text.replace(
+        "`type: resource.reference` · `spec: agent.swarm`", "`type: agent.swarm`", 1)
+    repo = _tmp_repo("e5_swarm_type", {"docs/falsify.md": typed})
+    rep = V.Report(); V.check_identity(repo, rep)
+    assert rep.findings[0].ok is False
+    assert any("agent.swarm is a spec, not a type" in row for row in rep.findings[0].rows), rep.findings[0].rows
 
 
 def test_E5_rejects_agent_fleet_as_a_spec():

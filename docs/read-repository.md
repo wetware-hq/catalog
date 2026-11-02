@@ -39,8 +39,9 @@ stop = "first sufficient route"
 | read or rank catalogue rows | [`follow-agent-contract.md`](follow-agent-contract.md) |
 | resolve a key | contract → [`resolve-key`](../skills/resolve-key.md) |
 | propose an evidenced pair | contract → [`resolve-key`](../skills/resolve-key.md) → [`propose-pairs`](../skills/propose-pairs.md) |
-| run de novo design | contract; [`pin-references`](pin-references.md) → [`design-binder`](../skills/design-binder.md) → [`record-traces`](../systems/record-traces.md); [`use-bench`](../systems/use-bench.md) → [`run-campaign`](../systems/run-campaign.md) |
+| run de novo design | contract → [`falsify`](falsify.md) → [`pin-references`](pin-references.md) → [`design-binder`](../skills/design-binder.md) → [`record-traces`](../systems/record-traces.md); [`use-bench`](../systems/use-bench.md) → [`run-campaign`](../systems/run-campaign.md) |
 | verify catalogue | contract → `python3 verifier/verify.py` |
+| falsify a claim | contract → [`falsify`](falsify.md) |
 | verify traces | contract + [`record-traces`](../systems/record-traces.md) → `python3 verifier/verify.py --trace` |
 
 Rows may stop at their endpoint; design lists the sink closure.
@@ -59,7 +60,7 @@ Rows may stop at their endpoint; design lists the sink closure.
 objective = "select the smallest sufficient read-before route"
 
 [independent]
-task = "read | resolve | propose | design | verify"
+task = "read | resolve | propose | design | verify | falsify"
 
 [dependent]
 route = "ordered Markdown path ending at the first sufficient node"
@@ -77,7 +78,8 @@ stateDiagram-v2
     Contract --> Read: catalogue query
     Contract --> Resolve: key query
     Resolve --> Propose: intake query
-    Contract --> Pins: de novo query
+    Contract --> Falsify: falsify query
+    Falsify --> Pins: de novo query
     Pins --> Design
     Design --> Trace
     Propose --> Trace

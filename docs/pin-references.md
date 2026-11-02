@@ -23,7 +23,7 @@ Pin external artifacts, extraction procedures, claim-level read status, and know
 ## Graph
 
 - → [../skills/design-binder.md](../skills/design-binder.md)
-- ← [follow-agent-contract.md](follow-agent-contract.md)
+- ← [falsify.md](falsify.md)
 
 ## Composition
 
