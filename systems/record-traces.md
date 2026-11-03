@@ -16,7 +16,7 @@ Define the content-addressed act log for one bounded `fleet.campaign` run and th
   "reads": ["core.trace", "worker trace heads", "carrier block in this file"],
   "writes": [".trace files outside the repository"],
   "must": ["derive ids from bytes", "end on one halt", "keep oracle not-discharged"],
-  "check": ["verifier/verify.py --trace", "R1-R10", "E4", "E5", "E6", "E7"]
+  "check": ["runtime falsifier trace judgement", "R1-R10", "E4", "E5", "E6", "E7"]
 }
 ```
 
@@ -134,7 +134,7 @@ The preimage of a line is that line with the id and the final newline removed. `
 
 ### 1. Allowed values
 
-The carrier block is the closed list. `verifier/verify.py` loads it and does not restate it. A model that writes a checker at runtime loads the same block. A token that is not in the block is refused.
+The carrier block is the closed list. The runtime falsifier loads it and does not restate it. A token that is not in the block is refused.
 
 ### Carrier sets
 
@@ -516,8 +516,8 @@ halt 9d2001abc00391ea2c66714740c2ba9ec5c279405495498f51a72db31be4d6a3 ^2f3f73356
 
 Licensed oversight is required for any use of this system; none has been performed to date.
 
-`verifier/verify.py --trace` decides this file and loads the carrier block in §1. It does not keep a second list.
-A campaign executor writes lines from this Markdown grammar and hands every completed run to that checker; no repository-local fleet
+The runtime falsifier decides this file and loads the carrier block in §1. It does not keep a second list.
+A campaign executor writes lines from this Markdown grammar and hands every completed run to that falsifier; no repository-local fleet
 program owns the write path. Extension predicate E4 decides the bijection between
 `docs/follow-agent-contract.md` §11 and the files `systems/*.md`. The identity line above is
 extension predicate E5 (`docs/follow-agent-contract.md` §0c). Neither decision is §8.16.
@@ -551,7 +551,7 @@ Retrieved 1 Nov 2026 (Australia/Sydney). These sources explain adjacent intercha
 | duplicate one molecule under `aa:` and plain-chain HELM | R9 |
 | copy a valid trace and assert its events occurred | no checker predicate supports the assertion |
 
-The witness above must continue to round-trip through `trace_emit` and return `result`; every mutation test must fail for its named reason.
+The witness above is a `result`. Every mutation in the table fails for its named reason.
 
 ## Licence
 

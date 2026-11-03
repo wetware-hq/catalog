@@ -196,20 +196,14 @@ Every sequence that leaves the run carries the repository disclaimer in its own 
 
 #### 5. Materialize and verify
 
-Write `core.bench`, `core.trace`, and one worker head per participating component outside the repository under `systems/use-bench.md` and `systems/record-traces.md`. A failed control records a `refuse` act with gate `positive-control`, then one `halt`; an unavailable provider records `unavailable` at `generator`. Verify every completed trace with:
+Write `core.bench`, `core.trace`, and one worker head per participating component outside the repository under `systems/use-bench.md` and `systems/record-traces.md`. A failed control records a `refuse` act with gate `positive-control`, then one `halt`; an unavailable provider records `unavailable` at `generator`. The runtime falsifier written from [`docs/falsify.md`](../docs/falsify.md) decides every completed trace. The command below is an example of that program's surface. It is not a path in this repository.
 
 ```bash
-python3 verifier/verify.py --trace /path/to/core.trace /path/to/worker.trace
+# Example only. The runtime is written outside this repository.
+falsify --trace /path/to/core.trace /path/to/worker.trace
 ```
 
-Run repository conformance checks with:
-
-```bash
-python3 verifier/tests/test_verify.py
-python3 verifier/verify.py graph.json --repo .
-```
-
-There is intentionally no fleet-runtime unit suite: the runtime is this Markdown contract, and provider execution is evidenced by its materialized requests, responses, control result, and trace rather than by mocks of a removed hardcoded client.
+This repository ships no unit suite and no committed checker. Repository predicates are that same runtime program reading the contract. There is intentionally no fleet-runtime unit suite: the runtime is this Markdown contract, and provider execution is evidenced by its materialized requests, responses, control result, and trace rather than by mocks of a removed hardcoded client.
 
 ## Citations
 
