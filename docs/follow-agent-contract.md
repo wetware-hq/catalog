@@ -4,7 +4,7 @@
 
 `type: resource.reference` · **normative**. `docs/read-repository.md` is `type: initialization` and non-normative; on conflict this file governs.
 
-Define the catalogue schema, evidence boundary, canonical bytes, merge law, read behavior, procedure registry, and campaign-system registry. Implement verifiers, mergers, and updaters from this file alone.
+Define the catalogue schema, evidence boundary, canonical bytes, merge law, read behavior, procedure registry, and campaign-system registry. Implement the falsifier from this file and from `docs/falsify.md`; a user AI writes that runtime outside this repository.
 
 ## Specification
 
@@ -113,9 +113,9 @@ recovery,retry unavailable and never cache it as unresolved
 
 ### 0. Scope
 
-- **Read:** `graph.json`, `docs/*.md`, `skills/*.md`, `systems/*.md` (§11), `verifier/`, `.github/workflows/`, `LICENSE`.
+- **Read:** `graph.json`, `docs/*.md`, `skills/*.md`, `systems/*.md` (§11), `LICENSE`.
 - **Write:** `graph.json` and `proposals.json` only, under §9.
-- **Refuse:** writing scripts, workflows, CI, package manifests or secondary data files in this repo, `proposals.json` (§9) being the single named exception — the verifier under `verifier/` and workflow under `.github/workflows/` are human-directed additions that check this contract and are outside every agent's write scope, so an agent reads them and does not edit them; stored ranks, scores or grades; citations other than bare `pmid:<digits>`; empty citation arrays; pairs without qualifying evidence (§4); removal or rewriting of existing rows absent explicit human supersession.
+- **Refuse:** writing scripts, workflows, CI, package manifests, or secondary data files in this repo, `proposals.json` (§9) being the single named exception; stored ranks, scores or grades; citations other than bare `pmid:<digits>`; empty citation arrays; pairs without qualifying evidence (§4); removal or rewriting of existing rows absent explicit human supersession. The specbase is the Markdown in `docs/`, `skills/`, and `systems/`. `graph.json` is the catalogue those files govern, not a spec and not a DSL. A falsifier, merger, or trace tool is written by a user AI at runtime, outside this repository, from these Markdown files. It is not committed here.
 
 ### 0b. Documentation banner
 
@@ -123,7 +123,7 @@ Every Markdown file in this repository opens, as its **first non-blank line**, w
 
 `⚠️ ACADEMIC RESEARCH PURPOSES ONLY; NOT FOR MEDICAL USE WITHOUT LICENSED OVERSIGHT`
 
-— one fixed, repeated string, byte-identical in every file, never paraphrased, abbreviated or replaced by a cross-reference. It states **who may act on this repository**, and is deliberately distinct from the README's *What it is not* paragraph, which states what the catalogue records; the two are not merged. This is a normative documentation invariant. It is **not** one of the nineteen §8 predicates and does not renumber them; it is checked as a verifier extension, predicate E1 (see `verifier/`).
+— one fixed, repeated string, byte-identical in every file, never paraphrased, abbreviated or replaced by a cross-reference. It states **who may act on this repository**, and is deliberately distinct from the README's *What it is not* paragraph, which states what the catalogue records; the two are not merged. This is a normative documentation invariant. It is **not** one of the nineteen §8 predicates and does not renumber them; it is checked as extension predicate E1 by the runtime falsifier ([`falsify.md`](falsify.md)).
 
 ### 0c. Identity line
 
@@ -134,11 +134,11 @@ Every file in `skills/` and `systems/` names itself once, in the header, before 
 | `skills/` | a `resource.procedure`, spec `agent.skill`. The one skill §10 marks `special` also says so. The others do not. |
 | `systems/` | an `agent.system`, spec `fleet.campaign`. No class. |
 
-`agent.skill` is the spec of a procedure. `fleet.campaign` is the spec of one run. `agent.swarm` is the spec of the falsifier [`falsify.md`](falsify.md), and of no other file. A header on any other path that carries `agent.swarm` fails E5. `agent.fleet` is not a spec and not a type. A header that carries it fails E5. A header outside `skills/` and `systems/` that carries `agent.skill` or `fleet.campaign` fails E5: that file is an orphan. The checker skips exactly two registry fixtures, `verifier/tests/fixtures/ext_registry_fail/skills/exercise-special-scope.md` and `verifier/tests/fixtures/ext_registry_ok/skills/exercise-special-scope.md`. They declare the skill spec so E2 can be tested, and they are not skills of this contract. Those two paths are `e5_spec_allowlist` in §0f, and `docs/falsify.md` is `e5_swarm_paths` in that same block, which is what the checker loads. The campaign runtime is the Markdown specification [`systems/run-campaign.md`](../systems/run-campaign.md); no repository-local fleet executable is a hidden second contract. The four strings, and the ordinary words next to them, are set out in §11.
+`agent.skill` is the spec of a procedure. `fleet.campaign` is the spec of one run. `agent.swarm` is the spec of the falsifier [`falsify.md`](falsify.md), and of no other file. A header on any other path that carries `agent.swarm` fails E5. `agent.fleet` is not a spec and not a type. A header that carries it fails E5. A header outside `skills/` and `systems/` that carries `agent.skill` or `fleet.campaign` fails E5: that file is an orphan. `e5_spec_allowlist` in §0f is empty: no fixture is exempt, and no path outside `skills/` is a skill. `docs/falsify.md` is the only entry of `e5_swarm_paths` in that same block, which is what the runtime falsifier loads. The campaign runtime is the Markdown specification [`systems/run-campaign.md`](../systems/run-campaign.md); no repository-local fleet executable is a hidden second contract. The four strings, and the ordinary words next to them, are set out in §11.
 
 ### 0d. Scientific Markdown profile and documentation DAG
 
-**Live Markdown** is every repository `*.md` except the exact fixture paths in the checker-literals block (§0f). Each excluded file is a deliberately incomplete or invalid verifier input under `verifier/tests/fixtures/`, not documentation; tests require the manifest to equal the fixture Markdown set and require every entry to lack the live-document headings. E1 still checks every bannered fixture and its exact one-path allowlist is unchanged.
+**Live Markdown** is every repository `*.md`. The specbase is that set: `docs/`, `skills/`, and `systems/`. There is no fixture tree and no exempt path. `e6.fixture_paths` and `e1_allowlist` in §0f are empty. E1 checks the banner on every Markdown file.
 
 The header has exactly the banner block, one column-zero H1, an optional one-line block containing `` `type: ...` ``, and one functional-description paragraph; no other pre-H2 prose is allowed. The description has one to three sentences and at most 384 UTF-8 bytes. It is followed by exactly these column-zero H2 headings, in order: `Specification`, `Graph`, `Composition`, `Indications`, `Contraindications`, `Algorithm`, `Citations`, `Falsification`, `Licence`. Fenced content never supplies headings; indented or setext H2s are refused.
 
@@ -203,20 +203,21 @@ animations = "Three.js"
 
 Canonical fence tags are `python`, `javascript`, `typescript`, `rust`, `bend`, `lean`, `tla`, `dockerfile`, `yaml` for Kubernetes manifests only, `wolfram`, `mermaid`, `json`, `r`, `csv`, `toml`, `tex`, `svg`, `stl`, `text`, and `bash`. GFM cards, registries, and comparison tables are Markdown structure; machine-consumed embedded tables use `csv`.
 
-Every repository Markdown fence is a column-zero triple backtick fence with one explicit canonical tag; raw HTML is not a language escape. In live Markdown, `Composition` and `Variables` each contain exactly one mapping in the line-oriented, JSON-value subset of TOML 1.1.0: lowercase bare keys, single-component tables, no escapes, and no duplicate table or key. Mermaid starts with `stateDiagram-v2` or `flowchart`; CSV uses minimal quoting and LF. Where live Markdown contains `### Process`, E7 requires the three variable tables, that seven-row CSV inside `Process`, and both Mermaid kinds inside `Algorithm`. E7 enforces fence tags across all Markdown, parses TOML, JSON, and CSV, checks Mermaid kind, and admits YAML only for Kubernetes manifests. It does not compile the remaining preferred languages or discharge §8.16.
+Every repository Markdown fence is a column-zero triple backtick fence with one explicit canonical tag; raw HTML is not a language escape. In live Markdown, `Composition` and `Variables` each contain exactly one mapping in the line-oriented, JSON-value subset of TOML 1.1.0: lowercase bare keys, single-component tables, no escapes, and no duplicate table or key. Mermaid starts with `stateDiagram-v2` or `flowchart`; CSV uses minimal quoting and LF. Where live Markdown contains `### Process`, E7 requires the three variable tables, that seven-row CSV inside `Process`, and both Mermaid kinds inside `Algorithm`. E7 enforces fence tags across all Markdown, parses TOML, JSON, and CSV, checks Mermaid kind, and admits YAML only for Kubernetes manifests. It does not compile the remaining preferred languages or discharge §8.16. A fenced program in live Markdown is an example of a framework for a user AI that writes the runtime outside this repository. It is not that runtime, and it is not a standalone artifact.
 
 ### 0f. Checker literals
 
-Closed lists and normative patterns live in the block below. `verifier/verify.py` loads that block and does not restate it. A model that writes a checker, a merger, or a trace tool at runtime loads the same block and writes the procedure from it. The generated procedure is not a second copy of the lists.
+Closed lists and normative patterns live in the block below. The falsifier ([`falsify.md`](falsify.md)) is the only instrument, and the decision procedure is inside it. A user AI writes that instrument at runtime, outside this repository, and loads this block. The fences in the falsifier are an example of the framework. They are not the program, and they are not a second copy of the lists.
 
 | class | parent | where the list lives |
 |---|---|---|
 | catalogue grammar, predicate labels, profile bounds, allowlists | this file | the block in this section |
 | trace carrier sets | [`systems/record-traces.md`](../systems/record-traces.md) | `### Carrier sets` |
+| attack manifest | [`falsify.md`](falsify.md) | the `attacks` object |
 | bench line grammar | [`systems/use-bench.md`](../systems/use-bench.md) | section 3; this repository stores no bench program |
 | campaign runtime | [`systems/run-campaign.md`](../systems/run-campaign.md) | the manifest table; this repository stores no fleet program |
 
-The banner a checker compares is the first non-blank line of this file. E1 skips exactly `verifier/tests/fixtures/ext_disclaimer_fail/skip-disclaimer-banner.md`. The edge cap in §0d is `|V| + 1`, stored here as `edge_surplus_max` of 2 because a tree has `|V| - 1` edges. A bracketed HELM symbol matches `monomer_symbol` and is refused when it is an all-uppercase run of length at least `monomer_uppercase_run_min_length`. Polymer-index normalisation applies `helm_index_normalise` and replaces each matched digit run with `#`.
+The banner a checker compares is the first non-blank line of this file. `e1_allowlist` is empty, so E1 skips nothing. The edge cap in §0d is `|V| + 1`, stored here as `edge_surplus_max` of 2 because a tree has `|V| - 1` edges. A bracketed HELM symbol matches `monomer_symbol` and is refused when it is an all-uppercase run of length at least `monomer_uppercase_run_min_length`. Polymer-index normalisation applies `helm_index_normalise` and replaces each matched digit run with `#`.
 
 ```json
 {
@@ -397,9 +398,7 @@ The banner a checker compares is the first non-blank line of this file. E1 skips
       "Markdown formal language profile"
     ]
   },
-  "e1_allowlist": [
-    "verifier/tests/fixtures/ext_disclaimer_fail/skip-disclaimer-banner.md"
-  ],
+  "e1_allowlist": [],
   "untracked_dirs": [
     ".git",
     ".pytest_cache",
@@ -407,22 +406,9 @@ The banner a checker compares is the first non-blank line of this file. E1 skips
     ".mypy_cache",
     ".ruff_cache"
   ],
-  "e5_spec_allowlist": [
-    "verifier/tests/fixtures/ext_registry_fail/skills/exercise-special-scope.md",
-    "verifier/tests/fixtures/ext_registry_ok/skills/exercise-special-scope.md"
-  ],
+  "e5_spec_allowlist": [],
   "e6": {
-    "fixture_paths": [
-      "verifier/tests/fixtures/ext_disclaimer_fail/docs/follow-agent-contract.md",
-      "verifier/tests/fixtures/ext_disclaimer_fail/skip-disclaimer-banner.md",
-      "verifier/tests/fixtures/ext_disclaimer_ok/docs/follow-agent-contract.md",
-      "verifier/tests/fixtures/ext_disclaimer_ok/record-fixture-notes.md",
-      "verifier/tests/fixtures/ext_registry_fail/docs/follow-agent-contract.md",
-      "verifier/tests/fixtures/ext_registry_fail/skills/exercise-special-scope.md",
-      "verifier/tests/fixtures/ext_registry_fail/skills/leave-unregistered.md",
-      "verifier/tests/fixtures/ext_registry_ok/docs/follow-agent-contract.md",
-      "verifier/tests/fixtures/ext_registry_ok/skills/exercise-special-scope.md"
-    ],
+    "fixture_paths": [],
     "root": "docs/read-repository.md",
     "sink": "systems/run-campaign.md",
     "root_max_bytes": 4096,
@@ -586,7 +572,7 @@ Never stored. Rank **within one dictionary only**; a `preclinical` row and a `pa
 
 ### 8. Validation predicates
 
-Implement from this section alone. Tags: **pure** = decidable from one file's bytes; **relational** = needs a predecessor file; **oracle** = needs an external source. A passing verifier run proves **only the pure conditions**.
+Implement from this section alone. Tags: **pure** = decidable from one file's bytes; **relational** = needs a predecessor file; **oracle** = needs an external source. A passing run of the decision procedure proves **only the pure conditions**.
 
 1. **[pure] UTF-8.** Bytes decode as valid UTF-8.
 2. **[pure] Final newline.** Exactly one `\n`, nothing after it.
@@ -610,10 +596,10 @@ Implement from this section alone. Tags: **pure** = decidable from one file's by
 13. **[pure] One molecule, one key.** Across both dictionaries. Decidable identity: (a) two `aa:` keys are the same molecule iff their sorted chain multisets are equal; (b) two `helm:` keys iff their payloads are equal after normalising polymer index digits only (§0f `helm_index_normalise`, each matched digit run replaced by `#`); (c) an `aa:` and a `helm:` key denoting the same plain L-chain sequence are the same molecule and only the `aa:` form is valid. No two distinct binder keys in `pair` or `preclinical` may share a molecule.
 14. **[pure] Cross-prefix hygiene.** No role's prefix on another role's key; citations only inside citation arrays.
 15. **[pure] No duplicate triple.** No `(binder, target, pmid)` triple appears in both `pair` and `preclinical`.
-16. **[oracle] Inclusion and study type.** Every `(binder, target, pmid)` triple satisfies §4, in the dictionary it occupies. Requires reading the paper. **No verifier run and no automated intake discharges this condition.**
+16. **[oracle] Inclusion and study type.** Every `(binder, target, pmid)` triple satisfies §4, in the dictionary it occupies. Requires reading the paper. **No falsifier run and no automated intake discharges this condition.**
 17. **[pure] Forbidden writes.** No stored ranks, grades or non-`pmid:` citations.
 18. **[pure] Empty catalogue.** The empty catalogue is `{`, `  "version": 2,`, `  "pair": {},`, `  "preclinical": {}`, `}` on five lines with one trailing newline, and satisfies conditions 1–15 and 17. Any compact one-line form **fails** condition 6 and is invalid.
-19. **[relational] Add-only.** Given predecessor `P` and successor `S`, every binder, target and citation in `P` is present unchanged in `S`, in the same dictionary, except under human-directed supersession outside this spec. **A single-file verifier cannot implement this.**
+19. **[relational] Add-only.** Given predecessor `P` and successor `S`, every binder, target and citation in `P` is present unchanged in `S`, in the same dictionary, except under human-directed supersession outside this spec. **A decision over one catalogue file cannot implement this.**
 
 ### 9. Background update contract
 
@@ -622,7 +608,7 @@ Implement from this section alone. Tags: **pure** = decidable from one file's by
 3. **File boundary.** Autonomous intake writes `proposals.json` only, and never writes `graph.json` on any branch. Admission is the act of reading the paper, and that act is what moves bytes from `proposals.json` into `graph.json`, choosing the dictionary per §4. **Trust is carried by the file, not by a branch:** a branch name is mutable and has no merge law, so a fence of the form "unverified rows live on branch X" dissolves at the first merge and relaunders those rows as verified, while `proposals.json` merges into `proposals.json` on every branch. Condition 16 is therefore discharged at the file move, by a reader, and never by the run that proposed the row.
 4. **`proposals.json`.** Root: a non-array object with exactly `version` (the number `2`) and `proposal` (an array). Each element has exactly `binder`, `target`, `pmid`, each satisfying §3. A proposal carries **no dictionary assignment**: `pair` versus `preclinical` is part of the oracle and is chosen when the paper is read. Serialise per §5; add-only per §8.19. It is not catalogue-shaped and must not be read as one.
 5. Intake procedure: [`skills/propose-pairs.md`](../skills/propose-pairs.md). It enumerates structured authorities; it does not crawl prose, and its own acceptance test is rediscovery of the rows already committed.
-6. This repository ships no updater and no cron. It does ship a verifier (`verifier/`) and a workflow (`.github/workflows/validate.yml`) that runs it, and neither writes `graph.json` or `proposals.json`: a passing run proves only the pure conditions (§8) and the repository extension predicates E1, E2, E4, E5, E6, and E7, which are not §8 predicates and do not renumber them (E3, pmid resolution, is non-blocking and gates nothing). It never proves §8.16. Compliance is your behaviour against this contract, not a green check.
+6. This repository ships no updater, no cron, no checker, and no workflow. The instrument is the falsifier a user AI writes at runtime from [`falsify.md`](falsify.md), outside this repository. That program includes the decision procedure. It writes neither `graph.json` nor `proposals.json`. A run proves only the pure conditions (§8) and the extension predicates E1, E2, E4, E5, E6, and E7, which are not §8 predicates and do not renumber them (E3, pmid resolution, is non-blocking and gates nothing). It never proves §8.16. A green check on a forge is not this instrument. Compliance is your behaviour against this contract, not a check mark.
 
 A proposed row failing any rule above is **refused**, naming the condition that failed.
 
@@ -664,7 +650,7 @@ The reader-facing warning is therefore not carried by a path either. It is carri
 
 **`fleet.campaign` is one run.** It is the spec on every system in the table below. The run has one core. `run` is the SHA-256 of `core.trace`. That file carries `bound-n` and `bound-tok`. The run ends on one `halt`. `core.bench` hashes its own bytes, and the executor writes this `run` into that file as the parameter `trace`. Workers that append bench lines or trace lines are members of that run. Set-union merge with no coordinator is a property of the bench store inside the run. Wikidata `wbsearchentities` for `fleet.campaign`, language `en`, limit 5, returned an empty `search` array on this retrieval.
 
-**`agent.swarm` is the spec of a falsifier.** The only header that carries it is `docs/falsify.md`. It is not a run and not a type. A run of this contract is a `fleet.campaign`. A header on any other path that carries `agent.swarm` fails E5. Dropping the spec from the falsifier fails E5.
+**`agent.swarm` is the spec of a falsifier.** The only header that carries it is `docs/falsify.md`. The decision procedure is part of that falsifier, and that file is the only instrument. It is not a run and not a type. A run of this contract is a `fleet.campaign`. A header on any other path that carries `agent.swarm` fails E5. Dropping the spec from the falsifier fails E5.
 
 **`agent.fleet` is not a spec and not a type.** The folder sort retired it. A header that carries it fails E5. The name of the run is `fleet.campaign`. The members of that run are its workers. Wikidata `wbsearchentities` for `agent.fleet`, language `en`, limit 10, returned an empty `search` array on this retrieval, the same result as the query for `agent.swarm`.
 
@@ -687,8 +673,8 @@ A procedure of this contract is an `agent.skill`. A run of this contract is one 
 
 - A system is not a skill and is not listed in §10. It originates nothing and admits nothing: §4 is untouched by anything written to a scratchpad or an act log, and a record in a `.bench` or `.trace` store is not a claim this file recognises.
 - `bench` is scoped to a single run and is discarded with it. It is not a second catalogue, and it is not a cache of `graph.json`.
-- Every `.bench` record declares an evidence tier, and no query pools across tiers — the same refusal §2 makes between clinical and preclinical, one layer down. A tier that is declared is not thereby honest; the line can only require the declaration.
-- The trace records acts, not evidence. The record has no tier, no study type, and no score. A `.trace` file is not a proposal and is not a bench. It is discarded with the run. The specification is `systems/record-traces.md`. `verifier/verify.py --trace` decides it. That decision is pure and does not discharge §8.16.
+- Every `.bench` record declares an evidence tier, and no query pools across tiers — the same refusal §1 makes between clinical and preclinical, one layer down. A tier that is declared is not thereby honest; the line can only require the declaration.
+- The trace records acts, not evidence. The record has no tier, no study type, and no score. A `.trace` file is not a proposal and is not a bench. It is discarded with the run. The specification is `systems/record-traces.md`. The runtime falsifier decides it from that file and does not keep a second carrier list. That decision is pure and does not discharge §8.16.
 - The rows of this table and the files `systems/*.md` are in bijection. That bijection is extension predicate E4. It is not a §8 predicate and it does not renumber them.
 - Three systems, named here exactly. A specification not listed in this section is not part of this contract.
 
@@ -721,7 +707,7 @@ Rows that do not name 3 Nov 2026 were retrieved 1 Nov 2026 (Australia/Sydney). E
 | Re-run a stochastic agent once and call it reliable | no contract predicate supports that inference |
 | Run the workers in [`falsify.md`](falsify.md) | a survivor falsifies that prediction; a catch is not clinical proof |
 
-Run `python3 verifier/tests/test_verify.py`, `python3 verifier/verify.py graph.json --repo .`, and—when a predecessor exists—`python3 verifier/verify.py --prev OLD.json graph.json`. The falsifier is `cargo run --manifest-path falsifier/Cargo.toml --locked`. A green result is scoped evidence, never proof of clinical truth.
+A user AI writes the falsifier from [`falsify.md`](falsify.md) and runs it outside this repository, including the predecessor check when a predecessor exists. A passing result is scoped evidence, never proof of clinical truth.
 
 ## Licence
 

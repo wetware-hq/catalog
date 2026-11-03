@@ -40,9 +40,8 @@ stop = "first sufficient route"
 | resolve a key | contract → [`resolve-key`](../skills/resolve-key.md) |
 | propose a pair | contract → [`resolve-key`](../skills/resolve-key.md) → [`propose-pairs`](../skills/propose-pairs.md) |
 | design | contract → [`falsify`](falsify.md) → [`pins`](pin-references.md) → [`design`](../skills/design-binder.md) → [`traces`](../systems/record-traces.md); [`bench`](../systems/use-bench.md) → [`run`](../systems/run-campaign.md) |
-| verify | contract → `python3 verifier/verify.py` |
-| falsify | contract → [`falsify`](falsify.md) |
-| traces | contract + [`traces`](../systems/record-traces.md) → `python3 verifier/verify.py --trace` |
+| falsify | contract → [`falsify`](falsify.md); the runtime is written outside the repository |
+| traces | contract + [`traces`](../systems/record-traces.md) → that runtime's trace judgement |
 
 Stop at the row's endpoint. Design continues to the sink.
 
@@ -60,7 +59,7 @@ Stop at the row's endpoint. Design continues to the sink.
 objective = "select the smallest sufficient read-before route"
 
 [independent]
-task = "read | resolve | propose | design | verify | falsify"
+task = "read | resolve | propose | design | falsify"
 
 [dependent]
 route = "ordered Markdown path ending at the first sufficient node"
