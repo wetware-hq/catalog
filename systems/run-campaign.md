@@ -22,7 +22,7 @@ Specify one bounded design campaign in Markdown, from catalogue gate through pos
 
 ## Graph
 
-- ← [../tmp/biofleet-egfr-campaign-summary-agent-card.md](../tmp/biofleet-egfr-campaign-summary-agent-card.md)
+- ← [../tmp/record-egfr-calibration.md](../tmp/record-egfr-calibration.md)
 - ← [record-traces.md](record-traces.md)
 
 ## Composition

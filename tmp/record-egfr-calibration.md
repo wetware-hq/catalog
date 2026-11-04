@@ -1,4 +1,4 @@
-⚠️ ACADIC RESEARCH PURPOSES ONLY; NOT FOR MEDICAL USE WITHOUT LICENSED OVERSIGHT
+⚠️ ACADEMIC RESEARCH PURPOSES ONLY; NOT FOR MEDICAL USE WITHOUT LICENSED OVERSIGHT
 
 # EGFR campaign record
 
@@ -10,7 +10,7 @@ Select uniprot:P00533 by descending in-scope pair count. Catalogue gate returns 
 
 ```json
 {
-  "id": "tmp/biofleet-egfr-campaign-summary-agent-card.md",
+  "id": "tmp/record-egfr-calibration.md",
   "type": "record",
   "role": "record one EGFR calibration verdict",
   "reads": ["systems/use-bench.md", "systems/run-campaign.md", "pinned graph.json"],
@@ -39,30 +39,30 @@ oracle = "not-discharged"
 
 ## Indications
 
-| verb | value |
+| parameter | value |
 |---|---|
-| pin spec | `4108e940ee5f8c8aad7d8e1ae173bbe166c718cb` |
-| rank pair | `pair` ∩ {oncology, immunology}; in_scope desc; target asc |
-| pick target | `uniprot:P00533` EGFR |
-| halt gate | hit-same-indication · `pmid:16467544` cetuximab · spend 0 |
-| shift context | hit-other-indication · epitope recovery, not a new clinical claim |
-| trim crop | author 310–514 = UniProt 334–538 · offset author+24 |
-| hide chains | C, D · catalogue Fab sequences withheld |
-| map epitope | 22 residues · contact ≤ 4.5 Å |
-| run design | peptide 12..18 · n=10 · exclude C · `boltzprot` 1.0 |
-| set bar | `binding_confidence` ≥ 0.7 · geometry ≥ 8/22 does not pass |
-| quote cost | USD 0.2500 · request `b615e910dbf792b808e0a0639a7e057c38934418f510c4e75daeae33f089d944` |
-| poll run | `prot_des_6SDannvhmPSi293YAsJ2` succeeded |
-| score best | `pres_Bxgm7DvSbKwlNY7MP4yd` `SLSEAEQKLLDEVKSLS` · 0.10832766083050813 · 15/22 |
-| count emitted | 0 · positive-control-failed |
-| log traces | gate `f941afe146343fab22fff05cab5ebacf416b9dcfa84ae07cd5a490fd27094695` · calibration `d0c39db694ec49716002d67433092e0053a3b527f53b263a2b93c4ab73a468c5` · both result |
-| hold oracle | not-discharged |
+| spec | `4108e940ee5f8c8aad7d8e1ae173bbe166c718cb` |
+| rank | `pair` ∩ {oncology, immunology}; in_scope desc; target asc |
+| select | `uniprot:P00533` EGFR |
+| gate | hit-same-indication · `pmid:16467544` cetuximab · spend 0 |
+| context | hit-other-indication · epitope recovery, not a new clinical claim |
+| crop | author 310–514 = UniProt 334–538 · offset author+24 |
+| withhold | chains C, D · catalogue Fab sequences withheld |
+| epitope | 22 residues · contact ≤ 4.5 Å |
+| design | peptide 12..18 · n=10 · exclude C · `boltzprot` 1.0 |
+| bar | `binding_confidence` ≥ 0.7 · geometry ≥ 8/22 does not pass |
+| estimate | USD 0.2500 · request `b615e910dbf792b808e0a0639a7e057c38934418f510c4e75daeae33f089d944` |
+| run | `prot_des_6SDannvhmPSi293YAsJ2` succeeded |
+| best | `pres_Bxgm7DvSbKwlNY7MP4yd` `SLSEAEQKLLDEVKSLS` · 0.10832766083050813 · 15/22 |
+| emitted | 0 · positive-control-failed |
+| traces | gate `f941afe146343fab22fff05cab5ebacf416b9dcfa84ae07cd5a490fd27094695` · calibration `d0c39db694ec49716002d67433092e0053a3b527f53b263a2b93c4ab73a468c5` · both result |
+| oracle | not-discharged |
 
 ## Contraindications
 
-- refuse catalogue write, prescription, and oracle discharge.
-- refuse iptm, structure_confidence, min_interaction_pae, or contact count as a substitute pass.
-- refuse reading hit-same-indication as permission to emit a new binder.
+- `REFUSE` catalogue write, prescription, and oracle discharge.
+- `REFUSE` iptm, structure_confidence, min_interaction_pae, or contact count as a substitute pass.
+- `REFUSE` reading hit-same-indication as permission to emit a new binder.
 
 ## Algorithm
 
@@ -95,11 +95,11 @@ spec = "4108e940ee5f8c8aad7d8e1ae173bbe166c718cb"
 ### Process
 
 ```text
-rank pair
-pick uniprot:P00533
-halt same-indication
-calibrate blind-epitope
-record none-emitted
+RANK pair FILTER area:oncology|immunology ORDER in_scope:desc,target:asc
+SELECT uniprot:P00533
+HALT hit-same-indication pmid:16467544
+CALIBRATE pdb:1YY9 withhold:C,D crop:310-514 bar:binding_confidence>=0.7
+VERDICT positive-control-failed emitted:0
 ```
 
 ```json
@@ -109,7 +109,7 @@ record none-emitted
   "version": "1.0.0",
   "supportedInterfaces": [
     {
-      "url": "https://github.com/wetware-hq/catalog/blob/main/tmp/biofleet-egfr-campaign-summary-agent-card.md",
+      "url": "https://github.com/wetware-hq/catalog/blob/main/tmp/record-egfr-calibration.md",
       "protocolBinding": "HTTP+JSON",
       "protocolVersion": "1.0"
     }
@@ -125,8 +125,8 @@ record none-emitted
       "tags": ["pair", "rank"]
     },
     {
-      "id": "calibrate-blind",
-      "name": "Calibrate blind",
+      "id": "blind-calibrate",
+      "name": "Blind calibrate",
       "description": "Withhold 1YY9 chains C and D. Emit none unless binding_confidence >= 0.7.",
       "tags": ["egfr", "positive-control"]
     }
@@ -136,19 +136,20 @@ record none-emitted
 
 ```mermaid
 flowchart LR
-    rank --> pick
-    pick --> halt
-    halt --> calibrate
-    calibrate --> refuse
+    Rank --> Select
+    Select --> Halt
+    Halt --> Calibrate
+    Calibrate --> Refuse
 ```
 
 ```mermaid
 stateDiagram-v2
-    [*] --> rank
-    rank --> halt
-    halt --> calibrate
-    calibrate --> refuse
-    refuse --> [*]
+    [*] --> Rank
+    Rank --> Gate
+    Gate --> SameHit
+    SameHit --> Calibrate
+    Calibrate --> Refuse
+    Refuse --> [*]
 ```
 
 ```csv
