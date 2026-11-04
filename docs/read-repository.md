@@ -109,6 +109,8 @@ flowchart LR
     Next --> Stop
 ```
 
+Collapsible fences hold closed lists. Leave one folded until a predicate on this route names it.
+
 ## Citations
 
 | Pin | Supports |

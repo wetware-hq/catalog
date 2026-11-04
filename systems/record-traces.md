@@ -134,11 +134,11 @@ The preimage of a line is that line with the id and the final newline removed. `
 
 ### 1. Allowed values
 
-The carrier block is the closed list. The runtime falsifier loads it and does not restate it. A token that is not in the block is refused.
+The carrier block is the closed list. The runtime falsifier loads it and does not restate it. Its fence carries `{collapsible: true}`. A token that is not in the block is refused.
 
 ### Carrier sets
 
-```json
+```json {collapsible: true}
 {
   "skills": [
     "resolve-key",
@@ -489,7 +489,7 @@ Illustration. `spec` is forty `a`s and `rev` is forty `b`s. The proposal `aa:ACD
 
 `core.trace`:
 
-```text
+```text {collapsible: true}
 %trace-core/1
 bound-n:"1"
 bound-tok:"8000"
@@ -501,7 +501,7 @@ spec:"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
 
 `a1.trace`:
 
-```text
+```text {collapsible: true}
 %trace/1 core=d2066050893688b4fc69def4b3c03ffa9ee8b06ef14858786224a7adf2684853 spec=aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
 call 82d0bb98077f59cb3544536e2023d4cf99699408e57250de2ce20d3e0b20a294 ^0 run=d2066050893688b4fc69def4b3c03ffa9ee8b06ef14858786224a7adf2684853 skill=propose-pairs
 pin 2f3f7335675c72766882db3b0dea24b20818183f1934fd10eb131a10ba13fba4 ^82d0bb98077f59cb3544536e2023d4cf99699408e57250de2ce20d3e0b20a294 run=d2066050893688b4fc69def4b3c03ffa9ee8b06ef14858786224a7adf2684853 skill=propose-pairs path:"graph.json" rev:"bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"

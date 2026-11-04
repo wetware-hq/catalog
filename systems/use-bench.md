@@ -162,7 +162,7 @@ Canonical bytes, which `H` is taken over: the line with fields sorted by key, si
 
 Worked example:
 
-```text
+```text {collapsible: true}
 %bench/1 core=9f2a1b7c4d
 1 a3f1c0 ^0 w:a1 s:12 obs:0.712 sd:0.041 unit:uM dev:inst-4 ts:1761790001
 2 b7c2e9 ^a3f1c0 w:a2 s:13 score:0.883 model:mx-7 pose:M(0.92388,0.0,0.0,0.38268,0.0,1.5,-0.25,0.0)

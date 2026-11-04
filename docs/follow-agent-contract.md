@@ -123,7 +123,7 @@ Every Markdown file in this repository opens, as its **first non-blank line**, w
 
 `⚠️ ACADEMIC RESEARCH PURPOSES ONLY; NOT FOR MEDICAL USE WITHOUT LICENSED OVERSIGHT`
 
-— one fixed, repeated string, byte-identical in every file, never paraphrased, abbreviated or replaced by a cross-reference. It states **who may act on this repository**, and is deliberately distinct from the README's *What it is not* paragraph, which states what the catalogue records; the two are not merged. This is a normative documentation invariant. It is **not** one of the nineteen §8 predicates and does not renumber them; it is checked as extension predicate E1 by the runtime falsifier ([`falsify.md`](falsify.md)).
+— one fixed, repeated string, byte-identical in every file, never paraphrased, abbreviated or replaced by a cross-reference. It states **who may act on this repository**, and is deliberately distinct from §1, which states what the catalogue records; the two are not merged. This is a normative documentation invariant. It is **not** one of the nineteen §8 predicates and does not renumber them; it is checked as extension predicate E1 by the runtime falsifier ([`falsify.md`](falsify.md)).
 
 ### 0c. Identity line
 
@@ -163,7 +163,7 @@ E6 checks the functional paragraph, H2 profile, JSON card, variable/process head
 
 The profile selects a language when that artifact exists; it does not require placeholder code. Extensions below name standalone artifacts. Inside Markdown, use the canonical lowercase fence tag for that language. Exact `.trace` and `.bench` protocol bytes are `text`; terminal command wrappers are `bash`.
 
-```toml
+```toml {collapsible: true}
 [preferred]
 tools = ".py"
 browser_templates = ".js"
@@ -203,11 +203,11 @@ animations = "Three.js"
 
 Canonical fence tags are `python`, `javascript`, `typescript`, `rust`, `bend`, `lean`, `tla`, `dockerfile`, `yaml` for Kubernetes manifests only, `wolfram`, `mermaid`, `json`, `r`, `csv`, `toml`, `tex`, `svg`, `stl`, `text`, and `bash`. GFM cards, registries, and comparison tables are Markdown structure; machine-consumed embedded tables use `csv`.
 
-Every repository Markdown fence is a column-zero triple backtick fence with one explicit canonical tag; raw HTML is not a language escape. In live Markdown, `Composition` and `Variables` each contain exactly one mapping in the line-oriented, JSON-value subset of TOML 1.1.0: lowercase bare keys, single-component tables, no escapes, and no duplicate table or key. Mermaid starts with `stateDiagram-v2` or `flowchart`; CSV uses minimal quoting and LF. Where live Markdown contains `### Process`, E7 requires the three variable tables, that seven-row CSV inside `Process`, and both Mermaid kinds inside `Algorithm`. E7 enforces fence tags across all Markdown, parses TOML, JSON, and CSV, checks Mermaid kind, and admits YAML only for Kubernetes manifests. It does not compile the remaining preferred languages or discharge §8.16. A fenced program in live Markdown is an example of a framework for a user AI that writes the runtime outside this repository. It is not that runtime, and it is not a standalone artifact.
+Every repository Markdown fence is a column-zero triple backtick fence whose info string is one explicit canonical tag, or that tag, one space, and the exact suffix `{collapsible: true}`. The suffix is the prompt-compression hint on a hardcoded closed list or fixture: a prompt may leave the fence folded, and a loader still reads the tag and the body. Raw HTML is not a language escape and is not a collapsible wrapper. In live Markdown, `Composition` and `Variables` each contain exactly one mapping in the line-oriented, JSON-value subset of TOML 1.1.0: lowercase bare keys, single-component tables, no escapes, and no duplicate table or key. Mermaid starts with `stateDiagram-v2` or `flowchart`; CSV uses minimal quoting and LF. Where live Markdown contains `### Process`, E7 requires the three variable tables, that seven-row CSV inside `Process`, and both Mermaid kinds inside `Algorithm`. E7 enforces fence tags across all Markdown, accepts only the suffix `{collapsible: true}` after a tag, parses TOML, JSON, and CSV, checks Mermaid kind, and admits YAML only for Kubernetes manifests. It does not compile the remaining preferred languages or discharge §8.16. A fenced program in live Markdown is an example of a framework for a user AI that writes the runtime outside this repository. It is not that runtime, and it is not a standalone artifact.
 
 ### 0f. Checker literals
 
-Closed lists and normative patterns live in the block below. The falsifier ([`falsify.md`](falsify.md)) is the only instrument, and the decision procedure is inside it. A user AI writes that instrument at runtime, outside this repository, and loads this block. The fences in the falsifier are an example of the framework. They are not the program, and they are not a second copy of the lists.
+Closed lists and normative patterns live in the block below. That fence carries `{collapsible: true}` so a prompt can leave the bytes folded until a predicate loads them. The falsifier ([`falsify.md`](falsify.md)) is the only instrument, and the decision procedure is inside it. A user AI writes that instrument at runtime, outside this repository, and loads this block. The fences in the falsifier are an example of the framework. They are not the program, and they are not a second copy of the lists.
 
 | class | parent | where the list lives |
 |---|---|---|
@@ -219,7 +219,7 @@ Closed lists and normative patterns live in the block below. The falsifier ([`fa
 
 The banner a checker compares is the first non-blank line of this file. `e1_allowlist` is empty, so E1 skips nothing. The edge cap in §0d is `|V| + 1`, stored here as `edge_surplus_max` of 2 because a tree has `|V| - 1` edges. A bracketed HELM symbol matches `monomer_symbol` and is refused when it is an all-uppercase run of length at least `monomer_uppercase_run_min_length`. Polymer-index normalisation applies `helm_index_normalise` and replaces each matched digit run with `#`.
 
-```json
+```json {collapsible: true}
 {
   "version": 2,
   "root_keys": [
@@ -461,6 +461,7 @@ The banner a checker compares is the first non-blank line of this file. `e1_allo
       "wolfram",
       "yaml"
     ],
+    "fence_suffix": "{collapsible: true}",
     "mermaid_kinds": [
       "stateDiagram-v2",
       "flowchart"
@@ -702,6 +703,8 @@ Rows that do not name 3 Nov 2026 were retrieved 1 Nov 2026 (Australia/Sydney). E
 | Move one triple between `pair` and `preclinical` | predicates 15 or 19 fail; predicate 16 still needs a paper |
 | Supply a compact one-line empty catalogue | predicates 6 and 18 fail |
 | Remove one reciprocal Markdown edge | E6 fails even when the target exists |
+| Use a fence info string other than a canonical tag or `{collapsible: true}` | E7 fails |
+| Collapse a fence with raw HTML | E7 fails |
 | Add an unregistered skill or system | E2 or E4 fails |
 | Label a prediction as a paper-backed row | pure checks may pass; predicate 16 remains explicitly undischarged |
 | Re-run a stochastic agent once and call it reliable | no contract predicate supports that inference |

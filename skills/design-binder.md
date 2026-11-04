@@ -210,15 +210,16 @@ A weighted sum cannot do this job: a total can be high for the wrong reason, and
 
 #### Screen performance, as the source reports it
 
-The source reports median experimental success rates only for the five discriminators and three threshold strategies in the table below. It does **not** validate the stage-one hard screens, this composite procedure, or an arbitrary scorer. A report may carry a table value only when its discriminator and operating point match exactly; otherwise expected success rate is `not established`. Source: Figure 3, panel E of the ipSAE preprint, read at 600 dpi — row 9 of [`docs/pin-references.md`](../docs/pin-references.md). The x-axis groups are **`Recall = 0.2`**, **`Recall = 0.4`** and **`Max F1`**; the figure legend's "0.6" conflicts with the panel and Results prose.
+The source reports median experimental success rates only for the five discriminators and three threshold strategies in the collapsible table below. It does **not** validate the stage-one hard screens, this composite procedure, or an arbitrary scorer. A report may carry a table value only when its discriminator and operating point match exactly; otherwise expected success rate is `not established`. Source: Figure 3, panel E of the ipSAE preprint, read at 600 dpi — row 9 of [`docs/pin-references.md`](../docs/pin-references.md). The x-axis groups are **`Recall = 0.2`**, **`Recall = 0.4`** and **`Max F1`**; the figure legend's "0.6" conflicts with the panel and Results prose.
 
-| discriminator | legend AP | Recall = 0.2 | Recall = 0.4 | Max F1 |
-|---|---|---|---|---|
-| LIS × input_interface_sc | 0.58 | 54% | 50% | 44% |
-| ipSAE_min × interface_ΔG/ΔSASA | 0.56 | 61% | 53% | 36% |
-| ipSAE_min | 0.54 | 29% | 48% | 47% |
-| ipTM | 0.51 | 60% | 38% | 31% |
-| AF2 pAE interaction | 0.38 | 12% | 20% | 29% |
+```csv {collapsible: true}
+discriminator,legend AP,Recall = 0.2,Recall = 0.4,Max F1
+LIS × input_interface_sc,0.58,54%,50%,44%
+ipSAE_min × interface_ΔG/ΔSASA,0.56,61%,53%,36%
+ipSAE_min,0.54,29%,48%,47%
+ipTM,0.51,60%,38%,31%
+AF2 pAE interaction,0.38,12%,20%,29%
+```
 
 Each cell is a **median experimental success rate across 15 targets**, and the error bars are the **inter-quartile range**: at recall 0.2 the widest whiskers run from roughly **9% to 90%**, and ipSAE_min's from roughly **9% to 66%** around its 29% median. Those bounds are estimated from the axis; only bar labels are printed values. This is across-target dispersion, not repeated-order sampling noise and not a prediction interval for a new target. The targets were not sampled randomly; the direction of selection bias and generalization to an unseen target are unknown.
 

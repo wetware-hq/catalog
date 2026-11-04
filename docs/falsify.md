@@ -123,9 +123,9 @@ Workers run concurrently and share no verdict. The run reports the set of verdic
 
 ### Framework
 
-The fences in this section are an example of the framework and nothing else. A user AI reads them to see the shape of one runtime, then writes that runtime from the laws. A fence is not a program this repository contains, and running one as if it were is a misread. Closed lists stay in their Markdown fences. The runtime loads them and does not copy them into source.
+The fences in this section are an example of the framework and nothing else. A user AI reads them to see the shape of one runtime, then writes that runtime from the laws. A fence is not a program this repository contains, and running one as if it were is a misread. Closed lists stay in their Markdown fences. The runtime loads them and does not copy them into source. A closed-list fence carries the suffix `{collapsible: true}` from the contract. A prompt may leave that fence folded. The loader still reads the body.
 
-```python
+```python {collapsible: true}
 """Example only. Framework only. One program, written at runtime, outside this repository.
 Fill every stub from the named prose. Do not commit the result here."""
 
@@ -133,7 +133,8 @@ WORKERS = ("bytes", "grammar", "identity", "relation", "oracle", "document", "tr
 
 
 def load_json_fence(markdown, heading):
-    """Return the object in the first json fence after a column-zero heading line."""
+    """Return the object in the first json fence after a column-zero heading line.
+    The info string may end with the collapsible suffix. The suffix is not part of the body."""
 
 
 def literals(repo):
@@ -180,7 +181,7 @@ def campaign(repo, only=None):
     only restricts the set. An unknown name is exit 2."""
 ```
 
-```rust
+```rust {collapsible: true}
 // Example only. Framework only. Vocabulary, not a crate in this repository.
 // Implement these names inside the one runtime. Do not shell out to a second checker.
 enum Verdict {
@@ -190,7 +191,7 @@ enum Verdict {
 }
 ```
 
-```bash
+```bash {collapsible: true}
 # Example only. The program is whatever the user AI wrote outside this repository.
 falsify
 falsify --decide graph.json
@@ -203,7 +204,7 @@ falsify --json
 falsify --worker bytes
 ```
 
-```text
+```text {collapsible: true}
 # Example only. Framework only. Not a workflow of this repository.
 # The language profile admits a yaml fence only for a Kubernetes manifest,
 # so this sketch stays text. A user AI may emit it outside the repository
@@ -219,9 +220,9 @@ jobs:
 
 ### Attacks
 
-Seventy-two attacks, seven workers, no vote. This object is the closed list. The runtime loads it and does not restate it. Each prediction is the observation that corroborates the premise. A hold that the pure predicates pass still leaves predicate 16 undischarged.
+Seventy-three attacks, seven workers, no vote. This object is the closed list. The runtime loads it and does not restate it. Its fence carries `{collapsible: true}`. Each prediction is the observation that corroborates the premise. A hold that the pure predicates pass still leaves predicate 16 undischarged.
 
-```json
+```json {collapsible: true}
 {
   "attacks": [
     {
@@ -615,6 +616,12 @@ Seventy-two attacks, seven workers, no vote. This object is the closed list. The
       "prediction": "E7 fails and E6 still passes"
     },
     {
+      "worker": "document",
+      "id": "fence-info-string",
+      "premise": "the only admitted info-string suffix is {collapsible: true}, and raw HTML is not that suffix",
+      "prediction": "any other info string fails E7 and the admitted suffix keeps the tag"
+    },
+    {
       "worker": "trace",
       "id": "valid-trace-holds",
       "premise": "a resolve-key call and one halt is a result",
@@ -696,6 +703,7 @@ Stated 3 Nov 2026 (Australia/Sydney). The decision procedure was folded into thi
 | Delete one side of a Markdown edge | E6 |
 | Remove the banner | E1 |
 | Put raw HTML in a section body | E7 fails; E6 still passes |
+| Use a fence info string other than a canonical tag or `{collapsible: true}` | E7 fails; the admitted suffix keeps the tag |
 | Set trace `oracle` to `discharged` | `value:oracle` |
 | Add `score` to an act | `fields` |
 | Pin twice | R5 |
