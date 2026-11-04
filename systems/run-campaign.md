@@ -15,7 +15,7 @@ Specify one bounded design campaign in Markdown, from catalogue gate through pos
   "role": "execute one caller-targeted, caller-composed design campaign",
   "reads": ["caller manifest", "pinned graph.json", "caller-supplied structures", "current provider schema"],
   "writes": [".bench and .trace files outside the repository"],
-  "must": ["take target and composition from the manifest", "condition on a mapped epitope", "halt when the binding control fails"],
+  "must": ["take target and composition from the manifest", "condition on a mapped epitope", "halt when the binding control fails", "keep the fleet image a tree"],
   "check": ["positive-control verdict", "trace result", "E4", "E5", "E6", "E7"]
 }
 ```
@@ -33,6 +33,8 @@ inputs = ["target", "model composition"]
 phases = ["preflight", "catalogue gate", "target preparation", "positive control", "design", "screen", "verify"]
 stores = [".bench", ".trace"]
 graph = "Graph section; this file is the sink"
+structure = "prolog tree"
+image = "agent_fleet"
 ```
 
 ## Indications
@@ -116,6 +118,24 @@ stopping,halt before novelty when the binding control fails
 search,read the provider schema and the pinned reverse index
 filters,drop advisory sequences and unconstrained full-length targets
 recovery,record unavailable or positive-control and still verify the trace
+```
+
+#### Structure image
+
+The phase diagram above is the control flow. The fence below is the membership tree of one `fleet.campaign`. `core` is the root. `halt` is the end of the run. `worker` is the member role, and the manifest names the heads. `bench` and `trace` are the stores a member appends. The bench Merkle DAG stays inside the store `bench`. E7 checks this fence equal to the rendering of `agent.fleet` in `checker literals`. The fence stays outside compression. A fleet program stays outside this repository, and a YAML manifest stays out of this image.
+
+```prolog
+image(agent_fleet).
+shape(tree).
+node(bench).
+node(core).
+node(halt).
+node(trace).
+node(worker).
+edge(core, halt).
+edge(core, worker).
+edge(worker, bench).
+edge(worker, trace).
 ```
 
 #### 0. The manifest supplies the target and the composition
@@ -229,6 +249,7 @@ This repository ships no unit suite and no committed checker. Repository predica
 | change the composition between the control and the novel target | novel-target generation does not start |
 | emit or reseed any sequence from a failed control | positive control stays failed and no binder is emitted |
 | add a repository-local fleet executable or hidden default | Markdown ceases to be the sole runtime authority |
+| replace the membership tree, or wrap it | E7 |
 | preserve trace shape while faking provider calls | trace may be `result`, exposing why requests and control outputs must also be retained |
 
 The strongest break remains experimental: failure of the measured binding assay or binding to the pre-registered counter-screen panel kills the hypothesis even after a calibrated computational run.
