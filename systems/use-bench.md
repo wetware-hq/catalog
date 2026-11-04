@@ -191,6 +191,19 @@ Let `N` be the set of all possible nodes. Merge is `A ⊔ B = A ∪ B` on `(P(N)
 - **Commutative** — `A ∪ B = B ∪ A`.
 - **Idempotent** — `A ∪ A = A`.
 
+The fence `merge sketch` records that law. It is not the off-repo TLC model (§9).
+
+<details>
+<summary>merge sketch</summary>
+
+```tla
+---- MODULE bench_sketch ----
+\* Example only. Not the 2026-10-29 TLC model. E7 does not run this fence.
+Merge(A, B) == A \union B
+====
+```
+</details>
+
 So merge is a join on a complete join-semilattice with bottom `∅`, and the induced partial order is exactly `A ⊑ B ⟺ A ⊆ B`: "B has seen everything A has seen". **What converges** is each worker's head, monotonically, to the union of all appended nodes, in any merge order, with duplicates and reordering. **What does not converge** is anything computed over the set; two readers at different heads give different correct answers, which is why §1 requires the head on every answer.
 
 Hash naming is what makes this work without identity metadata: "same node" is decidable from the bytes.
@@ -224,6 +237,17 @@ No joins, no subqueries, no cross-tier aggregate, no "latest". Appending costs o
 
 A record may carry a rigid-body transform as `pose:M(...)`: a **motor** in 3D projective geometric algebra `Cl(3,0,1)`, eight coefficients, composing rotation and translation in one object, compared by `d(M,N) = ‖log(M̃N)‖` over the screw parameters — rotation angle about the screw axis, translation along it. It earns its place because workers produce transforms independently and the system must compare them, and this comparison is invariant under a change of either frame. The numbers in this section come from a run made outside this repository on 2026-10-30: a standard-library Python script, seed `20261030`, which is not in this tree because agents may not commit scripts here (`docs/follow-agent-contract.md` §0). Treat them as a dated snapshot, not a check this repository can re-run. Over 20,000 random pairs it reported `max |d(AM,AN) - d(M,N)| = 4.663e-15` and `max |d(MA,NA) - d(M,N)| = 4.177e-15`, while the obvious alternative — comparing rotation angle and translation vector separately — drifts by `2.301e+00` and `3.201e+00` under the same change of frame. An earlier draft of this file quoted `1e-13` and `5e-3` for these; that run did not reproduce `5e-3`, and the figures above are what it actually printed.
 
+The same distance, in the equation fence:
+
+<details>
+<summary>pose distance</summary>
+
+```tex
+% Example only. The distance defined in this section. Not the off-repo script.
+\[ d(M,N)=\lVert\log(\tilde{M} N)\rVert \]
+```
+</details>
+
 Two findings that must travel with it:
 
 - **It is not a metric.** It is bi-invariant, symmetric and zero on the diagonal, and it **violates the triangle inequality** — `22` of 20,000 random triples at seed `20261030`, worst excess `3.894e-01`, from the same 2026-10-30 run. (An earlier draft said 434; that number is not reproduced. Three other seeds give 24, 30 and 34, so the rate is tens per 20,000, not hundreds, for this sampling — uniform rotations and translations in [-1,1]^3. The rate depends on the sampling; that violations exist at all is the finding, and it does not depend on the count.) That is not a defect to fix: there is no bi-invariant metric on SE(3), so invariance and the triangle inequality cannot both be had. Therefore `near(pose, …)` is a **linear scan**, and poses must **never** enter a VP-tree, a ball tree, or any index that assumes a metric space. This is precisely the assumption an implementer makes without examining it.
@@ -233,7 +257,7 @@ This is the only use of geometric algebra in BENCH. It contributes nothing to th
 
 ### 9. Verification status
 
-The concurrency model was checked with TLC (TLA+) in an off-repo run on 2026-10-29 by catalog-systems. **The model is not in this repository** — there is no `.tla` or `.cfg` here — so nothing below is reproducible from this checkout, and the table records what that run reported rather than a property this repository can demonstrate. The configuration was: two agents, byte-level staging, a derived index, tier-pure aggregation, the immutable core, an untiered record and a record from a foreign run.
+The concurrency model was checked with TLC (TLA+) in an off-repo run on 2026-10-29 by catalog-systems. **The TLC model is not in this repository.** The `tla` fence labelled `merge sketch` in §5 is the merge equation only. It is not that model, it has no `.cfg`, and TLC has not run it. Nothing in the table below is reproducible from this checkout. The table records what the 2026-10-29 run reported rather than a property this repository can demonstrate. The configuration was: two agents, byte-level staging, a derived index, tier-pure aggregation, the immutable core, an untiered record and a record from a foreign run.
 
 | rule | result |
 |---|---|
@@ -294,6 +318,7 @@ Retrieved or re-checked 1 Nov 2026 (Australia/Sydney). The measured token ratio,
 | index a pose with a metric tree | triangle-inequality counterexamples invalidate pruning |
 | label a prediction as tier `1` | syntax passes, exposing the truthfulness limit |
 | run forever waiting for quiescence | no local termination predicate exists |
+| treat the `merge sketch` fence as the 2026-10-29 TLC model | the fence is the merge law only, and TLC has not run it |
 
 Canonical ordering, tier refusal, and run binding are obligations on every executor and receiver. Claims about replication, indexing, pose distance, and the off-repo TLA+ model remain falsification targets until executable fixtures are committed.
 

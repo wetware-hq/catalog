@@ -4,7 +4,7 @@
 
 `type: resource.reference` · **normative**. `docs/read-repository.md` is `type: initialization` and non-normative; on conflict this file governs.
 
-Define the catalogue schema, evidence boundary, canonical bytes, merge law, read behavior, procedure registry, and campaign-system registry. Implement the falsifier from this file and from `docs/falsify.md`; a user AI writes that runtime outside this repository.
+Define the catalogue schema, evidence boundary, canonical bytes, merge law, read behavior, procedure registry, and campaign-system registry. Implement the falsifier from this file and from `docs/falsify.md`; a user AI writes that runtime outside this repository. Fleet and swarm structure images are Prolog trees and DAGs.
 
 ## Specification
 
@@ -15,7 +15,7 @@ Define the catalogue schema, evidence boundary, canonical bytes, merge law, read
   "role": "normative catalogue and agent-system contract",
   "reads": ["graph.json", "registered Markdown", "predecessor catalogue", "paper evidence"],
   "writes": ["graph.json under human supersession", "proposals.json under section 9"],
-  "must": ["preserve canonical bytes", "separate study types", "leave the paper oracle explicit", "compress closed lists in place"],
+  "must": ["preserve canonical bytes", "separate study types", "leave the paper oracle explicit", "compress closed lists in place", "keep structure images expanded"],
   "check": ["predicates 1-19", "E1-E7"]
 }
 ```
@@ -33,7 +33,7 @@ Define the catalogue schema, evidence boundary, canonical bytes, merge law, read
 law = ["0", "0b", "0c", "0d", "0e", "1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "11"]
 graph = "Graph section; reciprocal relative paths; read before"
 registry = ["10 Skills", "11 Systems"]
-embeds = ["toml", "json", "csv", "stateDiagram-v2", "flowchart", "GFM tables"]
+embeds = ["toml", "json", "csv", "stateDiagram-v2", "flowchart", "GFM tables", "typescript", "lean"]
 compression = "details wrapper around one canonical fence"
 ```
 
@@ -43,6 +43,7 @@ compression = "details wrapper around one canonical fence"
 - Validating, merging, or extending catalogue bytes.
 - Resolving keys, proposing pairs, or launching de novo design.
 - Implementing a registered campaign system or interpreting its outputs.
+- Reading a fleet tree or a swarm DAG.
 
 ## Contraindications
 
@@ -51,6 +52,7 @@ compression = "details wrapper around one canonical fence"
 - `pair` and `preclinical` are study types, not evidence grades, and are never pooled.
 - A missing row is unknown coverage, not evidence that no binder exists.
 - Repository-local `agent.skill` and `fleet.campaign` are not claims of conformance with external Agent Skills or A2A.
+- A structure image is a Prolog fence. It is not a header spec, a fleet executable, or a cluster manifest.
 
 ## Algorithm
 
@@ -135,7 +137,7 @@ Every file in `skills/` and `systems/` names itself once, in the header, before 
 | `skills/` | a `resource.procedure`, spec `agent.skill`. The one skill §10 marks `special` also says so. The others do not. |
 | `systems/` | an `agent.system`, spec `fleet.campaign`. No class. |
 
-`agent.skill` is the spec of a procedure. `fleet.campaign` is the spec of one run. `agent.swarm` is the spec of the falsifier [`falsify.md`](falsify.md), and of no other file. A header on any other path that carries `agent.swarm` fails E5. `agent.fleet` is not a spec and not a type. A header that carries it fails E5. A header outside `skills/` and `systems/` that carries `agent.skill` or `fleet.campaign` fails E5: that file is an orphan. `e5_spec_allowlist` in §0f is empty: no fixture is exempt, and no path outside `skills/` is a skill. `docs/falsify.md` is the only entry of `e5_swarm_paths` in that same block, which is what the runtime falsifier loads. The campaign runtime is the Markdown specification [`systems/run-campaign.md`](../systems/run-campaign.md); no repository-local fleet executable is a hidden second contract. The four strings, and the ordinary words next to them, are set out in §11.
+`agent.skill` is the spec of a procedure. `fleet.campaign` is the spec of one run. `agent.swarm` is the spec of the falsifier [`falsify.md`](falsify.md), and of no other file. A header on any other path that carries `agent.swarm` fails E5. `agent.fleet` is not a spec and not a type. A header that carries it fails E5. A header outside `skills/` and `systems/` that carries `agent.skill` or `fleet.campaign` fails E5: that file is an orphan. `e5_spec_allowlist` in §0f is empty: no fixture is exempt, and no path outside `skills/` is a skill. `docs/falsify.md` is the only entry of `e5_swarm_paths` in that same block, which is what the runtime falsifier loads. The campaign runtime is the Markdown specification [`systems/run-campaign.md`](../systems/run-campaign.md); no repository-local fleet executable is a hidden second contract. The four strings, and the ordinary words next to them, are set out in §11. The structure image of `agent.fleet` is the Prolog tree in [`systems/run-campaign.md`](../systems/run-campaign.md). The structure image of `agent.swarm` is the Prolog DAG in [`falsify.md`](falsify.md). Neither image is a header.
 
 ### 0d. Scientific Markdown profile and documentation DAG
 
@@ -162,7 +164,7 @@ E6 checks the functional paragraph, H2 profile, JSON card, variable/process head
 
 ### 0e. Formal language profile
 
-The profile selects a language when that artifact exists; it does not require placeholder code. Extensions below name standalone artifacts. Inside Markdown, use the canonical lowercase fence tag for that language. Exact `.trace` and `.bench` protocol bytes are `text`; terminal command wrappers are `bash`.
+The profile selects a language when that artifact exists; it does not require placeholder code. Extensions below name standalone artifacts. Inside Markdown, use the canonical lowercase fence tag for that language. Exact `.trace` and `.bench` protocol bytes are `text`. Terminal command wrappers are `bash`. Terminal tools are `python`, extension `.py`. Interfaces are `typescript`, extension `.ts`. The cybernetics channels are `AI2A` (frontier, agent to agent) and `A2H` (HITL, agent to human). In this profile, `frontier` names the caller-supplied model on channel `AI2A`. The Pareto reading of that word stays in `skills/design-binder.md`. Structure images of `agent.fleet` and `agent.swarm` are `prolog`, extension `.pl`, and each image is a tree or a DAG. A preferred extension with no committed fence remains the selector for that artifact. An agent image, when one exists, is a Dockerfile. This repository does not commit one.
 
 ```toml
 [preferred]
@@ -174,10 +176,22 @@ falsifiers = ".bend"
 theories = ".lean"
 machines = ".tla"
 
+[terminal]
+tools = "python"
+wrappers = "bash"
+
 [images]
 agents = "Dockerfile"
-fleets = "Kubernetes"
-swarms = "Kubernetes"
+fleets = ".pl"
+swarms = ".pl"
+
+[structures]
+agent_fleet = "tree"
+agent_swarm = "dag"
+
+[cybernetics]
+ai2a = "frontier"
+a2h = "hitl"
 
 [embedded]
 math = ".wl"
@@ -203,9 +217,54 @@ code_demos = "Marimo (.py)"
 animations = "Three.js"
 ```
 
-Canonical fence tags are `python`, `javascript`, `typescript`, `rust`, `bend`, `lean`, `tla`, `dockerfile`, `yaml` for Kubernetes manifests only, `wolfram`, `mermaid`, `json`, `r`, `csv`, `toml`, `tex`, `svg`, `stl`, `text`, and `bash`. GFM cards, registries, and comparison tables are Markdown structure; machine-consumed embedded tables use `csv`.
+Canonical fence tags are `python`, `prolog`, `javascript`, `typescript`, `rust`, `bend`, `lean`, `tla`, `dockerfile`, `yaml` for Kubernetes manifests only, `wolfram`, `mermaid`, `json`, `r`, `csv`, `toml`, `tex`, `svg`, `stl`, `text`, and `bash`. GFM cards, registries, and comparison tables are Markdown structure; machine-consumed embedded tables use `csv`.
 
-Every repository Markdown fence is a column-zero triple backtick fence with one explicit canonical tag. Raw HTML is not a language escape; the compression wrapper below is the only admitted form. In live Markdown, `Composition` and `Variables` each contain exactly one mapping in the line-oriented, JSON-value subset of TOML 1.1.0: lowercase bare keys, single-component tables, no escapes, and no duplicate table or key. Mermaid starts with `stateDiagram-v2` or `flowchart`; CSV uses minimal quoting and LF. Where live Markdown contains `### Process`, E7 requires the three variable tables, that seven-row CSV inside `Process`, and both Mermaid kinds inside `Algorithm`. E7 enforces fence tags across all Markdown, parses TOML, JSON, and CSV, checks Mermaid kind, admits YAML only for Kubernetes manifests, and admits raw HTML only as one in-place compression wrapper. It does not compile the remaining preferred languages or discharge §8.16. A fenced program in live Markdown is an example of a framework for a user AI that writes the runtime outside this repository. It is not that runtime, and it is not a standalone artifact.
+Every repository Markdown fence is a column-zero triple backtick fence with one explicit canonical tag. Raw HTML is not a language escape; the compression wrapper below is the only admitted form. In live Markdown, `Composition` and `Variables` each contain exactly one mapping in the line-oriented, JSON-value subset of TOML 1.1.0: lowercase bare keys, single-component tables, no escapes, and no duplicate table or key. Mermaid starts with `stateDiagram-v2` or `flowchart`; CSV uses minimal quoting and LF. Where live Markdown contains `### Process`, E7 requires the three variable tables, that seven-row CSV inside `Process`, and both Mermaid kinds inside `Algorithm`. E7 enforces fence tags across all Markdown, parses TOML, JSON, and CSV, checks Mermaid kind, admits YAML only for Kubernetes manifests, and admits raw HTML only as one in-place compression wrapper. A YAML fence is a Kubernetes manifest and is never a structure image. E7 does not compile the remaining preferred languages or discharge §8.16. A fenced program in live Markdown is an example of a framework for a user AI that writes the runtime outside this repository, except the two Prolog structure images, which E7 checks against `e7.structure_images`. An example is not that runtime, and it is not a standalone artifact.
+
+#### Structure images
+
+The documentation DAG stays in the `Graph` sections (§0d). A structure image is the membership of one fleet, or the dependency of one swarm. `agent.fleet` stays out of the header (§0c, §11). The atom `agent_fleet` names its image. `agent.swarm` remains the falsifier spec, and the atom `agent_swarm` names its image. Each image is one expanded `prolog` fence on the path in `e7.structure_images`, and no other `prolog` fence occurs.
+
+The fence body is LF lines. The facts, in order, are `image(Atom).`, `shape(tree).` or `shape(dag).`, then `node(Atom).` in ascending byte order, then `edge(Atom, Atom).` in ascending byte order of the pair. An atom matches `^[a-z][a-z0-9_]*$`. One space follows the comma in an edge. The body has no comment, blank line, or extra fact. E7 rebuilds that body from `e7.structure_images` and refuses a difference.
+
+A fleet record stores `nodes` and `edges`. Its shape is `tree`. Its unique indegree-zero node is `root`. Every other node has indegree one, `|E| = |V| - 1`, and every node is reachable from the root. The fleet image is that tree. `core` roots the run, `halt` ends it, `worker` is the member role, and `bench` and `trace` are the stores a member appends. The manifest names the heads. The tree is membership. The bench Merkle DAG stays the store inside `bench`.
+
+A swarm record stores `workers`, `join`, `sink`, and `second_parent`. Its shape is `dag`. The nodes are the workers plus `join` and `sink`. The edges are one edge from each worker to `join`, one edge from `join` to `sink`, and one edge from `second_parent` to `sink`. `second_parent` is one of the workers. `join` and `sink` are not workers. The directed graph is acyclic, every node is reachable from a root, and at least one node has indegree greater than one. The swarm image is that DAG: the seven workers depend on `decide`, and `decide` and `document` both depend on `literals`. The workers do not vote. The image does not schedule a cluster.
+
+The two fences below are examples. E7 checks that the typescript fence contains the channel tokens `AI2A` and `A2H`. E7 does not compile the Lean fence.
+
+<details>
+<summary>cybernetics interface</summary>
+
+```typescript
+/** Example only. Local interface vocabulary. Not an A2A Agent Card and not a runtime. */
+export type Channel = "AI2A" | "A2H";
+
+/** AI2A, frontier: agent to agent. The caller names the model. */
+export interface FrontierTurn {
+  readonly channel: "AI2A";
+  readonly from: string;
+  readonly to: string;
+  readonly artifact: string;
+}
+
+/** A2H, HITL: agent to human. The human act is a paper read or a refusal. */
+export interface HitlTurn {
+  readonly channel: "A2H";
+  readonly agent: string;
+  readonly human: "read" | "refuse";
+}
+```
+</details>
+
+<details>
+<summary>tree cardinality</summary>
+
+```lean
+-- Example only. E7 does not compile this fence. Reachability and unique parents are separate checks.
+def treeCardinality (v e : Nat) : Prop := v ≥ 1 ∧ e + 1 = v
+```
+</details>
 
 #### In-place compression
 
@@ -213,15 +272,15 @@ In-place compression is a collapsible code block. The payload stays in the file.
 
 The wrapper is the only raw HTML live Markdown admits. It is column-zero: `<details>`, then `<summary>LABEL</summary>`, then one blank line, then one canonical fence, then `</details>` on the line after the fence's closing backticks. `LABEL` is 1 to 128 ASCII bytes, with no ASCII control and no `<`, no `>`, no backtick, and no `#`. The tags have no attributes. Labels are unique in a file. The wrapper holds one fence and no prose.
 
-The `Specification` JSON card, the `Composition` TOML, the `Variables` TOML, the `Process` CSV, and both Mermaid diagrams stay outside every wrapper. A closed list a runtime loads may sit inside one. The labels in this repository are `checker literals`, `attacks`, `carrier sets`, `example framework: python`, `example framework: rust`, `example framework: bash`, `example framework: text`, `witness: a1.trace`, and `agent card`.
+The expanded set in `e7.compression.expanded` stays outside every wrapper: the specification card, the composition mapping, the variables mapping, the process CSV, both Mermaid diagrams, and every Prolog structure image. A closed list a runtime loads may sit inside one. The labels are `e7.compression.labels`: `checker literals`, `attacks`, `carrier sets`, `example framework: python`, `example framework: rust`, `example framework: bash`, `example framework: text`, `witness: a1.trace`, `agent card`, `cybernetics interface`, `tree cardinality`, `pose distance`, and `merge sketch`.
 
 E7 admits that wrapper and refuses every other line that, outside a fence, begins with optional whitespace and then `<`. A second fence, prose inside the wrapper, a wrapped fence from the expanded set, an attribute on `<details>`, a repeated label, and any other HTML line fail E7. E6 does not read the summary as a heading. The wrapper is not a graph edge, a second copy, or a language tag.
 
-The delimiters and the expanded-fence names are also recorded under `e7.compression` in §0f. This prose is the law.
+The delimiters, the expanded-fence names, and the label inventory are recorded under `e7.compression` in §0f. This prose is the law. E7 refuses a label inventory that differs from the summaries in the repository.
 
 ### 0f. Checker literals
 
-Closed lists and normative patterns live in the collapsible fence `checker literals` below. Expand that label to load them. The falsifier ([`falsify.md`](falsify.md)) is the only instrument, and the decision procedure is inside it. A user AI writes that instrument at runtime, outside this repository, and loads this block. The fences in the falsifier are an example of the framework. They are not the program, and they are not a second copy of the lists.
+Closed lists and normative patterns live in the collapsible fence `checker literals` below. Expand that label to load them. The falsifier ([`falsify.md`](falsify.md)) is the only instrument, and the decision procedure is inside it. A user AI writes that instrument at runtime, outside this repository, and loads this block. The fences in the falsifier are an example of the framework. They are not the program, and they are not a second copy of the lists. The expanded Prolog images render `e7.structure_images`. E7 refuses a difference, and the image is not a second authority.
 
 | class | parent | where the list lives |
 |---|---|---|
@@ -230,6 +289,7 @@ Closed lists and normative patterns live in the collapsible fence `checker liter
 | attack manifest | [`falsify.md`](falsify.md) | the fence `attacks` |
 | bench line grammar | [`systems/use-bench.md`](../systems/use-bench.md) | section 3; this repository stores no bench program |
 | campaign runtime | [`systems/run-campaign.md`](../systems/run-campaign.md) | the manifest table; this repository stores no fleet program |
+| fleet and swarm structure images | this file §0e and `e7.structure_images` | the expanded Prolog fences in `systems/run-campaign.md` and `docs/falsify.md` |
 
 The banner a checker compares is the first non-blank line of this file. `e1_allowlist` is empty, so E1 skips nothing. The edge cap in §0d is `|V| + 1`, stored here as `edge_surplus_max` of 2 because a tree has `|V| - 1` edges. A bracketed HELM symbol matches `monomer_symbol` and is refused when it is an all-uppercase run of length at least `monomer_uppercase_run_min_length`. Polymer-index normalisation applies `helm_index_normalise` and replaces each matched digit run with `#`.
 
@@ -412,7 +472,7 @@ The banner a checker compares is the first non-blank line of this file. `e1_allo
     ],
     "E7": [
       "pure-ext",
-      "Markdown formal language profile and in-place compression"
+      "Markdown formal language profile, compression, and structure images"
     ]
   },
   "e1_allowlist": [],
@@ -465,6 +525,7 @@ The banner a checker compares is the first non-blank line of this file. `e1_allo
       "json",
       "lean",
       "mermaid",
+      "prolog",
       "python",
       "r",
       "rust",
@@ -496,6 +557,77 @@ The banner a checker compares is the first non-blank line of this file. `e1_allo
       "filters",
       "recovery"
     ],
+    "terminal": {
+      "extension": ".py",
+      "fence": "python",
+      "path": "docs/falsify.md"
+    },
+    "cybernetics": {
+      "extension": ".ts",
+      "fence": "typescript",
+      "path": "docs/follow-agent-contract.md",
+      "label": "cybernetics interface",
+      "channels": [
+        "AI2A",
+        "A2H"
+      ]
+    },
+    "structure_images": [
+      {
+        "name": "agent.fleet",
+        "atom": "agent_fleet",
+        "extension": ".pl",
+        "fence": "prolog",
+        "shape": "tree",
+        "path": "systems/run-campaign.md",
+        "root": "core",
+        "nodes": [
+          "bench",
+          "core",
+          "halt",
+          "trace",
+          "worker"
+        ],
+        "edges": [
+          [
+            "core",
+            "halt"
+          ],
+          [
+            "core",
+            "worker"
+          ],
+          [
+            "worker",
+            "bench"
+          ],
+          [
+            "worker",
+            "trace"
+          ]
+        ]
+      },
+      {
+        "name": "agent.swarm",
+        "atom": "agent_swarm",
+        "extension": ".pl",
+        "fence": "prolog",
+        "shape": "dag",
+        "path": "docs/falsify.md",
+        "join": "decide",
+        "sink": "literals",
+        "second_parent": "document",
+        "workers": [
+          "bytes",
+          "grammar",
+          "identity",
+          "relation",
+          "oracle",
+          "document",
+          "trace"
+        ]
+      }
+    ],
     "compression": {
       "open": "<details>",
       "summary_open": "<summary>",
@@ -508,7 +640,23 @@ The banner a checker compares is the first non-blank line of this file. `e1_allo
         "variables toml",
         "process csv",
         "stateDiagram-v2",
-        "flowchart"
+        "flowchart",
+        "prolog structure image"
+      ],
+      "labels": [
+        "checker literals",
+        "attacks",
+        "carrier sets",
+        "example framework: python",
+        "example framework: rust",
+        "example framework: bash",
+        "example framework: text",
+        "witness: a1.trace",
+        "agent card",
+        "cybernetics interface",
+        "tree cardinality",
+        "pose distance",
+        "merge sketch"
       ]
     }
   }
@@ -683,9 +831,9 @@ The reader-facing warning is therefore not carried by a path either. It is carri
 
 **`fleet.campaign` is one run.** It is the spec on every system in the table below. The run has one core. `run` is the SHA-256 of `core.trace`. That file carries `bound-n` and `bound-tok`. The run ends on one `halt`. `core.bench` hashes its own bytes, and the executor writes this `run` into that file as the parameter `trace`. Workers that append bench lines or trace lines are members of that run. Set-union merge with no coordinator is a property of the bench store inside the run. Wikidata `wbsearchentities` for `fleet.campaign`, language `en`, limit 5, returned an empty `search` array on this retrieval.
 
-**`agent.swarm` is the spec of a falsifier.** The only header that carries it is `docs/falsify.md`. The decision procedure is part of that falsifier, and that file is the only instrument. It is not a run and not a type. A run of this contract is a `fleet.campaign`. A header on any other path that carries `agent.swarm` fails E5. Dropping the spec from the falsifier fails E5.
+**`agent.swarm` is the spec of a falsifier.** The only header that carries it is `docs/falsify.md`. The decision procedure is part of that falsifier, and that file is the only instrument. It is not a run and not a type. A run of this contract is a `fleet.campaign`. A header on any other path that carries `agent.swarm` fails E5. Dropping the spec from the falsifier fails E5. Its structure image is the expanded Prolog DAG in that file (§0e).
 
-**`agent.fleet` is not a spec and not a type.** The folder sort retired it. A header that carries it fails E5. The name of the run is `fleet.campaign`. The members of that run are its workers. Wikidata `wbsearchentities` for `agent.fleet`, language `en`, limit 10, returned an empty `search` array on this retrieval, the same result as the query for `agent.swarm`.
+**`agent.fleet` is not a spec and not a type.** The folder sort retired it. A header that carries it fails E5. The name of the run is `fleet.campaign`. The members of that run are its workers. Its structure image is the expanded Prolog tree in [`systems/run-campaign.md`](../systems/run-campaign.md) (§0e). The image keeps the string out of the header. Wikidata `wbsearchentities` for `agent.fleet`, language `en`, limit 10, returned an empty `search` array on this retrieval, the same result as the query for `agent.swarm`.
 
 **One reading in a skill.** "The campaign" names the one `fleet.campaign` run. "Workers" names the members of that run. The phrase "fleet and design architectures" in `skills/design-binder.md` §5 names methods in the literature. It does not name this run.
 
@@ -696,7 +844,7 @@ The reader-facing warning is therefore not carried by a path either. It is carri
 - [Q47311934](https://www.wikidata.org/wiki/Q47311934), English label "fleet", English description "group of vehicles operated by an organization", last revision 2520618032, modified 2026-07-21T11:05:03Z. Subclass of [Q16887380](https://www.wikidata.org/wiki/Q16887380) "group". arXiv:2510.10379v1 (Gupta, Asbery, Merchant, Anwar, Thomason), byte sha256 `e6494d40cf75e7cdc60cd7713960f58e30b515b144b243d580feb690148e79d8`. System Design, read off that PDF: "At its core, the system employs a centralized fleet manager that orchestrates robot operations through a planning and allocation framework."
 - [Q831663](https://www.wikidata.org/wiki/Q831663), English label "military campaign", English alias "campaign", English description "large scale, long duration, significant military strategy plan", last revision 2552201427, modified 2026-10-02T15:17:09Z.
 
-A procedure of this contract is an `agent.skill`. A run of this contract is one `fleet.campaign`: one core, one hash, bounds, one halt. A falsifier of this contract is `docs/falsify.md`, spec `agent.swarm`. Q205961 is a learned ability. Q863960 is collective behaviour of decentralized, self-organized systems, in the item's own spelling. Q47311934 is a group of vehicles operated by an organization. Q831663 is a military campaign. arXiv:2510.10379v1 describes a centralized fleet manager. Those items remain different objects from the procedure, from the run, and from the falsifier.
+A procedure of this contract is an `agent.skill`. A run of this contract is one `fleet.campaign`: one core, one hash, bounds, one halt. A falsifier of this contract is `docs/falsify.md`, spec `agent.swarm`. Q205961 is a learned ability. Q863960 is collective behaviour of decentralized, self-organized systems, in the item's own spelling. Q47311934 is a group of vehicles operated by an organization. Q831663 is a military campaign. arXiv:2510.10379v1 describes a centralized fleet manager. Those items remain different objects from the procedure, from the run, and from the falsifier. The fleet structure image is a membership tree rooted at `core`, a different object from the centralized fleet manager in arXiv:2510.10379v1.
 
 | system | what it holds | write scope |
 |---|---|---|
@@ -740,6 +888,7 @@ Rows that do not name 3 Nov 2026 were retrieved 1 Nov 2026 (Australia/Sydney). E
 | Re-run a stochastic agent once and call it reliable | no contract predicate supports that inference |
 | Wrap the process CSV or a diagram, or put an HTML line outside a compression wrapper | E7 fails |
 | Wrap one closed-list fence in one compression wrapper | E7 holds |
+| Replace a fleet or swarm Prolog image with a cycle or a YAML manifest, or wrap that image | E7 |
 | Run the workers in [`falsify.md`](falsify.md) | a survivor falsifies that prediction; a catch is not clinical proof |
 
 A user AI writes the falsifier from [`falsify.md`](falsify.md) and runs it outside this repository, including the predecessor check when a predecessor exists. A passing result is scoped evidence, never proof of clinical truth.
