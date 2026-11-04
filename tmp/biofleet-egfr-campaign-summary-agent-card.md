@@ -1,120 +1,187 @@
 ⚠️ ACADEMIC RESEARCH PURPOSES ONLY; NOT FOR MEDICAL USE WITHOUT LICENSED OVERSIGHT
 
-# Biofleet EGFR campaign summary (A2A Agent Card specification)
+# EGFR campaign record
 
-This file records one `fleet.campaign` run against the pinned catalogue at commit `4108e940ee5f8c8aad7d8e1ae173bbe166c718cb`. It is a descriptive Agent Card, not a live A2A endpoint. Runtime authority remains [`systems/run-campaign.md`](../systems/run-campaign.md).
+`type: record` · one pinned calibration.
 
-## Campaign summary
+Select uniprot:P00533 by descending in-scope pair count. Catalogue gate returns hit-same-indication on pmid:16467544. Blinded 1YY9 calibration fails the binding bar and emits nothing.
 
-Two phases executed outside this repository under `/home/ubuntu/biofleet/`.
-
-| Phase | When (Australia/Sydney) | Outcome |
-|---|---|---|
-| Catalogue gate | 4 Nov 2026, 9:13 am | Ranked oncology/immunology `pair` targets; selected `uniprot:P00533` (EGFR); **hit-same-indication** on cetuximab for head and neck SCC (pmid:16467544); **no design spend** |
-| Blinded positive control | 4 Nov 2026, 9:21–9:27 am | Boltz peptide design on EGFR domain III (PDB 1YY9 crop, 22 epitope indices); **positive-control-failed** (`binding_confidence` bar 0.7); **USD 0.25 estimated**; **zero binders emitted** |
-
-Ranking law: within dictionary `pair` only; count in-scope papers whose read area is oncology or immunology; descending; tie-break target key ascending. Seven targets tied at two in-scope citations; EGFR sorts first on accession. VEGFA has four clinical citations but only one in-scope (bevacizumab in mCRC).
-
-Positive control withheld catalogue Fab chains and sequences. Primary pass metric: `metrics.binding_confidence` ≥ 0.7. Supporting metrics (`iptm`, `structure_confidence`, `min_interaction_pae`) did not substitute. Best candidate: `SLSEAEQKLLDEVKSLS` at binding confidence 0.108, 15/22 epitope contacts within 4.5 Å.
-
-Trace judgements: gate `result` run `f941afe146343fab22fff05cab5ebacf416b9dcfa84ae07cd5a490fd27094695`; calibration `result` run `d0c39db694ec49716002d67433092e0053a3b527f53b263a2b93c4ab73a468c5`. Paper oracle: **not-discharged**.
-
-External run reports (not committed here): `/home/ubuntu/biofleet/runs/20261104T091305+1100/report.json`, `/home/ubuntu/biofleet/runs/20261104T092853+1100/report.json`.
-
-## Agent Card (A2A v1.0 shape)
+## Specification
 
 ```json
 {
-  "name": "catalog-biofleet-egfr-2026-11-04",
-  "description": "Pinned-catalogue fleet.campaign: rank oncology and immunology pair targets, run the design-binder gate, then blinded Boltz peptide calibration on the cetuximab EGFR epitope without revealing catalogue binder sequences.",
+  "id": "tmp/biofleet-egfr-campaign-summary-agent-card.md",
+  "type": "record",
+  "role": "record one EGFR calibration verdict",
+  "reads": ["systems/use-bench.md", "systems/run-campaign.md", "pinned graph.json"],
+  "writes": [],
+  "must": ["rank inside pair", "withhold reference chains", "emit nothing below the bar"],
+  "check": ["binding_confidence", "trace result", "E1", "E6", "E7"]
+}
+```
+
+## Graph
+
+- → [../systems/run-campaign.md](../systems/run-campaign.md)
+- ← [../systems/use-bench.md](../systems/use-bench.md)
+
+## Composition
+
+```toml
+target = "uniprot:P00533"
+dictionary = "pair"
+pdb = "1YY9"
+provider = "Boltz"
+pipeline = "boltzprot"
+verdict = "positive-control-failed"
+oracle = "not-discharged"
+```
+
+## Indications
+
+| parameter | value |
+|---|---|
+| spec | `4108e940ee5f8c8aad7d8e1ae173bbe166c718cb` |
+| rank | `pair` ∩ {oncology, immunology}; in_scope desc; target asc |
+| select | `uniprot:P00533` EGFR |
+| gate | hit-same-indication · `pmid:16467544` cetuximab · spend 0 |
+| context | hit-other-indication · epitope recovery, not a new clinical claim |
+| crop | author 310–514 = UniProt 334–538 · offset author+24 |
+| withhold | chains C, D · catalogue Fab sequences withheld |
+| epitope | 22 residues · contact ≤ 4.5 Å |
+| design | peptide 12..18 · n=10 · exclude C · `boltzprot` 1.0 |
+| bar | `binding_confidence` ≥ 0.7 · geometry ≥ 8/22 does not pass |
+| estimate | USD 0.2500 · request `b615e910dbf792b808e0a0639a7e057c38934418f510c4e75daeae33f089d944` |
+| run | `prot_des_6SDannvhmPSi293YAsJ2` succeeded |
+| best | `pres_Bxgm7DvSbKwlNY7MP4yd` `SLSEAEQKLLDEVKSLS` · 0.10832766083050813 · 15/22 |
+| emitted | 0 · positive-control-failed |
+| traces | gate `f941afe146343fab22fff05cab5ebacf416b9dcfa84ae07cd5a490fd27094695` · calibration `d0c39db694ec49716002d67433092e0053a3b527f53b263a2b93c4ab73a468c5` · both result |
+| oracle | not-discharged |
+
+## Contraindications
+
+- `REFUSE` catalogue write, prescription, and oracle discharge.
+- `REFUSE` iptm, structure_confidence, min_interaction_pae, or contact count as a substitute pass.
+- `REFUSE` reading hit-same-indication as permission to emit a new binder.
+
+## Algorithm
+
+### Variables
+
+```toml
+objective = "pass the binding bar or emit nothing"
+
+[independent]
+areas = ["oncology", "immunology"]
+crop = "1YY9:310-514"
+length = "12..18"
+n = 10
+
+[dependent]
+gate = "hit-same-indication"
+control = "positive-control-failed"
+emitted = 0
+best = 0.10832766083050813
+
+[controlled]
+metric = "binding_confidence"
+bar = 0.7
+geometry = "8/22 at 4.5A"
+withhold = "1YY9 chains C and D"
+oracle = "not-discharged"
+spec = "4108e940ee5f8c8aad7d8e1ae173bbe166c718cb"
+```
+
+### Process
+
+```text
+RANK pair FILTER area:oncology|immunology ORDER in_scope:desc,target:asc
+SELECT uniprot:P00533
+HALT hit-same-indication pmid:16467544
+CALIBRATE pdb:1YY9 withhold:C,D crop:310-514 bar:binding_confidence>=0.7
+VERDICT positive-control-failed emitted:0
+```
+
+```json
+{
+  "name": "catalog-biofleet-egfr",
+  "description": "Descriptive card of a finished run. Not a live endpoint.",
   "version": "1.0.0",
-  "documentationUrl": "https://github.com/wetware-hq/catalog/blob/4108e940ee5f8c8aad7d8e1ae173bbe166c718cb/systems/run-campaign.md",
   "supportedInterfaces": [
     {
-      "url": "https://github.com/wetware-hq/catalog/tree/4108e940ee5f8c8aad7d8e1ae173bbe166c718cb",
-      "protocolBinding": "DOCUMENTATION",
+      "url": "https://github.com/wetware-hq/catalog/blob/main/tmp/biofleet-egfr-campaign-summary-agent-card.md",
+      "protocolBinding": "HTTP+JSON",
       "protocolVersion": "1.0"
     }
   ],
-  "provider": {
-    "organization": "Wetware",
-    "url": "https://github.com/wetware-hq/catalog"
-  },
-  "capabilities": {
-    "streaming": false,
-    "pushNotifications": false,
-    "extensions": [],
-    "extendedAgentCard": false
-  },
+  "capabilities": {"streaming": false, "pushNotifications": false},
   "defaultInputModes": ["application/json"],
   "defaultOutputModes": ["application/json", "text/markdown"],
   "skills": [
     {
-      "id": "rank-oncology-immunology-pair-targets",
-      "name": "Rank oncology and immunology pair targets",
-      "description": "Build a reverse index from pinned graph.json pair rows; rank by in-scope pmid count within oncology or immunology reads; never pool preclinical.",
-      "tags": ["catalogue", "pair", "oncology", "immunology", "ranking"]
+      "id": "rank-pair",
+      "name": "Rank pair",
+      "description": "Count in-scope oncology or immunology pmids. Tie-break target ascending.",
+      "tags": ["pair", "rank"]
     },
     {
-      "id": "design-binder-catalogue-gate",
-      "name": "Design-binder catalogue gate",
-      "description": "Stop on hit-same-indication; branch hit-other-indication only after reading the paper; record hit-unread without designing.",
-      "tags": ["design-binder", "gate", "indication-aware"]
-    },
-    {
-      "id": "blinded-positive-control-calibration",
-      "name": "Blinded positive control calibration",
-      "description": "Epitope-conditioned provider design on a mapped co-structure with reference binder chains withheld; pass only if binding_confidence crosses a pre-registered bar and geometry contacts the mapped epitope.",
-      "tags": ["positive-control", "boltz", "epitope", "binding_confidence"]
+      "id": "blind-calibrate",
+      "name": "Blind calibrate",
+      "description": "Withhold 1YY9 chains C and D. Emit none unless binding_confidence >= 0.7.",
+      "tags": ["egfr", "positive-control"]
     }
-  ],
-  "extensions": {
-    "fleet.campaign": {
-      "specCommit": "4108e940ee5f8c8aad7d8e1ae173bbe166c718cb",
-      "selectedTarget": "uniprot:P00533",
-      "gene": "EGFR",
-      "phases": [
-        {
-          "id": "catalogue-gate",
-          "verdict": "hit-same-indication",
-          "stoppingPmid": "pmid:16467544",
-          "stoppingDrug": "cetuximab",
-          "indication": "locoregionally advanced squamous-cell carcinoma of the head and neck",
-          "designRequests": 0,
-          "estimateRequests": 0,
-          "traceRun": "f941afe146343fab22fff05cab5ebacf416b9dcfa84ae07cd5a490fd27094695"
-        },
-        {
-          "id": "blinded-calibration",
-          "verdict": "positive-control-failed",
-          "contextVerdict": "hit-other-indication",
-          "indication": "blinded recovery of the mapped cetuximab epitope on EGFR",
-          "providerRun": "prot_des_6SDannvhmPSi293YAsJ2",
-          "providerStatus": "succeeded",
-          "estimatedCostUsd": "0.2500",
-          "requestSha256": "b615e910dbf792b808e0a0639a7e057c38934418f510c4e75daeae33f089d944",
-          "primaryMetric": "metrics.binding_confidence",
-          "primaryBar": 0.7,
-          "bestBindingConfidence": 0.10832766083050813,
-          "bestCandidateId": "pres_Bxgm7DvSbKwlNY7MP4yd",
-          "candidatesGenerated": 10,
-          "candidatesEmitted": 0,
-          "traceRun": "d0c39db694ec49716002d67433092e0053a3b527f53b263a2b93c4ab73a468c5"
-        }
-      ],
-      "structure": {
-        "pdb": "1YY9",
-        "pdbSha256": "e574b33a287c4100ff35f8346a6eadba1486d4a90464f4344f3189115f6d5fa8",
-        "cropAuthor": "310-514",
-        "cropUniprot": "334-538",
-        "epitopeResidueCount": 22,
-        "withheldChains": ["C", "D"]
-      },
-      "oracle": "not-discharged"
-    }
-  }
+  ]
 }
 ```
+
+```mermaid
+flowchart LR
+    Rank --> Select
+    Select --> Halt
+    Halt --> Calibrate
+    Calibrate --> Refuse
+```
+
+```mermaid
+stateDiagram-v2
+    [*] --> Rank
+    Rank --> Gate
+    Gate --> SameHit
+    SameHit --> Calibrate
+    Calibrate --> Refuse
+    Refuse --> [*]
+```
+
+```csv
+operator,law
+controls,binding_confidence bar 0.7 and oracle not-discharged
+design,pair rank then blinded peptide calibration
+transport,Boltz run prot_des_6SDannvhmPSi293YAsJ2
+stopping,emit none when the bar fails
+search,oncology and immunology inside pair
+filters,withhold 1YY9 chains C and D
+recovery,do not substitute iptm for the binding bar
+```
+
+## Citations
+
+A2A Project (no date) ‘Agent2Agent protocol’, v1.0.1, commit 3303592. Available at: https://github.com/a2aproject/A2A/tree/3303592588e388e62e0f69f701af531d2f4e3991 (Accessed: 4 November 2026).
+
+Boltz (no date) ‘Protein design concepts’. Available at: https://api.boltz.com/docs/api/guides/concepts/ (Accessed: 4 November 2026).
+
+Bonner, J.A. et al. (2006) ‘Radiotherapy plus cetuximab for squamous-cell carcinoma of the head and neck’, *The New England Journal of Medicine*, 354(6), pp. 567–578. doi:10.1056/NEJMoa053422. pmid:16467544.
+
+Li, S. et al. (2005) ‘Structural basis for inhibition of the epidermal growth factor receptor by cetuximab’, *Cancer Cell*, 7(4), pp. 301–311. doi:10.1016/j.ccr.2005.03.003. pmid:15837620.
+
+Thatcher, N. et al. (2015) ‘Necitumumab plus gemcitabine and cisplatin versus gemcitabine and cisplatin alone as first-line therapy in patients with stage IV squamous non-small-cell lung cancer (SQUIRE): an open-label, randomised, controlled phase 3 trial’, *The Lancet Oncology*, 16(7), pp. 763–774. doi:10.1016/S1470-2045(15)00021-2. pmid:26045340.
+
+UniProt (no date) ‘P00533 · EGFR_HUMAN’. Available at: https://www.uniprot.org/uniprotkb/P00533/entry (Accessed: 4 November 2026).
+
+wetware-hq (2026) ‘catalog’, commit 4108e940ee5f8c8aad7d8e1ae173bbe166c718cb. Available at: https://github.com/wetware-hq/catalog/commit/4108e940ee5f8c8aad7d8e1ae173bbe166c718cb (Accessed: 4 November 2026).
+
+## Falsification
+
+A candidate on request `b615e910dbf792b808e0a0639a7e057c38934418f510c4e75daeae33f089d944` with `binding_confidence` ≥ 0.7, or any emitted sequence, contradicts `positive-control-failed`.
 
 ## Licence
 

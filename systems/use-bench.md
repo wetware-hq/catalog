@@ -23,7 +23,7 @@ Provide one run-scoped, append-only commons where workers exchange immutable par
 ## Graph
 
 - ← [../docs/follow-agent-contract.md](../docs/follow-agent-contract.md)
-- → [run-campaign.md](run-campaign.md)
+- → [../tmp/biofleet-egfr-campaign-summary-agent-card.md](../tmp/biofleet-egfr-campaign-summary-agent-card.md)
 
 ## Composition
 
