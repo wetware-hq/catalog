@@ -4,7 +4,7 @@
 
 `type: resource.reference` · `spec: agent.swarm` · subordinate to `docs/follow-agent-contract.md`.
 
-The falsifier holds the decision procedure and attacks the premises of this catalogue. Code fences here are an example framework for a user AI that writes the runtime outside this repository. A caught attack corroborates a prediction and is not clinical proof.
+The falsifier holds the decision procedure and attacks the premises of this catalogue. The Prolog fence is the swarm structure image; other code fences are an example framework for a runtime written outside this repository. A caught attack corroborates a prediction and is not clinical proof.
 
 ## Specification
 
@@ -15,7 +15,7 @@ The falsifier holds the decision procedure and attacks the premises of this cata
   "role": "attack premises with the folded decision procedure",
   "reads": ["docs/follow-agent-contract.md", "graph.json", "systems/record-traces.md"],
   "writes": [],
-  "must": ["name the premise", "name the predicted break", "record a survivor"],
+  "must": ["name the premise", "name the predicted break", "record a survivor", "keep the swarm image a DAG"],
   "check": ["runtime exit status", "E1", "E5", "E6", "E7"]
 }
 ```
@@ -33,9 +33,12 @@ instrument = "falsifier"
 folded = "decision procedure"
 carrier = "markdown"
 fences = "example framework"
+compression = "details wrapper"
 audience = "user AI at runtime"
 run_unit = "fleet.campaign"
 swarm = "agent.swarm"
+structure = "prolog dag"
+image = "agent_swarm"
 
 [workers]
 bytes = "canonical bytes and the committed catalogue"
@@ -54,14 +57,16 @@ trace = "act-log refusals"
 - Attack a premise before treating a passing decision as evidence.
 - Keep a `PEPTIDE` scope failure distinct from a monomer failure.
 - Carry `spec: agent.swarm` on this file, and show that any other header carrying it is refused.
+- Read the expanded Prolog fence as the swarm structure image. It matches `checker literals`.
+- Expand `checker literals`, `attacks`, and `carrier sets` when writing the runtime. Leave those labels closed when reading a premise.
 
 ## Contraindications
 
 - This is not a formulary, a prescription, or a design campaign. Grammar fixtures such as `aa:ACD` are not binder designs.
-- The seven workers are members of one falsification run. They do not vote. `spec: agent.swarm` is valid on this file only. `agent.fleet` is not a spec. The profile name `swarms = "Kubernetes"` does not schedule a cluster.
+- The seven workers are members of one falsification run. They do not vote. `spec: agent.swarm` is valid on this file only. `agent.fleet` is not a spec. The swarm structure image is the Prolog DAG in this file. It does not schedule a cluster.
 - A corroborated attack is not predicate 16, not a measurement, and not permission to write `graph.json` or `proposals.json`.
 - Do not commit the generated program, a workflow, or a package manifest into this repository. The specbase is Markdown.
-- The profile maps falsifiers to `.bend` and tools to `.py`. The example below is Python because that is the tool language and the folded instrument is one program. No Bend program is claimed, and no Rust crate is claimed.
+- The profile maps falsifiers to `.bend` and terminal tools to `.py`. The example below is Python because that is the terminal tool language and the folded instrument is one program. No Bend program is claimed, and no Rust crate is claimed.
 - This repository does not run the instrument. A green forge check does not mean these attacks ran.
 - Naming `agent.swarm` as the spec of a skill or a run, or naming `agent.fleet` as a spec, is a document attack. The contract refuses both readings.
 
@@ -121,32 +126,63 @@ The question the old verifier asked — whether the checked assertions hold — 
 
 Workers run concurrently and share no verdict. The run reports the set of verdicts. There is no majority. Exit `0` means every named prediction was corroborated. Exit `1` means at least one survivor. Exit `2` means the harness did not finish the decision.
 
+### Structure
+
+The fence below is the swarm structure image. Each worker depends on `decide` and on no other worker. `decide` and `document` both depend on `literals`, so `literals` has two parents and the image is a DAG. The workers do not vote. E7 checks this fence equal to the rendering of `agent.swarm` in `checker literals`. The fence stays outside compression. It does not schedule a cluster.
+
+```prolog
+image(agent_swarm).
+shape(dag).
+node(bytes).
+node(decide).
+node(document).
+node(grammar).
+node(identity).
+node(literals).
+node(oracle).
+node(relation).
+node(trace).
+edge(bytes, decide).
+edge(decide, literals).
+edge(document, decide).
+edge(document, literals).
+edge(grammar, decide).
+edge(identity, decide).
+edge(oracle, decide).
+edge(relation, decide).
+edge(trace, decide).
+```
+
 ### Framework
 
-The fences in this section are an example of the framework and nothing else. A user AI reads them to see the shape of one runtime, then writes that runtime from the laws. A fence is not a program this repository contains, and running one as if it were is a misread. Closed lists stay in their Markdown fences. The runtime loads them and does not copy them into source. A closed-list fence carries the suffix `{collapsible: true}` from the contract. A prompt may leave that fence folded. The loader still reads the body.
+The swarm structure image is the Prolog fence in the previous section. The fences in this section are an example of the framework and nothing else. A user AI reads them to see the shape of one runtime, then writes that runtime from the laws. A fence is not a program this repository contains, and running one as if it were is a misread. Each example fence is collapsible under an `example framework` label. Expand that label when writing the runtime. Closed lists stay in their Markdown fences. The runtime loads them and does not copy them into source.
 
-```python {collapsible: true}
+<details>
+<summary>example framework: python</summary>
+
+```python
 """Example only. Framework only. One program, written at runtime, outside this repository.
 Fill every stub from the named prose. Do not commit the result here."""
 
 WORKERS = ("bytes", "grammar", "identity", "relation", "oracle", "document", "trace")
+# Swarm structure: the expanded prolog fence in this file. E7 checks that fence.
 
 
 def load_json_fence(markdown, heading):
     """Return the object in the first json fence after a column-zero heading line.
-    The info string may end with the collapsible suffix. The suffix is not part of the body."""
+    A details wrapper around that fence is compression, not part of the object."""
 
 
 def literals(repo):
-    """Contract section 0f. Banner is that file's first non-blank line."""
+    """Contract section 0f, the fence labelled checker literals. Banner is that file's first non-blank line."""
 
 
 def carriers(repo):
-    """systems/record-traces.md, the carrier-sets heading."""
+    """systems/record-traces.md, the fence labelled carrier sets."""
 
 
 def attacks(repo):
-    """The attacks object in this file. Do not restate it."""
+    """The attacks object in this file, the fence labelled attacks. Do not restate it."""
 
 
 def decide(catalogue, predecessor=None, repo=None, trace=None, online=False):
@@ -180,8 +216,12 @@ def campaign(repo, only=None):
     """Seven workers, one run, no vote. Sort by worker, then id.
     only restricts the set. An unknown name is exit 2."""
 ```
+</details>
 
-```rust {collapsible: true}
+<details>
+<summary>example framework: rust</summary>
+
+```rust
 // Example only. Framework only. Vocabulary, not a crate in this repository.
 // Implement these names inside the one runtime. Do not shell out to a second checker.
 enum Verdict {
@@ -190,8 +230,12 @@ enum Verdict {
     Error,
 }
 ```
+</details>
 
-```bash {collapsible: true}
+<details>
+<summary>example framework: bash</summary>
+
+```bash
 # Example only. The program is whatever the user AI wrote outside this repository.
 falsify
 falsify --decide graph.json
@@ -203,11 +247,16 @@ falsify --online graph.json
 falsify --json
 falsify --worker bytes
 ```
+</details>
 
-```text {collapsible: true}
+<details>
+<summary>example framework: text</summary>
+
+```text
 # Example only. Framework only. Not a workflow of this repository.
 # The language profile admits a yaml fence only for a Kubernetes manifest,
-# so this sketch stays text. A user AI may emit it outside the repository
+# and a manifest is not a fleet or swarm structure image. This sketch stays
+# text. A user AI may emit it outside the repository
 # after the runtime exists. A forge check is not the instrument.
 name: falsify
 on: workflow_dispatch
@@ -217,12 +266,16 @@ jobs:
     steps:
       - run: falsify --json
 ```
+</details>
 
 ### Attacks
 
-Seventy-three attacks, seven workers, no vote. This object is the closed list. The runtime loads it and does not restate it. Its fence carries `{collapsible: true}`. Each prediction is the observation that corroborates the premise. A hold that the pure predicates pass still leaves predicate 16 undischarged.
+Eighty-three attacks, seven workers, no vote. This object is the closed list, in the collapsible fence `attacks`. Expand that label to load it. The runtime loads it and does not restate it. Each prediction is the observation that corroborates the premise. A hold that the pure predicates pass still leaves predicate 16 undischarged.
 
-```json {collapsible: true}
+<details>
+<summary>attacks</summary>
+
+```json
 {
   "attacks": [
     {
@@ -612,14 +665,74 @@ Seventy-three attacks, seven workers, no vote. This object is the closed list. T
     {
       "worker": "document",
       "id": "html-in-body",
-      "premise": "raw HTML is not a language escape, and a late HTML line is not an H2",
+      "premise": "a line that begins with < and is not the compression wrapper is not a language escape, and a late HTML line is not an H2",
       "prediction": "E7 fails and E6 still passes"
     },
     {
       "worker": "document",
-      "id": "fence-info-string",
-      "premise": "the only admitted info-string suffix is {collapsible: true}, and raw HTML is not that suffix",
-      "prediction": "any other info string fails E7 and the admitted suffix keeps the tag"
+      "id": "compression-wrapper-holds",
+      "premise": "one details wrapper around one canonical fence is in-place compression",
+      "prediction": "E7 passes"
+    },
+    {
+      "worker": "document",
+      "id": "compression-two-fences",
+      "premise": "a compression wrapper holds one fence",
+      "prediction": "E7 fails"
+    },
+    {
+      "worker": "document",
+      "id": "compression-around-prose",
+      "premise": "a compression wrapper is not a prose container",
+      "prediction": "E7 fails"
+    },
+    {
+      "worker": "document",
+      "id": "compression-hides-process",
+      "premise": "the process CSV and both diagrams stay outside every wrapper",
+      "prediction": "E7 fails"
+    },
+    {
+      "worker": "document",
+      "id": "compression-attribute",
+      "premise": "a details tag with an attribute is not the compression wrapper",
+      "prediction": "E7 fails and E6 still passes"
+    },
+    {
+      "worker": "document",
+      "id": "compression-duplicate-label",
+      "premise": "a compression label is unique in its file",
+      "prediction": "E7 fails"
+    },
+    {
+      "worker": "document",
+      "id": "fleet-image-not-tree",
+      "premise": "the fleet structure image is the Prolog tree rooted at core",
+      "prediction": "E7 fails when that fence is missing, cyclic, or rooted elsewhere"
+    },
+    {
+      "worker": "document",
+      "id": "swarm-image-not-dag",
+      "premise": "the swarm structure image is the Prolog DAG of the seven workers",
+      "prediction": "E7 fails when a worker is dropped, a cycle is added, or the shape fact is tree"
+    },
+    {
+      "worker": "document",
+      "id": "structure-image-moved",
+      "premise": "each structure image is allowed only on its path",
+      "prediction": "E7 fails when the fleet fence is copied onto docs/falsify.md"
+    },
+    {
+      "worker": "document",
+      "id": "structure-image-wrapped",
+      "premise": "a prolog structure image stays outside every compression wrapper",
+      "prediction": "E7 fails"
+    },
+    {
+      "worker": "document",
+      "id": "yaml-not-structure",
+      "premise": "a Kubernetes manifest is not a fleet or swarm structure image",
+      "prediction": "E7 fails when the fleet fence is replaced by yaml"
     },
     {
       "worker": "trace",
@@ -666,6 +779,7 @@ Seventy-three attacks, seven workers, no vote. This object is the closed list. T
   ]
 }
 ```
+</details>
 
 ## Citations
 
@@ -702,8 +816,11 @@ Stated 3 Nov 2026 (Australia/Sydney). The decision procedure was folded into thi
 | Add an unregistered skill or system | E2 or E4 |
 | Delete one side of a Markdown edge | E6 |
 | Remove the banner | E1 |
-| Put raw HTML in a section body | E7 fails; E6 still passes |
-| Use a fence info string other than a canonical tag or `{collapsible: true}` | E7 fails; the admitted suffix keeps the tag |
+| Put an HTML line outside a compression wrapper | E7 fails; E6 still passes |
+| Give `<details>` an attribute, wrap two fences or prose, wrap the process CSV or a diagram, or repeat a label | E7 fails |
+| Wrap one canonical fence in one `<details>` block with a new plain label | E7 passes |
+| Drop a swarm worker, add a cycle, move the image, or wrap it | E7 |
+| Replace the image with a Kubernetes manifest | E7 |
 | Set trace `oracle` to `discharged` | `value:oracle` |
 | Add `score` to an act | `fields` |
 | Pin twice | R5 |

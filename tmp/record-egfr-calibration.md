@@ -94,7 +94,7 @@ spec = "4108e940ee5f8c8aad7d8e1ae173bbe166c718cb"
 
 ### Process
 
-```text {collapsible: true}
+```text
 RANK pair FILTER area:oncology|immunology ORDER in_scope:desc,target:asc
 SELECT uniprot:P00533
 HALT hit-same-indication pmid:16467544
@@ -102,7 +102,10 @@ CALIBRATE pdb:1YY9 withhold:C,D crop:310-514 bar:binding_confidence>=0.7
 VERDICT positive-control-failed emitted:0
 ```
 
-```json {collapsible: true}
+<details>
+<summary>agent card</summary>
+
+```json
 {
   "name": "catalog-biofleet-egfr",
   "description": "Descriptive card of a finished run. Not a live endpoint.",
@@ -133,6 +136,7 @@ VERDICT positive-control-failed emitted:0
   ]
 }
 ```
+</details>
 
 ```mermaid
 flowchart LR
