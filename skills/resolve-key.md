@@ -146,7 +146,11 @@ service answer 400: not unresolved (no record answered) and not unavailable (the
 service did answer). admitting it would force a third verdict. refusing it keeps
 stage 1 two-valued.
 
-PROTEIN_MONOMERS is one flat set. one block type, one alphabet, no per-block scoping.
+PROTEIN_MONOMERS loads from docs/follow-agent-contract.md §0f and is not copied here.
+    one-letter tokens use residues.
+    a bracketed token uses monomer_symbol and is refused when it is an
+    all-uppercase run of length at least monomer_uppercase_run_min_length.
+    one block type, one alphabet, no per-block scoping.
     d-prefixed tokens are D-stereoisomers, never deoxy: dA is D-alanine, dR is D-arginine.
     with nucleic acids out of scope there is no second reading of d left to disambiguate.
 
