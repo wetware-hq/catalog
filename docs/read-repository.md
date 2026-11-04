@@ -50,6 +50,7 @@ Stop at the row's endpoint. Design continues to the sink.
 - `graph.json` is evidence metadata, not a formulary, prescription, or ranking.
 - `pair` and `preclinical` never pool. Absence is not evidence of no binder.
 - Automation never discharges §8.16. An unread `pair` hit stops design.
+- A collapsed fence stays closed until the route names its label.
 
 ## Algorithm
 
