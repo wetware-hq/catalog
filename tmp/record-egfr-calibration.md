@@ -102,6 +102,9 @@ CALIBRATE pdb:1YY9 withhold:C,D crop:310-514 bar:binding_confidence>=0.7
 VERDICT positive-control-failed emitted:0
 ```
 
+<details>
+<summary>agent card</summary>
+
 ```json
 {
   "name": "catalog-biofleet-egfr",
@@ -133,6 +136,7 @@ VERDICT positive-control-failed emitted:0
   ]
 }
 ```
+</details>
 
 ```mermaid
 flowchart LR

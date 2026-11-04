@@ -15,7 +15,7 @@ Define the catalogue schema, evidence boundary, canonical bytes, merge law, read
   "role": "normative catalogue and agent-system contract",
   "reads": ["graph.json", "registered Markdown", "predecessor catalogue", "paper evidence"],
   "writes": ["graph.json under human supersession", "proposals.json under section 9"],
-  "must": ["preserve canonical bytes", "separate study types", "leave the paper oracle explicit"],
+  "must": ["preserve canonical bytes", "separate study types", "leave the paper oracle explicit", "compress closed lists in place"],
   "check": ["predicates 1-19", "E1-E7"]
 }
 ```
@@ -34,6 +34,7 @@ law = ["0", "0b", "0c", "0d", "0e", "1", "2", "3", "4", "5", "6", "7", "8", "9",
 graph = "Graph section; reciprocal relative paths; read before"
 registry = ["10 Skills", "11 Systems"]
 embeds = ["toml", "json", "csv", "stateDiagram-v2", "flowchart", "GFM tables"]
+compression = "details wrapper around one canonical fence"
 ```
 
 ## Indications
@@ -144,7 +145,7 @@ The header has exactly the banner block, one column-zero H1, an optional one-lin
 
 `Specification` contains one fenced JSON object of at most 2,048 UTF-8 bytes with these unique ordered fields: `id`, `type`, `role`, `reads`, `writes`, `must`, `check`. `id` is the repository-relative path; scalar values and array items are non-empty and at most 128 UTF-8 bytes, while `writes` may be an empty array. Outside fenced content, `Algorithm` contains `### Variables` followed by `### Process`, each exactly once. Every section is non-empty; the exact `Licence` body is one blank line followed by `MIT`.
 
-`Variables` names three TOML tables. `independent` is a factor the procedure sets. `dependent` is an outcome it records. `controlled` is a condition held fixed so it is not confounded with the factors. Each table has at least one assignment. `Process` carries one CSV law table with header `operator,law` and exactly these rows, in order: `controls`, `design`, `transport`, `stopping`, `search`, `filters`, `recovery`. Those operators are the fixed limits, the configuration chosen before the outcome, the movement of artifacts, the halt rule, the place searched, the hard exclusions, and the failure return. The same `Algorithm` section embeds one `stateDiagram-v2` statechart and one `flowchart` diagram. Those two Mermaid fences are the inline figures. JSON, TOML, and that CSV are the serialization. GFM tables compare rows for a reader. A derived view that only repeats the card or the neighbor list does not earn its tokens. None of these views overrides prose.
+`Variables` names three TOML tables. `independent` is a factor the procedure sets. `dependent` is an outcome it records. `controlled` is a condition held fixed so it is not confounded with the factors. Each table has at least one assignment. `Process` carries one CSV law table with header `operator,law` and exactly these rows, in order: `controls`, `design`, `transport`, `stopping`, `search`, `filters`, `recovery`. Those operators are the fixed limits, the configuration chosen before the outcome, the movement of artifacts, the halt rule, the place searched, the hard exclusions, and the failure return. The same `Algorithm` section embeds one `stateDiagram-v2` statechart and one `flowchart` diagram. Those two Mermaid fences are the inline figures. JSON, TOML, and that CSV are the serialization. GFM tables compare rows for a reader. A derived view that only repeats the card or the neighbor list does not earn its tokens. A closed list a runtime loads keeps its bytes in one collapsible fence. The summary stays in the read, and the fence is expanded only when the task names its label. None of these views overrides prose.
 
 `Falsification` names an observation that would contradict the claim. A pass, one stochastic sample, or a green check of a different predicate is not such an observation.
 
@@ -192,6 +193,7 @@ statecharts = "stateDiagram-v2"
 diagrams = "flowchart"
 figures = "mermaid"
 tables = ["gfm", "csv"]
+compression = "details"
 
 [prettification]
 equations = ".tex"
@@ -203,21 +205,36 @@ animations = "Three.js"
 
 Canonical fence tags are `python`, `javascript`, `typescript`, `rust`, `bend`, `lean`, `tla`, `dockerfile`, `yaml` for Kubernetes manifests only, `wolfram`, `mermaid`, `json`, `r`, `csv`, `toml`, `tex`, `svg`, `stl`, `text`, and `bash`. GFM cards, registries, and comparison tables are Markdown structure; machine-consumed embedded tables use `csv`.
 
-Every repository Markdown fence is a column-zero triple backtick fence with one explicit canonical tag; raw HTML is not a language escape. In live Markdown, `Composition` and `Variables` each contain exactly one mapping in the line-oriented, JSON-value subset of TOML 1.1.0: lowercase bare keys, single-component tables, no escapes, and no duplicate table or key. Mermaid starts with `stateDiagram-v2` or `flowchart`; CSV uses minimal quoting and LF. Where live Markdown contains `### Process`, E7 requires the three variable tables, that seven-row CSV inside `Process`, and both Mermaid kinds inside `Algorithm`. E7 enforces fence tags across all Markdown, parses TOML, JSON, and CSV, checks Mermaid kind, and admits YAML only for Kubernetes manifests. It does not compile the remaining preferred languages or discharge §8.16. A fenced program in live Markdown is an example of a framework for a user AI that writes the runtime outside this repository. It is not that runtime, and it is not a standalone artifact.
+Every repository Markdown fence is a column-zero triple backtick fence with one explicit canonical tag. Raw HTML is not a language escape; the compression wrapper below is the only admitted form. In live Markdown, `Composition` and `Variables` each contain exactly one mapping in the line-oriented, JSON-value subset of TOML 1.1.0: lowercase bare keys, single-component tables, no escapes, and no duplicate table or key. Mermaid starts with `stateDiagram-v2` or `flowchart`; CSV uses minimal quoting and LF. Where live Markdown contains `### Process`, E7 requires the three variable tables, that seven-row CSV inside `Process`, and both Mermaid kinds inside `Algorithm`. E7 enforces fence tags across all Markdown, parses TOML, JSON, and CSV, checks Mermaid kind, admits YAML only for Kubernetes manifests, and admits raw HTML only as one in-place compression wrapper. It does not compile the remaining preferred languages or discharge §8.16. A fenced program in live Markdown is an example of a framework for a user AI that writes the runtime outside this repository. It is not that runtime, and it is not a standalone artifact.
+
+#### In-place compression
+
+In-place compression is a collapsible code block. The payload stays in the file. The summary stays in the read. Expand the fence only when the task names its label.
+
+The wrapper is the only raw HTML live Markdown admits. It is column-zero: `<details>`, then `<summary>LABEL</summary>`, then one blank line, then one canonical fence, then `</details>` on the line after the fence's closing backticks. `LABEL` is 1 to 128 ASCII bytes, with no ASCII control and no `<`, no `>`, no backtick, and no `#`. The tags have no attributes. Labels are unique in a file. The wrapper holds one fence and no prose.
+
+The `Specification` JSON card, the `Composition` TOML, the `Variables` TOML, the `Process` CSV, and both Mermaid diagrams stay outside every wrapper. A closed list a runtime loads may sit inside one. The labels in this repository are `checker literals`, `attacks`, `carrier sets`, `example framework: python`, `example framework: rust`, `example framework: bash`, `example framework: text`, `witness: a1.trace`, and `agent card`.
+
+E7 admits that wrapper and refuses every other line that, outside a fence, begins with optional whitespace and then `<`. A second fence, prose inside the wrapper, a wrapped fence from the expanded set, an attribute on `<details>`, a repeated label, and any other HTML line fail E7. E6 does not read the summary as a heading. The wrapper is not a graph edge, a second copy, or a language tag.
+
+The delimiters and the expanded-fence names are also recorded under `e7.compression` in §0f. This prose is the law.
 
 ### 0f. Checker literals
 
-Closed lists and normative patterns live in the block below. The falsifier ([`falsify.md`](falsify.md)) is the only instrument, and the decision procedure is inside it. A user AI writes that instrument at runtime, outside this repository, and loads this block. The fences in the falsifier are an example of the framework. They are not the program, and they are not a second copy of the lists.
+Closed lists and normative patterns live in the collapsible fence `checker literals` below. Expand that label to load them. The falsifier ([`falsify.md`](falsify.md)) is the only instrument, and the decision procedure is inside it. A user AI writes that instrument at runtime, outside this repository, and loads this block. The fences in the falsifier are an example of the framework. They are not the program, and they are not a second copy of the lists.
 
 | class | parent | where the list lives |
 |---|---|---|
-| catalogue grammar, predicate labels, profile bounds, allowlists | this file | the block in this section |
-| trace carrier sets | [`systems/record-traces.md`](../systems/record-traces.md) | `### Carrier sets` |
-| attack manifest | [`falsify.md`](falsify.md) | the `attacks` object |
+| catalogue grammar, predicate labels, profile bounds, allowlists | this file | the fence `checker literals` |
+| trace carrier sets | [`systems/record-traces.md`](../systems/record-traces.md) | the fence `carrier sets` |
+| attack manifest | [`falsify.md`](falsify.md) | the fence `attacks` |
 | bench line grammar | [`systems/use-bench.md`](../systems/use-bench.md) | section 3; this repository stores no bench program |
 | campaign runtime | [`systems/run-campaign.md`](../systems/run-campaign.md) | the manifest table; this repository stores no fleet program |
 
 The banner a checker compares is the first non-blank line of this file. `e1_allowlist` is empty, so E1 skips nothing. The edge cap in §0d is `|V| + 1`, stored here as `edge_surplus_max` of 2 because a tree has `|V| - 1` edges. A bracketed HELM symbol matches `monomer_symbol` and is refused when it is an all-uppercase run of length at least `monomer_uppercase_run_min_length`. Polymer-index normalisation applies `helm_index_normalise` and replaces each matched digit run with `#`.
+
+<details>
+<summary>checker literals</summary>
 
 ```json
 {
@@ -395,7 +412,7 @@ The banner a checker compares is the first non-blank line of this file. `e1_allo
     ],
     "E7": [
       "pure-ext",
-      "Markdown formal language profile"
+      "Markdown formal language profile and in-place compression"
     ]
   },
   "e1_allowlist": [],
@@ -478,10 +495,26 @@ The banner a checker compares is the first non-blank line of this file. `e1_allo
       "search",
       "filters",
       "recovery"
-    ]
+    ],
+    "compression": {
+      "open": "<details>",
+      "summary_open": "<summary>",
+      "summary_close": "</summary>",
+      "close": "</details>",
+      "label_max_bytes": 128,
+      "expanded": [
+        "specification json",
+        "composition toml",
+        "variables toml",
+        "process csv",
+        "stateDiagram-v2",
+        "flowchart"
+      ]
+    }
   }
 }
 ```
+</details>
 
 ### 1. Purpose
 
@@ -705,6 +738,8 @@ Rows that do not name 3 Nov 2026 were retrieved 1 Nov 2026 (Australia/Sydney). E
 | Add an unregistered skill or system | E2 or E4 fails |
 | Label a prediction as a paper-backed row | pure checks may pass; predicate 16 remains explicitly undischarged |
 | Re-run a stochastic agent once and call it reliable | no contract predicate supports that inference |
+| Wrap the process CSV or a diagram, or put an HTML line outside a compression wrapper | E7 fails |
+| Wrap one closed-list fence in one compression wrapper | E7 holds |
 | Run the workers in [`falsify.md`](falsify.md) | a survivor falsifies that prediction; a catch is not clinical proof |
 
 A user AI writes the falsifier from [`falsify.md`](falsify.md) and runs it outside this repository, including the predecessor check when a predecessor exists. A passing result is scoped evidence, never proof of clinical truth.

@@ -39,6 +39,7 @@ graph = "Graph section"
 - Audit calls, pins, control passes, refusals, proposals, context verdicts, emissions, and halt for one run.
 - Merge independently written worker traces without a coordinator.
 - Recompute run and act identities from exact bytes.
+- Expand `carrier sets` when judging a trace. Leave that label closed when the task does not name a trace.
 
 ## Contraindications
 
@@ -134,9 +135,12 @@ The preimage of a line is that line with the id and the final newline removed. `
 
 ### 1. Allowed values
 
-The carrier block is the closed list. The runtime falsifier loads it and does not restate it. A token that is not in the block is refused.
+The carrier block is the closed list, in the collapsible fence `carrier sets`. Expand that label to load it. The runtime falsifier loads it and does not restate it. A token that is not in the block is refused.
 
 ### Carrier sets
+
+<details>
+<summary>carrier sets</summary>
 
 ```json
 {
@@ -355,6 +359,7 @@ The carrier block is the closed list. The runtime falsifier loads it and does no
   }
 }
 ```
+</details>
 
 The tables below are the same lists. Acts, gates, and steps are sets. Field arrays and context rows are ordered.
 
@@ -501,6 +506,9 @@ spec:"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
 
 `a1.trace`:
 
+<details>
+<summary>witness: a1.trace</summary>
+
 ```text
 %trace/1 core=d2066050893688b4fc69def4b3c03ffa9ee8b06ef14858786224a7adf2684853 spec=aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
 call 82d0bb98077f59cb3544536e2023d4cf99699408e57250de2ce20d3e0b20a294 ^0 run=d2066050893688b4fc69def4b3c03ffa9ee8b06ef14858786224a7adf2684853 skill=propose-pairs
@@ -509,6 +517,7 @@ refuse 4d25814dcfdc011016c4c4126bb3a220e4a69e52d7517a9d7b395a8c7d40dfbe ^2f3f733
 propose 179014b62688af1357af3e8dad3f4dd0fcf0e4675426115a52390b8e02ae4b46 ^2f3f7335675c72766882db3b0dea24b20818183f1934fd10eb131a10ba13fba4 run=d2066050893688b4fc69def4b3c03ffa9ee8b06ef14858786224a7adf2684853 skill=propose-pairs binder:"aa:ACD" pmid:"pmid:1" target:"uniprot:P12345"
 halt 9d2001abc00391ea2c66714740c2ba9ec5c279405495498f51a72db31be4d6a3 ^2f3f7335675c72766882db3b0dea24b20818183f1934fd10eb131a10ba13fba4 run=d2066050893688b4fc69def4b3c03ffa9ee8b06ef14858786224a7adf2684853 skill=propose-pairs bound-n:"1" bound-tok:"8000" oracle:"not-discharged"
 ```
+</details>
 
 `decide` of this pair of files is `result`.
 

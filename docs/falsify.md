@@ -33,6 +33,7 @@ instrument = "falsifier"
 folded = "decision procedure"
 carrier = "markdown"
 fences = "example framework"
+compression = "details wrapper"
 audience = "user AI at runtime"
 run_unit = "fleet.campaign"
 swarm = "agent.swarm"
@@ -54,6 +55,7 @@ trace = "act-log refusals"
 - Attack a premise before treating a passing decision as evidence.
 - Keep a `PEPTIDE` scope failure distinct from a monomer failure.
 - Carry `spec: agent.swarm` on this file, and show that any other header carrying it is refused.
+- Expand `checker literals`, `attacks`, and `carrier sets` when writing the runtime. Leave those labels closed when reading a premise.
 
 ## Contraindications
 
@@ -123,7 +125,10 @@ Workers run concurrently and share no verdict. The run reports the set of verdic
 
 ### Framework
 
-The fences in this section are an example of the framework and nothing else. A user AI reads them to see the shape of one runtime, then writes that runtime from the laws. A fence is not a program this repository contains, and running one as if it were is a misread. Closed lists stay in their Markdown fences. The runtime loads them and does not copy them into source.
+The fences in this section are an example of the framework and nothing else. A user AI reads them to see the shape of one runtime, then writes that runtime from the laws. A fence is not a program this repository contains, and running one as if it were is a misread. Each example fence is collapsible under an `example framework` label. Expand that label when writing the runtime. Closed lists stay in their Markdown fences. The runtime loads them and does not copy them into source.
+
+<details>
+<summary>example framework: python</summary>
 
 ```python
 """Example only. Framework only. One program, written at runtime, outside this repository.
@@ -133,19 +138,20 @@ WORKERS = ("bytes", "grammar", "identity", "relation", "oracle", "document", "tr
 
 
 def load_json_fence(markdown, heading):
-    """Return the object in the first json fence after a column-zero heading line."""
+    """Return the object in the first json fence after a column-zero heading line.
+    A details wrapper around that fence is compression, not part of the object."""
 
 
 def literals(repo):
-    """Contract section 0f. Banner is that file's first non-blank line."""
+    """Contract section 0f, the fence labelled checker literals. Banner is that file's first non-blank line."""
 
 
 def carriers(repo):
-    """systems/record-traces.md, the carrier-sets heading."""
+    """systems/record-traces.md, the fence labelled carrier sets."""
 
 
 def attacks(repo):
-    """The attacks object in this file. Do not restate it."""
+    """The attacks object in this file, the fence labelled attacks. Do not restate it."""
 
 
 def decide(catalogue, predecessor=None, repo=None, trace=None, online=False):
@@ -179,6 +185,10 @@ def campaign(repo, only=None):
     """Seven workers, one run, no vote. Sort by worker, then id.
     only restricts the set. An unknown name is exit 2."""
 ```
+</details>
+
+<details>
+<summary>example framework: rust</summary>
 
 ```rust
 // Example only. Framework only. Vocabulary, not a crate in this repository.
@@ -189,6 +199,10 @@ enum Verdict {
     Error,
 }
 ```
+</details>
+
+<details>
+<summary>example framework: bash</summary>
 
 ```bash
 # Example only. The program is whatever the user AI wrote outside this repository.
@@ -202,6 +216,10 @@ falsify --online graph.json
 falsify --json
 falsify --worker bytes
 ```
+</details>
+
+<details>
+<summary>example framework: text</summary>
 
 ```text
 # Example only. Framework only. Not a workflow of this repository.
@@ -216,10 +234,14 @@ jobs:
     steps:
       - run: falsify --json
 ```
+</details>
 
 ### Attacks
 
-Seventy-two attacks, seven workers, no vote. This object is the closed list. The runtime loads it and does not restate it. Each prediction is the observation that corroborates the premise. A hold that the pure predicates pass still leaves predicate 16 undischarged.
+Seventy-eight attacks, seven workers, no vote. This object is the closed list, in the collapsible fence `attacks`. Expand that label to load it. The runtime loads it and does not restate it. Each prediction is the observation that corroborates the premise. A hold that the pure predicates pass still leaves predicate 16 undischarged.
+
+<details>
+<summary>attacks</summary>
 
 ```json
 {
@@ -611,8 +633,44 @@ Seventy-two attacks, seven workers, no vote. This object is the closed list. The
     {
       "worker": "document",
       "id": "html-in-body",
-      "premise": "raw HTML is not a language escape, and a late HTML line is not an H2",
+      "premise": "a line that begins with < and is not the compression wrapper is not a language escape, and a late HTML line is not an H2",
       "prediction": "E7 fails and E6 still passes"
+    },
+    {
+      "worker": "document",
+      "id": "compression-wrapper-holds",
+      "premise": "one details wrapper around one canonical fence is in-place compression",
+      "prediction": "E7 passes"
+    },
+    {
+      "worker": "document",
+      "id": "compression-two-fences",
+      "premise": "a compression wrapper holds one fence",
+      "prediction": "E7 fails"
+    },
+    {
+      "worker": "document",
+      "id": "compression-around-prose",
+      "premise": "a compression wrapper is not a prose container",
+      "prediction": "E7 fails"
+    },
+    {
+      "worker": "document",
+      "id": "compression-hides-process",
+      "premise": "the process CSV and both diagrams stay outside every wrapper",
+      "prediction": "E7 fails"
+    },
+    {
+      "worker": "document",
+      "id": "compression-attribute",
+      "premise": "a details tag with an attribute is not the compression wrapper",
+      "prediction": "E7 fails and E6 still passes"
+    },
+    {
+      "worker": "document",
+      "id": "compression-duplicate-label",
+      "premise": "a compression label is unique in its file",
+      "prediction": "E7 fails"
     },
     {
       "worker": "trace",
@@ -659,6 +717,7 @@ Seventy-two attacks, seven workers, no vote. This object is the closed list. The
   ]
 }
 ```
+</details>
 
 ## Citations
 
@@ -695,7 +754,9 @@ Stated 3 Nov 2026 (Australia/Sydney). The decision procedure was folded into thi
 | Add an unregistered skill or system | E2 or E4 |
 | Delete one side of a Markdown edge | E6 |
 | Remove the banner | E1 |
-| Put raw HTML in a section body | E7 fails; E6 still passes |
+| Put an HTML line outside a compression wrapper | E7 fails; E6 still passes |
+| Give `<details>` an attribute, wrap two fences or prose, wrap the process CSV or a diagram, or repeat a label | E7 fails |
+| Wrap one canonical fence in one `<details>` block with a new plain label | E7 passes |
 | Set trace `oracle` to `discharged` | `value:oracle` |
 | Add `score` to an act | `fields` |
 | Pin twice | R5 |
