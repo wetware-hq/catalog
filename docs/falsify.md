@@ -128,7 +128,7 @@ Workers run concurrently and share no verdict. The run reports the set of verdic
 
 ### Structure
 
-The fence below is the swarm structure image. Each worker depends on `decide` and on no other worker. `decide` and `document` both depend on `literals`, so `literals` has two parents and the image is a DAG. The workers do not vote. E7 checks this fence equal to the rendering of `agent.swarm` in `checker literals`. The fence stays outside compression. It does not schedule a cluster.
+The fence below is the swarm structure image. Each worker depends on `decide` and on no other worker. `decide` and `document` both depend on `literals`, so `literals` has two parents and the image is a DAG. The workers do not vote. E7 checks this fence equal to the rendering of `agent.swarm` in `checker literals`. The fence stays outside compression. It does not schedule a cluster. A trace ramifies this DAG into one Merkle tree under [`systems/record-traces.md`](../systems/record-traces.md). The image stays a DAG.
 
 ```prolog
 image(agent_swarm).
@@ -706,9 +706,9 @@ Eighty-three attacks, seven workers, no vote. This object is the closed list, in
     },
     {
       "worker": "document",
-      "id": "fleet-image-not-tree",
-      "premise": "the fleet structure image is the Prolog tree rooted at core",
-      "prediction": "E7 fails when that fence is missing, cyclic, or rooted elsewhere"
+      "id": "fleet-image-not-dag",
+      "premise": "the fleet structure image is the Prolog DAG rooted at core",
+      "prediction": "E7 fails when that fence is missing, cyclic, shaped as a tree, or rooted elsewhere"
     },
     {
       "worker": "document",

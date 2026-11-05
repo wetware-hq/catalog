@@ -4,7 +4,7 @@
 
 `type: agent.system` · `spec: fleet.campaign` · subordinate to `docs/follow-agent-contract.md`, which governs on any conflict.
 
-Define the content-addressed act log for one bounded `fleet.campaign` run and the byte-level decision procedure for accepting it. A valid trace proves shape and causal linkage, not that an act occurred or a paper supports a claim.
+Define the content-addressed act log for one bounded `fleet.campaign` run and the byte-level decision procedure for accepting it. The same store ramifies a fleet or swarm DAG into one Merkle tree. A valid trace proves shape and causal linkage, not that an act occurred or a paper supports a claim.
 
 ## Specification
 
@@ -12,11 +12,11 @@ Define the content-addressed act log for one bounded `fleet.campaign` run and th
 {
   "id": "systems/record-traces.md",
   "type": "agent.system",
-  "role": "content-address campaign acts and decide trace shape",
-  "reads": ["core.trace", "worker trace heads", "carrier block in this file"],
+  "role": "content-address campaign acts and ramify structure DAGs",
+  "reads": ["core.trace", "worker trace heads", "carrier block in this file", "fleet and swarm structure images"],
   "writes": [".trace files outside the repository"],
-  "must": ["derive ids from bytes", "end on one halt", "keep oracle not-discharged"],
-  "check": ["runtime falsifier trace judgement", "R1-R10", "E4", "E5", "E6", "E7"]
+  "must": ["derive ids from bytes", "end on one halt", "keep oracle not-discharged", "ramify each structure DAG into one Merkle tree"],
+  "check": ["runtime falsifier trace judgement", "R1-R10", "fleet merkle root", "E4", "E5", "E6", "E7"]
 }
 ```
 
@@ -29,8 +29,9 @@ Define the content-addressed act log for one bounded `fleet.campaign` run and th
 ## Composition
 
 ```toml
-files = ["core.trace", "<worker>.trace"]
+files = ["core.trace", "<worker>.trace", "merkle.trace"]
 answer = ["result", "partial"]
+structure = ["merkle", "merkle-mismatch", "merkle-absent"]
 graph = "Graph section"
 ```
 
@@ -39,6 +40,7 @@ graph = "Graph section"
 - Audit calls, pins, control passes, refusals, proposals, context verdicts, emissions, and halt for one run.
 - Merge independently written worker traces without a coordinator.
 - Recompute run and act identities from exact bytes.
+- Recompute the Merkle root of a structure image. A campaign store carries the fleet root in `merkle.trace`.
 - Expand `carrier sets` when judging a trace. Leave that label closed when the task does not name a trace.
 
 ## Contraindications
@@ -63,6 +65,7 @@ bound_tok = "positive integer without a leading zero"
 [dependent]
 id = "SHA-256 of the act preimage"
 answer = "result | partial"
+merkle = "one root of the ramified image"
 
 [controlled]
 run = "SHA-256 of core.trace bytes"
@@ -95,7 +98,7 @@ flowchart LR
 ```csv
 operator,law
 controls,keep oracle not-discharged and bounds equal to the core
-design,admit a line only when hash fields and parent match
+design,admit an act by its hash and ramify each image into one tree
 transport,merge worker files by set union on id
 stopping,return the first failure from R1 through R10
 search,resolve each parent inside the admitted head
@@ -447,7 +450,7 @@ A line is admitted when every row below holds. The code is the first that fails.
 | `value` | every value meets §1, and a `halt` uses the core's bounds |
 | `parent` | the parent is `^0` or `^` plus 64 hex digits, and it equals P1–P4 where those rows do not read the head. A line shaped like P6 has a `^` plus 64 hex digits that is not `^0` and is not the call. A `design-binder` `halt` may parent the call or some other id. |
 
-The file is well formed when the core basename is `core.trace`, every worker basename matches §0, every header is `%trace/1 core=<run> spec=<spec>` for this core, and every line is admitted. Otherwise the checker returns `partial` and `R1` when the core does not match §0, `partial` and `R3` when a name or header fails, and `partial` and `admit` when a line is not admitted. Line failures are reported before R1–R10. A line that is not admitted is not in the head.
+The file is well formed when the core basename is `core.trace`, every worker basename matches §0 and is not `merkle.trace`, every header is `%trace/1 core=<run> spec=<spec>` for this core, and every line is admitted. `merkle.trace` is judged only by §7. Otherwise the checker returns `partial` and `R1` when the core does not match §0, `partial` and `R3` when a name or header fails, and `partial` and `admit` when a line is not admitted. Line failures are reported before R1–R10. A line that is not admitted is not in the head.
 
 On a head whose file is well formed:
 
@@ -455,7 +458,7 @@ On a head whose file is well formed:
 |---|---|
 | R1 | the core matches §0 and `run` is `H` of its bytes |
 | R2 | every line in the head carries that run and that skill |
-| R3 | every worker header matches §0 for this core, and every basename matches §0 |
+| R3 | every worker header matches §0 for this core, every worker basename matches §0, and `merkle.trace` is not read as a worker |
 | R4 | the head contains one `call`, and its id is the call id from §2 |
 | R5 | the head contains one `halt`; its bounds equal the core; its oracle is `not-discharged`; its parent is the call when there is no pin, the pin's id when there is one pin, and there is no legal parent when there is more than one pin |
 | R6 | every parent id other than `^0` is the id of a line in the head |
@@ -485,6 +488,7 @@ A checker that returns `result` has not decided any of the following.
 - `docs/follow-agent-contract.md` §8.16. The only derived oracle string is `not-discharged`. A `hit-unread` line does not decide the indication. `hit-same-indication` and `hit-other-indication` are the shapes for a reader who did. The checker does not know which reader ran.
 - Patient benefit. A result on a design head is a hypothesis carrying the disclaimer, or a named refusal. The disclaimer sits inside the preimage, so a line with the disclaimer removed has a different id and fails `hash`.
 - Any area under a curve. The checker's answer is `result`, not a number.
+- The Merkle root. A matching `merkle.trace` decides the tree of the fleet image. It does not decide that the run followed that image, and it does not decide the bench DAG.
 
 A `.trace` byte string is not a `proposals.json` element and not a `.bench` line. `%trace/` is not a `%bench/` line.
 
@@ -526,10 +530,53 @@ halt 9d2001abc00391ea2c66714740c2ba9ec5c279405495498f51a72db31be4d6a3 ^2f3f73356
 Licensed oversight is required for any use of this system; none has been performed to date.
 
 The runtime falsifier decides this file and loads the carrier block in §1. It does not keep a second list.
-A campaign executor writes lines from this Markdown grammar and hands every completed run to that falsifier; no repository-local fleet
+A campaign executor writes act lines from this Markdown grammar, writes `merkle.trace` from §7, and hands every completed run to that falsifier; no repository-local fleet
 program owns the write path. Extension predicate E4 decides the bijection between
 `docs/follow-agent-contract.md` §11 and the files `systems/*.md`. The identity line above is
 extension predicate E5 (`docs/follow-agent-contract.md` §0c). Neither decision is §8.16.
+
+### 7. Ramify
+
+A structure image is a DAG. The trace commits a tree. Ramify copies a DAG node once for each path from a root, then hashes that tree as one Merkle tree. `H` is the SHA-256 of §0. The preimage is UTF-8 and has no trailing newline. This tree is not the bench Merkle DAG: bench nodes may be shared, and a node here has one parent.
+
+The image atom is `agent_fleet` or `agent_swarm`. A root is an indegree-zero node, taken in ascending byte order. A path starts at a root and follows edges. Its text is the atoms joined by `/`. A path whose last node has no successor is a leaf. Any other path is a branch. Successors are taken in ascending atom order, not hash order.
+
+A leaf preimage is `merkle-leaf/1 image=<atom> path:"<path>"`. A branch preimage is `merkle-branch/1 image=<atom> path:"<path>"` followed by one ` child=<id>` per successor. That id is `H` of the path extended by the successor. The root preimage is `merkle-root/1 image=<atom>` followed by one ` child=<id>` per DAG root. That id is `H` of the one-node path. The Merkle root is `H` of the root preimage.
+
+The ramified graph adds one synthetic root. The parent of a longer path is its prefix. The parent of a one-node path is the synthetic root. The graph is a tree: one indegree-zero node, every other node has indegree one, and `|E| = |V| - 1`. The fleet image has 6 paths, so the tree has `|V| = 7` and `|E| = 6`. The swarm image has 22 paths, so the tree has `|V| = 23` and `|E| = 22`.
+
+`merkle.trace` is reserved. It is not a worker, and R3 does not open it. A campaign store writes the fleet tree as these two lines and no other bytes. The structure answer is `merkle` when the file is those bytes. It is `merkle-mismatch` when the file is present and differs. It is `merkle-absent` when the file is missing. The act answer does not read the file. The witness in §5 has no structure answer.
+
+```text
+%merkle/1 image=agent_fleet
+cbc8a4c3a1178d47421942d29c55712619964102aaf25f33f7fcb3d803a12ceb
+```
+
+The same function on `agent_swarm` yields `8d71ad3b8feb53d6a15200688165f84330722f2ec1c2849e7dead8062ca35a5d`. A campaign file does not carry that root. Fleet node `trace` is the two leaves `core/trace` and `core/worker/trace`. Swarm node `literals` is one leaf per path. `document/literals` is `db7203829eb2105eb7dbbdddaacddd10527cbffaa44cd46421c31a70ff78ebea` and `document/decide/literals` is `f1c1cb69b8c1d9b8f6c5b0bac7fdbcdc5023e8f692969bac5bd559322f29e59e`.
+
+The first fence below is the fleet preimages, bottom-up. The id of a line is `H` of that line with the newline removed. The second fence is those ids, in the same order. Its last line is the Merkle root.
+
+```text
+merkle-leaf/1 image=agent_fleet path:"core/halt"
+merkle-leaf/1 image=agent_fleet path:"core/trace"
+merkle-leaf/1 image=agent_fleet path:"core/worker/bench"
+merkle-leaf/1 image=agent_fleet path:"core/worker/trace"
+merkle-branch/1 image=agent_fleet path:"core/worker" child=e3986c1a93207f1478b6dbe4959bc23747c9985e721d7ad7d9fd97069ee648f9 child=e899b50d8ca83ab5440e2c97e726f110f48ebba66c1ba1c6d0b39a2e73089f3d
+merkle-branch/1 image=agent_fleet path:"core" child=27f7b6e625c7f4c63ef11186660cc0513d0da7f94c304422468f6b6e87180b7d child=08836e6522e0be759b32e5e4116e4873b8551b9d8dacce93d9ccccba83e0aeb9 child=e451d396e41a3237d6f97b186b8c90a6dc37bd63237c75eb7a3c4fcdf72c7238
+merkle-root/1 image=agent_fleet child=450953b7743b684754d4caaf47e86df8e1795617ac8c04a5a5eb166596795071
+```
+
+```text
+27f7b6e625c7f4c63ef11186660cc0513d0da7f94c304422468f6b6e87180b7d
+08836e6522e0be759b32e5e4116e4873b8551b9d8dacce93d9ccccba83e0aeb9
+e3986c1a93207f1478b6dbe4959bc23747c9985e721d7ad7d9fd97069ee648f9
+e899b50d8ca83ab5440e2c97e726f110f48ebba66c1ba1c6d0b39a2e73089f3d
+e451d396e41a3237d6f97b186b8c90a6dc37bd63237c75eb7a3c4fcdf72c7238
+450953b7743b684754d4caaf47e86df8e1795617ac8c04a5a5eb166596795071
+cbc8a4c3a1178d47421942d29c55712619964102aaf25f33f7fcb3d803a12ceb
+```
+
+No pin beyond the FIPS 180-4 row is required. The construction is repository-local.
 
 ## Citations
 
@@ -559,6 +606,10 @@ Retrieved 1 Nov 2026 (Australia/Sydney). These sources explain adjacent intercha
 | claim `oracle=discharged` | `value:oracle` |
 | duplicate one molecule under `aa:` and plain-chain HELM | R9 |
 | copy a valid trace and assert its events occurred | no checker predicate supports the assertion |
+| omit `merkle.trace` from a campaign store | `merkle-absent` |
+| change one fleet edge and keep the pinned root | `merkle-mismatch` |
+| hash one fleet preimage with its newline kept | the id differs from the pin |
+| treat the bench Merkle DAG as this tree | no predicate equates the two |
 
 The witness above is a `result`. Every mutation in the table fails for its named reason.
 
