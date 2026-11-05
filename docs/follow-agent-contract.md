@@ -4,7 +4,7 @@
 
 `type: resource.reference` · **normative**. `docs/read-repository.md` is `type: initialization` and non-normative; on conflict this file governs.
 
-Define the catalogue schema, evidence boundary, canonical bytes, merge law, read behavior, procedure registry, and campaign-system registry. Implement the falsifier from this file and from `docs/falsify.md`; a user AI writes that runtime outside this repository. Fleet and swarm structure images are Prolog trees and DAGs.
+Define the catalogue schema, evidence boundary, canonical bytes, merge law, read behavior, procedure registry, and campaign-system registry. Implement the falsifier from this file and from `docs/falsify.md`; a user AI writes that runtime outside this repository. Fleet and swarm structure images are Prolog DAGs, and a trace ramifies each image into one Merkle tree.
 
 ## Specification
 
@@ -43,7 +43,7 @@ compression = "details wrapper around one canonical fence"
 - Validating, merging, or extending catalogue bytes.
 - Resolving keys, proposing pairs, or launching de novo design.
 - Implementing a registered campaign system or interpreting its outputs.
-- Reading a fleet tree or a swarm DAG.
+- Reading a fleet DAG, a swarm DAG, or the Merkle tree derived at traces.
 
 ## Contraindications
 
@@ -137,7 +137,7 @@ Every file in `skills/` and `systems/` names itself once, in the header, before 
 | `skills/` | a `resource.procedure`, spec `agent.skill`. The one skill §10 marks `special` also says so. The others do not. |
 | `systems/` | an `agent.system`, spec `fleet.campaign`. No class. |
 
-`agent.skill` is the spec of a procedure. `fleet.campaign` is the spec of one run. `agent.swarm` is the spec of the falsifier [`falsify.md`](falsify.md), and of no other file. A header on any other path that carries `agent.swarm` fails E5. `agent.fleet` is not a spec and not a type. A header that carries it fails E5. A header outside `skills/` and `systems/` that carries `agent.skill` or `fleet.campaign` fails E5: that file is an orphan. `e5_spec_allowlist` in §0f is empty: no fixture is exempt, and no path outside `skills/` is a skill. `docs/falsify.md` is the only entry of `e5_swarm_paths` in that same block, which is what the runtime falsifier loads. The campaign runtime is the Markdown specification [`systems/run-campaign.md`](../systems/run-campaign.md); no repository-local fleet executable is a hidden second contract. The four strings, and the ordinary words next to them, are set out in §11. The structure image of `agent.fleet` is the Prolog tree in [`systems/run-campaign.md`](../systems/run-campaign.md). The structure image of `agent.swarm` is the Prolog DAG in [`falsify.md`](falsify.md). Neither image is a header.
+`agent.skill` is the spec of a procedure. `fleet.campaign` is the spec of one run. `agent.swarm` is the spec of the falsifier [`falsify.md`](falsify.md), and of no other file. A header on any other path that carries `agent.swarm` fails E5. `agent.fleet` is not a spec and not a type. A header that carries it fails E5. A header outside `skills/` and `systems/` that carries `agent.skill` or `fleet.campaign` fails E5: that file is an orphan. `e5_spec_allowlist` in §0f is empty: no fixture is exempt, and no path outside `skills/` is a skill. `docs/falsify.md` is the only entry of `e5_swarm_paths` in that same block, which is what the runtime falsifier loads. The campaign runtime is the Markdown specification [`systems/run-campaign.md`](../systems/run-campaign.md); no repository-local fleet executable is a hidden second contract. The four strings, and the ordinary words next to them, are set out in §11. The structure image of `agent.fleet` is the Prolog DAG in [`systems/run-campaign.md`](../systems/run-campaign.md). The structure image of `agent.swarm` is the Prolog DAG in [`falsify.md`](falsify.md). Neither image is a header.
 
 ### 0d. Scientific Markdown profile and documentation DAG
 
@@ -164,7 +164,7 @@ E6 checks the functional paragraph, H2 profile, JSON card, variable/process head
 
 ### 0e. Formal language profile
 
-The profile selects a language when that artifact exists; it does not require placeholder code. Extensions below name standalone artifacts. Inside Markdown, use the canonical lowercase fence tag for that language. Exact `.trace` and `.bench` protocol bytes are `text`. Terminal command wrappers are `bash`. Terminal tools are `python`, extension `.py`. Interfaces are `typescript`, extension `.ts`. The cybernetics channels are `AI2A` (frontier, agent to agent) and `A2H` (HITL, agent to human). In this profile, `frontier` names the caller-supplied model on channel `AI2A`. The Pareto reading of that word stays in `skills/design-binder.md`. Structure images of `agent.fleet` and `agent.swarm` are `prolog`, extension `.pl`, and each image is a tree or a DAG. A preferred extension with no committed fence remains the selector for that artifact. An agent image, when one exists, is a Dockerfile. This repository does not commit one.
+The profile selects a language when that artifact exists; it does not require placeholder code. Extensions below name standalone artifacts. Inside Markdown, use the canonical lowercase fence tag for that language. Exact `.trace` and `.bench` protocol bytes are `text`. Terminal command wrappers are `bash`. Terminal tools are `python`, extension `.py`. Interfaces are `typescript`, extension `.ts`. The cybernetics channels are `AI2A` (frontier, agent to agent) and `A2H` (HITL, agent to human). In this profile, `frontier` names the caller-supplied model on channel `AI2A`. The Pareto reading of that word stays in `skills/design-binder.md`. Structure images of `agent.fleet` and `agent.swarm` are `prolog`, extension `.pl`, and each image is a DAG. A preferred extension with no committed fence remains the selector for that artifact. An agent image, when one exists, is a Dockerfile. This repository does not commit one.
 
 ```toml
 [preferred]
@@ -186,8 +186,9 @@ fleets = ".pl"
 swarms = ".pl"
 
 [structures]
-agent_fleet = "tree"
+agent_fleet = "dag"
 agent_swarm = "dag"
+trace_merkle = "tree"
 
 [cybernetics]
 ai2a = "frontier"
@@ -227,11 +228,13 @@ The documentation DAG stays in the `Graph` sections (§0d). A structure image is
 
 The fence body is LF lines. The facts, in order, are `image(Atom).`, `shape(tree).` or `shape(dag).`, then `node(Atom).` in ascending byte order, then `edge(Atom, Atom).` in ascending byte order of the pair. An atom matches `^[a-z][a-z0-9_]*$`. One space follows the comma in an edge. The body has no comment, blank line, or extra fact. E7 rebuilds that body from `e7.structure_images` and refuses a difference.
 
-A fleet record stores `nodes` and `edges`. Its shape is `tree`. Its unique indegree-zero node is `root`. Every other node has indegree one, `|E| = |V| - 1`, and every node is reachable from the root. The fleet image is that tree. `core` roots the run, `halt` ends it, `worker` is the member role, and `bench` and `trace` are the stores a member appends. The manifest names the heads. The tree is membership. The bench Merkle DAG stays the store inside `bench`.
+A fleet record stores `nodes` and `edges`. Its shape is `dag`. Its unique indegree-zero node is `root`. The directed graph is acyclic, every node is reachable from the root, and at least one node has indegree greater than one. The fleet image is that DAG. `core` roots the run, `halt` ends it, `worker` is the member role, and `bench` and `trace` are the stores a member appends. `trace` has parents `core` and `worker`, because the core file and the worker files are one store. The manifest names the heads. The DAG is membership. The bench Merkle DAG stays the store inside `bench`.
 
 A swarm record stores `workers`, `join`, `sink`, and `second_parent`. Its shape is `dag`. The nodes are the workers plus `join` and `sink`. The edges are one edge from each worker to `join`, one edge from `join` to `sink`, and one edge from `second_parent` to `sink`. `second_parent` is one of the workers. `join` and `sink` are not workers. The directed graph is acyclic, every node is reachable from a root, and at least one node has indegree greater than one. The swarm image is that DAG: the seven workers depend on `decide`, and `decide` and `document` both depend on `literals`. The workers do not vote. The image does not schedule a cluster.
 
-The two fences below are examples. E7 checks that the typescript fence contains the channel tokens `AI2A` and `A2H`. E7 does not compile the Lean fence.
+Both images are DAGs. `shape(tree)` on either image fails E7. The profile key `trace_merkle` is `tree`. A trace ramifies each image into one Merkle tree under [`systems/record-traces.md`](../systems/record-traces.md). That tree is `text`, not a Prolog fence, and it is not the bench Merkle DAG. Tree cardinality binds the ramified tree only.
+
+The two fences below are examples. E7 checks that the typescript fence contains the channel tokens `AI2A` and `A2H`. E7 does not compile the Lean fence. The Lean fence is the cardinality check named above.
 
 <details>
 <summary>cybernetics interface</summary>
@@ -578,7 +581,7 @@ The banner a checker compares is the first non-blank line of this file. `e1_allo
         "atom": "agent_fleet",
         "extension": ".pl",
         "fence": "prolog",
-        "shape": "tree",
+        "shape": "dag",
         "path": "systems/run-campaign.md",
         "root": "core",
         "nodes": [
@@ -592,6 +595,10 @@ The banner a checker compares is the first non-blank line of this file. `e1_allo
           [
             "core",
             "halt"
+          ],
+          [
+            "core",
+            "trace"
           ],
           [
             "core",
@@ -833,7 +840,7 @@ The reader-facing warning is therefore not carried by a path either. It is carri
 
 **`agent.swarm` is the spec of a falsifier.** The only header that carries it is `docs/falsify.md`. The decision procedure is part of that falsifier, and that file is the only instrument. It is not a run and not a type. A run of this contract is a `fleet.campaign`. A header on any other path that carries `agent.swarm` fails E5. Dropping the spec from the falsifier fails E5. Its structure image is the expanded Prolog DAG in that file (§0e).
 
-**`agent.fleet` is not a spec and not a type.** The folder sort retired it. A header that carries it fails E5. The name of the run is `fleet.campaign`. The members of that run are its workers. Its structure image is the expanded Prolog tree in [`systems/run-campaign.md`](../systems/run-campaign.md) (§0e). The image keeps the string out of the header. Wikidata `wbsearchentities` for `agent.fleet`, language `en`, limit 10, returned an empty `search` array on this retrieval, the same result as the query for `agent.swarm`.
+**`agent.fleet` is not a spec and not a type.** The folder sort retired it. A header that carries it fails E5. The name of the run is `fleet.campaign`. The members of that run are its workers. Its structure image is the expanded Prolog DAG in [`systems/run-campaign.md`](../systems/run-campaign.md) (§0e). The image keeps the string out of the header. Wikidata `wbsearchentities` for `agent.fleet`, language `en`, limit 10, returned an empty `search` array on this retrieval, the same result as the query for `agent.swarm`.
 
 **One reading in a skill.** "The campaign" names the one `fleet.campaign` run. "Workers" names the members of that run. The phrase "fleet and design architectures" in `skills/design-binder.md` §5 names methods in the literature. It does not name this run.
 
@@ -844,18 +851,18 @@ The reader-facing warning is therefore not carried by a path either. It is carri
 - [Q47311934](https://www.wikidata.org/wiki/Q47311934), English label "fleet", English description "group of vehicles operated by an organization", last revision 2520618032, modified 2026-07-21T11:05:03Z. Subclass of [Q16887380](https://www.wikidata.org/wiki/Q16887380) "group". arXiv:2510.10379v1 (Gupta, Asbery, Merchant, Anwar, Thomason), byte sha256 `e6494d40cf75e7cdc60cd7713960f58e30b515b144b243d580feb690148e79d8`. System Design, read off that PDF: "At its core, the system employs a centralized fleet manager that orchestrates robot operations through a planning and allocation framework."
 - [Q831663](https://www.wikidata.org/wiki/Q831663), English label "military campaign", English alias "campaign", English description "large scale, long duration, significant military strategy plan", last revision 2552201427, modified 2026-10-02T15:17:09Z.
 
-A procedure of this contract is an `agent.skill`. A run of this contract is one `fleet.campaign`: one core, one hash, bounds, one halt. A falsifier of this contract is `docs/falsify.md`, spec `agent.swarm`. Q205961 is a learned ability. Q863960 is collective behaviour of decentralized, self-organized systems, in the item's own spelling. Q47311934 is a group of vehicles operated by an organization. Q831663 is a military campaign. arXiv:2510.10379v1 describes a centralized fleet manager. Those items remain different objects from the procedure, from the run, and from the falsifier. The fleet structure image is a membership tree rooted at `core`, a different object from the centralized fleet manager in arXiv:2510.10379v1.
+A procedure of this contract is an `agent.skill`. A run of this contract is one `fleet.campaign`: one core, one hash, bounds, one halt. A falsifier of this contract is `docs/falsify.md`, spec `agent.swarm`. Q205961 is a learned ability. Q863960 is collective behaviour of decentralized, self-organized systems, in the item's own spelling. Q47311934 is a group of vehicles operated by an organization. Q831663 is a military campaign. arXiv:2510.10379v1 describes a centralized fleet manager. Those items remain different objects from the procedure, from the run, and from the falsifier. The fleet structure image is a membership DAG rooted at `core`, a different object from the centralized fleet manager in arXiv:2510.10379v1. A trace ramifies that DAG, and the swarm DAG, into Merkle trees. Those trees are not the bench Merkle DAG.
 
 | system | what it holds | write scope |
 |---|---|---|
 | [`systems/use-bench.md`](../systems/use-bench.md) | a run-scoped append-only commons where a campaign's workers read and write partial work concurrently | its own `.bench` store only; never `graph.json`, never `proposals.json` |
-| [`systems/record-traces.md`](../systems/record-traces.md) | the act log of one `fleet.campaign` run: pin, call, control pass, refusal, proposal, emission, halt | its own `.trace` store only, outside this repository; never `graph.json`, never `proposals.json`, never `.bench` |
+| [`systems/record-traces.md`](../systems/record-traces.md) | the act log of one `fleet.campaign` run, and the Merkle tree ramified from the fleet DAG | its own `.trace` store only, outside this repository; never `graph.json`, never `proposals.json`, never `.bench` |
 | [`systems/run-campaign.md`](../systems/run-campaign.md) | the Markdown runtime for one run: preflight, positive-control calibration, epitope-conditioned `design-binder`, and the handoff to `--trace` | no file in this repository; the executor appends the `.bench` and `.trace` stores outside this repository |
 
 - A system is not a skill and is not listed in §10. It originates nothing and admits nothing: §4 is untouched by anything written to a scratchpad or an act log, and a record in a `.bench` or `.trace` store is not a claim this file recognises.
 - `bench` is scoped to a single run and is discarded with it. It is not a second catalogue, and it is not a cache of `graph.json`.
 - Every `.bench` record declares an evidence tier, and no query pools across tiers — the same refusal §1 makes between clinical and preclinical, one layer down. A tier that is declared is not thereby honest; the line can only require the declaration.
-- The trace records acts, not evidence. The record has no tier, no study type, and no score. A `.trace` file is not a proposal and is not a bench. It is discarded with the run. The specification is `systems/record-traces.md`. The runtime falsifier decides it from that file and does not keep a second carrier list. That decision is pure and does not discharge §8.16.
+- The trace records acts, not evidence. The record has no tier, no study type, and no score. A `.trace` file is not a proposal and is not a bench. It is discarded with the run. The specification is `systems/record-traces.md`. That file also ramifies each structure DAG into one Merkle tree. The runtime falsifier decides it from that file and does not keep a second carrier list. That decision is pure and does not discharge §8.16.
 - The rows of this table and the files `systems/*.md` are in bijection. That bijection is extension predicate E4. It is not a §8 predicate and it does not renumber them.
 - Three systems, named here exactly. A specification not listed in this section is not part of this contract.
 
@@ -888,7 +895,7 @@ Rows that do not name 3 Nov 2026 were retrieved 1 Nov 2026 (Australia/Sydney). E
 | Re-run a stochastic agent once and call it reliable | no contract predicate supports that inference |
 | Wrap the process CSV or a diagram, or put an HTML line outside a compression wrapper | E7 fails |
 | Wrap one closed-list fence in one compression wrapper | E7 holds |
-| Replace a fleet or swarm Prolog image with a cycle or a YAML manifest, or wrap that image | E7 |
+| Replace a fleet or swarm Prolog image with a cycle, a tree shape, or a YAML manifest, or wrap that image | E7 |
 | Run the workers in [`falsify.md`](falsify.md) | a survivor falsifies that prediction; a catch is not clinical proof |
 
 A user AI writes the falsifier from [`falsify.md`](falsify.md) and runs it outside this repository, including the predecessor check when a predecessor exists. A passing result is scoped evidence, never proof of clinical truth.

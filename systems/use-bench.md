@@ -113,7 +113,7 @@ recovery,a correction is a new node and the old node stays
 
 ### 1. Structure
 
-A grow-only set of immutable nodes, each named by the hash of its own content, forming a Merkle DAG. Replication is state-based: an agent sends nodes, a receiver merges by **set union**.
+A grow-only set of immutable nodes, each named by the hash of its own content, forming a Merkle DAG. Nodes in this DAG may be shared. The Merkle tree in [`record-traces.md`](record-traces.md) is a different object: ramify copies a shared structure-image node once per path, and that tree does not share nodes. Replication is state-based: an agent sends nodes, a receiver merges by **set union**.
 
 - `H` is SHA-256 over the node's canonical bytes (§3). A node's name is its content; identical content written twice by two agents is one node.
 - Parent edges point only to the past — a parent's name is fixed before a child's can be computed — so the graph is acyclic by construction, and the edges are the causal history. No vector clock is kept and none is needed.
@@ -319,6 +319,7 @@ Retrieved or re-checked 1 Nov 2026 (Australia/Sydney). The measured token ratio,
 | label a prediction as tier `1` | syntax passes, exposing the truthfulness limit |
 | run forever waiting for quiescence | no local termination predicate exists |
 | treat the `merge sketch` fence as the 2026-10-29 TLC model | the fence is the merge law only, and TLC has not run it |
+| equate this Merkle DAG with the trace Merkle tree | a bench node is not a path of the structure image |
 
 Canonical ordering, tier refusal, and run binding are obligations on every executor and receiver. Claims about replication, indexing, pose distance, and the off-repo TLA+ model remain falsification targets until executable fixtures are committed.
 
