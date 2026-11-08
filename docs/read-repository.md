@@ -110,6 +110,52 @@ flowchart LR
     Next --> Stop
 ```
 
+Symbolic reasoning. `type: sandbox.playground`.
+
+```tla
+---- MODULE ReadRoute ----
+\* model agent. source of nature.
+\* A Lisp variation is a proposal only when this module grounds it.
+\* Stop when the contract is first and the route is sufficient.
+CONSTANTS contract_first, sufficient
+Stop == contract_first /\ sufficient
+====
+```
+
+```lisp
+;; write agent. executable image. grounded in the tla module only.
+(defun stop (contract-first sufficient)
+  (and contract-first sufficient))
+```
+
+```lean
+-- model agent. forward pass. discharge and refinement check.
+-- autoproof: tla source -> lisp image -> Ti -> bend breakpoint -> tla
+-- E7 does not compile this fence.
+def lispStop (c s : Bool) : Bool := c && s
+
+theorem Ti :
+    (lispStop false false = false) ∧
+    (lispStop false true = false) ∧
+    (lispStop true false = false) ∧
+    (lispStop true true = true) :=
+  And.intro rfl (And.intro rfl (And.intro rfl (rfl)))
+```
+
+```bend
+# proof agent. backward pass. search under Ti.
+# ti_holds is a number. 0 takes the refuse branch.
+# breakpoint: a route that still names the contract first
+# This value is not a .trace file. E7 does not run this fence.
+object Trace { name, holds }
+
+def backward(ti_holds):
+  if ti_holds:
+    return Trace { name: "breakpoint", holds: 1 }
+  else:
+    return Trace { name: "refuse", holds: 0 }
+```
+
 ## Citations
 
 | Pin | Supports |
@@ -129,6 +175,7 @@ Retrieved 1 Nov 2026 (Australia/Sydney). Representation only, not catalogue evid
 | Read a branch twice | bytes can differ |
 | Treat a missing row as a negative | the file does not say that |
 | Treat one green run as confirmation | a pass is not a contradicting observation |
+| Remove the ReadRoute playground | E7 |
 
 ## Licence
 

@@ -167,6 +167,52 @@ filters,withhold 1YY9 chains C and D
 recovery,do not substitute iptm for the binding bar
 ```
 
+Symbolic reasoning. `type: sandbox.playground`.
+
+```tla
+---- MODULE EgfrRecord ----
+\* model agent. source of nature.
+\* A Lisp variation is a proposal only when this module grounds it.
+\* 108 thousandths is the integer part of recorded confidence 0.10832766083050813. The bar is 700 thousandths. Emitted is 0.
+\* iptm is not this comparison.
+EXTENDS Integers
+Failed == 108 < 700 /\ 0 = 0
+====
+```
+
+```lisp
+;; write agent. executable image. grounded in the tla module only.
+(defun failed (confidence bar emitted)
+  (and (< confidence bar) (= emitted 0)))
+```
+
+```lean
+-- model agent. forward pass. discharge and refinement check.
+-- autoproof: tla source -> lisp image -> Ti -> bend breakpoint -> tla
+-- E7 does not compile this fence.
+def lispFailed (confidence bar emitted : Nat) : Bool :=
+  decide (confidence < bar) && decide (emitted = 0)
+
+theorem Ti :
+    lispFailed 108 700 0 = true ∧
+    lispFailed 700 700 0 = false := by
+  decide
+```
+
+```bend
+# proof agent. backward pass. search under Ti.
+# ti_holds is a number. 0 takes the refuse branch.
+# breakpoint: recorded confidence stays under the bar and emitted stays 0
+# This value is not a .trace file. E7 does not run this fence.
+object Trace { name, holds }
+
+def backward(ti_holds):
+  if ti_holds:
+    return Trace { name: "breakpoint", holds: 1 }
+  else:
+    return Trace { name: "refuse", holds: 0 }
+```
+
 ## Citations
 
 A2A Project (no date) ‘Agent2Agent protocol’, v1.0.1, commit 3303592. Available at: https://github.com/a2aproject/A2A/tree/3303592588e388e62e0f69f701af531d2f4e3991 (Accessed: 4 November 2026).
@@ -185,7 +231,7 @@ wetware-hq (2026) ‘catalog’, commit 4108e940ee5f8c8aad7d8e1ae173bbe166c718cb
 
 ## Falsification
 
-A candidate on request `b615e910dbf792b808e0a0639a7e057c38934418f510c4e75daeae33f089d944` with `binding_confidence` ≥ 0.7, or any emitted sequence, contradicts `positive-control-failed`.
+A candidate on request `b615e910dbf792b808e0a0639a7e057c38934418f510c4e75daeae33f089d944` with `binding_confidence` ≥ 0.7, or any emitted sequence, contradicts `positive-control-failed`. Removing the EgfrRecord playground contradicts the record's autoproof shape. A theorem Ti that treats 108 thousandths as a pass contradicts the bar.
 
 ## Licence
 

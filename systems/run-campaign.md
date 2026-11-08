@@ -120,6 +120,53 @@ filters,drop advisory sequences and unconstrained full-length targets
 recovery,record unavailable or positive-control and still verify the trace
 ```
 
+Symbolic reasoning. `type: sandbox.playground`.
+
+```tla
+---- MODULE Campaign ----
+\* model agent. source of nature.
+\* A Lisp variation is a proposal only when this module grounds it.
+\* Novel launch requires a passed control and a manifest target.
+CONSTANTS control_pass, manifest_target
+Launch == control_pass /\ manifest_target
+====
+```
+
+```lisp
+;; write agent. executable image. grounded in the tla module only.
+(defun launchp (control-pass manifest-target)
+  (and control-pass manifest-target))
+```
+
+```lean
+-- model agent. forward pass. discharge and refinement check.
+-- autoproof: tla source -> lisp image -> Ti -> bend breakpoint -> tla
+-- E7 does not compile this fence.
+def lispLaunch (control manifest : Bool) : Bool :=
+  control && manifest
+
+theorem Ti :
+    (lispLaunch false false = false) ∧
+    (lispLaunch false true = false) ∧
+    (lispLaunch true false = false) ∧
+    (lispLaunch true true = true) :=
+  And.intro rfl (And.intro rfl (And.intro rfl (rfl)))
+```
+
+```bend
+# proof agent. backward pass. search under Ti.
+# ti_holds is a number. 0 takes the refuse branch.
+# breakpoint: launch only after the binding control and a manifest target
+# This value is not a .trace file. E7 does not run this fence.
+object Trace { name, holds }
+
+def backward(ti_holds):
+  if ti_holds:
+    return Trace { name: "breakpoint", holds: 1 }
+  else:
+    return Trace { name: "refuse", holds: 0 }
+```
+
 #### Structure image
 
 The phase diagram above is the control flow. The fence below is the membership DAG of one `fleet.campaign`. `core` is the root. `halt` is the end of the run. `worker` is the member role, and the manifest names the heads. `bench` and `trace` are the stores a member appends. `trace` has parents `core` and `worker`. The bench Merkle DAG stays inside the store `bench`. The trace Merkle tree is the ramification of this DAG under [`record-traces.md`](record-traces.md). E7 checks this fence equal to the rendering of `agent.fleet` in `checker literals`. The fence stays outside compression. A fleet program stays outside this repository, and a YAML manifest stays out of this image.
@@ -252,6 +299,7 @@ This repository ships no unit suite and no committed checker. Repository predica
 | add a repository-local fleet executable or hidden default | Markdown ceases to be the sole runtime authority |
 | replace the membership DAG, give `trace` one parent, or wrap the fence | E7 |
 | preserve trace shape while faking provider calls | trace may be `result`, exposing why requests and control outputs must also be retained |
+| Remove the Campaign playground or launch with the control false | E7, and Launch stays the control plus the manifest |
 
 The strongest break remains experimental: failure of the measured binding assay or binding to the pre-registered counter-screen panel kills the hypothesis even after a calibrated computational run.
 

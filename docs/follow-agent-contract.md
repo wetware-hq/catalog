@@ -33,7 +33,7 @@ Define the catalogue schema, evidence boundary, canonical bytes, merge law, read
 law = ["0", "0b", "0c", "0d", "0e", "1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "11"]
 graph = "Graph section; reciprocal relative paths; read before"
 registry = ["10 Skills", "11 Systems"]
-embeds = ["toml", "json", "csv", "stateDiagram-v2", "flowchart", "GFM tables", "typescript", "lean"]
+embeds = ["toml", "json", "csv", "stateDiagram-v2", "flowchart", "GFM tables", "typescript", "tla", "lisp", "lean", "bend"]
 compression = "details wrapper around one canonical fence"
 ```
 
@@ -44,6 +44,7 @@ compression = "details wrapper around one canonical fence"
 - Resolving keys, proposing pairs, or launching de novo design.
 - Implementing a registered campaign system or interpreting its outputs.
 - Reading a fleet DAG, a swarm DAG, or the Merkle tree derived at traces.
+- Reading the symbolic playground for the design agent or the proof agent.
 
 ## Contraindications
 
@@ -53,6 +54,7 @@ compression = "details wrapper around one canonical fence"
 - A missing row is unknown coverage, not evidence that no binder exists.
 - Repository-local `agent.skill` and `fleet.campaign` are not claims of conformance with external Agent Skills or A2A.
 - A structure image is a Prolog fence. It is not a header spec, a fleet executable, or a cluster manifest.
+- A symbolic playground is a shape check. It is not a discharged proof, not a TLC run, and not predicate 16.
 
 ## Algorithm
 
@@ -114,6 +116,54 @@ filters,refuse bad grammar scope and duplicate triples
 recovery,retry unavailable and never cache it as unresolved
 ```
 
+Symbolic reasoning. `type: sandbox.playground`.
+
+```tla
+---- MODULE Catalogue ----
+\* model agent. source of nature.
+\* A Lisp variation is a proposal only when this module grounds it.
+\* version is the number 2. The paper oracle stays not-discharged.
+\* Not a TLC run and not predicate 16.
+EXTENDS Integers
+CONSTANTS version, oracle
+Safe == version = 2 /\ oracle = "not-discharged"
+====
+```
+
+```lisp
+;; write agent. executable image. grounded in the tla module only.
+(defun safe (version oracle)
+  (and (= version 2) (string= oracle "not-discharged")))
+```
+
+```lean
+-- model agent. forward pass. discharge and refinement check.
+-- autoproof: tla source -> lisp image -> Ti -> bend breakpoint -> tla
+-- E7 does not compile this fence.
+def lispSafe (version : Nat) (oracle : String) : Bool :=
+  decide (version = 2) && decide (oracle = "not-discharged")
+
+theorem Ti :
+    lispSafe 2 "not-discharged" = true ∧
+    lispSafe 2 "discharged" = false ∧
+    lispSafe 1 "not-discharged" = false := by
+  decide
+```
+
+```bend
+# proof agent. backward pass. search under Ti.
+# ti_holds is a number. 0 takes the refuse branch.
+# breakpoint: version 2 with the paper oracle not-discharged
+# This value is not a .trace file. E7 does not run this fence.
+object Trace { name, holds }
+
+def backward(ti_holds):
+  if ti_holds:
+    return Trace { name: "breakpoint", holds: 1 }
+  else:
+    return Trace { name: "refuse", holds: 0 }
+```
+
 ### 0. Scope
 
 - **Read:** `graph.json`, `docs/*.md`, `skills/*.md`, `systems/*.md` (§11), `LICENSE`.
@@ -137,7 +187,7 @@ Every file in `skills/` and `systems/` names itself once, in the header, before 
 | `skills/` | a `resource.procedure`, spec `agent.skill`. The one skill §10 marks `special` also says so. The others do not. |
 | `systems/` | an `agent.system`, spec `fleet.campaign`. No class. |
 
-`agent.skill` is the spec of a procedure. `fleet.campaign` is the spec of one run. `agent.swarm` is the spec of the falsifier [`falsify.md`](falsify.md), and of no other file. A header on any other path that carries `agent.swarm` fails E5. `agent.fleet` is not a spec and not a type. A header that carries it fails E5. A header outside `skills/` and `systems/` that carries `agent.skill` or `fleet.campaign` fails E5: that file is an orphan. `e5_spec_allowlist` in §0f is empty: no fixture is exempt, and no path outside `skills/` is a skill. `docs/falsify.md` is the only entry of `e5_swarm_paths` in that same block, which is what the runtime falsifier loads. The campaign runtime is the Markdown specification [`systems/run-campaign.md`](../systems/run-campaign.md); no repository-local fleet executable is a hidden second contract. The four strings, and the ordinary words next to them, are set out in §11. The structure image of `agent.fleet` is the Prolog DAG in [`systems/run-campaign.md`](../systems/run-campaign.md). The structure image of `agent.swarm` is the Prolog DAG in [`falsify.md`](falsify.md). Neither image is a header.
+`agent.skill` is the spec of a procedure. `fleet.campaign` is the spec of one run. `agent.swarm` is the spec of the falsifier [`falsify.md`](falsify.md), and of no other file. A header on any other path that carries `agent.swarm` fails E5. `agent.fleet` is not a spec and not a type. A header that carries it fails E5. `sandbox.playground` is the symbolic-playground fence type in §0e. It is not a spec and not a header type. A header that carries `sandbox.playground` fails E5. A header outside `skills/` and `systems/` that carries `agent.skill` or `fleet.campaign` fails E5: that file is an orphan. `e5_spec_allowlist` in §0f is empty: no fixture is exempt, and no path outside `skills/` is a skill. `docs/falsify.md` is the only entry of `e5_swarm_paths` in that same block, which is what the runtime falsifier loads. The campaign runtime is the Markdown specification [`systems/run-campaign.md`](../systems/run-campaign.md); no repository-local fleet executable is a hidden second contract. The four strings, and the ordinary words next to them, are set out in §11. The structure image of `agent.fleet` is the Prolog DAG in [`systems/run-campaign.md`](../systems/run-campaign.md). The structure image of `agent.swarm` is the Prolog DAG in [`falsify.md`](falsify.md). Neither image is a header.
 
 ### 0d. Scientific Markdown profile and documentation DAG
 
@@ -158,13 +208,13 @@ The document graph is a directed read-before DAG rooted at `docs/read-repository
 
 Every edge is declared at both endpoints, so each file lists all and only its incoming and outgoing neighbors; labels equal canonical paths relative to that file and are path-sorted. The graph has one root and one sink, `systems/run-campaign.md`; it is root-reachable, acyclic, transitively reduced, and has at most `|V| + 1` edges. Self-edges, broken or external targets, annotations, duplicate local items, and one-sided declarations are invalid. Links elsewhere are not graph edges.
 
-The initialization file is at most 4,096 UTF-8 bytes. JSON cards and graph lists are canonical routing data. The CSV laws, statechart, and diagram are derived views and never override prose law.
+The initialization file is at most 6,144 UTF-8 bytes, including its symbolic playground. It stays a router. JSON cards and graph lists are canonical routing data. The CSV laws, statechart, and diagram are derived views and never override prose law.
 
 E6 checks the functional paragraph, H2 profile, JSON card, variable/process headings, MIT name, relative reciprocal links, single root and sink, reachability, acyclicity, edge budget, and transitive reduction. Representation sources are in `docs/pin-references.md`.
 
 ### 0e. Formal language profile
 
-The profile selects a language when that artifact exists; it does not require placeholder code. Extensions below name standalone artifacts. Inside Markdown, use the canonical lowercase fence tag for that language. Exact `.trace` and `.bench` protocol bytes are `text`. Terminal command wrappers are `bash`. Terminal tools are `python`, extension `.py`. Interfaces are `typescript`, extension `.ts`. The cybernetics channels are `AI2A` (frontier, agent to agent) and `A2H` (HITL, agent to human). In this profile, `frontier` names the caller-supplied model on channel `AI2A`. The Pareto reading of that word stays in `skills/design-binder.md`. Structure images of `agent.fleet` and `agent.swarm` are `prolog`, extension `.pl`, and each image is a DAG. A preferred extension with no committed fence remains the selector for that artifact. An agent image, when one exists, is a Dockerfile. This repository does not commit one.
+The profile selects a language when that artifact exists. It does not require a placeholder fence for an absent artifact. The symbolic playground is required in every live Markdown file, and this repository does not run it. Extensions below name standalone artifacts. Inside Markdown, use the canonical lowercase fence tag for that language. Exact `.trace` and `.bench` protocol bytes are `text`. Terminal command wrappers are `bash`. Terminal tools are `python`, extension `.py`. Interfaces are `typescript`, extension `.ts`. The cybernetics channels are `AI2A` (frontier, agent to agent) and `A2H` (HITL, agent to human). In this profile, `frontier` names the caller-supplied model on channel `AI2A`. The Pareto reading of that word stays in `skills/design-binder.md`. Structure images of `agent.fleet` and `agent.swarm` are `prolog`, extension `.pl`, and each image is a DAG. A preferred extension with no committed fence remains the selector for that artifact. An agent image, when one exists, is a Dockerfile. This repository does not commit one.
 
 ```toml
 [preferred]
@@ -175,6 +225,17 @@ tracers = ".rs"
 falsifiers = ".bend"
 theories = ".lean"
 machines = ".tla"
+
+[symbolic]
+type = "sandbox.playground"
+loop = "autoproof"
+source = ".tla"
+executable = ".lisp"
+forward = ".lean"
+backward = ".bend"
+upstream = ".rs and programming-language fences"
+design = "skills/design-binder.md"
+proof = "docs/falsify.md"
 
 [terminal]
 tools = "python"
@@ -218,9 +279,19 @@ code_demos = "Marimo (.py)"
 animations = "Three.js"
 ```
 
-Canonical fence tags are `python`, `prolog`, `javascript`, `typescript`, `rust`, `bend`, `lean`, `tla`, `dockerfile`, `yaml` for Kubernetes manifests only, `wolfram`, `mermaid`, `json`, `r`, `csv`, `toml`, `tex`, `svg`, `stl`, `text`, and `bash`. GFM cards, registries, and comparison tables are Markdown structure; machine-consumed embedded tables use `csv`.
+The symbolic playground has type `sandbox.playground`. It is the read for the design agent, `skills/design-binder.md`, and the proof agent, `docs/falsify.md` (spec `agent.swarm`). Model, write, and proof are roles inside the playground. They are not header specs.
 
-Every repository Markdown fence is a column-zero triple backtick fence with one explicit canonical tag. Raw HTML is not a language escape; the compression wrapper below is the only admitted form. In live Markdown, `Composition` and `Variables` each contain exactly one mapping in the line-oriented, JSON-value subset of TOML 1.1.0: lowercase bare keys, single-component tables, no escapes, and no duplicate table or key. Mermaid starts with `stateDiagram-v2` or `flowchart`; CSV uses minimal quoting and LF. Where live Markdown contains `### Process`, E7 requires the three variable tables, that seven-row CSV inside `Process`, and both Mermaid kinds inside `Algorithm`. E7 enforces fence tags across all Markdown, parses TOML, JSON, and CSV, checks Mermaid kind, admits YAML only for Kubernetes manifests, and admits raw HTML only as one in-place compression wrapper. A YAML fence is a Kubernetes manifest and is never a structure image. E7 does not compile the remaining preferred languages or discharge §8.16. A fenced program in live Markdown is an example of a framework for a user AI that writes the runtime outside this repository, except the two Prolog structure images, which E7 checks against `e7.structure_images`. An example is not that runtime, and it is not a standalone artifact.
+The playground is upstream of `.rs` tracer definitions and of the programming-language fences `python`, `rust`, `typescript`, `bash`, `javascript`, `prolog`, `wolfram`, `r`, and `tex`. A `.rs` definition may implement a discharged `Ti`. It does not originate the spec. A programming-language fence does not ground a variation. When one of those fences occurs, it follows the playground.
+
+The column-zero marker line equals `e7.symbolic.marker`. It is the next non-blank line after the process views. The process views are the operator CSV and the two Mermaid diagrams. Four fences follow, in order, with only blank lines between them: `tla`, `lisp`, `lean`, `bend`. That is the one playground. A file has one `lisp` fence. A later `tla`, `lean`, or `bend` fence is an example and is not a second playground. The tree-cardinality fence and the merge-sketch fence are examples. The playground stays outside every compression wrapper.
+
+The loop is autoproof. The `tla` fence is the model agent's source of nature. The `lisp` fence is the write agent's executable image of that spec. A variation there is a proposal only when the `tla` fence grounds it. The image is a predicate. It writes neither `graph.json` nor `proposals.json` nor a trace store. The `lean` fence is the forward pass. It discharges the obligations the `tla` fence names and checks that the Lisp image refines that spec. The strongest discharged statement is the theorem named `Ti`. The `bend` fence is the proof agent's backward pass. It searches only under `Ti`. It returns `Trace { name: "breakpoint", holds: 1 }` when `Ti` holds and `Trace { name: "refuse", holds: 0 }` otherwise. `ti_holds` is a number, and `0` takes the refuse branch. That breakpoint is the next input to the TLA+ spec. It is not a new source of nature, not a `.trace` file, and not `merkle.trace`.
+
+E7 checks the marker, the four tags in that order, a single `lisp` fence, the identifier `Ti` in the `lean` fence, the identifier `breakpoint` in the `bend` fence, that the named programming-language fences do not precede the marker, and that the playground is unwrapped. E7 does not compile TLA+, Lisp, Lean, or Bend, and it does not run the loop. A playground does not discharge §8.16. It is not the off-repository TLC model recorded in `systems/use-bench.md` §9. A dated check of the `lean` fences is recorded in the citations. It is not E7 and it does not discharge §8.16.
+
+Canonical fence tags are `python`, `prolog`, `javascript`, `typescript`, `rust`, `bend`, `lean`, `lisp`, `tla`, `dockerfile`, `yaml` for Kubernetes manifests only, `wolfram`, `mermaid`, `json`, `r`, `csv`, `toml`, `tex`, `svg`, `stl`, `text`, and `bash`. GFM cards, registries, and comparison tables are Markdown structure; machine-consumed embedded tables use `csv`.
+
+Every repository Markdown fence is a column-zero triple backtick fence with one explicit canonical tag. Raw HTML is not a language escape; the compression wrapper below is the only admitted form. In live Markdown, `Composition` and `Variables` each contain exactly one mapping in the line-oriented, JSON-value subset of TOML 1.1.0: lowercase bare keys, single-component tables, no escapes, and no duplicate table or key. Mermaid starts with `stateDiagram-v2` or `flowchart`; CSV uses minimal quoting and LF. Where live Markdown contains `### Process`, E7 requires the three variable tables, that seven-row CSV inside `Process`, and both Mermaid kinds inside `Algorithm`. E7 enforces fence tags across all Markdown, parses TOML, JSON, and CSV, checks Mermaid kind, admits YAML only for Kubernetes manifests, and admits raw HTML only as one in-place compression wrapper. A YAML fence is a Kubernetes manifest and is never a structure image. E7 checks the symbolic playground as this section states. E7 does not compile the playground languages or the remaining preferred languages, and it does not discharge §8.16. A fenced program in live Markdown is an example of a framework for a user AI that writes the runtime outside this repository, except the two Prolog structure images, which E7 checks against `e7.structure_images`, and except the playground, whose shape E7 checks and whose body it does not run. An example is not that runtime, and it is not a standalone artifact.
 
 #### Structure images
 
@@ -234,7 +305,7 @@ A swarm record stores `workers`, `join`, `sink`, and `second_parent`. Its shape 
 
 Both images are DAGs. `shape(tree)` on either image fails E7. The profile key `trace_merkle` is `tree`. A trace ramifies each image into one Merkle tree under [`systems/record-traces.md`](../systems/record-traces.md). That tree is `text`, not a Prolog fence, and it is not the bench Merkle DAG. Tree cardinality binds the ramified tree only.
 
-The two fences below are examples. E7 checks that the typescript fence contains the channel tokens `AI2A` and `A2H`. E7 does not compile the Lean fence. The Lean fence is the cardinality check named above.
+The two fences below are examples. E7 checks that the typescript fence contains the channel tokens `AI2A` and `A2H`. E7 does not compile the Lean fence. The Lean fence is the cardinality check named above. It is not the symbolic playground.
 
 <details>
 <summary>cybernetics interface</summary>
@@ -275,7 +346,7 @@ In-place compression is a collapsible code block. The payload stays in the file.
 
 The wrapper is the only raw HTML live Markdown admits. It is column-zero: `<details>`, then `<summary>LABEL</summary>`, then one blank line, then one canonical fence, then `</details>` on the line after the fence's closing backticks. `LABEL` is 1 to 128 ASCII bytes, with no ASCII control and no `<`, no `>`, no backtick, and no `#`. The tags have no attributes. Labels are unique in a file. The wrapper holds one fence and no prose.
 
-The expanded set in `e7.compression.expanded` stays outside every wrapper: the specification card, the composition mapping, the variables mapping, the process CSV, both Mermaid diagrams, and every Prolog structure image. A closed list a runtime loads may sit inside one. The labels are `e7.compression.labels`: `checker literals`, `attacks`, `carrier sets`, `example framework: python`, `example framework: rust`, `example framework: bash`, `example framework: text`, `witness: a1.trace`, `agent card`, `cybernetics interface`, `tree cardinality`, `pose distance`, and `merge sketch`.
+The expanded set in `e7.compression.expanded` stays outside every wrapper: the specification card, the composition mapping, the variables mapping, the process CSV, both Mermaid diagrams, every Prolog structure image, and the symbolic playground. A closed list a runtime loads may sit inside one. The labels are `e7.compression.labels`: `checker literals`, `attacks`, `carrier sets`, `example framework: python`, `example framework: rust`, `example framework: bash`, `example framework: text`, `witness: a1.trace`, `agent card`, `cybernetics interface`, `tree cardinality`, `pose distance`, and `merge sketch`.
 
 E7 admits that wrapper and refuses every other line that, outside a fence, begins with optional whitespace and then `<`. A second fence, prose inside the wrapper, a wrapped fence from the expanded set, an attribute on `<details>`, a repeated label, and any other HTML line fail E7. E6 does not read the summary as a heading. The wrapper is not a graph edge, a second copy, or a language tag.
 
@@ -491,7 +562,7 @@ The banner a checker compares is the first non-blank line of this file. `e1_allo
     "fixture_paths": [],
     "root": "docs/read-repository.md",
     "sink": "systems/run-campaign.md",
-    "root_max_bytes": 4096,
+    "root_max_bytes": 6144,
     "edge_surplus_max": 2,
     "section_names": [
       "Specification",
@@ -527,6 +598,7 @@ The banner a checker compares is the first non-blank line of this file. `e1_allo
       "javascript",
       "json",
       "lean",
+      "lisp",
       "mermaid",
       "prolog",
       "python",
@@ -574,6 +646,35 @@ The banner a checker compares is the first non-blank line of this file. `e1_allo
         "AI2A",
         "A2H"
       ]
+    },
+    "symbolic": {
+      "type": "sandbox.playground",
+      "loop": "autoproof",
+      "marker": "Symbolic reasoning. `type: sandbox.playground`.",
+      "order": [
+        "tla",
+        "lisp",
+        "lean",
+        "bend"
+      ],
+      "roles": {
+        "tla": "model",
+        "lisp": "write",
+        "lean": "model",
+        "bend": "proof"
+      },
+      "passes": {
+        "tla": "source",
+        "lisp": "executable",
+        "lean": "forward",
+        "bend": "backward"
+      },
+      "lean_token": "Ti",
+      "bend_token": "breakpoint",
+      "upstream": ".rs and programming-language fences",
+      "design": "skills/design-binder.md",
+      "proof": "docs/falsify.md",
+      "header_refused": "sandbox.playground"
     },
     "structure_images": [
       {
@@ -648,7 +749,8 @@ The banner a checker compares is the first non-blank line of this file. `e1_allo
         "process csv",
         "stateDiagram-v2",
         "flowchart",
-        "prolog structure image"
+        "prolog structure image",
+        "symbolic playground"
       ],
       "labels": [
         "checker literals",
@@ -834,6 +936,8 @@ The reader-facing warning is therefore not carried by a path either. It is carri
 
 `agent.skill`, `fleet.campaign`, `agent.swarm`, and `agent.fleet` are four strings. This contract uses the first as the spec of a procedure, the second as the spec of one run, and `agent.swarm` as the spec of the falsifier `docs/falsify.md`. Retrieved 31 Oct 2026 (Australia/Sydney). Re-checked 1 Nov 2026 (Australia/Sydney): Wikidata last revisions Q529909 `2516060604`, Q863960 `2515886205`, Q47311934 `2520618032`, Q205961 `2541591399`, and Q831663 `2552201427` were unchanged. `wbsearchentities` for `agent.skill`, `fleet.campaign`, `agent.fleet`, and `agent.swarm`, language `en`, limit 10, each returned an empty `search` array. arXiv:2502.14743 was still v2, arXiv:2411.11616 was still v2, and arXiv:2510.10379 was still v1. The three PDF byte hashes matched the pins below. The ten arXiv ids in `docs/pin-references.md` were still at the versions pinned there; those PDFs were not re-downloaded. The Wikidata items are live entities, pinned by last revision, with no byte hash. Each arXiv row is pinned by versioned id plus the SHA-256 of the PDF bytes downloaded that day from `https://arxiv.org/pdf/<id>`. A quoted sentence was read off that PDF's text layer (`pdftotext -layout`, poppler 24.02.0). The remainder of each paper was not read for this repository. These records describe the ordinary words. They do not replace the sentences below.
 
+`sandbox.playground` is not a fifth string. It is the fence type in §0e. A header that carries `sandbox.playground` fails E5.
+
 **`agent.skill` is a procedure.** It is the spec on every skill in §10. It is not a run. Wikidata `wbsearchentities` for `agent.skill`, language `en`, limit 5, returned an empty `search` array on this retrieval. The ordinary word is [Q205961](https://www.wikidata.org/wiki/Q205961), English label "skill", English description "learned ability and competence to carry out an action", last revision 2541591399, modified 2026-09-07T08:25:55Z.
 
 **`fleet.campaign` is one run.** It is the spec on every system in the table below. The run has one core. `run` is the SHA-256 of `core.trace`. That file carries `bound-n` and `bound-tok`. The run ends on one `halt`. `core.bench` hashes its own bytes, and the executor writes this `run` into that file as the parameter `trace`. Workers that append bench lines or trace lines are members of that run. Set-union merge with no coordinator is a property of the bench store inside the run. Wikidata `wbsearchentities` for `fleet.campaign`, language `en`, limit 5, returned an empty `search` array on this retrieval.
@@ -879,8 +983,10 @@ A procedure of this contract is an `agent.skill`. A run of this contract is one 
 | [Swarm Skills, arXiv:2605.10052v2 HTML](https://arxiv.org/abs/2605.10052v2) | a portable skill can describe a workflow DAG, including with Mermaid, apart from a runtime | HTML of §5.1.2 read 3 Nov 2026 (Australia/Sydney); no PDF hash; does not define this `agent.swarm` |
 | [Sequential stopping, arXiv:2509.21734v3 HTML](https://arxiv.org/abs/2509.21734v3) | stop when terminal reward meets expected continuation value; a fixed threshold is myopic | abstract read from HTML the same day; no PDF hash; not a clinical protocol and not this halt rule |
 | [Falsifiability](https://en.wikipedia.org/wiki/Falsifiability) | a claim is falsifiable when its language can describe a contradicting observation | lead read 3 Nov 2026 (Australia/Sydney); living page; no Popper edition; verification is not corroboration |
+| [Bend syntax `9a4223d`](https://github.com/HigherOrderCO/Bend/blob/9a4223d577ba56a0cb53d1fd952d2b481c38930f/docs/syntax.md) | `def` ends in `return`; `if` requires `else` and treats `0` as that branch; `#` starts a line comment; an object is `Point { x: 1, y: 2 }` | sections Def, If, Comments, and Open, read 9 Nov 2026 (Australia/Sydney); the playground was not executed |
+| [Lean 4.35.0 `eb6cafb`](https://github.com/leanprover/lean4/commit/eb6cafb7290e8bd5f2937522d8d804f58f02bafc) | each playground `lean` fence typechecks under this compiler | fence body extracted and run with `lean` on 9 Nov 2026 (Australia/Sydney); not E7; not predicate 16 |
 
-Rows that do not name 3 Nov 2026 were retrieved 1 Nov 2026 (Australia/Sydney). Exact artifact pins otherwise live in [`pin-references.md`](pin-references.md). External terminology never overrides the local definitions above.
+Rows that name neither 3 Nov 2026 nor 9 Nov 2026 were retrieved 1 Nov 2026 (Australia/Sydney). Exact artifact pins otherwise live in [`pin-references.md`](pin-references.md). External terminology never overrides the local definitions above.
 
 ## Falsification
 
@@ -897,6 +1003,8 @@ Rows that do not name 3 Nov 2026 were retrieved 1 Nov 2026 (Australia/Sydney). E
 | Wrap one closed-list fence in one compression wrapper | E7 holds |
 | Replace a fleet or swarm Prolog image with a cycle, a tree shape, or a YAML manifest, or wrap that image | E7 |
 | Run the workers in [`falsify.md`](falsify.md) | a survivor falsifies that prediction; a catch is not clinical proof |
+| Remove the Catalogue playground, wrap it, or put sandbox.playground in a header | E7 or E5 |
+| Treat playground Ti as predicate 16 or as the 2026-10-29 TLC model | the oracle stays not-discharged, and that TLC model stays off-repository |
 
 A user AI writes the falsifier from [`falsify.md`](falsify.md) and runs it outside this repository, including the predecessor check when a predecessor exists. A passing result is scoped evidence, never proof of clinical truth.
 
