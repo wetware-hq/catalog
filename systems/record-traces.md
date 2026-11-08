@@ -104,6 +104,55 @@ filters,reject scores tiers and unknown acts
 recovery,partial refuses the line and result does not repair it
 ```
 
+Symbolic reasoning. `type: sandbox.playground`.
+
+```tla
+---- MODULE Traces ----
+\* model agent. source of nature.
+\* A Lisp variation is a proposal only when this module grounds it.
+\* The oracle string stays not-discharged. A tree has one more vertex than it has edges.
+\* 7 and 23 are the ramified cardinalities in section 7.
+EXTENDS Integers
+CONSTANTS oracle, v, e
+Safe == oracle = "not-discharged" /\ e + 1 = v
+====
+```
+
+```lisp
+;; write agent. executable image. grounded in the tla module only.
+(defun safe (oracle v e)
+  (and (string= oracle "not-discharged") (= (+ e 1) v)))
+```
+
+```lean
+-- model agent. forward pass. discharge and refinement check.
+-- autoproof: tla source -> lisp image -> Ti -> bend breakpoint -> tla
+-- E7 does not compile this fence.
+def lispSafe (oracle : String) (v e : Nat) : Bool :=
+  decide (oracle = "not-discharged") && decide (e + 1 = v)
+
+theorem Ti :
+    lispSafe "not-discharged" 7 6 = true ∧
+    lispSafe "not-discharged" 23 22 = true ∧
+    lispSafe "discharged" 7 6 = false ∧
+    lispSafe "not-discharged" 7 5 = false := by
+  decide
+```
+
+```bend
+# proof agent. backward pass. search under Ti.
+# ti_holds is a number. 0 takes the refuse branch.
+# breakpoint: oracle not-discharged, with ramified cardinalities 7 and 23
+# This value is not a .trace file. E7 does not run this fence.
+object Trace { name, holds }
+
+def backward(ti_holds):
+  if ti_holds:
+    return Trace { name: "breakpoint", holds: 1 }
+  else:
+    return Trace { name: "refuse", holds: 0 }
+```
+
 ### 0. Lines
 
 A file is UTF-8. A file that is not valid UTF-8, or that contains a NUL or a carriage return, is refused. No byte is rewritten as U+FFFD.
@@ -608,6 +657,7 @@ Retrieved 1 Nov 2026 (Australia/Sydney). These sources explain adjacent intercha
 | change one fleet edge and keep the pinned root | `merkle-mismatch` |
 | hash one fleet preimage with its newline kept | the id differs from the pin |
 | treat the bench Merkle DAG as this tree | no predicate equates the two |
+| delete the Traces playground or move Ti off the ramified cardinalities | E7, and section 7 still has 7 and 23 vertices |
 
 The witness above is a `result`. Every mutation in the table fails for its named reason.
 

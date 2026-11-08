@@ -102,6 +102,65 @@ filters,refuse scope illegal payload and duplicate molecules
 recovery,retry an unavailable source and never store its silence
 ```
 
+Symbolic reasoning. `type: sandbox.playground`.
+
+```tla
+---- MODULE ProposePairs ----
+\* model agent. source of nature.
+\* A Lisp variation is a proposal only when this module grounds it.
+\* A proposal has binder, target, and pmid. It assigns no dictionary and writes no catalogue.
+CONSTANTS binder, target, pmid, classified
+Propose == binder /\ target /\ pmid /\ ~classified
+====
+```
+
+```lisp
+;; write agent. executable image. grounded in the tla module only.
+(defun proposep (binder target pmid classified)
+  (and binder target pmid (not classified)))
+```
+
+```lean
+-- model agent. forward pass. discharge and refinement check.
+-- autoproof: tla source -> lisp image -> Ti -> bend breakpoint -> tla
+-- E7 does not compile this fence.
+def lispPropose (binder target pmid classified : Bool) : Bool :=
+  binder && target && pmid && !classified
+
+theorem Ti :
+    (lispPropose false false false false = false) ∧
+    (lispPropose false false false true = false) ∧
+    (lispPropose false false true false = false) ∧
+    (lispPropose false false true true = false) ∧
+    (lispPropose false true false false = false) ∧
+    (lispPropose false true false true = false) ∧
+    (lispPropose false true true false = false) ∧
+    (lispPropose false true true true = false) ∧
+    (lispPropose true false false false = false) ∧
+    (lispPropose true false false true = false) ∧
+    (lispPropose true false true false = false) ∧
+    (lispPropose true false true true = false) ∧
+    (lispPropose true true false false = false) ∧
+    (lispPropose true true false true = false) ∧
+    (lispPropose true true true false = true) ∧
+    (lispPropose true true true true = false) :=
+  And.intro rfl (And.intro rfl (And.intro rfl (And.intro rfl (And.intro rfl (And.intro rfl (And.intro rfl (And.intro rfl (And.intro rfl (And.intro rfl (And.intro rfl (And.intro rfl (And.intro rfl (And.intro rfl (And.intro rfl (rfl)))))))))))))))
+```
+
+```bend
+# proof agent. backward pass. search under Ti.
+# ti_holds is a number. 0 takes the refuse branch.
+# breakpoint: a complete triple with the study type still unassigned
+# This value is not a .trace file. E7 does not run this fence.
+object Trace { name, holds }
+
+def backward(ti_holds):
+  if ti_holds:
+    return Trace { name: "breakpoint", holds: 1 }
+  else:
+    return Trace { name: "refuse", holds: 0 }
+```
+
 ### 0. Objective
 
 Propose `(binder, target)` pairs for `graph.json` by writing them to `proposals.json`. **This procedure never writes `graph.json`**, on any branch (`docs/follow-agent-contract.md` §9). A candidate qualifies when **all** hold:
@@ -196,6 +255,7 @@ Condition 16 is an **oracle** predicate: that a paper reports utility for a pair
 | Return 429 from one authority | `unavailable`, with no cached negative |
 | Run two writers against one proposals path | lost update demonstrates the single-writer requirement |
 | Assign `pair` during intake | procedure has crossed predicate 16 without reading the paper |
+| Remove the ProposePairs playground or let the image assign a dictionary | E7, and the image stays a predicate |
 
 The refusal ledger must exercise every decision step; a gate with count zero is untested rather than satisfied.
 

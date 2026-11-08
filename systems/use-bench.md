@@ -101,6 +101,47 @@ filters,refuse an untiered line and any cross-tier aggregate
 recovery,a correction is a new node and the old node stays
 ```
 
+Symbolic reasoning. `type: sandbox.playground`.
+
+```tla
+---- MODULE BenchPlay ----
+\* model agent. source of nature.
+\* A Lisp variation is a proposal only when this module grounds it.
+\* Two-point image of set union. Not the 2026-10-29 TLC model and not the merge-sketch fence.
+Merge(x, y) == x \/ y
+====
+```
+
+```lisp
+;; write agent. executable image. grounded in the tla module only.
+(defun merge-bit (a b)
+  (or a b))
+```
+
+```lean
+-- model agent. forward pass. discharge and refinement check.
+-- autoproof: tla source -> lisp image -> Ti -> bend breakpoint -> tla
+-- E7 does not compile this fence.
+def lispMerge (a b : Bool) : Bool := a || b
+
+theorem Ti (a b : Bool) : lispMerge a b = lispMerge b a := by
+  cases a <;> cases b <;> rfl
+```
+
+```bend
+# proof agent. backward pass. search under Ti.
+# ti_holds is a number. 0 takes the refuse branch.
+# breakpoint: the two-point merge stays commutative
+# This value is not a .trace file. E7 does not run this fence.
+object Trace { name, holds }
+
+def backward(ti_holds):
+  if ti_holds:
+    return Trace { name: "breakpoint", holds: 1 }
+  else:
+    return Trace { name: "refuse", holds: 0 }
+```
+
 ### 0. Scope
 
 - **Read:** this file, `docs/follow-agent-contract.md`, the run's own `.bench` files.
@@ -189,7 +230,7 @@ Let `N` be the set of all possible nodes. Merge is `A ⊔ B = A ∪ B` on `(P(N)
 - **Commutative** — `A ∪ B = B ∪ A`.
 - **Idempotent** — `A ∪ A = A`.
 
-The fence `merge sketch` records that law. It is not the off-repo TLC model (§9).
+The fence `merge sketch` records that law. It is not the off-repo TLC model (§9). The symbolic playground's `BenchPlay` module is the two-point autoproof image. It is neither that model nor this sketch.
 
 <details>
 <summary>merge sketch</summary>
@@ -255,7 +296,7 @@ This is the only use of geometric algebra in BENCH. It contributes nothing to th
 
 ### 9. Verification status
 
-The concurrency model was checked with TLC (TLA+) in an off-repo run on 2026-10-29 by catalog-systems. **The TLC model is not in this repository.** The `tla` fence labelled `merge sketch` in §5 is the merge equation only. It is not that model, it has no `.cfg`, and TLC has not run it. Nothing in the table below is reproducible from this checkout. The table records what the 2026-10-29 run reported rather than a property this repository can demonstrate. The configuration was: two agents, byte-level staging, a derived index, tier-pure aggregation, the immutable core, an untiered record and a record from a foreign run.
+The concurrency model was checked with TLC (TLA+) in an off-repo run on 2026-10-29 by catalog-systems. **The TLC model is not in this repository.** The symbolic playground does not supply it. The `tla` fence labelled `merge sketch` in §5 is the merge equation only. It is not that model, it has no `.cfg`, and TLC has not run it. Nothing in the table below is reproducible from this checkout. The table records what the 2026-10-29 run reported rather than a property this repository can demonstrate. The configuration was: two agents, byte-level staging, a derived index, tier-pure aggregation, the immutable core, an untiered record and a record from a foreign run.
 
 | rule | result |
 |---|---|
@@ -318,6 +359,7 @@ Retrieved or re-checked 1 Nov 2026 (Australia/Sydney). The measured token ratio,
 | run forever waiting for quiescence | no local termination predicate exists |
 | treat the `merge sketch` fence as the 2026-10-29 TLC model | the fence is the merge law only, and TLC has not run it |
 | equate this Merkle DAG with the trace Merkle tree | a bench node is not a path of the structure image |
+| Remove the BenchPlay playground or call it the 2026-10-29 TLC model | E7, and the fence stays the two-point image |
 
 Canonical ordering, tier refusal, and run binding are obligations on every executor and receiver. Claims about replication, indexing, pose distance, and the off-repo TLA+ model remain falsification targets until executable fixtures are committed.
 
