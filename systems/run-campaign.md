@@ -1,5 +1,3 @@
-⚠️ ACADEMIC RESEARCH PURPOSES ONLY; NOT FOR MEDICAL USE WITHOUT LICENSED OVERSIGHT
-
 # run a campaign
 
 `type: agent.system` · `spec: fleet.campaign` · subordinate to `docs/follow-agent-contract.md`, which governs on any conflict.
@@ -213,7 +211,7 @@ The report carries:
 - the two killing assays and owners required by `design-binder`; and
 - BENCH heads, TRACE files, and the final trace judgement.
 
-Every sequence that leaves the run carries the repository disclaimer in its own block. No candidate is emitted without both killing assays, regardless of prediction.
+Every sequence that leaves the run carries the line of `DISCLAIMER` in its own block. No candidate is emitted without both killing assays, regardless of prediction.
 
 #### 5. Materialize and verify
 
