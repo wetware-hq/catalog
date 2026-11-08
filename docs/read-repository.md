@@ -39,7 +39,7 @@ stop = "first sufficient route"
 | read or rank rows | [`contract`](follow-agent-contract.md) |
 | resolve a key | contract → [`resolve-key`](../skills/resolve-key.md) |
 | propose a pair | contract → [`resolve-key`](../skills/resolve-key.md) → [`propose-pairs`](../skills/propose-pairs.md) |
-| design | contract → [`falsify`](falsify.md) → [`pins`](pin-references.md) → [`design`](../skills/design-binder.md) → [`traces`](../systems/record-traces.md); [`bench`](../systems/use-bench.md) → [`record`](../tmp/record-egfr-calibration.md) → [`run`](../systems/run-campaign.md) |
+| design | contract → [`falsify`](falsify.md) → [`pins`](pin-references.md) → [`design`](../skills/design-binder.md) → [`traces`](../systems/record-traces.md) → [`seal`](../systems/seal-og.md); [`bench`](../systems/use-bench.md) → [`record`](../tmp/record-egfr-calibration.md) → [`run`](../systems/run-campaign.md) |
 | falsify | contract → [`falsify`](falsify.md); the runtime is written outside the repository |
 | traces | contract + [`traces`](../systems/record-traces.md) → that runtime's trace judgement |
 
@@ -95,7 +95,8 @@ stateDiagram-v2
     Design --> Trace
     Propose --> Trace
     Contract --> Bench
-    Trace --> Run
+    Trace --> Seal
+    Seal --> Run
     Bench --> Summary
     Summary --> Run
     Read --> [*]

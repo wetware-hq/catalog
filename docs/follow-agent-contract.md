@@ -43,7 +43,7 @@ compression = "details wrapper around one canonical fence"
 - Validating, merging, or extending catalogue bytes.
 - Resolving keys, proposing pairs, or launching de novo design.
 - Implementing a registered campaign system or interpreting its outputs.
-- Reading a fleet DAG, a swarm DAG, or the Merkle tree derived at traces.
+- Reading a fleet DAG, a swarm DAG, the Merkle tree derived at traces, or the context seal.
 
 ## Contraindications
 
@@ -189,6 +189,7 @@ swarms = ".pl"
 agent_fleet = "dag"
 agent_swarm = "dag"
 trace_merkle = "tree"
+og_merkle = "tree"
 
 [cybernetics]
 ai2a = "frontier"
@@ -232,7 +233,7 @@ A fleet record stores `nodes` and `edges`. Its shape is `dag`. Its unique indegr
 
 A swarm record stores `workers`, `join`, `sink`, and `second_parent`. Its shape is `dag`. The nodes are the workers plus `join` and `sink`. The edges are one edge from each worker to `join`, one edge from `join` to `sink`, and one edge from `second_parent` to `sink`. `second_parent` is one of the workers. `join` and `sink` are not workers. The directed graph is acyclic, every node is reachable from a root, and at least one node has indegree greater than one. The swarm image is that DAG: the seven workers depend on `decide`, and `decide` and `document` both depend on `literals`. The workers do not vote. The image does not schedule a cluster.
 
-Both images are DAGs. `shape(tree)` on either image fails E7. The profile key `trace_merkle` is `tree`. A trace ramifies each image into one Merkle tree under [`systems/record-traces.md`](../systems/record-traces.md). That tree is `text`, not a Prolog fence, and it is not the bench Merkle DAG. Tree cardinality binds the ramified tree only.
+Both images are DAGs. `shape(tree)` on either image fails E7. The profile key `trace_merkle` is `tree`. A trace ramifies each image into one Merkle tree under [`systems/record-traces.md`](../systems/record-traces.md). That tree is `text`, not a Prolog fence, and it is not the bench Merkle DAG. Tree cardinality binds the ramified tree only. The profile key `og_merkle` is `tree`. [`systems/seal-og.md`](../systems/seal-og.md) seals a context tree to that root. That tree is `text`. It is not the trace tree.
 
 The two fences below are examples. E7 checks that the typescript fence contains the channel tokens `AI2A` and `A2H`. E7 does not compile the Lean fence. The Lean fence is the cardinality check named above.
 
@@ -857,14 +858,16 @@ A procedure of this contract is an `agent.skill`. A run of this contract is one 
 |---|---|---|
 | [`systems/use-bench.md`](../systems/use-bench.md) | a run-scoped append-only commons where a campaign's workers read and write partial work concurrently | its own `.bench` store only; never `graph.json`, never `proposals.json` |
 | [`systems/record-traces.md`](../systems/record-traces.md) | the act log of one `fleet.campaign` run, and the Merkle tree ramified from the fleet DAG | its own `.trace` store only, outside this repository; never `graph.json`, never `proposals.json`, never `.bench` |
+| [`systems/seal-og.md`](../systems/seal-og.md) | one context tree sealed to one Merkle root | its own `og.root` file only, outside this repository; never `graph.json`, never `proposals.json`, never `.bench`, never `.trace` |
 | [`systems/run-campaign.md`](../systems/run-campaign.md) | the Markdown runtime for one run: preflight, positive-control calibration, epitope-conditioned `design-binder`, and the handoff to `--trace` | no file in this repository; the executor appends the `.bench` and `.trace` stores outside this repository |
 
 - A system is not a skill and is not listed in §10. It originates nothing and admits nothing: §4 is untouched by anything written to a scratchpad or an act log, and a record in a `.bench` or `.trace` store is not a claim this file recognises.
 - `bench` is scoped to a single run and is discarded with it. It is not a second catalogue, and it is not a cache of `graph.json`.
 - Every `.bench` record declares an evidence tier, and no query pools across tiers — the same refusal §1 makes between clinical and preclinical, one layer down. A tier that is declared is not thereby honest; the line can only require the declaration.
 - The trace records acts, not evidence. The record has no tier, no study type, and no score. A `.trace` file is not a proposal and is not a bench. It is discarded with the run. The specification is `systems/record-traces.md`. That file also ramifies each structure DAG into one Merkle tree. The runtime falsifier decides it from that file and does not keep a second carrier list. That decision is pure and does not discharge §8.16.
+- The context seal commits one tree to one Merkle root. The root file is written outside this repository. It is not a bench store, not a trace store, and not ciphertext. The specification is `systems/seal-og.md`.
 - The rows of this table and the files `systems/*.md` are in bijection. That bijection is extension predicate E4. It is not a §8 predicate and it does not renumber them.
-- Three systems, named here exactly. A specification not listed in this section is not part of this contract.
+- Four systems, named here exactly. A specification not listed in this section is not part of this contract.
 
 ## Citations
 
