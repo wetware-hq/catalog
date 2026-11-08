@@ -1,0 +1,102 @@
+::meta
+title: Resolve route
+version: 1
+updated: 2026-11-09
+domain: catalog|resolve|key
+scope: all
+catalogue-version: 2
+governs: docs/follow-agent-contract.md
+checksum: sha256:8ccc669df3daef6870dbcc52d3c91efaff1b6675995aa48a3780152225b427ff
+::end
+
+::schema
+node-types: [stage, assertion, meta]
+edge-types: [requires, precedes, see-also]
+scope-levels: [all, orchestrator, worker, readonly]
+::end
+
+::index
+# id | type | scope | conf | keywords
+banner | meta | all | 1.00 | academic, research, oversight, banner
+minimum | stage | all | 0.99 | resolve, key, identity, unresolved, unavailable
+contract | stage | all | 1.00 | grammar, prefixes, molecule, predicate-13
+resolve-key | stage | all | 0.99 | admit, crc64, protein, no-write, release
+stop | assertion | all | 1.00 | endpoint, halt, sufficient
+__changelog | meta | all | 1.00 | changes, version
+::end
+
+::node [id=banner type=meta confidence=1.00 scope=all updated=2026-11-09 entry=true skip-if-known=true]
+::dense
+academic|research|licensed-oversight
+::end
+::warning
+⚠️ ACADEMIC RESEARCH PURPOSES ONLY; NOT FOR MEDICAL USE WITHOUT LICENSED OVERSIGHT
+::end
+::edges
+->[:precedes] minimum
+::end
+::end
+
+::node [id=minimum type=stage confidence=0.99 scope=all updated=2026-11-09]
+::dense
+resolve|contract-then-skill|two-verdicts|read-only
+::end
+::full
+Cold start for key resolution. Stop at skills/resolve-key.md.
+::end
+::warning
+Refuse an ungrammatical key before any network call. Keep unresolved apart from unavailable. Catalogue absence is not a resolver verdict.
+::end
+::edges
+->[:requires] docs/follow-agent-contract.md
+->[:requires] skills/resolve-key.md
+->[:precedes] stop
+::end
+::end
+
+::node [id=contract type=stage confidence=1.00 scope=all updated=2026-11-09]
+::dense
+aa|helm|uniprot|pmid|one-molecule
+::end
+::full
+Grammar for the key. Load this stage when the task is admission, not lookup.
+::end
+::edges
+->[:requires] docs/follow-agent-contract.md
+->[:precedes] resolve-key
+::end
+::end
+
+::node [id=resolve-key type=stage confidence=0.99 scope=all updated=2026-11-09]
+::dense
+admit|crc64|unresolved|unavailable|protein-only|no-write
+::end
+::full
+Endpoint of the resolve route.
+::end
+::warning
+Do not cache unavailable. Do not align near-matches. Do not recover a citation from residues.
+::end
+::edges
+->[:requires] skills/resolve-key.md
+->[:precedes] stop
+::end
+::end
+
+::node [id=stop type=assertion confidence=1.00 scope=all updated=2026-11-09]
+::dense
+stop|endpoint|resolve-key
+::end
+::assertion
+trigger: after [resolve-key]
+check: endpoint("skills/resolve-key.md")
+on-pass: ->[:proceed] resolve-key
+on-fail: ->[:escalate] minimum
+::end
+::end
+
+::node [id=__changelog type=meta confidence=1.00 scope=all updated=2026-11-09]
+::changelog
+2026-11-09|added|node [minimum]|resolve route
+::end
+::end
