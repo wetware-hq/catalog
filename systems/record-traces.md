@@ -24,7 +24,7 @@ Define the content-addressed act log for one bounded `fleet.campaign` run and th
 
 - ← [../skills/design-binder.md](../skills/design-binder.md)
 - ← [../skills/propose-pairs.md](../skills/propose-pairs.md)
-- → [run-campaign.md](run-campaign.md)
+- → [seal-og.md](seal-og.md)
 
 ## Composition
 
@@ -537,7 +537,7 @@ extension predicate E5 (`docs/follow-agent-contract.md` §0c). Neither decision 
 
 ### 7. Ramify
 
-A structure image is a DAG. The trace commits a tree. Ramify copies a DAG node once for each path from a root, then hashes that tree as one Merkle tree. `H` is the SHA-256 of §0. The preimage is UTF-8 and has no trailing newline. This tree is not the bench Merkle DAG: bench nodes may be shared, and a node here has one parent.
+A structure image is a DAG. The trace commits a tree. Ramify copies a DAG node once for each path from a root, then hashes that tree as one Merkle tree. `H` is the SHA-256 of §0. The preimage is UTF-8 and has no trailing newline. This tree is not the bench Merkle DAG: bench nodes may be shared, and a node here has one parent. It is not the context seal in [`seal-og.md`](seal-og.md), whose preimage heads are `og-leaf/1`, `og-branch/1`, and `og-root/1`.
 
 The image atom is `agent_fleet` or `agent_swarm`. A root is an indegree-zero node, taken in ascending byte order. A path starts at a root and follows edges. Its text is the atoms joined by `/`. A path whose last node has no successor is a leaf. Any other path is a branch. Successors are taken in ascending atom order, not hash order.
 

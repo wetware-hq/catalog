@@ -23,7 +23,7 @@ Specify one bounded design campaign in Markdown, from catalogue gate through pos
 ## Graph
 
 - ← [../tmp/record-egfr-calibration.md](../tmp/record-egfr-calibration.md)
-- ← [record-traces.md](record-traces.md)
+- ← [seal-og.md](seal-og.md)
 
 ## Composition
 
