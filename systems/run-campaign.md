@@ -1,5 +1,3 @@
-⚠️ ACADEMIC RESEARCH PURPOSES ONLY; NOT FOR MEDICAL USE WITHOUT LICENSED OVERSIGHT
-
 # run a campaign
 
 `type: agent.system` · `spec: fleet.campaign` · subordinate to `docs/follow-agent-contract.md`, which governs on any conflict.
@@ -23,7 +21,7 @@ Specify one bounded design campaign from catalogue gate through positive-control
 ## Graph
 
 - ← [../tmp/record-egfr-calibration.md](../tmp/record-egfr-calibration.md)
-- ← [record-traces.md](record-traces.md)
+- ← [seal-og.md](seal-og.md)
 
 ## Composition
 
@@ -120,6 +118,53 @@ filters,drop advisory sequences and unconstrained full-length targets
 recovery,record unavailable or positive-control and still verify the trace
 ```
 
+Symbolic reasoning. `type: sandbox.playground`.
+
+```tla
+---- MODULE Campaign ----
+\* model agent. source of nature.
+\* A Lisp variation is a proposal only when this module grounds it.
+\* Novel launch requires a passed control and a manifest target.
+CONSTANTS control_pass, manifest_target
+Launch == control_pass /\ manifest_target
+====
+```
+
+```lisp
+;; write agent. executable image. grounded in the tla module only.
+(defun launchp (control-pass manifest-target)
+  (and control-pass manifest-target))
+```
+
+```lean
+-- model agent. forward pass. discharge and refinement check.
+-- autoproof: tla source -> lisp image -> Ti -> bend breakpoint -> tla
+-- E7 does not compile this fence.
+def lispLaunch (control manifest : Bool) : Bool :=
+  control && manifest
+
+theorem Ti :
+    (lispLaunch false false = false) ∧
+    (lispLaunch false true = false) ∧
+    (lispLaunch true false = false) ∧
+    (lispLaunch true true = true) :=
+  And.intro rfl (And.intro rfl (And.intro rfl (rfl)))
+```
+
+```bend
+# proof agent. backward pass. search under Ti.
+# ti_holds is a number. 0 takes the refuse branch.
+# breakpoint: launch only after the binding control and a manifest target
+# This value is not a .trace file. E7 does not run this fence.
+object Trace { name, holds }
+
+def backward(ti_holds):
+  if ti_holds:
+    return Trace { name: "breakpoint", holds: 1 }
+  else:
+    return Trace { name: "refuse", holds: 0 }
+```
+
 #### Structure image
 
 The phase diagram above is control flow. The cell below is the symbolic membership DAG of one `fleet.campaign`; it is downstream of the typed organization, not executable deployment syntax. `core` is the root, `halt` ends the run, `worker` is the member role, and `bench` and `trace` are stores. The bench Merkle DAG stays inside `bench`; the trace Merkle tree ramifies this DAG under [`record-traces.md`](record-traces.md). E7 checks this projection while `k8s/organization.yaml` schedules the concrete agent containers.
@@ -213,7 +258,7 @@ The report carries:
 - the two killing assays and owners required by `design-binder`; and
 - BENCH heads, TRACE files, and the final trace judgement.
 
-Every sequence that leaves the run carries the repository disclaimer in its own block. No candidate is emitted without both killing assays, regardless of prediction.
+Every sequence that leaves the run carries the line of `DISCLAIMER` in its own block. No candidate is emitted without both killing assays, regardless of prediction.
 
 #### 5. Materialize and verify
 
@@ -258,6 +303,7 @@ The Rust suite checks typed definitions, DAG validity, action serialization, JSO
 | add a target, provider, model, or request default to the organization crate | infrastructure has crossed into scientific configuration |
 | replace the membership DAG, give `trace` one parent, or wrap the fence | E7 |
 | preserve trace shape while faking provider calls | trace may be `result`, exposing why requests and control outputs must also be retained |
+| Remove the Campaign playground or launch with the control false | E7, and Launch stays the control plus the manifest |
 
 The strongest break remains experimental: failure of the measured binding assay or binding to the pre-registered counter-screen panel kills the hypothesis even after a calibrated computational run.
 

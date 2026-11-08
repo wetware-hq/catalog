@@ -1,0 +1,227 @@
+::meta
+title: Design route
+version: 1
+updated: 2026-11-09
+domain: catalog|design|campaign
+scope: all
+catalogue-version: 2
+governs: docs/follow-agent-contract.md
+checksum: sha256:61fd3808746cf9dd865fab2b6a6557ab6f8e876b7e6be61b5a924cd5ccf7d596
+::end
+
+::schema
+node-types: [stage, assertion, meta]
+edge-types: [requires, precedes, see-also]
+scope-levels: [all, orchestrator, worker, readonly]
+::end
+
+::index
+# id | type | scope | conf | keywords
+banner | meta | all | 1.00 | academic, research, oversight, banner
+minimum | stage | all | 0.95 | design, cold-start, sink, calibrate, worklist
+contract | stage | all | 1.00 | special, write-none, oracle, human-target
+falsify | stage | all | 0.99 | premises, swarm, outside-repo
+pins | stage | all | 0.95 | digest, row-9, benchmark-scope, read-status
+design-binder | stage | all | 0.95 | epitope, control, screens, assays, disclaimer
+traces | stage | all | 0.95 | emit, context, halt, merkle
+bench | stage | all | 0.95 | tier, union, pose, no-pool
+record | stage | all | 0.90 | calibration, one-run, not-a-default
+run | stage | all | 0.95 | manifest, preflight, sink, verify
+halt-early | assertion | all | 1.00 | hit-unread, positive-control, no-assay
+stop | assertion | all | 1.00 | endpoint, sink, sufficient
+__changelog | meta | all | 1.00 | changes, version
+::end
+
+::node [id=banner type=meta confidence=1.00 scope=all updated=2026-11-09 entry=true skip-if-known=true]
+::dense
+academic|research|licensed-oversight
+::end
+::warning
+⚠️ ACADEMIC RESEARCH PURPOSES ONLY; NOT FOR MEDICAL USE WITHOUT LICENSED OVERSIGHT
+::end
+::edges
+->[:precedes] minimum
+::end
+::end
+
+::node [id=minimum type=stage confidence=0.95 scope=all updated=2026-11-09]
+::dense
+cold-start|method-chain|store-chain|sink|stage-or-all
+::end
+::full
+Cold start loads the design minimum read and continues to the sink. When the task names one stage, resolve that stage instead of this node.
+::end
+::warning
+Stop on an unread or same-indication pair hit. A failed positive control emits nothing. Do not emit a sequence without the disclaimer and two killing assays.
+::end
+::edges
+->[:requires] docs/follow-agent-contract.md
+->[:requires] docs/falsify.md
+->[:requires] docs/pin-references.md
+->[:requires] skills/design-binder.md
+->[:requires] systems/record-traces.md
+->[:requires] systems/use-bench.md
+->[:requires] tmp/record-egfr-calibration.md
+->[:requires] systems/run-campaign.md
+->[:precedes] stop
+::end
+::end
+
+::node [id=contract type=stage confidence=1.00 scope=all updated=2026-11-09]
+::dense
+special-class|write-none|human-protein|predicate-16
+::end
+::full
+Design originates a claim and writes no catalogue file.
+::end
+::edges
+->[:requires] docs/follow-agent-contract.md
+->[:precedes] falsify
+->[:precedes] bench
+::end
+::end
+
+::node [id=falsify type=stage confidence=0.99 scope=all updated=2026-11-09]
+::dense
+premises|predicted-break|survivor|no-clinical-proof
+::end
+::full
+Attack a premise before treating a pass as evidence.
+::end
+::note
+Expand attacks and checker literals only when the task names the label.
+::end
+::edges
+->[:requires] docs/falsify.md
+->[:precedes] pins
+::end
+::end
+
+::node [id=pins type=stage confidence=0.95 scope=all updated=2026-11-09]
+::dense
+versioned-id|digest|read-status|row-9|no-clinical-benchmark
+::end
+::full
+Pin the method and the screen source before spending.
+::end
+::note
+Operating-point numbers stay in the design-binder terminal and in pin-references row 9. Do not restate them here.
+::end
+::edges
+->[:requires] docs/pin-references.md
+->[:precedes] design-binder
+::end
+::end
+
+::node [id=design-binder type=stage confidence=0.95 scope=all updated=2026-11-09]
+::dense
+indication|epitope|blinded-control|hard-screens|killing-assays
+::end
+::full
+Generate only after the catalogue gate and a blinded positive control.
+::end
+::warning
+Same-indication evidence stops design. An unread pair hit stops design. Prediction does not rank clinical utility.
+::end
+::edges
+->[:requires] skills/design-binder.md
+->[:precedes] traces
+::end
+::end
+
+::node [id=traces type=stage confidence=0.95 scope=all updated=2026-11-09]
+::dense
+context-verdict|control|emit|halt|not-discharged
+::end
+::full
+Record the acts. The trace does not discharge the paper oracle.
+::end
+::note
+Expand carrier sets only when judging a trace.
+::end
+::edges
+->[:requires] systems/record-traces.md
+->[:precedes] run
+::end
+::end
+
+::node [id=bench type=stage confidence=0.95 scope=all updated=2026-11-09]
+::dense
+tier|set-union|core-hash|no-pool|pose-not-metric
+::end
+::full
+Append tiered partial work outside the repository.
+::end
+::note
+Do not pool tiers. A bench line is not a catalogue row and not a trace line.
+::end
+::edges
+->[:requires] systems/use-bench.md
+->[:precedes] record
+::end
+::end
+
+::node [id=record type=stage confidence=0.90 scope=all updated=2026-11-09]
+::dense
+one-calibration|positive-control-failed|emit-nothing|not-a-default-target
+::end
+::full
+Read the pinned calibration record. Do not copy a sequence out of it.
+::end
+::warning
+This record is one calibration, not a default target, and it emitted nothing.
+::end
+::edges
+->[:requires] tmp/record-egfr-calibration.md
+->[:precedes] run
+::end
+::end
+
+::node [id=run type=stage confidence=0.95 scope=all updated=2026-11-09]
+::dense
+manifest|epitope|blinded-control|merkle.trace|sink
+::end
+::full
+Endpoint of the design route. The caller supplies the target and the composition.
+::end
+::warning
+Do not insert a target, provider, engine, or component this terminal does not contain.
+::end
+::edges
+->[:requires] systems/run-campaign.md
+->[:precedes] stop
+::end
+::end
+
+::node [id=halt-early type=assertion confidence=1.00 scope=all updated=2026-11-09]
+::dense
+hit-unread|same-indication|positive-control-failed|no-assay
+::end
+::warning
+An unread pair hit, a failed positive control, or a missing killing assay ends emission.
+::end
+::assertion
+trigger: after [design-binder]
+check: catalogue gate open and control passed and two killing assays named
+on-pass: ->[:proceed] traces
+on-fail: ->[:escalate] design-binder
+::end
+::end
+
+::node [id=stop type=assertion confidence=1.00 scope=all updated=2026-11-09]
+::dense
+stop|sink|run-campaign
+::end
+::assertion
+trigger: after [run]
+check: endpoint("systems/run-campaign.md")
+on-pass: ->[:proceed] run
+on-fail: ->[:escalate] minimum
+::end
+::end
+
+::node [id=__changelog type=meta confidence=1.00 scope=all updated=2026-11-09]
+::changelog
+2026-11-09|added|node [minimum]|design route
+::end
+::end

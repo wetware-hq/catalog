@@ -1,5 +1,3 @@
-⚠️ ACADEMIC RESEARCH PURPOSES ONLY; NOT FOR MEDICAL USE WITHOUT LICENSED OVERSIGHT
-
 # `design-binder` — de novo binder design
 
 `type: resource.procedure` · `class: special` · `spec: agent.skill` · subordinate to `docs/follow-agent-contract.md`, which governs on any conflict.
@@ -114,6 +112,57 @@ filters,exclude selectivity immunogenicity and developability failures
 recovery,name unavailable apart from an empty specification
 ```
 
+Symbolic reasoning. `type: sandbox.playground`.
+
+```tla
+---- MODULE DesignBinder ----
+\* model agent. source of nature.
+\* A Lisp variation is a proposal only when this module grounds it.
+\* Emit only with two assays, a passed control, and no unread hit. This module emits no sequence.
+CONSTANTS assays_two, control_pass, unread
+Emit == assays_two /\ control_pass /\ ~unread
+====
+```
+
+```lisp
+;; write agent. executable image. grounded in the tla module only.
+(defun emitp (assays-two control-pass unread)
+  (and assays-two control-pass (not unread)))
+```
+
+```lean
+-- model agent. forward pass. discharge and refinement check.
+-- autoproof: tla source -> lisp image -> Ti -> bend breakpoint -> tla
+-- E7 does not compile this fence.
+def lispEmit (assays control unread : Bool) : Bool :=
+  assays && control && !unread
+
+theorem Ti :
+    (lispEmit false false false = false) ∧
+    (lispEmit false false true = false) ∧
+    (lispEmit false true false = false) ∧
+    (lispEmit false true true = false) ∧
+    (lispEmit true false false = false) ∧
+    (lispEmit true false true = false) ∧
+    (lispEmit true true false = true) ∧
+    (lispEmit true true true = false) :=
+  And.intro rfl (And.intro rfl (And.intro rfl (And.intro rfl (And.intro rfl (And.intro rfl (And.intro rfl (rfl)))))))
+```
+
+```bend
+# proof agent. backward pass. search under Ti.
+# ti_holds is a number. 0 takes the refuse branch.
+# breakpoint: no emission while an unread hit or a failed control stands
+# This value is not a .trace file. E7 does not run this fence.
+object Trace { name, holds }
+
+def backward(ti_holds):
+  if ti_holds:
+    return Trace { name: "breakpoint", holds: 1 }
+  else:
+    return Trace { name: "refuse", holds: 0 }
+```
+
 ### 0. Objective
 
 Given a **native human protein target** and a **clinical or research indication**, design candidate synthetic binders, screen them, and return the survivors **ordered by a named scorer** — or, where only prediction separates them, as **unranked candidates**.
@@ -190,7 +239,7 @@ The design methods are not fixed in this file, because they move faster than it 
 
 **Token-efficiency is a stopping rule, not a style.** The §4 lookup gate is the largest saving available and runs first. Within a run: breadth buys independent hypotheses and nothing else, so the campaign fans out once over genuinely distinct scaffolds and methods rather than iterating variations, and a candidate excluded by a stage-one screen (§6) is dropped immediately rather than carried, re-scored or argued with.
 
-**The auto-loop needs a stopping condition or it is a hypothesis pump.** Looping `EVOLVE` is admissible only with all of: a bar stated before the loop starts, in the axes above; a bounded iteration count and token budget; and a requirement that each iteration either crosses the bar or names what it learned that changed the next one. A loop that generates candidates at zero marginal cost and never terminates is the cheapest possible way to look productive, and every candidate it emits still owes §7 two killing assays and somebody who could run them. That obligation, not the loop, is what bounds this procedure.
+**The auto-loop needs a stopping condition or it is a hypothesis pump.** Looping `EVOLVE` is admissible only with all of: a bar stated before the loop starts, in the axes above; a bounded iteration count and token budget; and a requirement that each iteration either crosses the bar or names what it learned that changed the next one. A loop that generates candidates at zero marginal cost and never terminates is the cheapest possible way to look productive, and every candidate it emits still owes §7 two killing assays and somebody who could run them. That obligation, not the loop, is what bounds this procedure. The symbolic playground in this file is the autoproof loop of `docs/follow-agent-contract.md` §0e. It does not relax the stopping rule above, and it emits no sequence.
 
 ### 6. Screen, then order
 
@@ -230,7 +279,7 @@ Each cell is a **median experimental success rate across 15 targets**, and the e
 
 Report, and write nothing. A single binder is emitted only when §6 earns it, and then it is labelled **by the criterion that chose it**, never as *best*.
 
-**The disclaimer travels with the sequence.** The report carries the canonical line verbatim on the same block as every binder key it hands back, not once at the top. A warning works only at the point of harm, and the thing that causes harm is the sequence, which exists to leave this repository and land on a bench. Nothing validates a report, so the obligation lives here: a warning that does not survive a copy-paste of the sequence protects nobody.
+**The disclaimer travels with the sequence.** The report copies the line of `DISCLAIMER` verbatim on the same block as every binder key it hands back, not once at the top of the report. A warning works only at the point of harm, and the thing that causes harm is the sequence, which exists to leave this repository and land on a bench. Nothing validates a report, so the obligation lives here: a warning that does not survive a copy-paste of the sequence protects nobody.
 
 | field | content |
 |---|---|
@@ -277,11 +326,12 @@ Method selection at runtime must add its own versioned primary sources and bench
 | Omit the blinded positive control, its binding bar, or its epitope map | novel-target generation starts |
 | Send an available structured target as an unconstrained full-length sequence | preflight admits the request |
 | Fail the primary binding metric but pass on a fold or interface-geometry score | metric substitution manufactures a positive control |
-| Copy a sequence without its exact disclaimer | trace hash or output contract fails |
+| Copy a sequence without the `DISCLAIMER` line | trace hash or output contract fails |
 | Change the named scorer and keep the same order | ranking is not caused by its stated variable |
 | Treat the across-target IQR as a new-target prediction interval | the source reports no such interval |
 | Run one target twice and call the difference target variability | the test measures sampling noise instead |
 | Blind the process to a known binder | failure to cross the binding bar at the mapped epitope rejects the design configuration, not a catalogue row |
+| Remove the DesignBinder playground or treat Ti as permission to emit | E7, and the playground still emits no sequence |
 
 The strongest break remains a wet-lab one: measured affinity above the stated threshold kills the binding claim; counter-screen binding or a disqualifying healthy-tissue profile kills the safety claim even when target affinity is excellent.
 

@@ -1,5 +1,3 @@
-⚠️ ACADEMIC RESEARCH PURPOSES ONLY; NOT FOR MEDICAL USE WITHOUT LICENSED OVERSIGHT
-
 # catalog
 
 `type: initialization` · non-normative. `docs/follow-agent-contract.md` governs on any conflict.
@@ -13,9 +11,9 @@ Route each task through the smallest sufficient path. The contract governs the R
   "id": "docs/read-repository.md",
   "type": "initialization",
   "role": "route tasks through the documentation DAG",
-  "reads": ["graph.json", "neighbor Markdown on demand"],
+  "reads": ["DISCLAIMER", "graph.json", "neighbor Markdown on demand", "ooc/catalog.og"],
   "writes": [],
-  "must": ["load the contract before any procedure", "treat absence as unknown"],
+  "must": ["read DISCLAIMER first", "load the contract before any procedure", "treat absence as unknown"],
   "check": ["E1", "E6", "E7"]
 }
 ```
@@ -30,6 +28,7 @@ Route each task through the smallest sufficient path. The contract governs the R
 root = "this file"
 sink = "systems/run-campaign.md"
 stop = "first sufficient route"
+index = "ooc/catalog.og"
 ```
 
 ## Indications
@@ -39,12 +38,12 @@ stop = "first sufficient route"
 | read or rank rows | [`contract`](follow-agent-contract.md) |
 | resolve a key | contract → [`resolve-key`](../skills/resolve-key.md) |
 | propose a pair | contract → [`resolve-key`](../skills/resolve-key.md) → [`propose-pairs`](../skills/propose-pairs.md) |
-| design | contract → [`falsify`](falsify.md) → [`pins`](pin-references.md) → [`design`](../skills/design-binder.md) → [`traces`](../systems/record-traces.md); [`bench`](../systems/use-bench.md) → [`record`](../tmp/record-egfr-calibration.md) → [`run`](../systems/run-campaign.md) |
+| design | contract → [`falsify`](falsify.md) → [`pins`](pin-references.md) → [`design`](../skills/design-binder.md) → [`traces`](../systems/record-traces.md) → [`seal`](../systems/seal-og.md); [`bench`](../systems/use-bench.md) → [`record`](../tmp/record-egfr-calibration.md) → [`run`](../systems/run-campaign.md) |
 | falsify | contract → [`falsify`](falsify.md) |
 | traces | contract → [`traces`](../systems/record-traces.md) |
 | organize agents | contract → [`falsify`](falsify.md) → `k8s/organization.yaml` |
 
-Stop at the first sufficient row.
+Stop at the first sufficient row. Design continues to the sink. Index: `ooc/catalog.og`.
 
 ## Contraindications
 
@@ -96,7 +95,8 @@ stateDiagram-v2
     Design --> Trace
     Propose --> Trace
     Contract --> Bench
-    Trace --> Run
+    Trace --> Seal
+    Seal --> Run
     Bench --> Summary
     Summary --> Run
     Read --> [*]
@@ -109,6 +109,52 @@ flowchart LR
     Rev[Pin] --> Contract
     Contract --> Next
     Next --> Stop
+```
+
+Symbolic reasoning. `type: sandbox.playground`.
+
+```tla
+---- MODULE ReadRoute ----
+\* model agent. source of nature.
+\* A Lisp variation is a proposal only when this module grounds it.
+\* Stop when the contract is first and the route is sufficient.
+CONSTANTS contract_first, sufficient
+Stop == contract_first /\ sufficient
+====
+```
+
+```lisp
+;; write agent. executable image. grounded in the tla module only.
+(defun stop (contract-first sufficient)
+  (and contract-first sufficient))
+```
+
+```lean
+-- model agent. forward pass. discharge and refinement check.
+-- autoproof: tla source -> lisp image -> Ti -> bend breakpoint -> tla
+-- E7 does not compile this fence.
+def lispStop (c s : Bool) : Bool := c && s
+
+theorem Ti :
+    (lispStop false false = false) ∧
+    (lispStop false true = false) ∧
+    (lispStop true false = false) ∧
+    (lispStop true true = true) :=
+  And.intro rfl (And.intro rfl (And.intro rfl (rfl)))
+```
+
+```bend
+# proof agent. backward pass. search under Ti.
+# ti_holds is a number. 0 takes the refuse branch.
+# breakpoint: a route that still names the contract first
+# This value is not a .trace file. E7 does not run this fence.
+object Trace { name, holds }
+
+def backward(ti_holds):
+  if ti_holds:
+    return Trace { name: "breakpoint", holds: 1 }
+  else:
+    return Trace { name: "refuse", holds: 0 }
 ```
 
 ## Citations
@@ -130,6 +176,7 @@ Retrieved 1 Nov 2026 (Australia/Sydney). Representation only.
 | Read a branch twice | bytes can differ |
 | Treat a missing row as a negative | the file does not say that |
 | Treat one green run as confirmation | a pass is not a contradicting observation |
+| Remove the ReadRoute playground | E7 |
 
 ## Licence
 

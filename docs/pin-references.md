@@ -1,5 +1,3 @@
-⚠️ ACADEMIC RESEARCH PURPOSES ONLY; NOT FOR MEDICAL USE WITHOUT LICENSED OVERSIGHT
-
 # `pin-references` — pinned reference table
 
 `type: resource.reference` · Repo: `wetware-hq/catalog` · Compiled 30 Oct 2026 (Australia/Sydney).
@@ -101,6 +99,57 @@ filters,reject unversioned ids and unread numbers
 recovery,re-pin on drift instead of repairing a hash
 ```
 
+Symbolic reasoning. `type: sandbox.playground`.
+
+```tla
+---- MODULE Pins ----
+\* model agent. source of nature.
+\* A Lisp variation is a proposal only when this module grounds it.
+\* A pin has a version, a retrieval, and a recorded digest scope. Resolution is not a read.
+CONSTANTS versioned, retrieved, digest_recorded
+Pinned == versioned /\ retrieved /\ digest_recorded
+====
+```
+
+```lisp
+;; write agent. executable image. grounded in the tla module only.
+(defun pinned (versioned retrieved digest-recorded)
+  (and versioned retrieved digest-recorded))
+```
+
+```lean
+-- model agent. forward pass. discharge and refinement check.
+-- autoproof: tla source -> lisp image -> Ti -> bend breakpoint -> tla
+-- E7 does not compile this fence.
+def lispPinned (versioned retrieved digest : Bool) : Bool :=
+  versioned && retrieved && digest
+
+theorem Ti :
+    (lispPinned false false false = false) ∧
+    (lispPinned false false true = false) ∧
+    (lispPinned false true false = false) ∧
+    (lispPinned false true true = false) ∧
+    (lispPinned true false false = false) ∧
+    (lispPinned true false true = false) ∧
+    (lispPinned true true false = false) ∧
+    (lispPinned true true true = true) :=
+  And.intro rfl (And.intro rfl (And.intro rfl (And.intro rfl (And.intro rfl (And.intro rfl (And.intro rfl (rfl)))))))
+```
+
+```bend
+# proof agent. backward pass. search under Ti.
+# ti_holds is a number. 0 takes the refuse branch.
+# breakpoint: a versioned retrieval with its digest scope recorded
+# This value is not a .trace file. E7 does not run this fence.
+object Trace { name, holds }
+
+def backward(ti_holds):
+  if ti_holds:
+    return Trace { name: "breakpoint", holds: 1 }
+  else:
+    return Trace { name: "refuse", holds: 0 }
+```
+
 #### Pinning rule
 
 A bare arXiv or DOI identifier is not a pin. Record a versioned identifier, retrieval date, artifact location, and either a SHA-256 with its digest scope or an explicit `null`; for normalized text, record the exact runnable extraction command and tool version. ArXiv versions are permanent records, but arXiv does not guarantee that a version's delivered PDF bytes can never be reprocessed, so a byte digest records the retrieved artifact rather than asserting universal byte immutability. Re-pinning is a deliberate, reviewed act.
@@ -112,6 +161,8 @@ A bare arXiv or DOI identifier is not a pin. Record a versioned identifier, retr
 #### Representation basis
 
 [CommonMark 0.31.2](https://spec.commonmark.org/0.31.2/) supplies headings, lists, and links; [GFM 0.29](https://github.github.com/gfm/#tables-extension-) supplies tables; [AgentKit, arXiv:2404.11483v2](https://arxiv.org/abs/2404.11483v2), byte sha256 `029ebd4f7d8cec7b611a97b640ae33f2eafd6b9294f712bf6e2dc10cd3b2f351`, supplies natural-language dependency DAGs; [AGENTS.md at `d001185`](https://github.com/agentsmd/agents.md/tree/d001185d792eb6402a58e4cbef1c228b309ec25d) supplies path-local disclosure without a required heading schema; [Mermaid](https://mermaid.ai/open-source/syntax/flowchart.html) supplies derived diagrams. Retrieved 1 Nov 2026 (Australia/Sydney); these are representation sources, not clinical evidence. Fleet and swarm structure images use the Prolog fact subset defined in [`follow-agent-contract.md`](follow-agent-contract.md) §0e. That subset was fixed in this repository on 5 Nov 2026 (Australia/Sydney). Both images are DAGs as of 6 Nov 2026 (Australia/Sydney). It is a local fact language, not an external Prolog program.
+
+Symbolic playgrounds use TLA+, Common Lisp, Lean 4, and Bend, as [`follow-agent-contract.md`](follow-agent-contract.md) §0e requires. Bend syntax is pinned at commit `9a4223d577ba56a0cb53d1fd952d2b481c38930f` of HigherOrderCO/Bend, file `docs/syntax.md`, sections Def, If, Comments, and Open, read 9 Nov 2026 (Australia/Sydney). Those sections state that a `def` ends in `return`, that `if` requires `else` and treats `0` as the else branch, that `#` starts a line comment, and that an object is written `Point { x: 1, y: 2 }`. The Bend fences were not executed. Each playground `lean` fence was typechecked the same day with Lean 4.35.0, commit `eb6cafb7290e8bd5f2937522d8d804f58f02bafc`, by extracting the fence body and running `lean` on that file. TLA+ and Common Lisp fences were not executed. The check does not discharge the catalogue's paper oracle.
 
 ## Citations
 
@@ -203,6 +254,7 @@ Read status for the Panel E/F block: figure read independently by catalog-occam 
 | Rank low-recall screening by whole-curve AP | the ordering conflicts with panel E success rates |
 | Treat a resolved paper as read | the read-status field falsifies the claim |
 | Read the Prolog structure subset as an external Prolog implementation | the subset is defined in the contract |
+| Remove the Pins playground or treat the Bend syntax pin as a run of that fence | E7, and no Bend program was executed |
 
 ### Hash instability — why the extraction command is part of the pin
 

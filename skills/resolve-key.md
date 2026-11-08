@@ -1,5 +1,3 @@
-⚠️ ACADEMIC RESEARCH PURPOSES ONLY; NOT FOR MEDICAL USE WITHOUT LICENSED OVERSIGHT
-
 # `resolve-key` — key to labels
 
 `type: resource.procedure` · `spec: agent.skill` · subordinate to `docs/follow-agent-contract.md`, which governs on any conflict.
@@ -100,6 +98,58 @@ stopping,refuse an ungrammatical key before the network
 search,checksum or accession equality only
 filters,drop non-protein monomers and non-ASCII keys
 recovery,return unavailable on 429 or 5xx and cache nothing
+```
+
+Symbolic reasoning. `type: sandbox.playground`.
+
+```tla
+---- MODULE ResolveKey ----
+\* model agent. source of nature.
+\* A Lisp variation is a proposal only when this module grounds it.
+\* The verdict is one of four strings. unresolved and unavailable are distinct. No network.
+CONSTANTS verdict
+Admitted == verdict \in {"identity", "unresolved", "unavailable", "refused"}
+Disjoint == "unresolved" # "unavailable"
+====
+```
+
+```lisp
+;; write agent. executable image. grounded in the tla module only.
+(defun admitted (verdict)
+  (cond ((string= verdict "identity") t)
+        ((string= verdict "unresolved") t)
+        ((string= verdict "unavailable") t)
+        ((string= verdict "refused") t)
+        (t nil)))
+```
+
+```lean
+-- model agent. forward pass. discharge and refinement check.
+-- autoproof: tla source -> lisp image -> Ti -> bend breakpoint -> tla
+-- E7 does not compile this fence.
+-- The Lisp cond keeps unresolved and unavailable in separate clauses.
+inductive Verdict where
+  | identity
+  | unresolved
+  | unavailable
+  | refused
+
+theorem Ti : Not (Verdict.unresolved = Verdict.unavailable) :=
+  fun h => nomatch h
+```
+
+```bend
+# proof agent. backward pass. search under Ti.
+# ti_holds is a number. 0 takes the refuse branch.
+# breakpoint: unresolved stays distinct from unavailable
+# This value is not a .trace file. E7 does not run this fence.
+object Trace { name, holds }
+
+def backward(ti_holds):
+  if ti_holds:
+    return Trace { name: "breakpoint", holds: 1 }
+  else:
+    return Trace { name: "refuse", holds: 0 }
 ```
 
 ### Folder contract (all skills here)
@@ -258,6 +308,7 @@ Live-service observations in the algorithm were retrieved 29 Oct 2026 (Australia
 | multiple exact records | `unresolved`, never an arbitrary first hit |
 | catalogue has no row for a resolved target | catalogue absence, not resolve failure |
 | Treat the 29 Oct 2026 timing snapshot as a benchmark | those seconds are one path, not a standing rate |
+| Remove the ResolveKey playground or collapse the two failure verdicts inside Ti | E7, and unresolved stays distinct from unavailable |
 
 Break the implementation by collapsing `unresolved` and `unavailable`; the resulting cache writes outages as facts. Break it again by adding approximate alignment; the resolver can then return a different molecule than the key.
 

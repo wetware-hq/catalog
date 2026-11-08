@@ -10,22 +10,42 @@ use catalog_agent_organization::{ActionKind, AgentId, AGENT_IMAGE, AGENT_SWARM, 
 use serde::Deserialize;
 use serde_json::Value;
 
-const BANNER: &str =
-    "⚠️ ACADEMIC RESEARCH PURPOSES ONLY; NOT FOR MEDICAL USE WITHOUT LICENSED OVERSIGHT";
 const CELL: &str = " { type: notebook.cell }";
+const PLAYGROUND: [&str; 4] = ["tla", "lisp", "lean", "bend"];
+const PLAYGROUND_MARKER: &str = "Symbolic reasoning. `type: sandbox.playground`.";
+const AFTER_PLAYGROUND: [&str; 9] = [
+    "bash",
+    "javascript",
+    "prolog",
+    "python",
+    "r",
+    "rust",
+    "tex",
+    "typescript",
+    "wolfram",
+];
 
 #[test]
 fn markdown_cells_are_definitive_and_parse() {
     let root = repo();
+    let disclaimer = fs::read_to_string(root.join("DISCLAIMER")).unwrap();
+    assert!(disclaimer.ends_with('\n'));
+    let notice = disclaimer.trim_end_matches('\n');
+    assert!(!notice.contains('\n'));
+    assert!(!notice.contains('"'));
+    assert!(notice.bytes().all(|byte| byte >= 0x20 && byte != 0x7f));
     for path in markdown_files(&root) {
         let text = fs::read_to_string(&path).unwrap();
         let relative = path.strip_prefix(&root).unwrap();
         let lines: Vec<_> = text.lines().collect();
-        let first = lines
-            .iter()
-            .find(|line| !line.trim().is_empty())
-            .unwrap_or_else(|| panic!("{relative:?} has no content"));
-        assert_eq!(*first, BANNER, "{relative:?} banner");
+        assert!(
+            !text.contains(notice),
+            "{relative:?} repeats the root DISCLAIMER"
+        );
+        assert!(
+            !text.contains("ACADEMIC RESEARCH PURPOSES ONLY"),
+            "{relative:?} repeats the retired header notice"
+        );
 
         let description = functional_description(&lines);
         assert!(
@@ -35,12 +55,13 @@ fn markdown_cells_are_definitive_and_parse() {
         );
         if relative == Path::new("docs/read-repository.md") {
             assert!(
-                text.len() <= 4096,
+                text.len() <= 6144,
                 "initialization file is {} bytes",
                 text.len()
             );
         }
 
+        assert_playground(&lines, relative);
         let fences = fences(&text, relative);
         let mut json_cards = 0;
         for fence in &fences {
@@ -99,7 +120,7 @@ fn symbolic_graph_matches_rust_and_kubernetes_and_sql() {
 
     let attacks = serde_json::from_str::<Value>(labeled_fence(&falsify, "attacks")).unwrap();
     let attack_list = attacks["attacks"].as_array().unwrap();
-    assert_eq!(attack_list.len(), 83);
+    assert_eq!(attack_list.len(), 88);
     assert!(attack_list
         .iter()
         .any(|attack| attack["id"] == "kubernetes-graph-drift"));
@@ -414,16 +435,80 @@ fn fences(text: &str, path: &Path) -> Vec<Fence> {
                 body.push('\n');
             }
         } else if let Some(rest) = line.strip_prefix("```") {
-            assert!(
-                rest.ends_with(CELL) && !rest[..rest.len() - CELL.len()].contains(' '),
-                "{path:?}:{number} is not a definitive notebook cell"
-            );
-            tag = rest[..rest.len() - CELL.len()].to_owned();
+            tag = if PLAYGROUND.contains(&rest) {
+                rest.to_owned()
+            } else if let Some(parsed) = rest.strip_suffix(CELL) {
+                assert!(
+                    !parsed.is_empty() && !parsed.contains(' '),
+                    "{path:?}:{number} is not a definitive notebook cell"
+                );
+                parsed.to_owned()
+            } else {
+                panic!("{path:?}:{number} is not a playground fence or a notebook cell");
+            };
             inside = true;
         }
     }
     assert!(!inside, "{path:?} has an unclosed notebook cell");
     parsed
+}
+
+fn assert_playground(lines: &[&str], path: &Path) {
+    let markers: Vec<_> = lines
+        .iter()
+        .enumerate()
+        .filter(|(_, line)| **line == PLAYGROUND_MARKER)
+        .map(|(index, _)| index)
+        .collect();
+    assert_eq!(markers.len(), 1, "{path:?} playground count");
+    let mut cursor = markers[0] + 1;
+    let mut lean = String::new();
+    let mut bend = String::new();
+    for tag in PLAYGROUND {
+        while lines.get(cursor).is_some_and(|line| line.is_empty()) {
+            cursor += 1;
+        }
+        let expected = format!("```{tag}");
+        assert_eq!(
+            lines.get(cursor).copied(),
+            Some(expected.as_str()),
+            "{path:?} playground order"
+        );
+        cursor += 1;
+        let start = cursor;
+        while lines.get(cursor).copied().is_some_and(|line| line != "```") {
+            cursor += 1;
+        }
+        let body = lines[start..cursor].join("\n");
+        if tag == "lean" {
+            lean = body;
+        } else if tag == "bend" {
+            bend = body;
+        }
+        cursor += 1;
+    }
+    assert!(lean.contains("Ti"), "{path:?} lean fence names Ti");
+    assert!(
+        bend.contains("breakpoint"),
+        "{path:?} bend fence names breakpoint"
+    );
+    assert_eq!(
+        lines
+            .iter()
+            .filter(|line| line.starts_with("```lisp"))
+            .count(),
+        1,
+        "{path:?} lisp fence count"
+    );
+    for line in &lines[..markers[0]] {
+        if let Some(rest) = line.strip_prefix("```") {
+            let tag = rest.split_whitespace().next().unwrap_or("");
+            assert!(
+                !AFTER_PLAYGROUND.contains(&tag),
+                "{path:?} has `{tag}` before the playground"
+            );
+        }
+    }
 }
 
 fn assert_specification_card(path: &Path, fence: &Fence) {

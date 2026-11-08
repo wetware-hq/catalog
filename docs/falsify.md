@@ -1,5 +1,3 @@
-⚠️ ACADEMIC RESEARCH PURPOSES ONLY; NOT FOR MEDICAL USE WITHOUT LICENSED OVERSIGHT
-
 # falsify the system
 
 `type: resource.reference` · `spec: agent.swarm` · subordinate to `docs/follow-agent-contract.md`.
@@ -46,7 +44,7 @@ grammar = "keys, HELM scope, and HELM monomers"
 identity = "one molecule and one triple"
 relation = "add-only and merge"
 oracle = "predicate 16 stays undischarged"
-document = "banner, registry, identity, and graph"
+document = "disclaimer, registry, identity, and graph"
 trace = "act-log refusals"
 ```
 
@@ -59,6 +57,7 @@ trace = "act-log refusals"
 - Carry `spec: agent.swarm` on this file, and show that any other header carrying it is refused.
 - Read the expanded Prolog cell as the symbolic swarm image and verify it against Rust and Kubernetes.
 - Expand `checker literals`, `attacks`, and `carrier sets` when writing the runtime. Leave those labels closed when reading a premise.
+- Read the symbolic playground as the autoproof loop. Its Bend fence is the backward pass, not this falsifier.
 
 ## Contraindications
 
@@ -66,8 +65,8 @@ trace = "act-log refusals"
 - The seven workers are members of one falsification run. They do not vote. `spec: agent.swarm` is valid on this file only. `agent.fleet` is not a spec. Rust is the executable graph, Prolog is its symbolic projection, and Kubernetes schedules its containers.
 - A corroborated attack is not predicate 16, not a measurement, and not permission to write `graph.json` or `proposals.json`.
 - Do not confuse the organization runtime with the semantic paper oracle. The crate has no catalogue write path.
-- The Python notebook checks documentation cells; the Rust crate owns typed definitions, topology, lifecycle actions, and log archiving. Neither claims a Bend implementation.
-- The Rust tests check organization and archive shape. They do not execute the eighty-three semantic attacks.
+- The Python notebook checks documentation cells. The Rust crate owns typed definitions, topology, lifecycle actions, and log archiving. The Bend fence in the symbolic playground is the backward pass, and this repository does not run that image.
+- The Rust tests check organization, archive shape, and playground shape. They do not execute the eighty-eight semantic attacks. A green forge check does not mean those attacks ran.
 - Naming `agent.swarm` as the spec of a skill or a run, or naming `agent.fleet` as a spec, is a document attack. The contract refuses both readings.
 
 ## Algorithm
@@ -120,6 +119,53 @@ stopping,exit 1 when a survivor remains
 search,attack only the premise that worker names
 filters,a different predicate is not corroboration
 recovery,record the survivor and preserve the typed action archive
+```
+
+Symbolic reasoning. `type: sandbox.playground`.
+
+```tla
+---- MODULE Falsifier ----
+\* model agent. source of nature.
+\* A Lisp variation is a proposal only when this module grounds it.
+\* A named predicate failure corroborates. Acceptance is a survivor. Workers do not vote.
+CONSTANTS named_failed, accepted
+Corroborated == named_failed /\ ~accepted
+====
+```
+
+```lisp
+;; write agent. executable image. grounded in the tla module only.
+(defun corroborated (named-failed accepted)
+  (and named-failed (not accepted)))
+```
+
+```lean
+-- model agent. forward pass. discharge and refinement check.
+-- autoproof: tla source -> lisp image -> Ti -> bend breakpoint -> tla
+-- E7 does not compile this fence.
+def lispCorroborated (namedFailed accepted : Bool) : Bool :=
+  namedFailed && !accepted
+
+theorem Ti :
+    (lispCorroborated false false = false) ∧
+    (lispCorroborated false true = false) ∧
+    (lispCorroborated true false = true) ∧
+    (lispCorroborated true true = false) :=
+  And.intro rfl (And.intro rfl (And.intro rfl (rfl)))
+```
+
+```bend
+# proof agent. backward pass. search under Ti.
+# ti_holds is a number. 0 takes the refuse branch.
+# breakpoint: a named predicate failure, else a survivor recorded as itself
+# This value is not a .trace file. E7 does not run this fence.
+object Trace { name, holds }
+
+def backward(ti_holds):
+  if ti_holds:
+    return Trace { name: "breakpoint", holds: 1 }
+  else:
+    return Trace { name: "refuse", holds: 0 }
 ```
 
 The question the old verifier asked — whether the checked assertions hold — is now inside this falsifier. Each premise forbids an observation. A worker builds that observation and asks the same program that decides the catalogue, the repository, and a trace. If the named predicate fails, the prediction is corroborated. If the mutant is accepted, or if a different predicate is the only failure, the prediction is falsified and the survivor stands. Corroboration is not a probability of clinical truth.
@@ -237,7 +283,7 @@ oracle  = not-discharged
 
 ### Attacks
 
-Eighty-three attacks, seven workers, no vote. This object is the closed list, in the collapsible fence `attacks`. Expand that label to load it. The runtime loads it and does not restate it. Each prediction is the observation that corroborates the premise. A hold that the pure predicates pass still leaves predicate 16 undischarged.
+Eighty-eight attacks, seven workers, no vote. This object is the closed list, in the collapsible fence `attacks`. Expand that label to load it. The runtime loads it and does not restate it. Each prediction is the observation that corroborates the premise. A hold that the pure predicates pass still leaves predicate 16 undischarged.
 
 <details>
 <summary>attacks</summary>
@@ -625,8 +671,8 @@ Eighty-three attacks, seven workers, no vote. This object is the closed list, in
     },
     {
       "worker": "document",
-      "id": "banner-removed",
-      "premise": "the banner is byte-identical on every Markdown file",
+      "id": "disclaimer-removed",
+      "premise": "DISCLAIMER is the only copy and no Markdown header carries it",
       "prediction": "E1 fails"
     },
     {
@@ -742,6 +788,36 @@ Eighty-three attacks, seven workers, no vote. This object is the closed list, in
       "id": "emit-without-control",
       "premise": "an emission without a passing control is not a result",
       "prediction": "R10 reports the missing control"
+    },
+    {
+      "worker": "document",
+      "id": "symbolic-playground-missing",
+      "premise": "every live Markdown file embeds one sandbox.playground after the process views",
+      "prediction": "E7 fails when the marker, one of the four fences, Ti, or breakpoint is removed"
+    },
+    {
+      "worker": "document",
+      "id": "symbolic-order",
+      "premise": "the playground order is tla, then lisp, then lean, then bend",
+      "prediction": "E7 fails when lisp precedes tla"
+    },
+    {
+      "worker": "document",
+      "id": "symbolic-wrapped",
+      "premise": "the symbolic playground stays outside every compression wrapper",
+      "prediction": "E7 fails when the playground sits inside details"
+    },
+    {
+      "worker": "document",
+      "id": "symbolic-downstream-tag",
+      "premise": "a programming-language fence does not occupy the lisp slot",
+      "prediction": "E7 fails when the lisp fence is retagged rust"
+    },
+    {
+      "worker": "document",
+      "id": "playground-as-spec",
+      "premise": "sandbox.playground is a fence type and not a header spec",
+      "prediction": "E5 fails when a header carries sandbox.playground"
     }
   ]
 }
@@ -782,7 +858,7 @@ Stated 3 Nov 2026 (Australia/Sydney). The decision procedure was folded into thi
 | Declare `spec: agent.fleet` | E5 |
 | Add an unregistered skill or system | E2 or E4 |
 | Delete one side of a Markdown edge | E6 |
-| Remove the banner | E1 |
+| Remove `DISCLAIMER` or copy it into a header | E1 |
 | Put an HTML line outside a compression wrapper | E7 fails; E6 still passes |
 | Give `<details>` an attribute, wrap two fences or prose, wrap the process CSV or a diagram, or repeat a label | E7 fails |
 | Wrap one canonical fence in one `<details>` block with a new plain label | E7 passes |
@@ -797,6 +873,7 @@ Stated 3 Nov 2026 (Australia/Sydney). The decision procedure was folded into thi
 | Treat one re-run as reliability | no predicate id supports that inference |
 | Let a Rust agent, Kubernetes container, or SQL agent enum diverge | E7 |
 | Treat a fence as a run that already happened | no mutant was decided |
+| Remove the Falsifier playground, reorder it, or treat its Bend fence as this falsifier | E7, and the instrument stays the example outside this repository |
 
 The attack object is the closed list. This table names the same premises in groups. The runtime does not edit the repository when a prediction dies.
 

@@ -1,5 +1,3 @@
-⚠️ ACADEMIC RESEARCH PURPOSES ONLY; NOT FOR MEDICAL USE WITHOUT LICENSED OVERSIGHT
-
 # `TRACES` — act log
 
 `type: agent.system` · `spec: fleet.campaign` · subordinate to `docs/follow-agent-contract.md`, which governs on any conflict.
@@ -24,7 +22,7 @@ Define the content-addressed act log for one bounded `fleet.campaign` and its by
 
 - ← [../skills/design-binder.md](../skills/design-binder.md)
 - ← [../skills/propose-pairs.md](../skills/propose-pairs.md)
-- → [run-campaign.md](run-campaign.md)
+- → [seal-og.md](seal-og.md)
 
 ## Composition
 
@@ -71,7 +69,7 @@ merkle = "one root of the ramified image"
 [controlled]
 run = "SHA-256 of core.trace bytes"
 oracle = "not-discharged"
-disclaimer = "banner bytes inside the emit preimage"
+disclaimer = "DISCLAIMER line inside the emit preimage"
 ```
 
 ### Process
@@ -105,6 +103,55 @@ stopping,return the first failure from R1 through R10
 search,resolve each parent inside the admitted head
 filters,reject scores tiers and unknown acts
 recovery,partial refuses the line and result does not repair it
+```
+
+Symbolic reasoning. `type: sandbox.playground`.
+
+```tla
+---- MODULE Traces ----
+\* model agent. source of nature.
+\* A Lisp variation is a proposal only when this module grounds it.
+\* The oracle string stays not-discharged. A tree has one more vertex than it has edges.
+\* 7 and 23 are the ramified cardinalities in section 7.
+EXTENDS Integers
+CONSTANTS oracle, v, e
+Safe == oracle = "not-discharged" /\ e + 1 = v
+====
+```
+
+```lisp
+;; write agent. executable image. grounded in the tla module only.
+(defun safe (oracle v e)
+  (and (string= oracle "not-discharged") (= (+ e 1) v)))
+```
+
+```lean
+-- model agent. forward pass. discharge and refinement check.
+-- autoproof: tla source -> lisp image -> Ti -> bend breakpoint -> tla
+-- E7 does not compile this fence.
+def lispSafe (oracle : String) (v e : Nat) : Bool :=
+  decide (oracle = "not-discharged") && decide (e + 1 = v)
+
+theorem Ti :
+    lispSafe "not-discharged" 7 6 = true ∧
+    lispSafe "not-discharged" 23 22 = true ∧
+    lispSafe "discharged" 7 6 = false ∧
+    lispSafe "not-discharged" 7 5 = false := by
+  decide
+```
+
+```bend
+# proof agent. backward pass. search under Ti.
+# ti_holds is a number. 0 takes the refuse branch.
+# breakpoint: oracle not-discharged, with ramified cardinalities 7 and 23
+# This value is not a .trace file. E7 does not run this fence.
+object Trace { name, holds }
+
+def backward(ti_holds):
+  if ti_holds:
+    return Trace { name: "breakpoint", holds: 1 }
+  else:
+    return Trace { name: "refuse", holds: 0 }
 ```
 
 ### 0. Lines
@@ -411,7 +458,7 @@ For `design-binder`, the gates `grammar`, `species`, `not-protein`, and `indicat
 
 These field names have no production: `auc`, `auroc`, `dict`, `dictionary`, `grade`, `kd`, `pair`, `pose`, `preclinical`, `rank`, `score`, `scores`, `tier`, `utility`.
 
-`gloss` belongs only to its context row. A context `verdict` is one of the four rows above. A `control` verdict is only `pass`, and its target is the admitted control target. `path` is `graph.json`. `oracle` is `not-discharged`. `kind` is `hypothesis`. `disclaimer` is the first non-blank line of this file, byte for byte.
+`gloss` belongs only to its context row. A context `verdict` is one of the four rows above. A `control` verdict is only `pass`, and its target is the admitted control target. `path` is `graph.json`. `oracle` is `not-discharged`. `kind` is `hypothesis`. `disclaimer` is the single line of `DISCLAIMER`, byte for byte.
 
 `binder` holds when the value satisfies `docs/follow-agent-contract.md` §8.7 and §8.8. `target` holds when it satisfies §8.9. `pmid` holds when it satisfies §8.10. The checker calls those predicates. It does not restate them. `subject` is not sent through them.
 
@@ -536,7 +583,7 @@ A campaign executor still writes act lines from this Markdown grammar and `merkl
 
 ### 7. Ramify
 
-A structure image is a DAG. The trace commits a tree. Ramify copies a DAG node once for each path from a root, then hashes that tree as one Merkle tree. `H` is the SHA-256 of §0. The preimage is UTF-8 and has no trailing newline. This tree is not the bench Merkle DAG: bench nodes may be shared, and a node here has one parent.
+A structure image is a DAG. The trace commits a tree. Ramify copies a DAG node once for each path from a root, then hashes that tree as one Merkle tree. `H` is the SHA-256 of §0. The preimage is UTF-8 and has no trailing newline. This tree is not the bench Merkle DAG: bench nodes may be shared, and a node here has one parent. It is not the context seal in [`seal-og.md`](seal-og.md), whose preimage heads are `og-leaf/1`, `og-branch/1`, and `og-root/1`.
 
 The image atom is `agent_fleet` or `agent_swarm`. A root is an indegree-zero node, taken in ascending byte order. A path starts at a root and follows edges. Its text is the atoms joined by `/`. A path whose last node has no successor is a leaf. Any other path is a branch. Successors are taken in ascending atom order, not hash order.
 
@@ -611,6 +658,7 @@ Retrieved 1 Nov 2026 (Australia/Sydney). These sources explain adjacent intercha
 | treat the bench Merkle DAG as this tree | no predicate equates the two |
 | archive a scalar payload or unknown agent from Kubernetes logs | Rust tracer refuses the line before either sink |
 | change the SQL agent enum without changing Rust or Kubernetes | E7 executable consistency fails |
+| delete the Traces playground or move Ti off the ramified cardinalities | E7, and section 7 still has 7 and 23 vertices |
 
 The witness above is a `result`. Every mutation in the table fails for its named reason.
 
