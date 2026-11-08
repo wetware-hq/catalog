@@ -4,11 +4,11 @@
 
 `type: resource.reference` · `spec: agent.swarm` · subordinate to `docs/follow-agent-contract.md`.
 
-The falsifier holds the decision procedure and attacks the premises of this catalogue. The Prolog fence is the swarm structure image; other code fences are an example framework for a runtime written outside this repository. A caught attack corroborates a prediction and is not clinical proof.
+The falsifier holds the decision procedure and attacks the premises of this catalogue. Rust publishes the agent definitions and DAG, Kubernetes runs them, and the notebook cells are definitive symbolic or executable projections; a caught attack is still not clinical proof.
 
 ## Specification
 
-```json
+```json { type: notebook.cell }
 {
   "id": "docs/falsify.md",
   "type": "resource.reference",
@@ -27,14 +27,14 @@ The falsifier holds the decision procedure and attacks the premises of this cata
 
 ## Composition
 
-```toml
+```toml { type: notebook.cell }
 method = "Popper"
 instrument = "falsifier"
 folded = "decision procedure"
 carrier = "markdown"
-fences = "example framework"
+fences = "definitive notebook cells"
 compression = "details wrapper"
-audience = "user AI at runtime"
+audience = "compiled agents and user AI"
 run_unit = "fleet.campaign"
 swarm = "agent.swarm"
 structure = "prolog dag"
@@ -52,29 +52,29 @@ trace = "act-log refusals"
 
 ## Indications
 
-- Write the runtime outside this repository from this file and from the contract.
-- Read a code fence as an example of the framework. Fill the procedure from the prose laws at runtime.
+- Compile the published Rust definitions and validate `AGENT_SWARM` before running a worker.
+- Read every code cell as normative serialization, a checked projection, or a runnable invocation.
 - Attack a premise before treating a passing decision as evidence.
 - Keep a `PEPTIDE` scope failure distinct from a monomer failure.
 - Carry `spec: agent.swarm` on this file, and show that any other header carrying it is refused.
-- Read the expanded Prolog fence as the swarm structure image. It matches `checker literals`.
+- Read the expanded Prolog cell as the symbolic swarm image and verify it against Rust and Kubernetes.
 - Expand `checker literals`, `attacks`, and `carrier sets` when writing the runtime. Leave those labels closed when reading a premise.
 
 ## Contraindications
 
 - This is not a formulary, a prescription, or a design campaign. Grammar fixtures such as `aa:ACD` are not binder designs.
-- The seven workers are members of one falsification run. They do not vote. `spec: agent.swarm` is valid on this file only. `agent.fleet` is not a spec. The swarm structure image is the Prolog DAG in this file. It does not schedule a cluster.
+- The seven workers are members of one falsification run. They do not vote. `spec: agent.swarm` is valid on this file only. `agent.fleet` is not a spec. Rust is the executable graph, Prolog is its symbolic projection, and Kubernetes schedules its containers.
 - A corroborated attack is not predicate 16, not a measurement, and not permission to write `graph.json` or `proposals.json`.
-- Do not commit the generated program, a workflow, or a package manifest into this repository. The specbase is Markdown.
-- The profile maps falsifiers to `.bend` and terminal tools to `.py`. The example below is Python because that is the terminal tool language and the folded instrument is one program. No Bend program is claimed, and no Rust crate is claimed.
-- This repository does not run the instrument. A green forge check does not mean these attacks ran.
+- Do not confuse the organization runtime with the semantic paper oracle. The crate has no catalogue write path.
+- The Python notebook checks documentation cells; the Rust crate owns typed definitions, topology, lifecycle actions, and log archiving. Neither claims a Bend implementation.
+- The Rust tests check organization and archive shape. They do not execute the eighty-three semantic attacks.
 - Naming `agent.swarm` as the spec of a skill or a run, or naming `agent.fleet` as a spec, is a document attack. The contract refuses both readings.
 
 ## Algorithm
 
 ### Variables
 
-```toml
+```toml { type: notebook.cell }
 objective = "corroborate a predicted break or record a survivor"
 
 [independent]
@@ -87,12 +87,12 @@ verdict = "corroborated or falsified"
 [controlled]
 oracle = "not-discharged"
 workers = "independent and unvoted"
-program = "written at runtime, outside this repository"
+program = "Rust organization plus caller-supplied semantic decision"
 ```
 
 ### Process
 
-```mermaid
+```mermaid { type: notebook.cell }
 flowchart LR
     P[Premise] --> R[Prediction]
     R --> M[Mutant]
@@ -101,7 +101,7 @@ flowchart LR
     D --> S[Survivor]
 ```
 
-```mermaid
+```mermaid { type: notebook.cell }
 stateDiagram-v2
     [*] --> Premise
     Premise --> Mutant
@@ -111,7 +111,7 @@ stateDiagram-v2
     Falsified --> [*]
 ```
 
-```csv
+```csv { type: notebook.cell }
 operator,law
 controls,oracle stays not-discharged
 design,each worker names one forbidden observation
@@ -119,7 +119,7 @@ transport,decide inside the falsifier
 stopping,exit 1 when a survivor remains
 search,attack only the premise that worker names
 filters,a different predicate is not corroboration
-recovery,record the survivor and do not commit a program
+recovery,record the survivor and preserve the typed action archive
 ```
 
 The question the old verifier asked — whether the checked assertions hold — is now inside this falsifier. Each premise forbids an observation. A worker builds that observation and asks the same program that decides the catalogue, the repository, and a trace. If the named predicate fails, the prediction is corroborated. If the mutant is accepted, or if a different predicate is the only failure, the prediction is falsified and the survivor stands. Corroboration is not a probability of clinical truth.
@@ -128,9 +128,9 @@ Workers run concurrently and share no verdict. The run reports the set of verdic
 
 ### Structure
 
-The fence below is the swarm structure image. Each worker depends on `decide` and on no other worker. `decide` and `document` both depend on `literals`, so `literals` has two parents and the image is a DAG. The workers do not vote. E7 checks this fence equal to the rendering of `agent.swarm` in `checker literals`. The fence stays outside compression. It does not schedule a cluster. A trace ramifies this DAG into one Merkle tree under [`systems/record-traces.md`](../systems/record-traces.md). The image stays a DAG.
+The cell below is the symbolic projection of `AGENT_SWARM` in `src/organization/mod.rs`. Each worker publishes into `decide`; `decide` and `document` both publish into `literals`, so `literals` has two parents and the image is a DAG. E7 checks Rust, Kubernetes, and this projection for the same nodes and edges. A trace ramifies this DAG into one Merkle tree under [`systems/record-traces.md`](../systems/record-traces.md).
 
-```prolog
+```prolog { type: notebook.cell }
 image(agent_swarm).
 shape(dag).
 node(bytes).
@@ -153,118 +153,85 @@ edge(relation, decide).
 edge(trace, decide).
 ```
 
-### Framework
+### Executable notebooks
 
-The swarm structure image is the Prolog fence in the previous section. The fences in this section are an example of the framework and nothing else. A user AI reads them to see the shape of one runtime, then writes that runtime from the laws. A fence is not a program this repository contains, and running one as if it were is a misread. Each example fence is collapsible under an `example framework` label. Expand that label when writing the runtime. Closed lists stay in their Markdown fences. The runtime loads them and does not copy them into source.
+The cells below are definitive utilities and invocations for this repository. They neither duplicate the closed semantic lists nor discharge predicate 16.
 
 <details>
-<summary>example framework: python</summary>
+<summary>decision notebook: python</summary>
 
-```python
-"""Example only. Framework only. One program, written at runtime, outside this repository.
-Fill every stub from the named prose. Do not commit the result here."""
+```python { type: notebook.cell }
+"""Validate the definitive notebook-cell envelope on every Markdown fence."""
 
-WORKERS = ("bytes", "grammar", "identity", "relation", "oracle", "document", "trace")
-# Swarm structure: the expanded prolog fence in this file. E7 checks that fence.
+from pathlib import Path
 
-
-def load_json_fence(markdown, heading):
-    """Return the object in the first json fence after a column-zero heading line.
-    A details wrapper around that fence is compression, not part of the object."""
+ROOT = Path.cwd()
+CELL_SUFFIX = " { type: notebook.cell }"
 
 
-def literals(repo):
-    """Contract section 0f, the fence labelled checker literals. Banner is that file's first non-blank line."""
+def validate_markdown(path: Path) -> None:
+    inside = False
+    for number, line in enumerate(path.read_text(encoding="utf-8").splitlines(), 1):
+        if not line.startswith("```"):
+            continue
+        if inside:
+            if line != "```":
+                raise ValueError(f"{path}:{number}: closing fence must be ```")
+        elif not line.endswith(CELL_SUFFIX):
+            raise ValueError(f"{path}:{number}: missing notebook.cell metadata")
+        inside = not inside
+    if inside:
+        raise ValueError(f"{path}: unclosed fence")
 
 
-def carriers(repo):
-    """systems/record-traces.md, the fence labelled carrier sets."""
-
-
-def attacks(repo):
-    """The attacks object in this file, the fence labelled attacks. Do not restate it."""
-
-
-def decide(catalogue, predecessor=None, repo=None, trace=None, online=False):
-    """Folded decision procedure.
-
-    Laws: contract sections 2, 3, 5, 6, and 8, plus E1 through E7.
-    Predicate 16 is reported not discharged and never passes.
-    E3 does not change the exit status.
-    Merge of two catalogues is contract section 6 and writes canonical bytes.
-    Trace judgement is systems/record-traces.md and loads carriers().
-    Text, when a caller asks for text: a PASS or FAIL line, the predicate label,
-    indented rows on a failure, an oracle line that says NOT DISCHARGED when a
-    catalogue was checked, then RESULT PASS or RESULT FAIL.
-    This function exits 0 when every evaluated predicate holds, 1 on a violation, and 2 on usage.
-    The campaign exits are separate: 0 corroborated, 1 survivor, 2 harness error.
-    """
-
-
-def build(repo, attack):
-    """Build the mutant the attack's premise and prediction name. Use a temporary directory.
-    Do not edit the repository when a prediction dies."""
-
-
-def judge(attack, report):
-    """A named failure corroborates.
-    Acceptance, or a different failure alone, falsifies.
-    A missing report is a harness error, not a survivor."""
-
-
-def campaign(repo, only=None):
-    """Seven workers, one run, no vote. Sort by worker, then id.
-    only restricts the set. An unknown name is exit 2."""
+SKIP = {".git", "target", "archive"}
+for markdown in sorted(ROOT.rglob("*.md")):
+    if set(markdown.parts) & SKIP:
+        continue
+    validate_markdown(markdown)
 ```
 </details>
 
 <details>
-<summary>example framework: rust</summary>
+<summary>organization notebook: rust</summary>
 
-```rust
-// Example only. Framework only. Vocabulary, not a crate in this repository.
-// Implement these names inside the one runtime. Do not shell out to a second checker.
-enum Verdict {
-    Corroborated,
-    Falsified,
-    Error,
+```rust { type: notebook.cell }
+use catalog_agent_organization::{
+    organization::OrganizationError, AgentId, AGENT_SWARM,
+};
+
+pub fn published_order() -> Result<Vec<AgentId>, OrganizationError> {
+    AGENT_SWARM.validate()?;
+    AGENT_SWARM.topological_order()
 }
 ```
 </details>
 
 <details>
-<summary>example framework: bash</summary>
+<summary>runtime notebook: bash</summary>
 
-```bash
-# Example only. The program is whatever the user AI wrote outside this repository.
-falsify
-falsify --decide graph.json
-falsify --prev OLD.json graph.json
-falsify --merge A.json B.json
-falsify --repo .
-falsify --trace core.trace worker.trace
-falsify --online graph.json
-falsify --json
-falsify --worker bytes
+```bash { type: notebook.cell }
+cargo test --all-targets
+cargo run --bin catalog-agent -- topology
+cargo run --bin catalog-agent -- --agent bytes describe
+cargo run --bin catalog-agent -- --agent bytes emit \
+  --kind completed --trace-id notebook-1 --payload '{"predicate":"bytes"}' |
+  cargo run --bin catalog-tracer -- \
+    --jsonl /tmp/catalog-actions.jsonl \
+    --sql /tmp/catalog-actions.sql \
+    stdin
 ```
 </details>
 
 <details>
-<summary>example framework: text</summary>
+<summary>workflow notebook: text</summary>
 
-```text
-# Example only. Framework only. Not a workflow of this repository.
-# The language profile admits a yaml fence only for a Kubernetes manifest,
-# and a manifest is not a fleet or swarm structure image. This sketch stays
-# text. A user AI may emit it outside the repository
-# after the runtime exists. A forge check is not the instrument.
-name: falsify
-on: workflow_dispatch
-jobs:
-  falsify:
-    runs-on: ubuntu-latest
-    steps:
-      - run: falsify --json
+```text { type: notebook.cell }
+source  = Kubernetes pod logs selected by catalog.agent/component=agent
+record  = one catalog.agent.action/v1 JSON object per line
+archive = actions.jsonl || actions.sql
+order   = trace_id, sequence
+oracle  = not-discharged
 ```
 </details>
 
@@ -275,7 +242,7 @@ Eighty-three attacks, seven workers, no vote. This object is the closed list, in
 <details>
 <summary>attacks</summary>
 
-```json
+```json { type: notebook.cell }
 {
   "attacks": [
     {
@@ -730,9 +697,9 @@ Eighty-three attacks, seven workers, no vote. This object is the closed list, in
     },
     {
       "worker": "document",
-      "id": "yaml-not-structure",
-      "premise": "a Kubernetes manifest is not a fleet or swarm structure image",
-      "prediction": "E7 fails when the fleet fence is replaced by yaml"
+      "id": "kubernetes-graph-drift",
+      "premise": "Kubernetes executes the published Rust organization",
+      "prediction": "E7 fails when Kubernetes nodes or edges differ from Rust or Prolog"
     },
     {
       "worker": "trace",
@@ -820,7 +787,7 @@ Stated 3 Nov 2026 (Australia/Sydney). The decision procedure was folded into thi
 | Give `<details>` an attribute, wrap two fences or prose, wrap the process CSV or a diagram, or repeat a label | E7 fails |
 | Wrap one canonical fence in one `<details>` block with a new plain label | E7 passes |
 | Drop a swarm worker, add a cycle, move the image, or wrap it | E7 |
-| Replace the image with a Kubernetes manifest | E7 |
+| Diverge the Kubernetes graph from Rust or the Prolog projection | E7 |
 | Set trace `oracle` to `discharged` | `value:oracle` |
 | Add `score` to an act | `fields` |
 | Pin twice | R5 |
@@ -828,7 +795,7 @@ Stated 3 Nov 2026 (Australia/Sydney). The decision procedure was folded into thi
 | Emit a binder with no passing control | R10 |
 | Treat a green pure run as closing the paper oracle | the oracle line stays not discharged |
 | Treat one re-run as reliability | no predicate id supports that inference |
-| Commit a checker or a workflow into this repository | the specbase is no longer Markdown only |
+| Let a Rust agent, Kubernetes container, or SQL agent enum diverge | E7 |
 | Treat a fence as a run that already happened | no mutant was decided |
 
 The attack object is the closed list. This table names the same premises in groups. The runtime does not edit the repository when a prediction dies.

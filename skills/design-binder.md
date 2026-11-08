@@ -8,7 +8,7 @@ Design and screen de novo binder hypotheses only after an indication-aware, comm
 
 ## Specification
 
-```json
+```json { type: notebook.cell }
 {
   "id": "skills/design-binder.md",
   "type": "resource.procedure",
@@ -27,7 +27,7 @@ Design and screen de novo binder hypotheses only after an indication-aware, comm
 
 ## Composition
 
-```toml
+```toml { type: notebook.cell }
 class = "special"
 input = ["uniprot accession", "indication"]
 output = "experimental worklist or named refusal"
@@ -55,7 +55,7 @@ graph = "Graph section"
 
 ### Variables
 
-```toml
+```toml { type: notebook.cell }
 objective = "stop before spend on a catalogue hit; otherwise define two killing assays"
 
 [independent]
@@ -77,7 +77,7 @@ selectivity = "two logs weaker on every panel member"
 
 ### Process
 
-```mermaid
+```mermaid { type: notebook.cell }
 stateDiagram-v2
     [*] --> Admit
     Admit --> Refuse: grammar, species, protein, or indication fails
@@ -96,14 +96,14 @@ stateDiagram-v2
     Refuse --> [*]
 ```
 
-```mermaid
+```mermaid { type: notebook.cell }
 flowchart LR
     Gate[Catalogue gate] --> Control[Blinded control]
     Control --> Screen[Hard screens]
     Screen --> Worklist[Assays or refusal]
 ```
 
-```csv
+```csv { type: notebook.cell }
 operator,law
 controls,hide the known binder and the catalogue answer
 design,condition on a mapped epitope and one pre-registered bar

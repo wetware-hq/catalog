@@ -8,7 +8,7 @@ Enumerate structured authorities, resolve complete protein triples, and append u
 
 ## Specification
 
-```json
+```json { type: notebook.cell }
 {
   "id": "skills/propose-pairs.md",
   "type": "resource.procedure",
@@ -27,7 +27,7 @@ Enumerate structured authorities, resolve complete protein triples, and append u
 
 ## Composition
 
-```toml
+```toml { type: notebook.cell }
 steps = ["admit", "resolve payload", "resolve binder", "resolve target", "deduplicate"]
 output = "proposals.json"
 graph = "Graph section"
@@ -50,7 +50,7 @@ graph = "Graph section"
 
 ### Variables
 
-```toml
+```toml { type: notebook.cell }
 objective = "recall committed rows while counting false admissions"
 
 [independent]
@@ -69,7 +69,7 @@ drugbank = "refused; licence re-check dated 2026-10-29"
 
 ### Process
 
-```mermaid
+```mermaid { type: notebook.cell }
 flowchart TD
     E[Enumerate structured records] --> A{Admitted protein payload?}
     A -->|no| R[Record refusal]
@@ -82,7 +82,7 @@ flowchart TD
     W --> V[Read back at commit SHA]
 ```
 
-```mermaid
+```mermaid { type: notebook.cell }
 stateDiagram-v2
     [*] --> Enumerate
     Enumerate --> Refuse: out of scope
@@ -93,7 +93,7 @@ stateDiagram-v2
     Refuse --> [*]
 ```
 
-```csv
+```csv { type: notebook.cell }
 operator,law
 controls,one pinned catalogue SHA and one serializer
 design,emit a triple only when binder target and pmid resolve

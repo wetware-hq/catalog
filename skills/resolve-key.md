@@ -8,7 +8,7 @@ Resolve one admitted protein key to a release-pinned identity or to one of two n
 
 ## Specification
 
-```json
+```json { type: notebook.cell }
 {
   "id": "skills/resolve-key.md",
   "type": "resource.procedure",
@@ -27,7 +27,7 @@ Resolve one admitted protein key to a release-pinned identity or to one of two n
 
 ## Composition
 
-```toml
+```toml { type: notebook.cell }
 stages = ["admit", "resolve", "enrich"]
 graph = "Graph section"
 writes = "none"
@@ -50,7 +50,7 @@ writes = "none"
 
 ### Variables
 
-```toml
+```toml { type: notebook.cell }
 objective = "return one identity or one typed failure"
 
 [independent]
@@ -69,7 +69,7 @@ monomers = "one flat PROTEIN_MONOMERS set"
 
 ### Process
 
-```mermaid
+```mermaid { type: notebook.cell }
 stateDiagram-v2
     [*] --> Admit
     Admit --> Refused: grammar, scope, or ASCII fails
@@ -84,14 +84,14 @@ stateDiagram-v2
     Enrich --> [*]
 ```
 
-```mermaid
+```mermaid { type: notebook.cell }
 flowchart LR
     Key[Key bytes] --> Admit[Admit]
     Admit --> Lookup[Exact lookup]
     Lookup --> Answer[Identity or verdict]
 ```
 
-```csv
+```csv { type: notebook.cell }
 operator,law
 controls,one named release and the CRC64 ISO polynomial
 design,admit on bytes before any lookup
@@ -106,7 +106,7 @@ recovery,return unavailable on 429 or 5xx and cache nothing
 
 Notation: one per folder. Blocks below are formal algorithms, not sample programs.
 
-```text
+```text { type: notebook.cell }
 skill   : input -> output | failure
 total   : every input returns; no undefined case
 pure    : output depends on input + named release only
@@ -115,7 +115,7 @@ no-write: output goes to the caller, never into the database
 
 ### Types
 
-```text
+```text { type: notebook.cell }
 Key       = "aa:" Residues | "helm:" Helm | "uniprot:" Accession
 Identity  = { accession | inn_name , source , release , retrieved }
 Failure   = unresolved        -- record answered, says nothing. final. cacheable.
@@ -128,7 +128,7 @@ No tier is computed and none is stored. A key is an admissible protein or it is 
 
 ### Stage 0 — intrinsic
 
-```text
+```text { type: notebook.cell }
 admit : Key -> { length, composition, shape } | refused
 total. no network. never fails. intrinsic: reads the bytes, needs no library and no date.
 
@@ -171,7 +171,7 @@ vectors:
 
 ### Stage 1 — resolve
 
-```text
+```text { type: notebook.cell }
 resolve : Key -> Identity | unresolved | unavailable
 total. deterministic. no free-text search. single path, never fanned out.
 
@@ -212,7 +212,7 @@ shard unit: a BATCH of keys, never one key per worker.
 
 ### Stage 2 — enrich
 
-```text
+```text { type: notebook.cell }
 enrich : Identity -> Findings        -- note the domain: Identity, NOT Key
 campaign. open. parallel. no coordinator. no shared mutable state.
 

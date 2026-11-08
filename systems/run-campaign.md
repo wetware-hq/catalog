@@ -4,11 +4,11 @@
 
 `type: agent.system` · `spec: fleet.campaign` · subordinate to `docs/follow-agent-contract.md`, which governs on any conflict.
 
-Specify one bounded design campaign in Markdown, from catalogue gate through positive-control calibration, epitope-conditioned generation, reporting, and trace verification. The caller supplies the target and the model composition. This file names neither, and no repository-local fleet program supplies hidden defaults or request bodies.
+Specify one bounded design campaign from catalogue gate through positive-control calibration, epitope-conditioned generation, reporting, and trace verification. The caller supplies the scientific configuration; the Rust organization publishes worker identity and lifecycle only, with no hidden target, model, or request body.
 
 ## Specification
 
-```json
+```json { type: notebook.cell }
 {
   "id": "systems/run-campaign.md",
   "type": "agent.system",
@@ -27,13 +27,13 @@ Specify one bounded design campaign in Markdown, from catalogue gate through pos
 
 ## Composition
 
-```toml
-authority = "this Markdown file; no repository-local fleet executable"
+```toml { type: notebook.cell }
+authority = "this Markdown contract plus typed Rust organization"
 inputs = ["target", "model composition"]
 phases = ["preflight", "catalogue gate", "target preparation", "positive control", "design", "screen", "verify"]
 stores = [".bench", ".trace"]
 graph = "Graph section; this file is the sink"
-structure = "prolog dag"
+structure = "typed lifecycle organization plus Prolog campaign DAG"
 image = "agent_fleet"
 ```
 
@@ -56,7 +56,7 @@ image = "agent_fleet"
 
 ### Variables
 
-```toml
+```toml { type: notebook.cell }
 objective = "recover a known interface before spending on an unknown one"
 
 [independent]
@@ -82,7 +82,7 @@ oracle = "not-discharged"
 
 ### Process
 
-```mermaid
+```mermaid { type: notebook.cell }
 stateDiagram-v2
     [*] --> Manifest
     Manifest --> Refuse: missing target, composition, epitope, or control bar
@@ -101,7 +101,7 @@ stateDiagram-v2
     Refuse --> VerifyTrace
 ```
 
-```mermaid
+```mermaid { type: notebook.cell }
 flowchart LR
     Manifest[Manifest] --> Gate[Catalogue gate]
     Gate --> Control[Blinded control]
@@ -109,7 +109,7 @@ flowchart LR
     Novel --> Trace[Trace check]
 ```
 
-```csv
+```csv { type: notebook.cell }
 operator,law
 controls,take target composition epitope and bar from the manifest
 design,calibrate that same composition on a blinded known interface
@@ -122,9 +122,9 @@ recovery,record unavailable or positive-control and still verify the trace
 
 #### Structure image
 
-The phase diagram above is the control flow. The fence below is the membership DAG of one `fleet.campaign`. `core` is the root. `halt` is the end of the run. `worker` is the member role, and the manifest names the heads. `bench` and `trace` are the stores a member appends. `trace` has parents `core` and `worker`. The bench Merkle DAG stays inside the store `bench`. The trace Merkle tree is the ramification of this DAG under [`record-traces.md`](record-traces.md). E7 checks this fence equal to the rendering of `agent.fleet` in `checker literals`. The fence stays outside compression. A fleet program stays outside this repository, and a YAML manifest stays out of this image.
+The phase diagram above is control flow. The cell below is the symbolic membership DAG of one `fleet.campaign`; it is downstream of the typed organization, not executable deployment syntax. `core` is the root, `halt` ends the run, `worker` is the member role, and `bench` and `trace` are stores. The bench Merkle DAG stays inside `bench`; the trace Merkle tree ramifies this DAG under [`record-traces.md`](record-traces.md). E7 checks this projection while `k8s/organization.yaml` schedules the concrete agent containers.
 
-```prolog
+```prolog { type: notebook.cell }
 image(agent_fleet).
 shape(dag).
 node(bench).
@@ -141,7 +141,7 @@ edge(worker, trace).
 
 #### 0. The manifest supplies the target and the composition
 
-The caller supplies a run manifest; the executing agent reads this file at a pinned commit and follows it. There is no repository-local fleet executable, generated configuration module, default target, default model composition, default length range, or vendor request body. A runtime may use any current client or tool that can satisfy the semantics below. It may not weaken them because a provider schema differs, and it may not fill a blank with a target or a component this file once mentioned.
+The caller supplies a run manifest; the executing agent reads this file at a pinned commit and follows it. The repository-local crate defines identity, topology, and action transport only: it contains no default target, model composition, length range, vendor request body, or provider credential. A runtime may use any current client or tool that satisfies the semantics below and may not fill a scientific blank from infrastructure defaults.
 
 The manifest fixes before any paid call:
 
@@ -219,12 +219,18 @@ Every sequence that leaves the run carries the repository disclaimer in its own 
 
 Write `core.bench`, `core.trace`, `merkle.trace`, and one worker head per participating component outside the repository under `systems/use-bench.md` and `systems/record-traces.md`. A failed control records a `refuse` act with gate `positive-control`, then one `halt`; an unavailable provider records `unavailable` at `generator`. The runtime falsifier written from [`docs/falsify.md`](../docs/falsify.md) decides every completed trace. The command below is an example of that program's surface. It is not a path in this repository.
 
-```bash
-# Example only. The runtime is written outside this repository.
-falsify --trace /path/to/core.trace /path/to/worker.trace
+```bash { type: notebook.cell }
+kubectl apply -f k8s/organization.yaml
+cargo run --bin catalog-tracer -- \
+  --jsonl /path/to/actions.jsonl \
+  --sql /path/to/actions.sql \
+  kubernetes \
+  --namespace catalog-agents \
+  --selector catalog.agent/component=agent \
+  --follow
 ```
 
-This repository ships no unit suite and no committed checker. Repository predicates are that same runtime program reading the contract. There is intentionally no fleet-runtime unit suite: the runtime is this Markdown contract, and provider execution is evidenced by its materialized requests, responses, control result, and trace rather than by mocks of a removed hardcoded client.
+The Rust suite checks typed definitions, DAG validity, action serialization, JSONL/SQL archiving, and deployment consistency. It is not a semantic catalogue checker and does not mock provider execution. Scientific execution remains evidenced by materialized requests, responses, the control result, and the campaign trace.
 
 ## Citations
 
@@ -249,7 +255,7 @@ This repository ships no unit suite and no committed checker. Repository predica
 | accept a sequence from an advisory component | the sequence is excluded unread |
 | change the composition between the control and the novel target | novel-target generation does not start |
 | emit or reseed any sequence from a failed control | positive control stays failed and no binder is emitted |
-| add a repository-local fleet executable or hidden default | Markdown ceases to be the sole runtime authority |
+| add a target, provider, model, or request default to the organization crate | infrastructure has crossed into scientific configuration |
 | replace the membership DAG, give `trace` one parent, or wrap the fence | E7 |
 | preserve trace shape while faking provider calls | trace may be `result`, exposing why requests and control outputs must also be retained |
 

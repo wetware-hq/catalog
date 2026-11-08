@@ -4,19 +4,19 @@
 
 `type: agent.system` · `spec: fleet.campaign` · subordinate to `docs/follow-agent-contract.md`, which governs on any conflict.
 
-Define the content-addressed act log for one bounded `fleet.campaign` run and the byte-level decision procedure for accepting it. The same store ramifies a fleet or swarm DAG into one Merkle tree. A valid trace proves shape and causal linkage, not that an act occurred or a paper supports a claim.
+Define the content-addressed act log for one bounded `fleet.campaign` and its byte-level acceptance procedure. The Rust tracer additionally archives typed Kubernetes lifecycle actions to JSONL and idempotent SQL; neither channel proves that an act occurred or a paper supports a claim.
 
 ## Specification
 
-```json
+```json { type: notebook.cell }
 {
   "id": "systems/record-traces.md",
   "type": "agent.system",
   "role": "content-address campaign acts and ramify structure DAGs",
-  "reads": ["core.trace", "worker trace heads", "carrier block in this file", "fleet and swarm structure images"],
-  "writes": [".trace files outside the repository"],
-  "must": ["derive ids from bytes", "end on one halt", "keep oracle not-discharged", "ramify each structure DAG into one Merkle tree"],
-  "check": ["runtime falsifier trace judgement", "R1-R10", "fleet merkle root", "E4", "E5", "E6", "E7"]
+  "reads": ["core.trace", "worker trace heads", "Kubernetes logs", "fleet and swarm structure images"],
+  "writes": [".trace files outside the repository", ".jsonl and .sql archives outside the repository"],
+  "must": ["derive ids from bytes", "keep oracle not-discharged", "archive only typed actions", "ramify each DAG"],
+  "check": ["R1-R10", "fleet merkle root", "Rust tests", "E4", "E5", "E6", "E7"]
 }
 ```
 
@@ -28,8 +28,8 @@ Define the content-addressed act log for one bounded `fleet.campaign` run and th
 
 ## Composition
 
-```toml
-files = ["core.trace", "<worker>.trace", "merkle.trace"]
+```toml { type: notebook.cell }
+files = ["core.trace", "<worker>.trace", "merkle.trace", "actions.jsonl", "actions.sql"]
 answer = ["result", "partial"]
 structure = ["merkle", "merkle-mismatch", "merkle-absent"]
 graph = "Graph section"
@@ -46,6 +46,7 @@ graph = "Graph section"
 ## Contraindications
 
 - A trace is not event sourcing: it is discarded, is not authoritative state, and replay is not defined.
+- The JSONL and SQL lifecycle archives are observational transport, not a substitute for `.trace`, BENCH, or catalogue evidence.
 - A hash proves byte identity, not occurrence, truth, provenance, clinical evidence, or patient benefit.
 - Scores, ranks, grades, tiers, study types, and utilities have no production in this grammar.
 - `result` never discharges the paper oracle or verifies that the pinned catalogue was fetched.
@@ -54,7 +55,7 @@ graph = "Graph section"
 
 ### Variables
 
-```toml
+```toml { type: notebook.cell }
 objective = "pure shape judgement with the paper oracle fixed"
 
 [independent]
@@ -75,7 +76,7 @@ disclaimer = "banner bytes inside the emit preimage"
 
 ### Process
 
-```mermaid
+```mermaid { type: notebook.cell }
 stateDiagram-v2
     [*] --> ParseCore
     ParseCore --> Partial: R1 or R3
@@ -88,14 +89,14 @@ stateDiagram-v2
     Partial --> [*]
 ```
 
-```mermaid
+```mermaid { type: notebook.cell }
 flowchart LR
     Core[core.trace] --> Lines[Worker lines]
     Lines --> Head[Admitted head]
     Head --> Decide[First failure or result]
 ```
 
-```csv
+```csv { type: notebook.cell }
 operator,law
 controls,keep oracle not-discharged and bounds equal to the core
 design,admit an act by its hash and ramify each image into one tree
@@ -112,7 +113,7 @@ A file is UTF-8. A file that is not valid UTF-8, or that contains a NUL or a car
 
 `core.trace` is these four lines, each ending in a newline. The bounds are positive integers with no leading zero. The skill is one of `resolve-key`, `propose-pairs`, `design-binder`. The spec is 40 lowercase hex digits.
 
-```text
+```text { type: notebook.cell }
 %trace-core/1
 bound-n:"<bound-n>"
 bound-tok:"<bound-tok>"
@@ -145,7 +146,7 @@ The carrier block is the closed list, in the collapsible fence `carrier sets`. E
 <details>
 <summary>carrier sets</summary>
 
-```json
+```json { type: notebook.cell }
 {
   "skills": [
     "resolve-key",
@@ -498,7 +499,7 @@ Illustration. `spec` is forty `a`s and `rev` is forty `b`s. The proposal `aa:ACD
 
 `core.trace`:
 
-```text
+```text { type: notebook.cell }
 %trace-core/1
 bound-n:"1"
 bound-tok:"8000"
@@ -513,7 +514,7 @@ spec:"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
 <details>
 <summary>witness: a1.trace</summary>
 
-```text
+```text { type: notebook.cell }
 %trace/1 core=d2066050893688b4fc69def4b3c03ffa9ee8b06ef14858786224a7adf2684853 spec=aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
 call 82d0bb98077f59cb3544536e2023d4cf99699408e57250de2ce20d3e0b20a294 ^0 run=d2066050893688b4fc69def4b3c03ffa9ee8b06ef14858786224a7adf2684853 skill=propose-pairs
 pin 2f3f7335675c72766882db3b0dea24b20818183f1934fd10eb131a10ba13fba4 ^82d0bb98077f59cb3544536e2023d4cf99699408e57250de2ce20d3e0b20a294 run=d2066050893688b4fc69def4b3c03ffa9ee8b06ef14858786224a7adf2684853 skill=propose-pairs path:"graph.json" rev:"bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"
@@ -529,11 +530,9 @@ halt 9d2001abc00391ea2c66714740c2ba9ec5c279405495498f51a72db31be4d6a3 ^2f3f73356
 
 Licensed oversight is required for any use of this system; none has been performed to date.
 
-The runtime falsifier decides this file and loads the carrier block in §1. It does not keep a second list.
-A campaign executor writes act lines from this Markdown grammar, writes `merkle.trace` from §7, and hands every completed run to that falsifier; no repository-local fleet
-program owns the write path. Extension predicate E4 decides the bijection between
-`docs/follow-agent-contract.md` §11 and the files `systems/*.md`. The identity line above is
-extension predicate E5 (`docs/follow-agent-contract.md` §0c). Neither decision is §8.16.
+The semantic falsifier decides `.trace` from this file and loads the carrier block in §1; it does not keep a second list. Separately, `catalog-agent` emits `catalog.agent.action/v1` JSON objects to standard output, Kubernetes preserves them as pod logs, and the Rust `catalog-tracer` validates each object before appending canonical `.jsonl` and `INSERT OR IGNORE` `.sql`. The SQL schema is `sql/actions.sql`; both sinks preserve `trace_id`, `sequence`, parent, agent, kind, timestamp, and JSON payload. This archive does not decide R1–R10 or §8.16.
+
+A campaign executor still writes act lines from this Markdown grammar and `merkle.trace` from §7. Extension predicate E4 decides the bijection between `docs/follow-agent-contract.md` §11 and `systems/*.md`; E5 checks the identity line. The organization crate supplies the typed transport and no scientific claim.
 
 ### 7. Ramify
 
@@ -547,7 +546,7 @@ The ramified graph adds one synthetic root. The parent of a longer path is its p
 
 `merkle.trace` is reserved. It is not a worker, and R3 does not open it. A campaign store writes the fleet tree as these two lines and no other bytes. The structure answer is `merkle` when the file is those bytes. It is `merkle-mismatch` when the file is present and differs. It is `merkle-absent` when the file is missing. The act answer does not read the file. The witness in §5 has no structure answer.
 
-```text
+```text { type: notebook.cell }
 %merkle/1 image=agent_fleet
 cbc8a4c3a1178d47421942d29c55712619964102aaf25f33f7fcb3d803a12ceb
 ```
@@ -556,7 +555,7 @@ The same function on `agent_swarm` yields `8d71ad3b8feb53d6a15200688165f84330722
 
 The first fence below is the fleet preimages, bottom-up. The id of a line is `H` of that line with the newline removed. The second fence is those ids, in the same order. Its last line is the Merkle root.
 
-```text
+```text { type: notebook.cell }
 merkle-leaf/1 image=agent_fleet path:"core/halt"
 merkle-leaf/1 image=agent_fleet path:"core/trace"
 merkle-leaf/1 image=agent_fleet path:"core/worker/bench"
@@ -566,7 +565,7 @@ merkle-branch/1 image=agent_fleet path:"core" child=27f7b6e625c7f4c63ef11186660c
 merkle-root/1 image=agent_fleet child=450953b7743b684754d4caaf47e86df8e1795617ac8c04a5a5eb166596795071
 ```
 
-```text
+```text { type: notebook.cell }
 27f7b6e625c7f4c63ef11186660cc0513d0da7f94c304422468f6b6e87180b7d
 08836e6522e0be759b32e5e4116e4873b8551b9d8dacce93d9ccccba83e0aeb9
 e3986c1a93207f1478b6dbe4959bc23747c9985e721d7ad7d9fd97069ee648f9
@@ -610,6 +609,8 @@ Retrieved 1 Nov 2026 (Australia/Sydney). These sources explain adjacent intercha
 | change one fleet edge and keep the pinned root | `merkle-mismatch` |
 | hash one fleet preimage with its newline kept | the id differs from the pin |
 | treat the bench Merkle DAG as this tree | no predicate equates the two |
+| archive a scalar payload or unknown agent from Kubernetes logs | Rust tracer refuses the line before either sink |
+| change the SQL agent enum without changing Rust or Kubernetes | E7 executable consistency fails |
 
 The witness above is a `result`. Every mutation in the table fails for its named reason.
 

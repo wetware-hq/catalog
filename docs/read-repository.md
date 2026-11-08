@@ -4,11 +4,11 @@
 
 `type: initialization` · non-normative. `docs/follow-agent-contract.md` governs on any conflict.
 
-Route a catalogue task through the smallest sufficient path in the documentation DAG. The normative contract always wins.
+Route each task through the smallest sufficient path. The contract governs the Rust and Kubernetes organization.
 
 ## Specification
 
-```json
+```json { type: notebook.cell }
 {
   "id": "docs/read-repository.md",
   "type": "initialization",
@@ -26,7 +26,7 @@ Route a catalogue task through the smallest sufficient path in the documentation
 
 ## Composition
 
-```toml
+```toml { type: notebook.cell }
 root = "this file"
 sink = "systems/run-campaign.md"
 stop = "first sufficient route"
@@ -40,10 +40,11 @@ stop = "first sufficient route"
 | resolve a key | contract → [`resolve-key`](../skills/resolve-key.md) |
 | propose a pair | contract → [`resolve-key`](../skills/resolve-key.md) → [`propose-pairs`](../skills/propose-pairs.md) |
 | design | contract → [`falsify`](falsify.md) → [`pins`](pin-references.md) → [`design`](../skills/design-binder.md) → [`traces`](../systems/record-traces.md); [`bench`](../systems/use-bench.md) → [`record`](../tmp/record-egfr-calibration.md) → [`run`](../systems/run-campaign.md) |
-| falsify | contract → [`falsify`](falsify.md); the runtime is written outside the repository |
-| traces | contract + [`traces`](../systems/record-traces.md) → that runtime's trace judgement |
+| falsify | contract → [`falsify`](falsify.md) |
+| traces | contract → [`traces`](../systems/record-traces.md) |
+| organize agents | contract → [`falsify`](falsify.md) → `k8s/organization.yaml` |
 
-Stop at the row's endpoint. Design continues to the sink.
+Stop at the first sufficient row.
 
 ## Contraindications
 
@@ -56,23 +57,23 @@ Stop at the row's endpoint. Design continues to the sink.
 
 ### Variables
 
-```toml
+```toml { type: notebook.cell }
 objective = "select the smallest sufficient read-before route"
 
 [independent]
-task = "read | resolve | propose | design | falsify"
+task = "read | resolve | propose | design | falsify | organize"
 
 [dependent]
-route = "ordered Markdown path ending at the first sufficient node"
+route = "first sufficient Markdown path"
 
 [controlled]
 revision = "one pinned repository commit"
-contract = "docs/follow-agent-contract.md governs every route"
+contract = "docs/follow-agent-contract.md"
 ```
 
 ### Process
 
-```csv
+```csv { type: notebook.cell }
 operator,law
 controls,one pinned commit
 design,smallest task row
@@ -83,7 +84,7 @@ filters,contract before any procedure
 recovery,a refusal returns to the contract
 ```
 
-```mermaid
+```mermaid { type: notebook.cell }
 stateDiagram-v2
     [*] --> Contract
     Contract --> Read: catalogue query
@@ -103,7 +104,7 @@ stateDiagram-v2
     Run --> [*]
 ```
 
-```mermaid
+```mermaid { type: notebook.cell }
 flowchart LR
     Rev[Pin] --> Contract
     Contract --> Next
@@ -118,7 +119,7 @@ flowchart LR
 | [AgentKit, arXiv:2404.11483v2](https://arxiv.org/abs/2404.11483v2) | dependency DAGs |
 | [AGENTS.md `d001185`](https://github.com/agentsmd/agents.md/tree/d001185d792eb6402a58e4cbef1c228b309ec25d) | path-local disclosure |
 
-Retrieved 1 Nov 2026 (Australia/Sydney). Representation only, not catalogue evidence.
+Retrieved 1 Nov 2026 (Australia/Sydney). Representation only.
 
 ## Falsification
 

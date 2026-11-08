@@ -8,7 +8,7 @@ Provide one run-scoped, append-only commons where workers exchange immutable par
 
 ## Specification
 
-```json
+```json { type: notebook.cell }
 {
   "id": "systems/use-bench.md",
   "type": "agent.system",
@@ -27,7 +27,7 @@ Provide one run-scoped, append-only commons where workers exchange immutable par
 
 ## Composition
 
-```toml
+```toml { type: notebook.cell }
 files = ["core.bench", "<worker>.bench"]
 merge = "set union on content hashes"
 graph = "Graph section"
@@ -51,7 +51,7 @@ graph = "Graph section"
 
 ### Variables
 
-```toml
+```toml { type: notebook.cell }
 objective = "join-semilattice merge and tier-pure answers at a named head"
 
 [independent]
@@ -70,7 +70,7 @@ order = "keys sorted; numbers in shortest round-trip form"
 
 ### Process
 
-```mermaid
+```mermaid { type: notebook.cell }
 flowchart LR
     C[Immutable core] --> A[Validate append]
     A -->|invalid tier or run| R[Refuse]
@@ -81,7 +81,7 @@ flowchart LR
     U --> Q[Tier-pure query at head]
 ```
 
-```mermaid
+```mermaid { type: notebook.cell }
 stateDiagram-v2
     [*] --> Core
     Core --> Append
@@ -92,7 +92,7 @@ stateDiagram-v2
     Refuse --> [*]
 ```
 
-```csv
+```csv { type: notebook.cell }
 operator,law
 controls,bind every node to the core hash and one tier
 design,grow a content-addressed Merkle DAG
@@ -107,7 +107,7 @@ recovery,a correction is a new node and the old node stays
 
 - **Read:** this file, `docs/follow-agent-contract.md`, the run's own `.bench` files.
 - **Write:** `.bench` files inside a run directory, which lives outside this repository.
-- **Refuse:** `graph.json`, `proposals.json`, and every other file in this repository. This directory holds the `fleet.campaign` specifications. This file's write scope is `.bench` files inside a run directory. Campaign executors append them from this Markdown format under `systems/run-campaign.md`; no repository-local fleet program widens that scope (§11).
+- **Refuse:** `graph.json`, `proposals.json`, and every other file in this repository. This directory holds the `fleet.campaign` specifications. This file's write scope is `.bench` files inside a run directory. Campaign executors append them from this Markdown format under `systems/run-campaign.md`. The organization crate does not widen that scope (§11).
 
 **`systems/` and `skills/`.** `skills/*.md` are *procedures*: a named thing an agent does, registered in `docs/follow-agent-contract.md` §10, each with a signature and a write scope. `systems/*.md` are the `fleet.campaign` specifications registered in §11. This file is a substrate: a format, a merge law and an invariant list. A system is not a skill, declares no signature over catalogue keys, and is not registered in §10. A skill may use a system; a system never discharges a skill's obligations, and neither widens `docs/follow-agent-contract.md` §0.
 
@@ -162,7 +162,7 @@ Canonical bytes, which `H` is taken over: the line with fields sorted by key, si
 
 Worked example:
 
-```text
+```text { type: notebook.cell }
 %bench/1 core=9f2a1b7c4d
 1 a3f1c0 ^0 w:a1 s:12 obs:0.712 sd:0.041 unit:uM dev:inst-4 ts:1761790001
 2 b7c2e9 ^a3f1c0 w:a2 s:13 score:0.883 model:mx-7 pose:M(0.92388,0.0,0.0,0.38268,0.0,1.5,-0.25,0.0)
@@ -196,9 +196,9 @@ The fence `merge sketch` records that law. It is not the off-repo TLC model (§9
 <details>
 <summary>merge sketch</summary>
 
-```tla
+```tla { type: notebook.cell }
 ---- MODULE bench_sketch ----
-\* Example only. Not the 2026-10-29 TLC model. E7 does not run this fence.
+\* Definitive merge law. This cell is not the uncommitted 2026-10-29 TLC model.
 Merge(A, B) == A \union B
 ====
 ```
@@ -223,7 +223,7 @@ A run whose core changed is not a tainted run to be discarded by policy; it is a
 
 Per worker, local, derived, rebuildable, never shared: an inverted index over `key:value` terms, sorted arrays per numeric key, and the DAG adjacency. All three are **add-only**, which is the only reason concurrent search works — the node set only grows, so the index only gains postings, with no tombstones and no reader invalidation. Segments merge on a size ladder.
 
-```text
+```text { type: notebook.cell }
 at <head>                                every query is evaluated at a head
 where tier=T and <key> <op> <value>      op ∈ { =, !=, <, <=, >, >=, ~ }
 ancestors(<id>) / descendants(<id>)
@@ -235,15 +235,15 @@ No joins, no subqueries, no cross-tier aggregate, no "latest". Appending costs o
 
 ### 8. Pose, and the one place geometric algebra earns its place
 
-A record may carry a rigid-body transform as `pose:M(...)`: a **motor** in 3D projective geometric algebra `Cl(3,0,1)`, eight coefficients, composing rotation and translation in one object, compared by `d(M,N) = ‖log(M̃N)‖` over the screw parameters — rotation angle about the screw axis, translation along it. It earns its place because workers produce transforms independently and the system must compare them, and this comparison is invariant under a change of either frame. The numbers in this section come from a run made outside this repository on 2026-10-30: a standard-library Python script, seed `20261030`, which is not in this tree because agents may not commit scripts here (`docs/follow-agent-contract.md` §0). Treat them as a dated snapshot, not a check this repository can re-run. Over 20,000 random pairs it reported `max |d(AM,AN) - d(M,N)| = 4.663e-15` and `max |d(MA,NA) - d(M,N)| = 4.177e-15`, while the obvious alternative — comparing rotation angle and translation vector separately — drifts by `2.301e+00` and `3.201e+00` under the same change of frame. An earlier draft of this file quoted `1e-13` and `5e-3` for these; that run did not reproduce `5e-3`, and the figures above are what it actually printed.
+A record may carry a rigid-body transform as `pose:M(...)`: a **motor** in 3D projective geometric algebra `Cl(3,0,1)`, eight coefficients, composing rotation and translation in one object, compared by `d(M,N) = ‖log(M̃N)‖` over the screw parameters — rotation angle about the screw axis, translation along it. It earns its place because workers produce transforms independently and the system must compare them, and this comparison is invariant under a change of either frame. The numbers in this section come from an uncommitted standard-library Python run made on 2026-10-30 with seed `20261030`; the current organization crate does not reproduce that experiment. Treat them as a dated snapshot. Over 20,000 random pairs it reported `max |d(AM,AN) - d(M,N)| = 4.663e-15` and `max |d(MA,NA) - d(M,N)| = 4.177e-15`, while the obvious alternative — comparing rotation angle and translation vector separately — drifts by `2.301e+00` and `3.201e+00` under the same change of frame. An earlier draft quoted `1e-13` and `5e-3`; that run did not reproduce `5e-3`, and the figures above are what it printed.
 
 The same distance, in the equation fence:
 
 <details>
 <summary>pose distance</summary>
 
-```tex
-% Example only. The distance defined in this section. Not the off-repo script.
+```tex { type: notebook.cell }
+% Definitive distance declaration; not the uncommitted experiment program.
 \[ d(M,N)=\lVert\log(\tilde{M} N)\rVert \]
 ```
 </details>

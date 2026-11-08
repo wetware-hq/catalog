@@ -8,7 +8,7 @@ Pin external artifacts, extraction procedures, claim-level read status, and know
 
 ## Specification
 
-```json
+```json { type: notebook.cell }
 {
   "id": "docs/pin-references.md",
   "type": "resource.reference",
@@ -27,7 +27,7 @@ Pin external artifacts, extraction procedures, claim-level read status, and know
 
 ## Composition
 
-```toml
+```toml { type: notebook.cell }
 rows = 11
 pin = "versioned id + retrieval date + digest or reproducible extraction"
 read_status = ["metadata-only", "claim-checked", "second-read"]
@@ -51,7 +51,7 @@ Do not infer source support from resolution, a digest match, venue acceptance, o
 
 ### Variables
 
-```toml
+```toml { type: notebook.cell }
 objective = "enable a later reader to recompute the recorded digest"
 
 [independent]
@@ -69,7 +69,7 @@ scope = "delivered bytes | normalized text | git object"
 
 ### Process
 
-```mermaid
+```mermaid { type: notebook.cell }
 stateDiagram-v2
     [*] --> Resolve
     Resolve --> Retrieve
@@ -82,7 +82,7 @@ stateDiagram-v2
     Record --> [*]
 ```
 
-```mermaid
+```mermaid { type: notebook.cell }
 flowchart LR
     Id[Versioned id] --> Fetch[Retrieve]
     Fetch --> Digest[Digest]
@@ -90,7 +90,7 @@ flowchart LR
     Locus --> Claim[Bounded claim]
 ```
 
-```csv
+```csv { type: notebook.cell }
 operator,law
 controls,fix the extractor command and tool version
 design,pin version date and digest scope before a claim

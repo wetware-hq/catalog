@@ -1,0 +1,6 @@
+.git
+target
+archive
+*.jsonl
+*.sql
+!sql/actions.sql

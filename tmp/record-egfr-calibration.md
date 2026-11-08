@@ -8,7 +8,7 @@ Select uniprot:P00533 by descending in-scope pair count. Catalogue gate returns 
 
 ## Specification
 
-```json
+```json { type: notebook.cell }
 {
   "id": "tmp/record-egfr-calibration.md",
   "type": "record",
@@ -27,7 +27,7 @@ Select uniprot:P00533 by descending in-scope pair count. Catalogue gate returns 
 
 ## Composition
 
-```toml
+```toml { type: notebook.cell }
 target = "uniprot:P00533"
 dictionary = "pair"
 pdb = "1YY9"
@@ -68,7 +68,7 @@ oracle = "not-discharged"
 
 ### Variables
 
-```toml
+```toml { type: notebook.cell }
 objective = "pass the binding bar or emit nothing"
 
 [independent]
@@ -94,7 +94,7 @@ spec = "4108e940ee5f8c8aad7d8e1ae173bbe166c718cb"
 
 ### Process
 
-```text
+```text { type: notebook.cell }
 RANK pair FILTER area:oncology|immunology ORDER in_scope:desc,target:asc
 SELECT uniprot:P00533
 HALT hit-same-indication pmid:16467544
@@ -105,7 +105,7 @@ VERDICT positive-control-failed emitted:0
 <details>
 <summary>agent card</summary>
 
-```json
+```json { type: notebook.cell }
 {
   "name": "catalog-biofleet-egfr",
   "description": "Descriptive card of a finished run. Not a live endpoint.",
@@ -138,7 +138,7 @@ VERDICT positive-control-failed emitted:0
 ```
 </details>
 
-```mermaid
+```mermaid { type: notebook.cell }
 flowchart LR
     Rank --> Select
     Select --> Halt
@@ -146,7 +146,7 @@ flowchart LR
     Calibrate --> Refuse
 ```
 
-```mermaid
+```mermaid { type: notebook.cell }
 stateDiagram-v2
     [*] --> Rank
     Rank --> Gate
@@ -156,7 +156,7 @@ stateDiagram-v2
     Refuse --> [*]
 ```
 
-```csv
+```csv { type: notebook.cell }
 operator,law
 controls,binding_confidence bar 0.7 and oracle not-discharged
 design,pair rank then blinded peptide calibration
