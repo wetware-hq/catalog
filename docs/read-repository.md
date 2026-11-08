@@ -1,5 +1,3 @@
-⚠️ ACADEMIC RESEARCH PURPOSES ONLY; NOT FOR MEDICAL USE WITHOUT LICENSED OVERSIGHT
-
 # catalog
 
 `type: initialization` · non-normative. `docs/follow-agent-contract.md` governs on any conflict.
@@ -13,9 +11,9 @@ Route a catalogue task through the smallest sufficient path in the documentation
   "id": "docs/read-repository.md",
   "type": "initialization",
   "role": "route tasks through the documentation DAG",
-  "reads": ["graph.json", "neighbor Markdown on demand", "ooc/catalog.og"],
+  "reads": ["DISCLAIMER", "graph.json", "neighbor Markdown on demand", "ooc/catalog.og"],
   "writes": [],
-  "must": ["load the contract before any procedure", "treat absence as unknown"],
+  "must": ["read DISCLAIMER first", "load the contract before any procedure", "treat absence as unknown"],
   "check": ["E1", "E6", "E7"]
 }
 ```

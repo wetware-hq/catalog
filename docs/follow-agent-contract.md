@@ -1,5 +1,3 @@
-⚠️ ACADEMIC RESEARCH PURPOSES ONLY; NOT FOR MEDICAL USE WITHOUT LICENSED OVERSIGHT
-
 # `graph.json` — agent contract
 
 `type: resource.reference` · **normative**. `docs/read-repository.md` is `type: initialization` and non-normative; on conflict this file governs.
@@ -116,17 +114,13 @@ recovery,retry unavailable and never cache it as unresolved
 
 ### 0. Scope
 
-- **Read:** `graph.json`, `docs/*.md`, `skills/*.md`, `systems/*.md` (§11), `LICENSE`, and the traversal index `ooc/*.og` (§0g).
+- **Read:** `DISCLAIMER`, `graph.json`, `docs/*.md`, `skills/*.md`, `systems/*.md` (§11), `LICENSE`, and the traversal index `ooc/*.og` (§0g).
 - **Write:** `graph.json` and `proposals.json` only, under §9.
-- **Refuse:** writing scripts, workflows, CI, package manifests, or secondary data files in this repo, `proposals.json` (§9) and the traversal index `ooc/*.og` (§0g) being the named exceptions; stored ranks, scores or grades; citations other than bare `pmid:<digits>`; empty citation arrays; pairs without qualifying evidence (§4); removal or rewriting of existing rows absent explicit human supersession. The specbase is the Markdown in `docs/`, `skills/`, and `systems/`. `graph.json` is the catalogue those files govern, not a spec and not a DSL. A falsifier, merger, or trace tool is written by a user AI at runtime, outside this repository, from these Markdown files. It is not committed here.
+- **Refuse:** writing scripts, workflows, CI, package manifests, or secondary data files in this repo, `proposals.json` (§9) and the traversal index `ooc/*.og` (§0g) being the named exceptions; stored ranks, scores or grades; citations other than bare `pmid:<digits>`; empty citation arrays; pairs without qualifying evidence (§4); removal or rewriting of existing rows absent explicit human supersession. The specbase is the Markdown in `docs/`, `skills/`, and `systems/`, and its top-level notice is `DISCLAIMER`. `graph.json` is the catalogue those files govern, not a spec and not a DSL. A falsifier, merger, or trace tool is written by a user AI at runtime, outside this repository, from these Markdown files. It is not committed here.
 
-### 0b. Documentation banner
+### 0b. Disclaimer
 
-Every Markdown file in this repository opens, as its **first non-blank line**, with the exact byte string
-
-`⚠️ ACADEMIC RESEARCH PURPOSES ONLY; NOT FOR MEDICAL USE WITHOUT LICENSED OVERSIGHT`
-
-— one fixed, repeated string, byte-identical in every file, never paraphrased, abbreviated or replaced by a cross-reference. It states **who may act on this repository**, and is deliberately distinct from §1, which states what the catalogue records; the two are not merged. This is a normative documentation invariant. It is **not** one of the nineteen §8 predicates and does not renumber them; it is checked as extension predicate E1 by the runtime falsifier ([`falsify.md`](falsify.md)).
+`DISCLAIMER` is the top-level notice of the specbase. The file sits at the repository root. It is one line and a terminating newline, about the length of `LICENSE`, with no quotation mark and no ASCII control. That line states who may act: academic research only, and no medical use without licensed oversight. It is distinct from §1, which states what the catalogue records. The two are not merged. No Markdown file repeats the line, and no header carries it. A report that emits a sequence copies the line onto that sequence. This is a normative documentation invariant. It is **not** one of the nineteen §8 predicates and does not renumber them. Extension predicate E1 ([`falsify.md`](falsify.md)) checks the file and refuses a copy in any Markdown header.
 
 ### 0c. Identity line
 
@@ -141,9 +135,9 @@ Every file in `skills/` and `systems/` names itself once, in the header, before 
 
 ### 0d. Scientific Markdown profile and documentation DAG
 
-**Live Markdown** is every repository `*.md`. The specbase is that set: `docs/`, `skills/`, and `systems/`. There is no fixture tree and no exempt path. `e6.fixture_paths` and `e1_allowlist` in §0f are empty. E1 checks the banner on every Markdown file.
+**Live Markdown** is every repository `*.md`. The specbase is that set: `docs/`, `skills/`, and `systems/`. Its top-level notice is the root file `DISCLAIMER`, which is not Markdown and is not a header. There is no fixture tree and no exempt path. `e6.fixture_paths` and `e1_allowlist` in §0f are empty. E1 checks that notice and refuses it on every Markdown header.
 
-The header has exactly the banner block, one column-zero H1, an optional one-line block containing `` `type: ...` ``, and one functional-description paragraph; no other pre-H2 prose is allowed. The description has one to three sentences and at most 384 UTF-8 bytes. It is followed by exactly these column-zero H2 headings, in order: `Specification`, `Graph`, `Composition`, `Indications`, `Contraindications`, `Algorithm`, `Citations`, `Falsification`, `Licence`. Fenced content never supplies headings; indented or setext H2s are refused.
+The header has exactly one column-zero H1, an optional one-line block containing `` `type: ...` ``, and one functional-description paragraph; no other pre-H2 prose is allowed. It does not carry the notice line. The description has one to three sentences and at most 384 UTF-8 bytes. It is followed by exactly these column-zero H2 headings, in order: `Specification`, `Graph`, `Composition`, `Indications`, `Contraindications`, `Algorithm`, `Citations`, `Falsification`, `Licence`. Fenced content never supplies headings; indented or setext H2s are refused.
 
 `Specification` contains one fenced JSON object of at most 2,048 UTF-8 bytes with these unique ordered fields: `id`, `type`, `role`, `reads`, `writes`, `must`, `check`. `id` is the repository-relative path; scalar values and array items are non-empty and at most 128 UTF-8 bytes, while `writes` may be an empty array. Outside fenced content, `Algorithm` contains `### Variables` followed by `### Process`, each exactly once. Every section is non-empty; the exact `Licence` body is one blank line followed by `MIT`.
 
@@ -295,7 +289,7 @@ Closed lists and normative patterns live in the collapsible fence `checker liter
 | campaign runtime | [`systems/run-campaign.md`](../systems/run-campaign.md) | the manifest table; this repository stores no fleet program |
 | fleet and swarm structure images | this file §0e and `e7.structure_images` | the expanded Prolog fences in `systems/run-campaign.md` and `docs/falsify.md` |
 
-The banner a checker compares is the first non-blank line of this file. `e1_allowlist` is empty, so E1 skips nothing. The edge cap in §0d is `|V| + 1`, stored here as `edge_surplus_max` of 2 because a tree has `|V| - 1` edges. A bracketed HELM symbol matches `monomer_symbol` and is refused when it is an all-uppercase run of length at least `monomer_uppercase_run_min_length`. Polymer-index normalisation applies `helm_index_normalise` and replaces each matched digit run with `#`.
+`DISCLAIMER` is the file a checker reads, and its single line is the notice. `e1_allowlist` is empty, so E1 skips nothing. The edge cap in §0d is `|V| + 1`, stored here as `edge_surplus_max` of 2 because a tree has `|V| - 1` edges. A bracketed HELM symbol matches `monomer_symbol` and is refused when it is an all-uppercase run of length at least `monomer_uppercase_run_min_length`. Polymer-index normalisation applies `helm_index_normalise` and replaces each matched digit run with `#`.
 
 <details>
 <summary>checker literals</summary>
@@ -452,7 +446,7 @@ The banner a checker compares is the first non-blank line of this file. `e1_allo
   "extensions": {
     "E1": [
       "pure-ext",
-      "Disclaimer banner (every .md first non-blank line)"
+      "DISCLAIMER at repo root; absent from Markdown headers"
     ],
     "E2": [
       "pure-ext",
@@ -820,7 +814,7 @@ A proposed row failing any rule above is **refused**, naming the condition that 
 
 No separate directory is needed, and none is used: a `special` skill has **no output file**, so there is no boundary to erode. That write-nothing contract is what the class rests on, and it is checkable — **a `class: special` row declares write scope `none`**, and a skill whose output could reach either dictionary is not `special`, it is a catalogue skill and §4 binds it.
 
-The reader-facing warning is therefore not carried by a path either. It is carried by the **emitted report**, verbatim on the same block as every sequence (see the skill's §7), because the report is the only thing that leaves.
+The reader-facing warning is not a skill output file. The line lives in `DISCLAIMER`. The **emitted report** copies that line on the same block as every sequence (see the skill's §7), because the report is the only thing that leaves.
 
 | skill | class | namespaces (§3) | signature | write scope |
 |---|---|---|---|---|

@@ -1,5 +1,3 @@
-⚠️ ACADEMIC RESEARCH PURPOSES ONLY; NOT FOR MEDICAL USE WITHOUT LICENSED OVERSIGHT
-
 # `design-binder` — de novo binder design
 
 `type: resource.procedure` · `class: special` · `spec: agent.skill` · subordinate to `docs/follow-agent-contract.md`, which governs on any conflict.
@@ -230,7 +228,7 @@ Each cell is a **median experimental success rate across 15 targets**, and the e
 
 Report, and write nothing. A single binder is emitted only when §6 earns it, and then it is labelled **by the criterion that chose it**, never as *best*.
 
-**The disclaimer travels with the sequence.** The report carries the canonical line verbatim on the same block as every binder key it hands back, not once at the top. A warning works only at the point of harm, and the thing that causes harm is the sequence, which exists to leave this repository and land on a bench. Nothing validates a report, so the obligation lives here: a warning that does not survive a copy-paste of the sequence protects nobody.
+**The disclaimer travels with the sequence.** The report copies the line of `DISCLAIMER` verbatim on the same block as every binder key it hands back, not once at the top of the report. A warning works only at the point of harm, and the thing that causes harm is the sequence, which exists to leave this repository and land on a bench. Nothing validates a report, so the obligation lives here: a warning that does not survive a copy-paste of the sequence protects nobody.
 
 | field | content |
 |---|---|
@@ -277,7 +275,7 @@ Method selection at runtime must add its own versioned primary sources and bench
 | Omit the blinded positive control, its binding bar, or its epitope map | novel-target generation starts |
 | Send an available structured target as an unconstrained full-length sequence | preflight admits the request |
 | Fail the primary binding metric but pass on a fold or interface-geometry score | metric substitution manufactures a positive control |
-| Copy a sequence without its exact disclaimer | trace hash or output contract fails |
+| Copy a sequence without the `DISCLAIMER` line | trace hash or output contract fails |
 | Change the named scorer and keep the same order | ranking is not caused by its stated variable |
 | Treat the across-target IQR as a new-target prediction interval | the source reports no such interval |
 | Run one target twice and call the difference target variability | the test measures sampling noise instead |

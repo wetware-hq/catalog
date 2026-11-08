@@ -1,5 +1,3 @@
-⚠️ ACADEMIC RESEARCH PURPOSES ONLY; NOT FOR MEDICAL USE WITHOUT LICENSED OVERSIGHT
-
 # falsify the system
 
 `type: resource.reference` · `spec: agent.swarm` · subordinate to `docs/follow-agent-contract.md`.
@@ -46,7 +44,7 @@ grammar = "keys, HELM scope, and HELM monomers"
 identity = "one molecule and one triple"
 relation = "add-only and merge"
 oracle = "predicate 16 stays undischarged"
-document = "banner, registry, identity, and graph"
+document = "disclaimer, registry, identity, and graph"
 trace = "act-log refusals"
 ```
 
@@ -174,7 +172,7 @@ def load_json_fence(markdown, heading):
 
 
 def literals(repo):
-    """Contract section 0f, the fence labelled checker literals. Banner is that file's first non-blank line."""
+    """Contract section 0f, the fence labelled checker literals. DISCLAIMER is the root file, not a header line."""
 
 
 def carriers(repo):
@@ -658,8 +656,8 @@ Eighty-three attacks, seven workers, no vote. This object is the closed list, in
     },
     {
       "worker": "document",
-      "id": "banner-removed",
-      "premise": "the banner is byte-identical on every Markdown file",
+      "id": "disclaimer-removed",
+      "premise": "DISCLAIMER is the only copy and no Markdown header carries it",
       "prediction": "E1 fails"
     },
     {
@@ -815,7 +813,7 @@ Stated 3 Nov 2026 (Australia/Sydney). The decision procedure was folded into thi
 | Declare `spec: agent.fleet` | E5 |
 | Add an unregistered skill or system | E2 or E4 |
 | Delete one side of a Markdown edge | E6 |
-| Remove the banner | E1 |
+| Remove `DISCLAIMER` or copy it into a header | E1 |
 | Put an HTML line outside a compression wrapper | E7 fails; E6 still passes |
 | Give `<details>` an attribute, wrap two fences or prose, wrap the process CSV or a diagram, or repeat a label | E7 fails |
 | Wrap one canonical fence in one `<details>` block with a new plain label | E7 passes |
