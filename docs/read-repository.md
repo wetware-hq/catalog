@@ -13,7 +13,7 @@ Route a catalogue task through the smallest sufficient path in the documentation
   "id": "docs/read-repository.md",
   "type": "initialization",
   "role": "route tasks through the documentation DAG",
-  "reads": ["graph.json", "neighbor Markdown on demand"],
+  "reads": ["graph.json", "neighbor Markdown on demand", "ooc/catalog.og"],
   "writes": [],
   "must": ["load the contract before any procedure", "treat absence as unknown"],
   "check": ["E1", "E6", "E7"]
@@ -30,6 +30,7 @@ Route a catalogue task through the smallest sufficient path in the documentation
 root = "this file"
 sink = "systems/run-campaign.md"
 stop = "first sufficient route"
+index = "ooc/catalog.og"
 ```
 
 ## Indications
@@ -43,7 +44,7 @@ stop = "first sufficient route"
 | falsify | contract → [`falsify`](falsify.md); the runtime is written outside the repository |
 | traces | contract + [`traces`](../systems/record-traces.md) → that runtime's trace judgement |
 
-Stop at the row's endpoint. Design continues to the sink.
+Stop at the row's endpoint. Design continues to the sink. Index: `ooc/catalog.og`.
 
 ## Contraindications
 

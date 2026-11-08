@@ -1,0 +1,105 @@
+::meta
+title: Traces route
+version: 1
+updated: 2026-11-09
+domain: catalog|trace|merkle
+scope: all
+catalogue-version: 2
+governs: docs/follow-agent-contract.md
+checksum: sha256:53ba2e8fbd0d0c4a1a0240512ce703973f3e31d5e5180f7e7186ee45264d31e1
+::end
+
+::schema
+node-types: [stage, assertion, meta]
+edge-types: [requires, precedes, see-also]
+scope-levels: [all, orchestrator, worker, readonly]
+::end
+
+::index
+# id | type | scope | conf | keywords
+banner | meta | all | 1.00 | academic, research, oversight, banner
+minimum | stage | all | 0.95 | trace, core, worker, result, partial
+contract | stage | all | 1.00 | run, skill, oracle, fleet
+record-traces | stage | all | 0.95 | act, parent, hash, merkle, R1-R10
+stop | assertion | all | 1.00 | endpoint, halt, sufficient
+__changelog | meta | all | 1.00 | changes, version
+::end
+
+::node [id=banner type=meta confidence=1.00 scope=all updated=2026-11-09 entry=true skip-if-known=true]
+::dense
+academic|research|licensed-oversight
+::end
+::warning
+⚠️ ACADEMIC RESEARCH PURPOSES ONLY; NOT FOR MEDICAL USE WITHOUT LICENSED OVERSIGHT
+::end
+::edges
+->[:precedes] minimum
+::end
+::end
+
+::node [id=minimum type=stage confidence=0.95 scope=all updated=2026-11-09]
+::dense
+trace|contract|record-traces|shape|not-occurrence
+::end
+::full
+Cold start for a trace judgement. Stop at systems/record-traces.md.
+::end
+::warning
+A result proves shape and linkage, not that an act occurred and not that a paper supports a claim. Oracle stays not-discharged.
+::end
+::edges
+->[:requires] docs/follow-agent-contract.md
+->[:requires] systems/record-traces.md
+->[:precedes] stop
+::end
+::end
+
+::node [id=contract type=stage confidence=1.00 scope=all updated=2026-11-09]
+::dense
+fleet.campaign|run-hash|oracle|no-score
+::end
+::full
+Run identity and the oracle boundary.
+::end
+::edges
+->[:requires] docs/follow-agent-contract.md
+->[:precedes] record-traces
+::end
+::end
+
+::node [id=record-traces type=stage confidence=0.95 scope=all updated=2026-11-09]
+::dense
+acts|parents|R1-R10|merkle-tree|carrier-sets
+::end
+::full
+Endpoint of the traces route.
+::end
+::note
+Expand carrier sets only when the task names that label. The trace Merkle tree is not the bench Merkle DAG.
+::end
+::warning
+No score, rank, grade, tier, or study type has a production in the act grammar.
+::end
+::edges
+->[:requires] systems/record-traces.md
+->[:precedes] stop
+::end
+::end
+
+::node [id=stop type=assertion confidence=1.00 scope=all updated=2026-11-09]
+::dense
+stop|endpoint|record-traces
+::end
+::assertion
+trigger: after [record-traces]
+check: endpoint("systems/record-traces.md")
+on-pass: ->[:proceed] record-traces
+on-fail: ->[:escalate] minimum
+::end
+::end
+
+::node [id=__changelog type=meta confidence=1.00 scope=all updated=2026-11-09]
+::changelog
+2026-11-09|added|node [minimum]|traces route
+::end
+::end

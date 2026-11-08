@@ -116,9 +116,9 @@ recovery,retry unavailable and never cache it as unresolved
 
 ### 0. Scope
 
-- **Read:** `graph.json`, `docs/*.md`, `skills/*.md`, `systems/*.md` (§11), `LICENSE`.
+- **Read:** `graph.json`, `docs/*.md`, `skills/*.md`, `systems/*.md` (§11), `LICENSE`, and the traversal index `ooc/*.og` (§0g).
 - **Write:** `graph.json` and `proposals.json` only, under §9.
-- **Refuse:** writing scripts, workflows, CI, package manifests, or secondary data files in this repo, `proposals.json` (§9) being the single named exception; stored ranks, scores or grades; citations other than bare `pmid:<digits>`; empty citation arrays; pairs without qualifying evidence (§4); removal or rewriting of existing rows absent explicit human supersession. The specbase is the Markdown in `docs/`, `skills/`, and `systems/`. `graph.json` is the catalogue those files govern, not a spec and not a DSL. A falsifier, merger, or trace tool is written by a user AI at runtime, outside this repository, from these Markdown files. It is not committed here.
+- **Refuse:** writing scripts, workflows, CI, package manifests, or secondary data files in this repo, `proposals.json` (§9) and the traversal index `ooc/*.og` (§0g) being the named exceptions; stored ranks, scores or grades; citations other than bare `pmid:<digits>`; empty citation arrays; pairs without qualifying evidence (§4); removal or rewriting of existing rows absent explicit human supersession. The specbase is the Markdown in `docs/`, `skills/`, and `systems/`. `graph.json` is the catalogue those files govern, not a spec and not a DSL. A falsifier, merger, or trace tool is written by a user AI at runtime, outside this repository, from these Markdown files. It is not committed here.
 
 ### 0b. Documentation banner
 
@@ -671,6 +671,12 @@ The banner a checker compares is the first non-blank line of this file. `e1_allo
 ```
 </details>
 
+### 0g. ObjectGraph traversal index
+
+`ooc/*.og` is a derived index for frontier traversal. It is not the specbase, not live Markdown, not catalogue bytes, and not a second contract. The specbase remains the Markdown in `docs/`, `skills/`, and `systems/`.
+
+An intermediate node is one compressed `.og` file. It carries `::meta`, `::schema`, and `::index`, then nodes with `::dense` keywords, short `::full` routing lines, `::warning` lines, and typed edges. It does not copy a closed list, a Prolog structure image, or a predicate. Each file's entry node carries the §0b banner as a `::warning`. A terminal node is an uncompressed Markdown file. A `:requires` edge loads its target. A `:precedes` edge orders stages and does not load them. The root is `ooc/catalog.og`. Select one route from its index, then open a terminal only when the selected node names that file. On any conflict this file governs. The index does not discharge §8.16, does not write `graph.json`, and does not admit a row.
+
 ### 1. Purpose
 
 Single-file bipartite database: biological binders → protein targets. An edge lists PubMed identifiers for that pair, in one of two dictionaries separated by **study type**: `pair` for clinical benefit in humans, `preclinical` for non-human or in-vitro utility. Protein-only (§3, §8.8). The two are never merged and never ranked against each other (§7).
@@ -897,6 +903,7 @@ Rows that do not name 3 Nov 2026 were retrieved 1 Nov 2026 (Australia/Sydney). E
 | Wrap one closed-list fence in one compression wrapper | E7 holds |
 | Replace a fleet or swarm Prolog image with a cycle, a tree shape, or a YAML manifest, or wrap that image | E7 |
 | Run the workers in [`falsify.md`](falsify.md) | a survivor falsifies that prediction; a catch is not clinical proof |
+| Treat `ooc/*.og` as the contract or as catalogue bytes | this file still governs; the index admits nothing |
 
 A user AI writes the falsifier from [`falsify.md`](falsify.md) and runs it outside this repository, including the predecessor check when a predecessor exists. A passing result is scoped evidence, never proof of clinical truth.
 
