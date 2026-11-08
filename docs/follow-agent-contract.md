@@ -1,5 +1,3 @@
-⚠️ ACADEMIC RESEARCH PURPOSES ONLY; NOT FOR MEDICAL USE WITHOUT LICENSED OVERSIGHT
-
 # `graph.json` — agent contract
 
 `type: resource.reference` · **normative**. `docs/read-repository.md` is `type: initialization` and non-normative; on conflict this file governs.
@@ -43,7 +41,7 @@ compression = "details wrapper around one canonical fence"
 - Validating, merging, or extending catalogue bytes.
 - Resolving keys, proposing pairs, or launching de novo design.
 - Implementing a registered campaign system or interpreting its outputs.
-- Reading a fleet DAG, a swarm DAG, or the Merkle tree derived at traces.
+- Reading a fleet DAG, a swarm DAG, the Merkle tree derived at traces, or the context seal.
 - Reading the symbolic playground for the design agent or the proof agent.
 
 ## Contraindications
@@ -166,17 +164,13 @@ def backward(ti_holds):
 
 ### 0. Scope
 
-- **Read:** `graph.json`, `docs/*.md`, `skills/*.md`, `systems/*.md` (§11), `LICENSE`.
+- **Read:** `DISCLAIMER`, `graph.json`, `docs/*.md`, `skills/*.md`, `systems/*.md` (§11), `LICENSE`, and the traversal index `ooc/*.og` (§0g).
 - **Write:** `graph.json` and `proposals.json` only, under §9.
-- **Refuse:** writing scripts, workflows, CI, package manifests, or secondary data files in this repo, `proposals.json` (§9) being the single named exception; stored ranks, scores or grades; citations other than bare `pmid:<digits>`; empty citation arrays; pairs without qualifying evidence (§4); removal or rewriting of existing rows absent explicit human supersession. The specbase is the Markdown in `docs/`, `skills/`, and `systems/`. `graph.json` is the catalogue those files govern, not a spec and not a DSL. A falsifier, merger, or trace tool is written by a user AI at runtime, outside this repository, from these Markdown files. It is not committed here.
+- **Refuse:** writing scripts, workflows, CI, package manifests, or secondary data files in this repo, `proposals.json` (§9) and the traversal index `ooc/*.og` (§0g) being the named exceptions; stored ranks, scores or grades; citations other than bare `pmid:<digits>`; empty citation arrays; pairs without qualifying evidence (§4); removal or rewriting of existing rows absent explicit human supersession. The specbase is the Markdown in `docs/`, `skills/`, and `systems/`, and its top-level notice is `DISCLAIMER`. `graph.json` is the catalogue those files govern, not a spec and not a DSL. A falsifier, merger, or trace tool is written by a user AI at runtime, outside this repository, from these Markdown files. It is not committed here.
 
-### 0b. Documentation banner
+### 0b. Disclaimer
 
-Every Markdown file in this repository opens, as its **first non-blank line**, with the exact byte string
-
-`⚠️ ACADEMIC RESEARCH PURPOSES ONLY; NOT FOR MEDICAL USE WITHOUT LICENSED OVERSIGHT`
-
-— one fixed, repeated string, byte-identical in every file, never paraphrased, abbreviated or replaced by a cross-reference. It states **who may act on this repository**, and is deliberately distinct from §1, which states what the catalogue records; the two are not merged. This is a normative documentation invariant. It is **not** one of the nineteen §8 predicates and does not renumber them; it is checked as extension predicate E1 by the runtime falsifier ([`falsify.md`](falsify.md)).
+`DISCLAIMER` is the top-level notice of the specbase. The file sits at the repository root. It is one line and a terminating newline, about the length of `LICENSE`, with no quotation mark and no ASCII control. That line states who may act: academic research only, and no medical use without licensed oversight. It is distinct from §1, which states what the catalogue records. The two are not merged. No Markdown file repeats the line, and no header carries it. A report that emits a sequence copies the line onto that sequence. This is a normative documentation invariant. It is **not** one of the nineteen §8 predicates and does not renumber them. Extension predicate E1 ([`falsify.md`](falsify.md)) checks the file and refuses a copy in any Markdown header.
 
 ### 0c. Identity line
 
@@ -191,9 +185,9 @@ Every file in `skills/` and `systems/` names itself once, in the header, before 
 
 ### 0d. Scientific Markdown profile and documentation DAG
 
-**Live Markdown** is every repository `*.md`. The specbase is that set: `docs/`, `skills/`, and `systems/`. There is no fixture tree and no exempt path. `e6.fixture_paths` and `e1_allowlist` in §0f are empty. E1 checks the banner on every Markdown file.
+**Live Markdown** is every repository `*.md`. The specbase is that set: `docs/`, `skills/`, and `systems/`. Its top-level notice is the root file `DISCLAIMER`, which is not Markdown and is not a header. There is no fixture tree and no exempt path. `e6.fixture_paths` and `e1_allowlist` in §0f are empty. E1 checks that notice and refuses it on every Markdown header.
 
-The header has exactly the banner block, one column-zero H1, an optional one-line block containing `` `type: ...` ``, and one functional-description paragraph; no other pre-H2 prose is allowed. The description has one to three sentences and at most 384 UTF-8 bytes. It is followed by exactly these column-zero H2 headings, in order: `Specification`, `Graph`, `Composition`, `Indications`, `Contraindications`, `Algorithm`, `Citations`, `Falsification`, `Licence`. Fenced content never supplies headings; indented or setext H2s are refused.
+The header has exactly one column-zero H1, an optional one-line block containing `` `type: ...` ``, and one functional-description paragraph; no other pre-H2 prose is allowed. It does not carry the notice line. The description has one to three sentences and at most 384 UTF-8 bytes. It is followed by exactly these column-zero H2 headings, in order: `Specification`, `Graph`, `Composition`, `Indications`, `Contraindications`, `Algorithm`, `Citations`, `Falsification`, `Licence`. Fenced content never supplies headings; indented or setext H2s are refused.
 
 `Specification` contains one fenced JSON object of at most 2,048 UTF-8 bytes with these unique ordered fields: `id`, `type`, `role`, `reads`, `writes`, `must`, `check`. `id` is the repository-relative path; scalar values and array items are non-empty and at most 128 UTF-8 bytes, while `writes` may be an empty array. Outside fenced content, `Algorithm` contains `### Variables` followed by `### Process`, each exactly once. Every section is non-empty; the exact `Licence` body is one blank line followed by `MIT`.
 
@@ -250,6 +244,7 @@ swarms = ".pl"
 agent_fleet = "dag"
 agent_swarm = "dag"
 trace_merkle = "tree"
+og_merkle = "tree"
 
 [cybernetics]
 ai2a = "frontier"
@@ -303,7 +298,7 @@ A fleet record stores `nodes` and `edges`. Its shape is `dag`. Its unique indegr
 
 A swarm record stores `workers`, `join`, `sink`, and `second_parent`. Its shape is `dag`. The nodes are the workers plus `join` and `sink`. The edges are one edge from each worker to `join`, one edge from `join` to `sink`, and one edge from `second_parent` to `sink`. `second_parent` is one of the workers. `join` and `sink` are not workers. The directed graph is acyclic, every node is reachable from a root, and at least one node has indegree greater than one. The swarm image is that DAG: the seven workers depend on `decide`, and `decide` and `document` both depend on `literals`. The workers do not vote. The image does not schedule a cluster.
 
-Both images are DAGs. `shape(tree)` on either image fails E7. The profile key `trace_merkle` is `tree`. A trace ramifies each image into one Merkle tree under [`systems/record-traces.md`](../systems/record-traces.md). That tree is `text`, not a Prolog fence, and it is not the bench Merkle DAG. Tree cardinality binds the ramified tree only.
+Both images are DAGs. `shape(tree)` on either image fails E7. The profile key `trace_merkle` is `tree`. A trace ramifies each image into one Merkle tree under [`systems/record-traces.md`](../systems/record-traces.md). That tree is `text`, not a Prolog fence, and it is not the bench Merkle DAG. Tree cardinality binds the ramified tree only. The profile key `og_merkle` is `tree`. [`systems/seal-og.md`](../systems/seal-og.md) seals a context tree to that root. That tree is `text`. It is not the trace tree.
 
 The two fences below are examples. E7 checks that the typescript fence contains the channel tokens `AI2A` and `A2H`. E7 does not compile the Lean fence. The Lean fence is the cardinality check named above. It is not the symbolic playground.
 
@@ -365,7 +360,7 @@ Closed lists and normative patterns live in the collapsible fence `checker liter
 | campaign runtime | [`systems/run-campaign.md`](../systems/run-campaign.md) | the manifest table; this repository stores no fleet program |
 | fleet and swarm structure images | this file §0e and `e7.structure_images` | the expanded Prolog fences in `systems/run-campaign.md` and `docs/falsify.md` |
 
-The banner a checker compares is the first non-blank line of this file. `e1_allowlist` is empty, so E1 skips nothing. The edge cap in §0d is `|V| + 1`, stored here as `edge_surplus_max` of 2 because a tree has `|V| - 1` edges. A bracketed HELM symbol matches `monomer_symbol` and is refused when it is an all-uppercase run of length at least `monomer_uppercase_run_min_length`. Polymer-index normalisation applies `helm_index_normalise` and replaces each matched digit run with `#`.
+`DISCLAIMER` is the file a checker reads, and its single line is the notice. `e1_allowlist` is empty, so E1 skips nothing. The edge cap in §0d is `|V| + 1`, stored here as `edge_surplus_max` of 2 because a tree has `|V| - 1` edges. A bracketed HELM symbol matches `monomer_symbol` and is refused when it is an all-uppercase run of length at least `monomer_uppercase_run_min_length`. Polymer-index normalisation applies `helm_index_normalise` and replaces each matched digit run with `#`.
 
 <details>
 <summary>checker literals</summary>
@@ -522,7 +517,7 @@ The banner a checker compares is the first non-blank line of this file. `e1_allo
   "extensions": {
     "E1": [
       "pure-ext",
-      "Disclaimer banner (every .md first non-blank line)"
+      "DISCLAIMER at repo root; absent from Markdown headers"
     ],
     "E2": [
       "pure-ext",
@@ -773,6 +768,12 @@ The banner a checker compares is the first non-blank line of this file. `e1_allo
 ```
 </details>
 
+### 0g. ObjectGraph traversal index
+
+`ooc/*.og` is a derived index for frontier traversal. It is not the specbase, not live Markdown, not catalogue bytes, and not a second contract. The specbase remains the Markdown in `docs/`, `skills/`, and `systems/`.
+
+An intermediate node is one compressed `.og` file. It carries `::meta`, `::schema`, and `::index`, then nodes with `::dense` keywords, short `::full` routing lines, `::warning` lines, and typed edges. It does not copy a closed list, a Prolog structure image, or a predicate. Each file's entry node carries the §0b banner as a `::warning`. A terminal node is an uncompressed Markdown file. A `:requires` edge loads its target. A `:precedes` edge orders stages and does not load them. The root is `ooc/catalog.og`. Select one route from its index, then open a terminal only when the selected node names that file. On any conflict this file governs. The index does not discharge §8.16, does not write `graph.json`, and does not admit a row.
+
 ### 1. Purpose
 
 Single-file bipartite database: biological binders → protein targets. An edge lists PubMed identifiers for that pair, in one of two dictionaries separated by **study type**: `pair` for clinical benefit in humans, `preclinical` for non-human or in-vitro utility. Protein-only (§3, §8.8). The two are never merged and never ranked against each other (§7).
@@ -915,7 +916,7 @@ A proposed row failing any rule above is **refused**, naming the condition that 
 
 No separate directory is needed, and none is used: a `special` skill has **no output file**, so there is no boundary to erode. That write-nothing contract is what the class rests on, and it is checkable — **a `class: special` row declares write scope `none`**, and a skill whose output could reach either dictionary is not `special`, it is a catalogue skill and §4 binds it.
 
-The reader-facing warning is therefore not carried by a path either. It is carried by the **emitted report**, verbatim on the same block as every sequence (see the skill's §7), because the report is the only thing that leaves.
+The reader-facing warning is not a skill output file. The line lives in `DISCLAIMER`. The **emitted report** copies that line on the same block as every sequence (see the skill's §7), because the report is the only thing that leaves.
 
 | skill | class | namespaces (§3) | signature | write scope |
 |---|---|---|---|---|
@@ -961,14 +962,16 @@ A procedure of this contract is an `agent.skill`. A run of this contract is one 
 |---|---|---|
 | [`systems/use-bench.md`](../systems/use-bench.md) | a run-scoped append-only commons where a campaign's workers read and write partial work concurrently | its own `.bench` store only; never `graph.json`, never `proposals.json` |
 | [`systems/record-traces.md`](../systems/record-traces.md) | the act log of one `fleet.campaign` run, and the Merkle tree ramified from the fleet DAG | its own `.trace` store only, outside this repository; never `graph.json`, never `proposals.json`, never `.bench` |
+| [`systems/seal-og.md`](../systems/seal-og.md) | one context tree sealed to one Merkle root | its own `og.root` file only, outside this repository; never `graph.json`, never `proposals.json`, never `.bench`, never `.trace` |
 | [`systems/run-campaign.md`](../systems/run-campaign.md) | the Markdown runtime for one run: preflight, positive-control calibration, epitope-conditioned `design-binder`, and the handoff to `--trace` | no file in this repository; the executor appends the `.bench` and `.trace` stores outside this repository |
 
 - A system is not a skill and is not listed in §10. It originates nothing and admits nothing: §4 is untouched by anything written to a scratchpad or an act log, and a record in a `.bench` or `.trace` store is not a claim this file recognises.
 - `bench` is scoped to a single run and is discarded with it. It is not a second catalogue, and it is not a cache of `graph.json`.
 - Every `.bench` record declares an evidence tier, and no query pools across tiers — the same refusal §1 makes between clinical and preclinical, one layer down. A tier that is declared is not thereby honest; the line can only require the declaration.
 - The trace records acts, not evidence. The record has no tier, no study type, and no score. A `.trace` file is not a proposal and is not a bench. It is discarded with the run. The specification is `systems/record-traces.md`. That file also ramifies each structure DAG into one Merkle tree. The runtime falsifier decides it from that file and does not keep a second carrier list. That decision is pure and does not discharge §8.16.
+- The context seal commits one tree to one Merkle root. The root file is written outside this repository. It is not a bench store, not a trace store, and not ciphertext. The specification is `systems/seal-og.md`.
 - The rows of this table and the files `systems/*.md` are in bijection. That bijection is extension predicate E4. It is not a §8 predicate and it does not renumber them.
-- Three systems, named here exactly. A specification not listed in this section is not part of this contract.
+- Four systems, named here exactly. A specification not listed in this section is not part of this contract.
 
 ## Citations
 
@@ -1005,6 +1008,7 @@ Rows that name neither 3 Nov 2026 nor 9 Nov 2026 were retrieved 1 Nov 2026 (Aust
 | Run the workers in [`falsify.md`](falsify.md) | a survivor falsifies that prediction; a catch is not clinical proof |
 | Remove the Catalogue playground, wrap it, or put sandbox.playground in a header | E7 or E5 |
 | Treat playground Ti as predicate 16 or as the 2026-10-29 TLC model | the oracle stays not-discharged, and that TLC model stays off-repository |
+| Treat `ooc/*.og` as the contract or as catalogue bytes | this file still governs; the index admits nothing |
 
 A user AI writes the falsifier from [`falsify.md`](falsify.md) and runs it outside this repository, including the predecessor check when a predecessor exists. A passing result is scoped evidence, never proof of clinical truth.
 

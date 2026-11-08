@@ -1,5 +1,3 @@
-⚠️ ACADEMIC RESEARCH PURPOSES ONLY; NOT FOR MEDICAL USE WITHOUT LICENSED OVERSIGHT
-
 # `pin-references` — pinned reference table
 
 `type: resource.reference` · Repo: `wetware-hq/catalog` · Compiled 30 Oct 2026 (Australia/Sydney).

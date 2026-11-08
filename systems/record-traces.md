@@ -1,5 +1,3 @@
-⚠️ ACADEMIC RESEARCH PURPOSES ONLY; NOT FOR MEDICAL USE WITHOUT LICENSED OVERSIGHT
-
 # `TRACES` — act log
 
 `type: agent.system` · `spec: fleet.campaign` · subordinate to `docs/follow-agent-contract.md`, which governs on any conflict.
@@ -24,7 +22,7 @@ Define the content-addressed act log for one bounded `fleet.campaign` run and th
 
 - ← [../skills/design-binder.md](../skills/design-binder.md)
 - ← [../skills/propose-pairs.md](../skills/propose-pairs.md)
-- → [run-campaign.md](run-campaign.md)
+- → [seal-og.md](seal-og.md)
 
 ## Composition
 
@@ -70,7 +68,7 @@ merkle = "one root of the ramified image"
 [controlled]
 run = "SHA-256 of core.trace bytes"
 oracle = "not-discharged"
-disclaimer = "banner bytes inside the emit preimage"
+disclaimer = "DISCLAIMER line inside the emit preimage"
 ```
 
 ### Process
@@ -459,7 +457,7 @@ For `design-binder`, the gates `grammar`, `species`, `not-protein`, and `indicat
 
 These field names have no production: `auc`, `auroc`, `dict`, `dictionary`, `grade`, `kd`, `pair`, `pose`, `preclinical`, `rank`, `score`, `scores`, `tier`, `utility`.
 
-`gloss` belongs only to its context row. A context `verdict` is one of the four rows above. A `control` verdict is only `pass`, and its target is the admitted control target. `path` is `graph.json`. `oracle` is `not-discharged`. `kind` is `hypothesis`. `disclaimer` is the first non-blank line of this file, byte for byte.
+`gloss` belongs only to its context row. A context `verdict` is one of the four rows above. A `control` verdict is only `pass`, and its target is the admitted control target. `path` is `graph.json`. `oracle` is `not-discharged`. `kind` is `hypothesis`. `disclaimer` is the single line of `DISCLAIMER`, byte for byte.
 
 `binder` holds when the value satisfies `docs/follow-agent-contract.md` §8.7 and §8.8. `target` holds when it satisfies §8.9. `pmid` holds when it satisfies §8.10. The checker calls those predicates. It does not restate them. `subject` is not sent through them.
 
@@ -586,7 +584,7 @@ extension predicate E5 (`docs/follow-agent-contract.md` §0c). Neither decision 
 
 ### 7. Ramify
 
-A structure image is a DAG. The trace commits a tree. Ramify copies a DAG node once for each path from a root, then hashes that tree as one Merkle tree. `H` is the SHA-256 of §0. The preimage is UTF-8 and has no trailing newline. This tree is not the bench Merkle DAG: bench nodes may be shared, and a node here has one parent.
+A structure image is a DAG. The trace commits a tree. Ramify copies a DAG node once for each path from a root, then hashes that tree as one Merkle tree. `H` is the SHA-256 of §0. The preimage is UTF-8 and has no trailing newline. This tree is not the bench Merkle DAG: bench nodes may be shared, and a node here has one parent. It is not the context seal in [`seal-og.md`](seal-og.md), whose preimage heads are `og-leaf/1`, `og-branch/1`, and `og-root/1`.
 
 The image atom is `agent_fleet` or `agent_swarm`. A root is an indegree-zero node, taken in ascending byte order. A path starts at a root and follows edges. Its text is the atoms joined by `/`. A path whose last node has no successor is a leaf. Any other path is a branch. Successors are taken in ascending atom order, not hash order.
 

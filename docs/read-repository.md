@@ -1,5 +1,3 @@
-⚠️ ACADEMIC RESEARCH PURPOSES ONLY; NOT FOR MEDICAL USE WITHOUT LICENSED OVERSIGHT
-
 # catalog
 
 `type: initialization` · non-normative. `docs/follow-agent-contract.md` governs on any conflict.
@@ -13,9 +11,9 @@ Route a catalogue task through the smallest sufficient path in the documentation
   "id": "docs/read-repository.md",
   "type": "initialization",
   "role": "route tasks through the documentation DAG",
-  "reads": ["graph.json", "neighbor Markdown on demand"],
+  "reads": ["DISCLAIMER", "graph.json", "neighbor Markdown on demand", "ooc/catalog.og"],
   "writes": [],
-  "must": ["load the contract before any procedure", "treat absence as unknown"],
+  "must": ["read DISCLAIMER first", "load the contract before any procedure", "treat absence as unknown"],
   "check": ["E1", "E6", "E7"]
 }
 ```
@@ -30,6 +28,7 @@ Route a catalogue task through the smallest sufficient path in the documentation
 root = "this file"
 sink = "systems/run-campaign.md"
 stop = "first sufficient route"
+index = "ooc/catalog.og"
 ```
 
 ## Indications
@@ -39,11 +38,11 @@ stop = "first sufficient route"
 | read or rank rows | [`contract`](follow-agent-contract.md) |
 | resolve a key | contract → [`resolve-key`](../skills/resolve-key.md) |
 | propose a pair | contract → [`resolve-key`](../skills/resolve-key.md) → [`propose-pairs`](../skills/propose-pairs.md) |
-| design | contract → [`falsify`](falsify.md) → [`pins`](pin-references.md) → [`design`](../skills/design-binder.md) → [`traces`](../systems/record-traces.md); [`bench`](../systems/use-bench.md) → [`record`](../tmp/record-egfr-calibration.md) → [`run`](../systems/run-campaign.md) |
+| design | contract → [`falsify`](falsify.md) → [`pins`](pin-references.md) → [`design`](../skills/design-binder.md) → [`traces`](../systems/record-traces.md) → [`seal`](../systems/seal-og.md); [`bench`](../systems/use-bench.md) → [`record`](../tmp/record-egfr-calibration.md) → [`run`](../systems/run-campaign.md) |
 | falsify | contract → [`falsify`](falsify.md); the runtime is written outside the repository |
 | traces | contract + [`traces`](../systems/record-traces.md) → that runtime's trace judgement |
 
-Stop at the row's endpoint. Design continues to the sink.
+Stop at the row's endpoint. Design continues to the sink. Index: `ooc/catalog.og`.
 
 ## Contraindications
 
@@ -95,7 +94,8 @@ stateDiagram-v2
     Design --> Trace
     Propose --> Trace
     Contract --> Bench
-    Trace --> Run
+    Trace --> Seal
+    Seal --> Run
     Bench --> Summary
     Summary --> Run
     Read --> [*]
