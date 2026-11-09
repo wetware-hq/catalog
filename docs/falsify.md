@@ -51,7 +51,7 @@ trace = "act-log refusals"
 ## Indications
 
 - Compile the published Rust definitions and validate `AGENT_SWARM` before running a worker.
-- Read every code cell as normative serialization, a checked projection, or a runnable invocation.
+- Read a program template as an example. A frontier model writes the crate, images, manifest, and SQL from it at test time. Read every other code cell as normative serialization, a checked projection, or a runnable invocation.
 - Attack a premise before treating a passing decision as evidence.
 - Keep a `PEPTIDE` scope failure distinct from a monomer failure.
 - Carry `spec: agent.swarm` on this file, and show that any other header carrying it is refused.
@@ -174,7 +174,7 @@ Workers run concurrently and share no verdict. The run reports the set of verdic
 
 ### Structure
 
-The cell below is the symbolic projection of `AGENT_SWARM` in `src/organization/mod.rs`. Each worker publishes into `decide`; `decide` and `document` both publish into `literals`, so `literals` has two parents and the image is a DAG. E7 checks Rust, Kubernetes, and this projection for the same nodes and edges. A trace ramifies this DAG into one Merkle tree under [`systems/record-traces.md`](../systems/record-traces.md).
+The cell below is the symbolic projection of `AGENT_SWARM`. Each worker publishes into `decide`; `decide` and `document` both publish into `literals`, so `literals` has two parents and the image is a DAG. The program templates are the examples a frontier model writes to match this projection at test time. A trace ramifies this DAG into one Merkle tree under [`systems/record-traces.md`](../systems/record-traces.md).
 
 ```prolog { type: notebook.cell }
 image(agent_swarm).
@@ -280,6 +280,105 @@ order   = trace_id, sequence
 oracle  = not-discharged
 ```
 </details>
+
+### Program templates
+
+Examples of the organization. A frontier model writes `src/`, `agent.dockerfile`, `tracer.dockerfile`, `k8s/organization.yaml`, and `sql/actions.sql` from these cells at test time. This repository does not commit those files.
+
+```rust { type: notebook.cell }
+// One leaf file per AgentId. mod.rs holds the DAG and no definition.
+pub enum Agent {}
+
+impl AgentDefinition for Agent {
+    const ID: AgentId = AgentId::Bytes;
+    const ROLE: Role = Role::Worker;
+    const MODULE: &'static str = "organization::workers::bytes";
+    const CONSUMES: &'static [Capability] = &[Capability::CatalogueBytes];
+    const PUBLISHES: &'static [Capability] = &[Capability::BytesVerdict];
+}
+
+pub const DEFINITION: Published<Agent> = Published::new();
+```
+
+```dockerfile { type: notebook.cell }
+# agent.dockerfile
+FROM rust:1.85.0-bookworm AS build
+WORKDIR /workspace
+COPY Cargo.toml Cargo.lock ./
+COPY src ./src
+COPY sql ./sql
+RUN cargo build --locked --release --bin catalog-agent
+FROM gcr.io/distroless/cc-debian12:nonroot
+COPY --from=build /workspace/target/release/catalog-agent /usr/local/bin/catalog-agent
+USER nonroot:nonroot
+ENTRYPOINT ["/usr/local/bin/catalog-agent"]
+CMD ["serve"]
+```
+
+```dockerfile { type: notebook.cell }
+# tracer.dockerfile
+FROM rust:1.85.0-bookworm AS build
+RUN cargo build --locked --release --bin catalog-tracer
+FROM debian:bookworm-slim
+ARG KUBECTL_VERSION=v1.31.2
+ARG KUBECTL_SHA256=399e9d1995da80b64d2ef3606c1a239018660d8b35209fba3f7b0bc11c631c68
+# dl.k8s.io/release/${KUBECTL_VERSION}/bin/linux/amd64/kubectl
+COPY --from=build /workspace/target/release/catalog-tracer /usr/local/bin/catalog-tracer
+ENTRYPOINT ["/usr/local/bin/catalog-tracer"]
+```
+
+```yaml { type: notebook.cell }
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: catalog-agent-organization
+  namespace: catalog-agents
+spec:
+  template:
+    spec:
+      containers:
+        - name: bytes
+          image: ghcr.io/wetware-hq/catalog-agent:0.1.0
+          env:
+            - name: AGENT_ID
+              value: bytes
+# one container per AgentId, same image
+# catalog-tracer image: ghcr.io/wetware-hq/catalog-tracer:0.1.0
+```
+
+```sql { type: notebook.cell }
+-- sql/actions.sql
+CREATE TABLE IF NOT EXISTS agent_actions (
+  action_id TEXT PRIMARY KEY,
+  agent TEXT NOT NULL CHECK (
+    agent IN (
+      'bytes', 'grammar', 'identity', 'relation', 'oracle',
+      'document', 'trace', 'decide', 'literals'
+    )
+  ),
+  kind TEXT NOT NULL CHECK (
+    kind IN (
+      'started', 'ready', 'heartbeat', 'accepted',
+      'completed', 'refused', 'error', 'stopped'
+    )
+  )
+);
+```
+
+```json { type: notebook.cell }
+{
+  "schema": "catalog.agent.action/v1",
+  "action_id": "bytes-1-0-0",
+  "trace_id": "notebook-1",
+  "parent_action_id": null,
+  "organization": "agent_swarm",
+  "agent": "bytes",
+  "kind": "completed",
+  "sequence": 0,
+  "observed_at_unix_ms": 0,
+  "payload": {}
+}
+```
 
 ### Attacks
 

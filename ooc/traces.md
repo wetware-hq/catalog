@@ -21,6 +21,7 @@ banner | meta | all | 1.00 | academic, research, oversight, banner
 minimum | stage | all | 0.95 | trace, core, worker, result, partial
 contract | stage | all | 1.00 | run, skill, oracle, fleet
 record-traces | stage | all | 0.95 | act, parent, hash, merkle, R1-R10
+seal | stage | all | 0.95 | og-root, merkle, context-tree, web3, rulebook
 stop | assertion | all | 1.00 | endpoint, halt, sufficient
 __changelog | meta | all | 1.00 | changes, version
 ::end
@@ -30,7 +31,7 @@ __changelog | meta | all | 1.00 | changes, version
 academic|research|licensed-oversight
 ::end
 ::warning
-⚠️ ACADEMIC RESEARCH PURPOSES ONLY; NOT FOR MEDICAL USE WITHOUT LICENSED OVERSIGHT
+Read DISCLAIMER before any node.
 ::end
 ::edges
 ->[:precedes] minimum
@@ -82,6 +83,23 @@ No score, rank, grade, tier, or study type has a production in the act grammar.
 ::end
 ::edges
 ->[:requires] systems/record-traces.md
+->[:precedes] seal
+->[:precedes] stop
+::end
+::end
+
+::node [id=seal type=stage confidence=0.95 scope=all updated=2026-11-09]
+::dense
+context-tree|og-root|merkle|web3|rulebook
+::end
+::full
+Seal one context tree to one Merkle root. Endpoint is systems/seal-og.md.
+::end
+::warning
+The root is a commitment. It is not ciphertext and it admits no catalogue row.
+::end
+::edges
+->[:requires] systems/seal-og.md
 ->[:precedes] stop
 ::end
 ::end
@@ -101,5 +119,6 @@ on-fail: ->[:escalate] minimum
 ::node [id=__changelog type=meta confidence=1.00 scope=all updated=2026-11-09]
 ::changelog
 2026-11-09|added|node [minimum]|traces route
+2026-11-09|added|node [seal]|context tree Merkle root
 ::end
 ::end

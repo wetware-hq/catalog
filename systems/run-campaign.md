@@ -167,7 +167,7 @@ def backward(ti_holds):
 
 #### Structure image
 
-The phase diagram above is control flow. The cell below is the symbolic membership DAG of one `fleet.campaign`; it is downstream of the typed organization, not executable deployment syntax. `core` is the root, `halt` ends the run, `worker` is the member role, and `bench` and `trace` are stores. The bench Merkle DAG stays inside `bench`; the trace Merkle tree ramifies this DAG under [`record-traces.md`](record-traces.md). E7 checks this projection while `k8s/organization.yaml` schedules the concrete agent containers.
+The phase diagram above is control flow. The cell below is the symbolic membership DAG of one `fleet.campaign`; it is downstream of the typed organization, not executable deployment syntax. `core` is the root, `halt` ends the run, `worker` is the member role, and `bench` and `trace` are stores. The bench Merkle DAG stays inside `bench`; the trace Merkle tree ramifies this DAG under [`record-traces.md`](record-traces.md). E7 checks this projection. The test-time manifest, written from the program templates, schedules the concrete agent containers.
 
 ```prolog { type: notebook.cell }
 image(agent_fleet).

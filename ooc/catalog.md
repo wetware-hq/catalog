@@ -24,8 +24,10 @@ read | route | all | 0.99 | read, rank, rows, pair, preclinical, catalogue
 resolve | route | all | 0.99 | resolve, key, aa, helm, uniprot, identity
 propose | route | all | 0.97 | propose, intake, proposals, pmid, triple
 falsify | route | all | 0.99 | falsify, attack, predicate, survivor, swarm
-traces | route | all | 0.95 | trace, act, merkle, halt, result
+router | route | all | 0.99 | navigate, route, initialization, minimum-read
+traces | route | all | 0.95 | trace, act, merkle, halt, seal, og-root
 design | route | all | 0.95 | design, campaign, epitope, calibrate, bench, sink
+w004 | route | all | 0.90 | christmas, eveleigh, ratio, talent
 oracle-open | assertion | all | 1.00 | predicate-16, not-discharged, paper
 oracle-admit | assertion | orchestrator | 1.00 | human, admission, study-type, graph.json
 __changelog | meta | all | 1.00 | changes, version, index
@@ -36,7 +38,7 @@ __changelog | meta | all | 1.00 | changes, version, index
 academic|research|licensed-oversight|banner
 ::end
 ::warning
-⚠️ ACADEMIC RESEARCH PURPOSES ONLY; NOT FOR MEDICAL USE WITHOUT LICENSED OVERSIGHT
+Read DISCLAIMER before any node.
 ::end
 ::edges
 ->[:precedes] protocol
@@ -48,7 +50,7 @@ academic|research|licensed-oversight|banner
 search-index|resolve-context|llm-router|requires-loads|precedes-orders|dense-then-full
 ::end
 ::full
-Pass 1 reads this index. Select one route id. Open that .og file. Follow :requires only. A :precedes edge orders stages and does not load them. Read a terminal Markdown file only when the selected node names it. A ::warning is never skipped. A closed-list label stays closed until the task names it. Route stages are scope all. oracle-admit is scope orchestrator.
+search_index reads this ::index and stops. Select one route id. resolve_context opens that Markdown index and follows :requires. A :precedes edge orders stages and does not load them. A :see-also edge does not load. ::dense is the second pass. ::full is the third. Read a terminal Markdown file only when the selected node names it. A ::warning is never skipped. skip-if-known loads once per session. A closed-list label stays closed until the task names it. Route stages are scope all. oracle-admit is scope orchestrator.
 ::end
 ::table
 task | minimum read
@@ -58,6 +60,9 @@ propose a pair | contract → resolve-key → propose-pairs
 design | contract → falsify → pins → design → traces; bench → record → run
 falsify | contract → falsify; the runtime is written outside the repository
 traces | contract + traces → that runtime's trace judgement
+seal a context tree | traces → seal
+navigate | router
+W004 | w004
 ::end
 ::note
 Stop at the row's endpoint. Design continues to the sink. Source: docs/read-repository.md Indications. That file wins if this table differs.
@@ -72,6 +77,8 @@ format: https://arxiv.org/html/2604.27820v1 retrieved 2026-11-09 (Australia/Sydn
 ->[:see-also] falsify
 ->[:see-also] traces
 ->[:see-also] design
+->[:see-also] router
+->[:see-also] w004
 ->[:see-also] docs/read-repository.md
 ::end
 ::end
@@ -93,10 +100,10 @@ docs/follow-agent-contract.md governs. This index is not the specbase, not catal
 read|rank|one-dictionary|pin-sha|absence
 ::end
 ::full
-Open ooc/read.og. Endpoint is the contract.
+Open ooc/read.md. Endpoint is the contract.
 ::end
 ::edges
-->[:requires] ooc/read.og
+->[:requires] ooc/read.md
 ::end
 ::end
 
@@ -105,10 +112,10 @@ Open ooc/read.og. Endpoint is the contract.
 resolve|key|unresolved|unavailable|protein
 ::end
 ::full
-Open ooc/resolve.og. Endpoint is skills/resolve-key.md.
+Open ooc/resolve.md. Endpoint is skills/resolve-key.md.
 ::end
 ::edges
-->[:requires] ooc/resolve.og
+->[:requires] ooc/resolve.md
 ::end
 ::end
 
@@ -117,10 +124,10 @@ Open ooc/resolve.og. Endpoint is skills/resolve-key.md.
 propose|proposals.json|no-graph-write|no-study-type
 ::end
 ::full
-Open ooc/propose.og. Endpoint is skills/propose-pairs.md.
+Open ooc/propose.md. Endpoint is skills/propose-pairs.md.
 ::end
 ::edges
-->[:requires] ooc/propose.og
+->[:requires] ooc/propose.md
 ::end
 ::end
 
@@ -129,10 +136,10 @@ Open ooc/propose.og. Endpoint is skills/propose-pairs.md.
 falsify|attacks|workers|no-vote|outside-repo
 ::end
 ::full
-Open ooc/falsify.og. Endpoint is docs/falsify.md.
+Open ooc/falsify.md. Endpoint is docs/falsify.md.
 ::end
 ::edges
-->[:requires] ooc/falsify.og
+->[:requires] ooc/falsify.md
 ::end
 ::end
 
@@ -141,10 +148,10 @@ Open ooc/falsify.og. Endpoint is docs/falsify.md.
 trace|act-log|merkle|not-discharged
 ::end
 ::full
-Open ooc/traces.og. Endpoint is systems/record-traces.md.
+Open ooc/traces.md. Endpoint is systems/record-traces.md. The seal stage names systems/seal-og.md.
 ::end
 ::edges
-->[:requires] ooc/traces.og
+->[:requires] ooc/traces.md
 ::end
 ::end
 
@@ -153,10 +160,10 @@ Open ooc/traces.og. Endpoint is systems/record-traces.md.
 design|calibrate|epitope|worklist|sink
 ::end
 ::full
-Open ooc/design.og. Endpoint is systems/run-campaign.md. Resolve one stage when the task names it.
+Open ooc/design.md. Endpoint is systems/run-campaign.md. Resolve one stage when the task names it.
 ::end
 ::edges
-->[:requires] ooc/design.og
+->[:requires] ooc/design.md
 ::end
 ::end
 
@@ -190,8 +197,35 @@ Choosing pair versus preclinical is the oracle. An unread paper is not a default
 ::end
 ::end
 
+::node [id=router type=route confidence=0.99 scope=all updated=2026-11-09]
+::dense
+navigate|initialization|minimum-read|dag
+::end
+::full
+Open docs/read-repository.md. Stop at the first sufficient row.
+::end
+::edges
+->[:requires] docs/read-repository.md
+::end
+::end
+
+::node [id=w004 type=route confidence=0.90 scope=all updated=2026-11-09]
+::dense
+w004|christmas|eveleigh|clinical-cost|talent
+::end
+::full
+Open ooc/w004.md. Endpoint is docs/w004.md. The contract governs any sequence.
+::end
+::edges
+->[:requires] ooc/w004.md
+::end
+::end
+
 ::node [id=__changelog type=meta confidence=1.00 scope=all updated=2026-11-09]
 ::changelog
 2026-11-09|added|node [protocol]|traversal index over the Markdown specbase
+2026-11-09|added|node [w004]|Christmas 2026 evening proposal
+2026-11-09|added|node [router]|initialization route
+2026-11-09|updated|node [traces]|seal stage for the context-tree root
 ::end
 ::end

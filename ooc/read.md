@@ -29,7 +29,7 @@ __changelog | meta | all | 1.00 | changes, version
 academic|research|licensed-oversight
 ::end
 ::warning
-⚠️ ACADEMIC RESEARCH PURPOSES ONLY; NOT FOR MEDICAL USE WITHOUT LICENSED OVERSIGHT
+Read DISCLAIMER before any node.
 ::end
 ::edges
 ->[:precedes] minimum

@@ -11,7 +11,7 @@ Route each task through the smallest sufficient path. The contract governs the R
   "id": "docs/read-repository.md",
   "type": "initialization",
   "role": "route tasks through the documentation DAG",
-  "reads": ["DISCLAIMER", "graph.json", "neighbor Markdown on demand", "ooc/catalog.og"],
+  "reads": ["DISCLAIMER", "graph.json", "neighbor Markdown on demand", "ooc/catalog.md"],
   "writes": [],
   "must": ["read DISCLAIMER first", "load the contract before any procedure", "treat absence as unknown"],
   "check": ["E1", "E6", "E7"]
@@ -28,7 +28,7 @@ Route each task through the smallest sufficient path. The contract governs the R
 root = "this file"
 sink = "systems/run-campaign.md"
 stop = "first sufficient route"
-index = "ooc/catalog.og"
+index = "ooc/catalog.md"
 ```
 
 ## Indications
@@ -41,9 +41,10 @@ index = "ooc/catalog.og"
 | design | contract → [`falsify`](falsify.md) → [`pins`](pin-references.md) → [`design`](../skills/design-binder.md) → [`traces`](../systems/record-traces.md) → [`seal`](../systems/seal-og.md); [`bench`](../systems/use-bench.md) → [`record`](../tmp/record-egfr-calibration.md) → [`run`](../systems/run-campaign.md) |
 | falsify | contract → [`falsify`](falsify.md) |
 | traces | contract → [`traces`](../systems/record-traces.md) |
-| organize agents | contract → [`falsify`](falsify.md) → `k8s/organization.yaml` |
+| organize agents | contract → [`falsify`](falsify.md) program templates |
+| W004 evening | contract → [`w004`](w004.md) |
 
-Stop at the first sufficient row. Design continues to the sink. Index: `ooc/catalog.og`.
+Stop at the first sufficient row. Design continues to the sink. Index: `ooc/catalog.md`.
 
 ## Contraindications
 
@@ -60,7 +61,7 @@ Stop at the first sufficient row. Design continues to the sink. Index: `ooc/cata
 objective = "select the smallest sufficient read-before route"
 
 [independent]
-task = "read | resolve | propose | design | falsify | organize"
+task = "read | resolve | propose | design | falsify | organize | w004"
 
 [dependent]
 route = "first sufficient Markdown path"
@@ -95,6 +96,8 @@ stateDiagram-v2
     Design --> Trace
     Propose --> Trace
     Contract --> Bench
+    Contract --> W004: evening
+    W004 --> [*]
     Trace --> Seal
     Seal --> Run
     Bench --> Summary

@@ -1,12 +1,12 @@
 ::meta
-title: Resolve route
+title: Falsify route
 version: 1
 updated: 2026-11-09
-domain: catalog|resolve|key
+domain: catalog|falsify|swarm
 scope: all
 catalogue-version: 2
 governs: docs/follow-agent-contract.md
-checksum: sha256:8ccc669df3daef6870dbcc52d3c91efaff1b6675995aa48a3780152225b427ff
+checksum: sha256:65863485f358c789df8bca7be99359ef34ab3e452de6a356535c9da7d4fb6779
 ::end
 
 ::schema
@@ -18,9 +18,9 @@ scope-levels: [all, orchestrator, worker, readonly]
 ::index
 # id | type | scope | conf | keywords
 banner | meta | all | 1.00 | academic, research, oversight, banner
-minimum | stage | all | 0.99 | resolve, key, identity, unresolved, unavailable
-contract | stage | all | 1.00 | grammar, prefixes, molecule, predicate-13
-resolve-key | stage | all | 0.99 | admit, crc64, protein, no-write, release
+minimum | stage | all | 0.99 | falsify, premise, prediction, survivor, workers
+contract | stage | all | 1.00 | predicates, extensions, literals, structure-images
+falsify | stage | all | 0.99 | attacks, decide, dag, templates, dockerfile, sql
 stop | assertion | all | 1.00 | endpoint, halt, sufficient
 __changelog | meta | all | 1.00 | changes, version
 ::end
@@ -30,7 +30,7 @@ __changelog | meta | all | 1.00 | changes, version
 academic|research|licensed-oversight
 ::end
 ::warning
-⚠️ ACADEMIC RESEARCH PURPOSES ONLY; NOT FOR MEDICAL USE WITHOUT LICENSED OVERSIGHT
+Read DISCLAIMER before any node.
 ::end
 ::edges
 ->[:precedes] minimum
@@ -39,64 +39,64 @@ academic|research|licensed-oversight
 
 ::node [id=minimum type=stage confidence=0.99 scope=all updated=2026-11-09]
 ::dense
-resolve|contract-then-skill|two-verdicts|read-only
+falsify|contract|attacks|exit-0-corroborated|exit-1-survivor
 ::end
 ::full
-Cold start for key resolution. Stop at skills/resolve-key.md.
+Cold start for falsification. Stop at docs/falsify.md. The runtime is written outside this repository.
 ::end
 ::warning
-Refuse an ungrammatical key before any network call. Keep unresolved apart from unavailable. Catalogue absence is not a resolver verdict.
+Workers do not vote. A corroborated attack is not clinical proof. Predicate 16 stays not-discharged. agent.swarm is the spec of docs/falsify.md only.
 ::end
 ::edges
 ->[:requires] docs/follow-agent-contract.md
-->[:requires] skills/resolve-key.md
+->[:requires] docs/falsify.md
 ->[:precedes] stop
 ::end
 ::end
 
 ::node [id=contract type=stage confidence=1.00 scope=all updated=2026-11-09]
 ::dense
-aa|helm|uniprot|pmid|one-molecule
+checker-literals|E1-E7|predicates-1-19|structure-images
 ::end
 ::full
-Grammar for the key. Load this stage when the task is admission, not lookup.
+Laws the falsifier loads. Expand checker literals only when the task names that label.
 ::end
 ::edges
 ->[:requires] docs/follow-agent-contract.md
-->[:precedes] resolve-key
+->[:precedes] falsify
 ::end
 ::end
 
-::node [id=resolve-key type=stage confidence=0.99 scope=all updated=2026-11-09]
+::node [id=falsify type=stage confidence=0.99 scope=all updated=2026-11-09]
 ::dense
-admit|crc64|unresolved|unavailable|protein-only|no-write
+seven-workers|prolog-dag|decide|attacks|no-commit
 ::end
 ::full
-Endpoint of the resolve route.
+Endpoint of the falsify route.
 ::end
-::warning
-Do not cache unavailable. Do not align near-matches. Do not recover a citation from residues.
+::note
+Expand attacks only when the task names that label. The Prolog image stays outside compression.
 ::end
 ::edges
-->[:requires] skills/resolve-key.md
+->[:requires] docs/falsify.md
 ->[:precedes] stop
 ::end
 ::end
 
 ::node [id=stop type=assertion confidence=1.00 scope=all updated=2026-11-09]
 ::dense
-stop|endpoint|resolve-key
+stop|endpoint|falsify
 ::end
 ::assertion
-trigger: after [resolve-key]
-check: endpoint("skills/resolve-key.md")
-on-pass: ->[:proceed] resolve-key
+trigger: after [falsify]
+check: endpoint("docs/falsify.md")
+on-pass: ->[:proceed] falsify
 on-fail: ->[:escalate] minimum
 ::end
 ::end
 
 ::node [id=__changelog type=meta confidence=1.00 scope=all updated=2026-11-09]
 ::changelog
-2026-11-09|added|node [minimum]|resolve route
+2026-11-09|added|node [minimum]|falsify route
 ::end
 ::end
