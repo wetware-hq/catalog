@@ -21,9 +21,9 @@ Define the catalogue schema, evidence boundary, executable agent organization, a
 ## Graph
 
 - → [../skills/resolve-key.md](../skills/resolve-key.md)
+- → [../systems/use-bench.md](../systems/use-bench.md)
 - → [falsify.md](falsify.md)
 - ← [read-repository.md](read-repository.md)
-- → [w004.md](w004.md)
 
 ## Composition
 
@@ -43,7 +43,6 @@ compression = "details wrapper around one canonical fence"
 - Implementing a registered campaign system or interpreting its outputs.
 - Reading a fleet DAG, a swarm DAG, the Merkle tree derived at traces, or the context seal.
 - Reading the symbolic playground for the design agent or the proof agent.
-- Reading the W004 evening proposal.
 
 ## Contraindications
 
@@ -795,7 +794,7 @@ Closed lists and normative patterns live in the collapsible cell `checker litera
 
 `ooc/*.md` is the ObjectGraph index for frontier traversal. It is Markdown. It is not the specbase, not live Markdown, not catalogue bytes, and not a second contract. The specbase remains the Markdown in `docs/`, `skills/`, and `systems/`. The format conventions are those of ObjectGraph, arXiv:2604.27820v1, retrieved 9 Nov 2026 (Australia/Sydney): `::meta`, `::schema`, `::index`, then nodes.
 
-`search_index` reads the `::index` of `ooc/catalog.md` and stops. `resolve_context` opens the selected route file and follows `:requires`. `:precedes` orders stages and does not load them. `:see-also` does not load. `::dense` is the second pass. `::full` is the third. A `::warning` is never skipped and does not quote `DISCLAIMER`. `skip-if-known` loads once per session. An intermediate file does not copy a closed list, a Prolog structure image, or a predicate. A terminal is an uncompressed specbase Markdown file. Every live Markdown file is the target of at least one `:requires` edge. `docs/read-repository.md` is the `router` node. `systems/seal-og.md` is the `seal` stage on the traces route. `docs/w004.md` is the terminal of `ooc/w004.md`. On any conflict this file governs. The index does not discharge §8.16, does not write `graph.json`, and does not admit a row.
+`search_index` reads the `::index` of `ooc/catalog.md` and stops. `resolve_context` opens the selected route file and follows `:requires`. `:precedes` orders stages and does not load them. `:see-also` does not load. `::dense` is the second pass. `::full` is the third. A `::warning` is never skipped and does not quote `DISCLAIMER`. `skip-if-known` loads once per session. An intermediate file does not copy a closed list, a Prolog structure image, or a predicate. A terminal is an uncompressed specbase Markdown file. Every live Markdown file is the target of at least one `:requires` edge. `docs/read-repository.md` is the `router` node. `systems/seal-og.md` is the `seal` stage on the traces route. On any conflict this file governs. The index does not discharge §8.16, does not write `graph.json`, and does not admit a row.
 
 ### 1. Purpose
 

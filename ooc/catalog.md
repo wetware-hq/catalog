@@ -27,7 +27,6 @@ falsify | route | all | 0.99 | falsify, attack, predicate, survivor, swarm
 router | route | all | 0.99 | navigate, route, initialization, minimum-read
 traces | route | all | 0.95 | trace, act, merkle, halt, seal, og-root
 design | route | all | 0.95 | design, campaign, epitope, calibrate, bench, sink
-w004 | route | all | 0.90 | christmas, eveleigh, ratio, talent
 oracle-open | assertion | all | 1.00 | predicate-16, not-discharged, paper
 oracle-admit | assertion | orchestrator | 1.00 | human, admission, study-type, graph.json
 __changelog | meta | all | 1.00 | changes, version, index
@@ -62,7 +61,6 @@ falsify | contract → falsify; the runtime is written outside the repository
 traces | contract + traces → that runtime's trace judgement
 seal a context tree | traces → seal
 navigate | router
-W004 | w004
 ::end
 ::note
 Stop at the row's endpoint. Design continues to the sink. Source: docs/read-repository.md Indications. That file wins if this table differs.
@@ -78,7 +76,6 @@ format: https://arxiv.org/html/2604.27820v1 retrieved 2026-11-09 (Australia/Sydn
 ->[:see-also] traces
 ->[:see-also] design
 ->[:see-also] router
-->[:see-also] w004
 ->[:see-also] docs/read-repository.md
 ::end
 ::end
@@ -209,22 +206,9 @@ Open docs/read-repository.md. Stop at the first sufficient row.
 ::end
 ::end
 
-::node [id=w004 type=route confidence=0.90 scope=all updated=2026-11-09]
-::dense
-w004|christmas|eveleigh|clinical-cost|talent
-::end
-::full
-Open ooc/w004.md. Endpoint is docs/w004.md. The contract governs any sequence.
-::end
-::edges
-->[:requires] ooc/w004.md
-::end
-::end
-
 ::node [id=__changelog type=meta confidence=1.00 scope=all updated=2026-11-09]
 ::changelog
 2026-11-09|added|node [protocol]|traversal index over the Markdown specbase
-2026-11-09|added|node [w004]|Christmas 2026 evening proposal
 2026-11-09|added|node [router]|initialization route
 2026-11-09|updated|node [traces]|seal stage for the context-tree root
 ::end

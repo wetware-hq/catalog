@@ -20,7 +20,7 @@ Provide one run-scoped, append-only commons where workers exchange immutable par
 
 ## Graph
 
-- ← [../docs/w004.md](../docs/w004.md)
+- ← [../docs/follow-agent-contract.md](../docs/follow-agent-contract.md)
 - → [../tmp/record-egfr-calibration.md](../tmp/record-egfr-calibration.md)
 
 ## Composition

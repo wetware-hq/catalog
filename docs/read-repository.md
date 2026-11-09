@@ -42,7 +42,6 @@ index = "ooc/catalog.md"
 | falsify | contract → [`falsify`](falsify.md) |
 | traces | contract → [`traces`](../systems/record-traces.md) |
 | organize agents | contract → [`falsify`](falsify.md) program templates |
-| W004 evening | contract → [`w004`](w004.md) |
 
 Stop at the first sufficient row. Design continues to the sink. Index: `ooc/catalog.md`.
 
@@ -61,7 +60,7 @@ Stop at the first sufficient row. Design continues to the sink. Index: `ooc/cata
 objective = "select the smallest sufficient read-before route"
 
 [independent]
-task = "read | resolve | propose | design | falsify | organize | w004"
+task = "read | resolve | propose | design | falsify | organize"
 
 [dependent]
 route = "first sufficient Markdown path"
@@ -96,8 +95,6 @@ stateDiagram-v2
     Design --> Trace
     Propose --> Trace
     Contract --> Bench
-    Contract --> W004: evening
-    W004 --> [*]
     Trace --> Seal
     Seal --> Run
     Bench --> Summary
