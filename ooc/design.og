@@ -6,7 +6,7 @@ domain: catalog|design|campaign
 scope: all
 catalogue-version: 2
 governs: docs/follow-agent-contract.md
-checksum: sha256:61fd3808746cf9dd865fab2b6a6557ab6f8e876b7e6be61b5a924cd5ccf7d596
+checksum: sha256:96416d2e433e70f862159a8063e9b6cba77b063649326877b31d8ad9e1d6be94
 ::end
 
 ::schema

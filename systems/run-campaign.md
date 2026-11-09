@@ -2,7 +2,7 @@
 
 `type: agent.system` · `spec: fleet.campaign` · subordinate to `docs/follow-agent-contract.md`, which governs on any conflict.
 
-Specify one bounded design campaign from catalogue gate through positive-control calibration, epitope-conditioned generation, reporting, and trace verification. The caller supplies the scientific configuration; the Rust organization publishes worker identity and lifecycle only, with no hidden target, model, or request body.
+Specify one bounded design campaign from catalogue gate through positive-control calibration, epitope-conditioned generation, reporting, and trace verification. The caller supplies the scientific configuration; the organization template names worker identity and lifecycle only, with no hidden target, model, or request body.
 
 ## Specification
 
@@ -26,7 +26,7 @@ Specify one bounded design campaign from catalogue gate through positive-control
 ## Composition
 
 ```toml { type: notebook.cell }
-authority = "this Markdown contract plus typed Rust organization"
+authority = "this Markdown contract plus the organization template"
 inputs = ["target", "model composition"]
 phases = ["preflight", "catalogue gate", "target preparation", "positive control", "design", "screen", "verify"]
 stores = [".bench", ".trace"]
@@ -167,7 +167,7 @@ def backward(ti_holds):
 
 #### Structure image
 
-The phase diagram above is control flow. The cell below is the symbolic membership DAG of one `fleet.campaign`; it is downstream of the typed organization, not executable deployment syntax. `core` is the root, `halt` ends the run, `worker` is the member role, and `bench` and `trace` are stores. The bench Merkle DAG stays inside `bench`; the trace Merkle tree ramifies this DAG under [`record-traces.md`](record-traces.md). E7 checks this projection. The test-time manifest, written from the program templates, schedules the concrete agent containers.
+The phase diagram above is control flow. The cell below is the symbolic membership DAG of one `fleet.campaign`; it is downstream of the typed organization, not executable deployment syntax. `core` is the root, `halt` ends the run, `worker` is the member role, and `bench` and `trace` are stores. The bench Merkle DAG stays inside `bench`; the trace Merkle tree ramifies this DAG under [`record-traces.md`](record-traces.md). E7 checks this projection. The test-time manifest, written from the organization template, schedules the concrete agent containers.
 
 ```prolog { type: notebook.cell }
 image(agent_fleet).
@@ -262,20 +262,16 @@ Every sequence that leaves the run carries the line of `DISCLAIMER` in its own b
 
 #### 5. Materialize and verify
 
-Write `core.bench`, `core.trace`, `merkle.trace`, and one worker head per participating component outside the repository under `systems/use-bench.md` and `systems/record-traces.md`. A failed control records a `refuse` act with gate `positive-control`, then one `halt`; an unavailable provider records `unavailable` at `generator`. The runtime falsifier written from [`docs/falsify.md`](../docs/falsify.md) decides every completed trace. The command below is an example of that program's surface. It is not a path in this repository.
+Write `core.bench`, `core.trace`, `merkle.trace`, and one worker head per participating component outside the repository under `systems/use-bench.md` and `systems/record-traces.md`. A failed control records a `refuse` act with gate `positive-control`, then one `halt`; an unavailable provider records `unavailable` at `generator`. The runtime falsifier written from [`docs/falsify.md`](../docs/falsify.md) decides every completed trace. The guide below is the surface. It is not a path in this repository.
 
-```bash { type: notebook.cell }
-kubectl apply -f k8s/organization.yaml
-cargo run --bin catalog-tracer -- \
-  --jsonl /path/to/actions.jsonl \
-  --sql /path/to/actions.sql \
-  kubernetes \
-  --namespace catalog-agents \
-  --selector catalog.agent/component=agent \
-  --follow
+```text { type: notebook.cell }
+apply the organization template outside this repository
+one role per agent id
+tracer reads logs for catalog.agent/component=agent
+append jsonl and idempotent sql beside the run
 ```
 
-The Rust suite checks typed definitions, DAG validity, action serialization, JSONL/SQL archiving, and deployment consistency. It is not a semantic catalogue checker and does not mock provider execution. Scientific execution remains evidenced by materialized requests, responses, the control result, and the campaign trace.
+A test-time program checks the organization template, action shape, and archive columns. It is not a semantic catalogue checker and does not mock provider execution. Scientific execution remains evidenced by materialized requests, responses, the control result, and the campaign trace.
 
 ## Citations
 

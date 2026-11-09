@@ -6,7 +6,7 @@ domain: catalog|orchestration
 scope: all
 catalogue-version: 2
 governs: docs/follow-agent-contract.md
-checksum: sha256:4f3112ad7fe2adc976742599824047fea77978fe873a2458800ea3525d03f4ff
+checksum: sha256:cdf1e1552578167f9d7eda9d0d0e39cef41eeef16379b78762ff74f38d7c28bd
 ::end
 
 ::schema
@@ -24,6 +24,7 @@ read | route | all | 0.99 | read, rank, rows, pair, preclinical, catalogue
 resolve | route | all | 0.99 | resolve, key, aa, helm, uniprot, identity
 propose | route | all | 0.97 | propose, intake, proposals, pmid, triple
 falsify | route | all | 0.99 | falsify, attack, predicate, survivor, swarm
+organize | route | all | 0.95 | organize, template, swarm, test-time
 router | route | all | 0.99 | navigate, route, initialization, minimum-read
 traces | route | all | 0.95 | trace, act, merkle, halt, seal, og-root
 design | route | all | 0.95 | design, campaign, epitope, calibrate, bench, sink
@@ -58,6 +59,7 @@ resolve a key | contract → resolve-key
 propose a pair | contract → resolve-key → propose-pairs
 design | contract → falsify → pins → design → traces; bench → record → run
 falsify | contract → falsify; the runtime is written outside the repository
+organize | contract → falsify; expand organization template
 traces | contract + traces → that runtime's trace judgement
 seal a context tree | traces → seal
 navigate | router
@@ -73,6 +75,7 @@ format: https://arxiv.org/html/2604.27820v1 retrieved 2026-11-09 (Australia/Sydn
 ->[:see-also] resolve
 ->[:see-also] propose
 ->[:see-also] falsify
+->[:see-also] organize
 ->[:see-also] traces
 ->[:see-also] design
 ->[:see-also] router
@@ -85,7 +88,7 @@ format: https://arxiv.org/html/2604.27820v1 retrieved 2026-11-09 (Australia/Sydn
 contract-governs|specbase-markdown|index-not-catalogue|oracle-open
 ::end
 ::warning
-docs/follow-agent-contract.md governs. This index is not the specbase, not catalogue bytes, and not an admission.
+docs/follow-agent-contract.md governs. This index routes the specbase. It is not catalogue bytes and not an admission.
 ::end
 ::edges
 ->[:see-also] docs/follow-agent-contract.md
@@ -97,10 +100,10 @@ docs/follow-agent-contract.md governs. This index is not the specbase, not catal
 read|rank|one-dictionary|pin-sha|absence
 ::end
 ::full
-Open ooc/read.md. Endpoint is the contract.
+Open ooc/read.og. Endpoint is the contract.
 ::end
 ::edges
-->[:requires] ooc/read.md
+->[:requires] ooc/read.og
 ::end
 ::end
 
@@ -109,10 +112,10 @@ Open ooc/read.md. Endpoint is the contract.
 resolve|key|unresolved|unavailable|protein
 ::end
 ::full
-Open ooc/resolve.md. Endpoint is skills/resolve-key.md.
+Open ooc/resolve.og. Endpoint is skills/resolve-key.md.
 ::end
 ::edges
-->[:requires] ooc/resolve.md
+->[:requires] ooc/resolve.og
 ::end
 ::end
 
@@ -121,10 +124,10 @@ Open ooc/resolve.md. Endpoint is skills/resolve-key.md.
 propose|proposals.json|no-graph-write|no-study-type
 ::end
 ::full
-Open ooc/propose.md. Endpoint is skills/propose-pairs.md.
+Open ooc/propose.og. Endpoint is skills/propose-pairs.md.
 ::end
 ::edges
-->[:requires] ooc/propose.md
+->[:requires] ooc/propose.og
 ::end
 ::end
 
@@ -133,10 +136,10 @@ Open ooc/propose.md. Endpoint is skills/propose-pairs.md.
 falsify|attacks|workers|no-vote|outside-repo
 ::end
 ::full
-Open ooc/falsify.md. Endpoint is docs/falsify.md.
+Open ooc/falsify.og. Endpoint is docs/falsify.md.
 ::end
 ::edges
-->[:requires] ooc/falsify.md
+->[:requires] ooc/falsify.og
 ::end
 ::end
 
@@ -145,10 +148,10 @@ Open ooc/falsify.md. Endpoint is docs/falsify.md.
 trace|act-log|merkle|not-discharged
 ::end
 ::full
-Open ooc/traces.md. Endpoint is systems/record-traces.md. The seal stage names systems/seal-og.md.
+Open ooc/traces.og. Endpoint is systems/record-traces.md. The seal stage names systems/seal-og.md.
 ::end
 ::edges
-->[:requires] ooc/traces.md
+->[:requires] ooc/traces.og
 ::end
 ::end
 
@@ -157,10 +160,10 @@ Open ooc/traces.md. Endpoint is systems/record-traces.md. The seal stage names s
 design|calibrate|epitope|worklist|sink
 ::end
 ::full
-Open ooc/design.md. Endpoint is systems/run-campaign.md. Resolve one stage when the task names it.
+Open ooc/design.og. Endpoint is systems/run-campaign.md. Resolve one stage when the task names it.
 ::end
 ::edges
-->[:requires] ooc/design.md
+->[:requires] ooc/design.og
 ::end
 ::end
 
@@ -194,6 +197,18 @@ Choosing pair versus preclinical is the oracle. An unread paper is not a default
 ::end
 ::end
 
+::node [id=organize type=route confidence=0.95 scope=all updated=2026-11-09]
+::dense
+organize|template|test-time|no-commit
+::end
+::full
+Open ooc/falsify.og. Expand organization template only when the task names that label.
+::end
+::edges
+->[:requires] ooc/falsify.og
+::end
+::end
+
 ::node [id=router type=route confidence=0.99 scope=all updated=2026-11-09]
 ::dense
 navigate|initialization|minimum-read|dag
@@ -211,5 +226,6 @@ Open docs/read-repository.md. Stop at the first sufficient row.
 2026-11-09|added|node [protocol]|traversal index over the Markdown specbase
 2026-11-09|added|node [router]|initialization route
 2026-11-09|updated|node [traces]|seal stage for the context-tree root
+2026-11-09|added|node [organize]|organization template route
 ::end
 ::end

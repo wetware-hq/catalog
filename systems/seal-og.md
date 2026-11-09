@@ -272,7 +272,7 @@ The root vertex id is `c5602896e77f36e68f7628e8f192afe4d8648a13fa84c822370734f13
 
 ### 6. Status
 
-Licensed oversight is required for any use of this system; none has been performed to date.
+The notice is `DISCLAIMER`. No licensed oversight has been performed.
 
 This Markdown file is the seal authority. An executor parses, canonicalizes, and hashes outside the repository, writes `og.root` there, and does not write a program into this repository. Receivers recompute `H(C(G))` and refuse a file that is not the two lines in §4.
 

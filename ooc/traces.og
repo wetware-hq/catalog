@@ -6,7 +6,7 @@ domain: catalog|trace|merkle
 scope: all
 catalogue-version: 2
 governs: docs/follow-agent-contract.md
-checksum: sha256:53ba2e8fbd0d0c4a1a0240512ce703973f3e31d5e5180f7e7186ee45264d31e1
+checksum: sha256:b798d43e46642e2a49aae784bd70bc0d2848e4d203590d8f253c146f285ed101
 ::end
 
 ::schema

@@ -1,12 +1,12 @@
 ::meta
-title: Falsify route
+title: Resolve route
 version: 1
 updated: 2026-11-09
-domain: catalog|falsify|swarm
+domain: catalog|resolve|key
 scope: all
 catalogue-version: 2
 governs: docs/follow-agent-contract.md
-checksum: sha256:65863485f358c789df8bca7be99359ef34ab3e452de6a356535c9da7d4fb6779
+checksum: sha256:73c03593425522f3fc1d1587d0198075755240f80925cf8e565e726751c667c7
 ::end
 
 ::schema
@@ -18,9 +18,9 @@ scope-levels: [all, orchestrator, worker, readonly]
 ::index
 # id | type | scope | conf | keywords
 banner | meta | all | 1.00 | academic, research, oversight, banner
-minimum | stage | all | 0.99 | falsify, premise, prediction, survivor, workers
-contract | stage | all | 1.00 | predicates, extensions, literals, structure-images
-falsify | stage | all | 0.99 | attacks, decide, dag, templates, dockerfile, sql
+minimum | stage | all | 0.99 | resolve, key, identity, unresolved, unavailable
+contract | stage | all | 1.00 | grammar, prefixes, molecule, predicate-13
+resolve-key | stage | all | 0.99 | admit, crc64, protein, no-write, release
 stop | assertion | all | 1.00 | endpoint, halt, sufficient
 __changelog | meta | all | 1.00 | changes, version
 ::end
@@ -39,64 +39,64 @@ Read DISCLAIMER before any node.
 
 ::node [id=minimum type=stage confidence=0.99 scope=all updated=2026-11-09]
 ::dense
-falsify|contract|attacks|exit-0-corroborated|exit-1-survivor
+resolve|contract-then-skill|two-verdicts|read-only
 ::end
 ::full
-Cold start for falsification. Stop at docs/falsify.md. The runtime is written outside this repository.
+Cold start for key resolution. Stop at skills/resolve-key.md.
 ::end
 ::warning
-Workers do not vote. A corroborated attack is not clinical proof. Predicate 16 stays not-discharged. agent.swarm is the spec of docs/falsify.md only.
+Refuse an ungrammatical key before any network call. Keep unresolved apart from unavailable. Catalogue absence is not a resolver verdict.
 ::end
 ::edges
 ->[:requires] docs/follow-agent-contract.md
-->[:requires] docs/falsify.md
+->[:requires] skills/resolve-key.md
 ->[:precedes] stop
 ::end
 ::end
 
 ::node [id=contract type=stage confidence=1.00 scope=all updated=2026-11-09]
 ::dense
-checker-literals|E1-E7|predicates-1-19|structure-images
+aa|helm|uniprot|pmid|one-molecule
 ::end
 ::full
-Laws the falsifier loads. Expand checker literals only when the task names that label.
+Grammar for the key. Load this stage when the task is admission, not lookup.
 ::end
 ::edges
 ->[:requires] docs/follow-agent-contract.md
-->[:precedes] falsify
+->[:precedes] resolve-key
 ::end
 ::end
 
-::node [id=falsify type=stage confidence=0.99 scope=all updated=2026-11-09]
+::node [id=resolve-key type=stage confidence=0.99 scope=all updated=2026-11-09]
 ::dense
-seven-workers|prolog-dag|decide|attacks|no-commit
+admit|crc64|unresolved|unavailable|protein-only|no-write
 ::end
 ::full
-Endpoint of the falsify route.
+Endpoint of the resolve route.
 ::end
-::note
-Expand attacks only when the task names that label. The Prolog image stays outside compression.
+::warning
+Do not cache unavailable. Do not align near-matches. Do not recover a citation from residues.
 ::end
 ::edges
-->[:requires] docs/falsify.md
+->[:requires] skills/resolve-key.md
 ->[:precedes] stop
 ::end
 ::end
 
 ::node [id=stop type=assertion confidence=1.00 scope=all updated=2026-11-09]
 ::dense
-stop|endpoint|falsify
+stop|endpoint|resolve-key
 ::end
 ::assertion
-trigger: after [falsify]
-check: endpoint("docs/falsify.md")
-on-pass: ->[:proceed] falsify
+trigger: after [resolve-key]
+check: endpoint("skills/resolve-key.md")
+on-pass: ->[:proceed] resolve-key
 on-fail: ->[:escalate] minimum
 ::end
 ::end
 
 ::node [id=__changelog type=meta confidence=1.00 scope=all updated=2026-11-09]
 ::changelog
-2026-11-09|added|node [minimum]|falsify route
+2026-11-09|added|node [minimum]|resolve route
 ::end
 ::end

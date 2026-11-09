@@ -2,7 +2,7 @@
 
 `type: resource.reference` · **normative**. `docs/read-repository.md` is `type: initialization` and non-normative; on conflict this file governs.
 
-Define the catalogue schema, evidence boundary, executable agent organization, and campaign-system registry. Markdown cells carry the normative reasoning model; the Rust crate, container recipes, Kubernetes manifest, and archive schema carry its executable organization.
+Define the catalogue schema, the evidence boundary, the type-safe organization, and the campaign registry. Fences are templates a frontier model may write at test time. This repository ships the specification, not that program.
 
 ## Specification
 
@@ -11,9 +11,9 @@ Define the catalogue schema, evidence boundary, executable agent organization, a
   "id": "docs/follow-agent-contract.md",
   "type": "resource.reference",
   "role": "normative catalogue and agent-system contract",
-  "reads": ["graph.json", "registered Markdown", "program templates", "paper evidence"],
+  "reads": ["graph.json", "registered Markdown", "organization template", "paper evidence"],
   "writes": ["graph.json under human supersession", "proposals.json under section 9"],
-  "must": ["preserve canonical bytes", "leave the paper oracle explicit", "publish typed agents", "keep code cells definitive"],
+  "must": ["preserve canonical bytes", "leave the paper oracle explicit", "publish typed agents", "keep fences as templates"],
   "check": ["predicates 1-19", "E1-E7"]
 }
 ```
@@ -51,7 +51,7 @@ compression = "details wrapper around one canonical fence"
 - `pair` and `preclinical` are study types, not evidence grades, and are never pooled.
 - A missing row is unknown coverage, not evidence that no binder exists.
 - Repository-local `agent.skill` and `fleet.campaign` are not claims of conformance with external Agent Skills or A2A.
-- A Prolog structure image is the symbolic projection of the typed Rust graph. Kubernetes executes that organization but does not alter its edges.
+- A Prolog structure image is the symbolic projection of the organization template. A test-time schedule may run that organization and does not alter its edges.
 - A symbolic playground is a shape check. It is not a discharged proof, not a TLC run, and not predicate 16.
 
 ## Algorithm
@@ -164,9 +164,9 @@ def backward(ti_holds):
 
 ### 0. Scope
 
-- **Read:** `DISCLAIMER`, `graph.json`, live Markdown, `ooc/*.md` (§0g), and `LICENSE`.
-- **Write:** catalogue procedures still write only `graph.json` and `proposals.json` under §9. The traversal index `ooc/*.md` is the other named write. A frontier model writes the crate, images, manifest, and SQL from the program templates in `docs/falsify.md` at test time. This repository does not commit those files.
-- **Refuse:** stored ranks, scores or grades; citations other than bare `pmid:<digits>`; empty citation arrays; pairs without qualifying evidence (§4); removal or rewriting of existing rows absent explicit human supersession; an untyped agent, an unvalidated organization edge, or an archive format outside `.jsonl` and `.sql`. The specbase is the Markdown in `docs/`, `skills/`, and `systems/`, and its top-level notice is `DISCLAIMER`. `graph.json` remains the catalogue, not executable configuration and not a DSL. The program templates name agent identity, topology, lifecycle actions, and archiving. The semantic decision procedure stays in this Markdown. Neither automates predicate 16 nor adds a catalogue write path.
+- **Read:** `DISCLAIMER`, `graph.json`, live Markdown, `ooc/*.og` (§0g), and `LICENSE`.
+- **Write:** catalogue procedures still write only `graph.json` and `proposals.json` under §9. The traversal index `ooc/*.og` is the other named write. A frontier model writes a program, images, a manifest, and SQL from the organization template in `docs/falsify.md` at test time. This repository does not commit those files.
+- **Refuse:** stored ranks, scores or grades; citations other than bare `pmid:<digits>`; empty citation arrays; pairs without qualifying evidence (§4); removal or rewriting of existing rows absent explicit human supersession; an untyped agent, an unvalidated organization edge, or an archive format outside `.jsonl` and `.sql`. The specbase is the Markdown in `docs/`, `skills/`, and `systems/`, and its top-level notice is `DISCLAIMER`. `graph.json` remains the catalogue, not executable configuration and not a DSL. The organization template names agent identity, topology, lifecycle actions, and archiving. The semantic decision procedure stays in this Markdown. Neither automates predicate 16 nor adds a catalogue write path.
 
 ### 0b. Disclaimer
 
@@ -181,11 +181,11 @@ Every file in `skills/` and `systems/` names itself once, in the header, before 
 | `skills/` | a `resource.procedure`, spec `agent.skill`. The one skill §10 marks `special` also says so. The others do not. |
 | `systems/` | an `agent.system`, spec `fleet.campaign`. No class. |
 
-`agent.skill` is the spec of a procedure. `fleet.campaign` is the spec of one run. `agent.swarm` is the spec of the falsifier [`falsify.md`](falsify.md), and of no other Markdown file. A header on any other path that carries `agent.swarm` fails E5. `agent.fleet` is not a spec and not a type. A header that carries it fails E5. `sandbox.playground` is the symbolic-playground fence type in §0e. It is not a spec and not a header type. A header that carries `sandbox.playground` fails E5. A header outside `skills/` and `systems/` that carries `agent.skill` or `fleet.campaign` fails E5: that file is an orphan. `e5_spec_allowlist` in §0f is empty: no fixture is exempt, and no path outside `skills/` is a skill. `docs/falsify.md` is the only entry of `e5_swarm_paths`. The campaign semantics remain in [`systems/run-campaign.md`](../systems/run-campaign.md); the test-time agent publishes typed identities and lifecycle actions but supplies no target, provider, or scientific default. The Prolog fences are the symbolic `agent.swarm`; a frontier model writes the executable graph from the program templates. Neither image is a header.
+`agent.skill` is the spec of a procedure. `fleet.campaign` is the spec of one run. `agent.swarm` is the spec of the falsifier [`falsify.md`](falsify.md), and of no other Markdown file. A header on any other path that carries `agent.swarm` fails E5. `agent.fleet` is not a spec and not a type. A header that carries it fails E5. `sandbox.playground` is the symbolic-playground fence type in §0e. It is not a spec and not a header type. A header that carries `sandbox.playground` fails E5. A header outside `skills/` and `systems/` that carries `agent.skill` or `fleet.campaign` fails E5: that file is an orphan. `e5_spec_allowlist` in §0f is empty: no fixture is exempt, and no path outside `skills/` is a skill. `docs/falsify.md` is the only entry of `e5_swarm_paths`. The campaign semantics remain in [`systems/run-campaign.md`](../systems/run-campaign.md); the test-time agent publishes typed identities and lifecycle actions but supplies no target, provider, or scientific default. The Prolog fences are the symbolic `agent.swarm`; a frontier model writes the executable graph from the organization template. Neither image is a header.
 
 ### 0d. Scientific Markdown profile and documentation DAG
 
-**Live Markdown** is every repository `*.md` outside `ooc/`. The specbase is `docs/`, `skills/`, and `systems/`. `tmp/*.md` is live and is not a second specbase. Its top-level notice is the root file `DISCLAIMER`, which is not Markdown and is not a header. `ooc/*.md` is the traversal index (§0g), not a fixture. `e6.fixture_paths` and `e1_allowlist` in §0f are empty. E6 does not read `ooc/`. E1 checks that notice and refuses it on every Markdown header, including `ooc/`.
+**Live Markdown** is every repository `*.md`. The specbase is `docs/`, `skills/`, and `systems/`. `tmp/*.md` is live and is not a second specbase. Its top-level notice is the root file `DISCLAIMER`, which is not Markdown and is not a header. `ooc/*.og` is the traversal index (§0g), not Markdown and not a fixture. `e6.fixture_paths` and `e1_allowlist` in §0f are empty. E6 does not read `ooc/`. E1 checks that notice and refuses it on every Markdown header.
 
 The header has exactly one column-zero H1, an optional one-line block containing `` `type: ...` ``, and one functional-description paragraph; no other pre-H2 prose is allowed. It does not carry the notice line. The description has one to three sentences and at most 384 UTF-8 bytes. It is followed by exactly these column-zero H2 headings, in order: `Specification`, `Graph`, `Composition`, `Indications`, `Contraindications`, `Algorithm`, `Citations`, `Falsification`, `Licence`. Fenced content never supplies headings; indented or setext H2s are refused.
 
@@ -208,7 +208,7 @@ E6 checks the functional paragraph, H2 profile, JSON card, variable/process head
 
 ### 0e. Formal language profile
 
-The profile selects a language when that artifact exists. It does not require a placeholder fence for an absent artifact. The symbolic playground is required in every live Markdown file, and this repository does not run that loop. Extensions below name standalone artifacts. Inside Markdown, use the canonical lowercase fence tag for that language. Exact `.trace` and `.bench` protocol bytes are `text`. Terminal command wrappers are `bash`. Terminal tools are `python`, extension `.py`. Interfaces are `typescript`, extension `.ts`. The cybernetics channels are `AI2A` (frontier, agent to agent) and `A2H` (HITL, agent to human). In this profile, `frontier` names the caller-supplied model on channel `AI2A`. The Pareto reading of that word stays in `skills/design-binder.md`. Structure images of `agent.fleet` and `agent.swarm` are `prolog`, extension `.pl`, and each image is a DAG. A preferred extension with no committed fence remains the selector for that artifact. Agent definitions and their module-tree organization are public Rust items a frontier model writes at test time. Exemplary templates of the crate, `agent.dockerfile`, `tracer.dockerfile`, `k8s/organization.yaml`, and `sql/actions.sql` are notebook cells in `docs/falsify.md`. This repository does not commit those files. Prolog remains the symbolic projection of that graph. Outside the playground, every opening fence is a notebook cell with the metadata `{ type: notebook.cell }`.
+The profile selects a language when that artifact exists. It does not require a placeholder fence for an absent artifact. The symbolic playground is required in every live Markdown file, and this repository does not run that loop. Extensions below name standalone artifacts. Inside Markdown, use the canonical lowercase fence tag for that language. Exact `.trace` and `.bench` protocol bytes are `text`. Terminal command wrappers are `bash`. Terminal tools are `python`, extension `.py`. Interfaces are `typescript`, extension `.ts`. The cybernetics channels are `AI2A` (frontier, agent to agent) and `A2H` (HITL, agent to human). In this profile, `frontier` names the caller-supplied model on channel `AI2A`. The Pareto reading of that word stays in `skills/design-binder.md`. Structure images of `agent.fleet` and `agent.swarm` are `prolog`, extension `.pl`, and each image is a DAG. A preferred extension with no committed fence remains the selector for that artifact. The organization template names the swarm. A frontier model may write a program, an image, a manifest, and an archive from it at test time. None of those files is committed. Prolog remains the symbolic projection of that graph. Outside the playground, every opening fence is a notebook cell with the metadata `{ type: notebook.cell }`.
 
 ```toml { type: notebook.cell }
 [preferred]
@@ -227,7 +227,7 @@ source = ".tla"
 executable = ".lisp"
 forward = ".lean"
 backward = ".bend"
-upstream = ".rs and programming-language fences"
+upstream = "test-time program and programming-language fences"
 design = "skills/design-binder.md"
 proof = "docs/falsify.md"
 
@@ -240,8 +240,8 @@ agents = ".dockerfile"
 organization = "Kubernetes .yaml"
 
 [agents]
-definition = "one public Rust type per .rs file"
-organization = "Rust module tree plus validated DAG"
+definition = "one agent id in the organization template"
+organization = "template plus validated DAG"
 actions = ".jsonl"
 archive = ".sql"
 
@@ -292,17 +292,17 @@ E7 checks the marker, the four tags in that order, a single `lisp` fence, the id
 
 Canonical fence tags are `python`, `prolog`, `javascript`, `typescript`, `rust`, `bend`, `lean`, `lisp`, `tla`, `dockerfile`, `sql`, `yaml` for Kubernetes manifests only, `wolfram`, `mermaid`, `json`, `r`, `csv`, `toml`, `tex`, `svg`, `stl`, `text`, and `bash`. GFM cards, registries, and comparison tables are Markdown structure; machine-consumed embedded tables use `csv`.
 
-Every repository Markdown fence is a column-zero triple backtick fence with one explicit canonical tag. The four playground fences are tag-only. Every other opening fence adds one space and the exact metadata `{ type: notebook.cell }`; its closing fence is exactly three backticks. A notebook cell is definitive serialization, a checked projection, or a runnable invocation. Raw HTML is not a language escape; the compression wrapper below is the only admitted form. In live Markdown, `Composition` and `Variables` each contain exactly one mapping in the line-oriented, JSON-value subset of TOML 1.1.0: lowercase bare keys, single-component tables, no escapes, and no duplicate table or key. Mermaid starts with `stateDiagram-v2` or `flowchart`; CSV uses minimal quoting and LF. Where live Markdown contains `### Process`, E7 requires the three variable tables, that seven-row CSV inside `Process`, and both Mermaid kinds inside `Algorithm`. E7 enforces notebook metadata outside the playground, parses TOML, JSON, and CSV, checks Mermaid kind, admits YAML only for Kubernetes manifests, and admits raw HTML only as one in-place compression wrapper. A YAML fence is a Kubernetes manifest and is never a structure image. E7 checks the symbolic playground as this section states and checks both Prolog projections against `e7.structure_images`. The program templates in `docs/falsify.md` are the examples of the crate, its images, its manifest, and its SQL. A frontier model writes those files at test time. E7 does not compile TLA+, Lisp, Lean, or Bend, does not run the playground, and does not discharge §8.16. The test-time crate is the organization runtime. It does not originate the playground spec.
+Every repository Markdown fence is a column-zero triple backtick fence with one explicit canonical tag. The four playground fences are tag-only. Every other opening fence adds one space and the exact metadata `{ type: notebook.cell }`; its closing fence is exactly three backticks. A notebook cell is a template, an example, a guide, pseudocode, or a checked projection. Raw HTML is not a language escape; the compression wrapper below is the only admitted form. In live Markdown, `Composition` and `Variables` each contain exactly one mapping in the line-oriented, JSON-value subset of TOML 1.1.0: lowercase bare keys, single-component tables, no escapes, and no duplicate table or key. Mermaid starts with `stateDiagram-v2` or `flowchart`; CSV uses minimal quoting and LF. Where live Markdown contains `### Process`, E7 requires the three variable tables, that seven-row CSV inside `Process`, and both Mermaid kinds inside `Algorithm`. E7 enforces notebook metadata outside the playground, parses TOML, JSON, and CSV, checks Mermaid kind, admits YAML only for Kubernetes manifests, and admits raw HTML only as one in-place compression wrapper. A YAML fence is a Kubernetes manifest and is never a structure image. E7 checks the symbolic playground as this section states and checks both Prolog projections against `e7.structure_images`. The organization template in `docs/falsify.md` is the guide for a test-time program, its image, its manifest, and its archive. This repository does not commit those files. E7 does not compile TLA+, Lisp, Lean, or Bend, does not run the playground, and does not discharge §8.16. The test-time crate is the organization runtime. It does not originate the playground spec.
 
 #### Structure images
 
-The documentation DAG stays in the `Graph` sections (§0d). The test-time swarm is the type-safe `AGENT_SWARM` constant a frontier model writes from the program templates; every individual definition is one leaf, and the module tree records its hierarchy. The test-time manifest names those agents and edges. A structure image is the symbolic membership of one fleet or dependency of one swarm. `agent.fleet` stays out of the header (§0c, §11). The atoms `agent_fleet` and `agent_swarm` name downstream Prolog projections in the Markdown notebook. Each image is one expanded `prolog` cell on the path in `e7.structure_images`, and no other `prolog` cell occurs.
+The documentation DAG stays in the `Graph` sections (§0d). The test-time swarm is the organization template a frontier model writes; every individual definition is one leaf, and the module tree records its hierarchy. The test-time manifest names those agents and edges. A structure image is the symbolic membership of one fleet or dependency of one swarm. `agent.fleet` stays out of the header (§0c, §11). The atoms `agent_fleet` and `agent_swarm` name downstream Prolog projections in the Markdown notebook. Each image is one expanded `prolog` cell on the path in `e7.structure_images`, and no other `prolog` cell occurs.
 
 The fence body is LF lines. The facts, in order, are `image(Atom).`, `shape(tree).` or `shape(dag).`, then `node(Atom).` in ascending byte order, then `edge(Atom, Atom).` in ascending byte order of the pair. An atom matches `^[a-z][a-z0-9_]*$`. One space follows the comma in an edge. The body has no comment, blank line, or extra fact. E7 rebuilds that body from `e7.structure_images` and refuses a difference.
 
 A fleet record stores `nodes` and `edges`. Its shape is `dag`. Its unique indegree-zero node is `root`. The directed graph is acyclic, every node is reachable from the root, and at least one node has indegree greater than one. The fleet image is that DAG. `core` roots the run, `halt` ends it, `worker` is the member role, and `bench` and `trace` are the stores a member appends. `trace` has parents `core` and `worker`, because the core file and the worker files are one store. The manifest names the heads. The DAG is membership. The bench Merkle DAG stays the store inside `bench`.
 
-A swarm record stores `workers`, `join`, `sink`, and `second_parent`. Its shape is `dag`. The nodes are the workers plus `join` and `sink`. The edges are one edge from each worker to `join`, one edge from `join` to `sink`, and one edge from `second_parent` to `sink`. `second_parent` is one of the workers. `join` and `sink` are not workers. The directed graph is acyclic, every node reaches the sink, and each edge shares at least one published/consumed Rust capability. The swarm image is that DAG: the seven workers feed `decide`, and `decide` and `document` both feed `literals`. Kubernetes runs one container per definition; the workers do not vote.
+A swarm record stores `workers`, `join`, `sink`, and `second_parent`. Its shape is `dag`. The nodes are the workers plus `join` and `sink`. The edges are one edge from each worker to `join`, one edge from `join` to `sink`, and one edge from `second_parent` to `sink`. `second_parent` is one of the workers. `join` and `sink` are not workers. The directed graph is acyclic, every node reaches the sink, and each edge shares at least one published/consumed capability. The swarm image is that DAG: the seven workers feed `decide`, and `decide` and `document` both feed `literals`. A test-time schedule runs one role per agent; the workers do not vote.
 
 Both images are DAGs. `shape(tree)` on either image fails E7. The profile key `trace_merkle` is `tree`. A trace ramifies each image into one Merkle tree under [`systems/record-traces.md`](../systems/record-traces.md). That tree is `text`, not a Prolog fence, and it is not the bench Merkle DAG. Tree cardinality binds the ramified tree only. The profile key `og_merkle` is `tree`. [`systems/seal-og.md`](../systems/seal-og.md) seals a context tree to that root. That tree is `text`. It is not the trace tree.
 
@@ -347,7 +347,7 @@ In-place compression is a collapsible code block. The payload stays in the file.
 
 The wrapper is the only raw HTML live Markdown admits. It is column-zero: `<details>`, then `<summary>LABEL</summary>`, then one blank line, then one canonical fence, then `</details>` on the line after the fence's closing backticks. `LABEL` is 1 to 128 ASCII bytes, with no ASCII control and no `<`, no `>`, no backtick, and no `#`. The tags have no attributes. Labels are unique in a file. The wrapper holds one fence and no prose.
 
-The expanded set in `e7.compression.expanded` stays outside every wrapper: the specification card, the composition mapping, the variables mapping, the process CSV, both Mermaid diagrams, every Prolog structure image, and the symbolic playground. A closed list a runtime loads may sit inside one. The labels are `e7.compression.labels`: `checker literals`, `attacks`, `carrier sets`, `decision notebook: python`, `organization notebook: rust`, `runtime notebook: bash`, `workflow notebook: text`, `witness: a1.trace`, `agent card`, `cybernetics interface`, `tree cardinality`, `pose distance`, and `merge sketch`.
+The expanded set in `e7.compression.expanded` stays outside every wrapper: the specification card, the composition mapping, the variables mapping, the process CSV, both Mermaid diagrams, every Prolog structure image, and the symbolic playground. A closed list a runtime loads may sit inside one. The labels are `e7.compression.labels`: `checker literals`, `attacks`, `carrier sets`, `organization template`, `witness: a1.trace`, `agent card`, `cybernetics interface`, `tree cardinality`, `pose distance`, and `merge sketch`.
 
 E7 admits that wrapper and refuses every other line that, outside a fence, begins with optional whitespace and then `<`. A second fence, prose inside the wrapper, a wrapped fence from the expanded set, an attribute on `<details>`, a repeated label, and any other HTML line fail E7. E6 does not read the summary as a heading. The wrapper is not a graph edge, a second copy, or a language tag.
 
@@ -355,17 +355,17 @@ The delimiters, the expanded-fence names, and the label inventory are recorded u
 
 ### 0f. Checker literals
 
-Closed lists and normative patterns live in the collapsible cell `checker literals` below. Expand that label to load them. The falsifier semantics remain in [`falsify.md`](falsify.md); the compiled Rust program publishes the agent organization, lifecycle action schema, and archive transport without claiming predicate 16. Notebook cells are definitive declarations or invocations, and the standalone files named by `e7.executable` are their execution boundary. The expanded Prolog cells render `e7.structure_images`; E7 refuses a difference from the Rust and Kubernetes graph.
+Closed lists and normative patterns live in the collapsible cell `checker literals` below. Expand that label to load them. The falsifier semantics remain in [`falsify.md`](falsify.md); the organization template publishes agent identity, lifecycle actions, and archive columns without claiming predicate 16. A frontier model may materialize `e7.executable` at test time. The expanded Prolog cells render `e7.structure_images`; E7 refuses a difference from the organization template.
 
 | class | parent | where the list lives |
 |---|---|---|
 | catalogue grammar, predicate labels, profile bounds, allowlists | this file | the fence `checker literals` |
 | trace carrier sets | [`systems/record-traces.md`](../systems/record-traces.md) | the fence `carrier sets` |
 | attack manifest | [`falsify.md`](falsify.md) | the fence `attacks` |
-| bench line grammar | [`systems/use-bench.md`](../systems/use-bench.md) | section 3; the crate does not widen the bench write scope |
+| bench line grammar | [`systems/use-bench.md`](../systems/use-bench.md) | section 3; the template does not widen the bench write scope |
 | campaign runtime | [`systems/run-campaign.md`](../systems/run-campaign.md) | the manifest table plus typed lifecycle organization |
-| fleet and swarm structure images | this file §0e and `e7.structure_images` | Rust/Kubernetes source with expanded Prolog projections |
-| action archive | `e7.executable` | Rust tracer, JSONL schema, and idempotent SQLite SQL |
+| fleet and swarm structure images | this file §0e and `e7.structure_images` | organization template with expanded Prolog projections |
+| action archive | `e7.executable` | organization template, JSONL lines, and idempotent SQL |
 
 `DISCLAIMER` is the file a checker reads, and its single line is the notice. `e1_allowlist` is empty, so E1 skips nothing. The edge cap in §0d is `|V| + 1`, stored here as `edge_surplus_max` of 2 because a tree has `|V| - 1` edges. A bracketed HELM symbol matches `monomer_symbol` and is refused when it is an all-uppercase run of length at least `monomer_uppercase_run_min_length`. Polymer-index normalisation applies `helm_index_normalise` and replaces each matched digit run with `#`.
 
@@ -652,16 +652,11 @@ Closed lists and normative patterns live in the collapsible cell `checker litera
       ]
     },
     "executable": {
-      "crate": "Cargo.toml",
-      "definition": "src/definition.rs",
-      "organization": "src/organization/mod.rs",
-      "agent_binary": "src/bin/catalog-agent.rs",
-      "tracer": "src/bin/catalog-tracer.rs",
-      "agent_image": "agent.dockerfile",
-      "tracer_image": "tracer.dockerfile",
-      "kubernetes": "k8s/organization.yaml",
-      "sql": "sql/actions.sql",
+      "materialize": "test-time",
+      "template": "docs/falsify.md",
+      "label": "organization template",
       "jsonl_extension": ".jsonl",
+      "sql_extension": ".sql",
       "committed": false
     },
     "symbolic": {
@@ -773,10 +768,7 @@ Closed lists and normative patterns live in the collapsible cell `checker litera
         "checker literals",
         "attacks",
         "carrier sets",
-        "decision notebook: python",
-        "organization notebook: rust",
-        "runtime notebook: bash",
-        "workflow notebook: text",
+        "organization template",
         "witness: a1.trace",
         "agent card",
         "cybernetics interface",
@@ -792,9 +784,9 @@ Closed lists and normative patterns live in the collapsible cell `checker litera
 
 ### 0g. ObjectGraph traversal index
 
-`ooc/*.md` is the ObjectGraph index for frontier traversal. It is Markdown. It is not the specbase, not live Markdown, not catalogue bytes, and not a second contract. The specbase remains the Markdown in `docs/`, `skills/`, and `systems/`. The format conventions are those of ObjectGraph, arXiv:2604.27820v1, retrieved 9 Nov 2026 (Australia/Sydney): `::meta`, `::schema`, `::index`, then nodes.
+`ooc/*.og` is the traversal form of the specbase. An intermediate node is one compressed `.og` file. A terminal node is an uncompressed Markdown file in `docs/`, `skills/`, `systems/`, or `tmp/`. The index is not live Markdown, not catalogue bytes, and not a second contract. On any conflict this file governs. The format conventions are those of ObjectGraph, arXiv:2604.27820v1, retrieved 9 Nov 2026 (Australia/Sydney): `::meta`, `::schema`, `::index`, then nodes.
 
-`search_index` reads the `::index` of `ooc/catalog.md` and stops. `resolve_context` opens the selected route file and follows `:requires`. `:precedes` orders stages and does not load them. `:see-also` does not load. `::dense` is the second pass. `::full` is the third. A `::warning` is never skipped and does not quote `DISCLAIMER`. `skip-if-known` loads once per session. An intermediate file does not copy a closed list, a Prolog structure image, or a predicate. A terminal is an uncompressed specbase Markdown file. Every live Markdown file is the target of at least one `:requires` edge. `docs/read-repository.md` is the `router` node. `systems/seal-og.md` is the `seal` stage on the traces route. On any conflict this file governs. The index does not discharge §8.16, does not write `graph.json`, and does not admit a row.
+`search_index` reads the `::index` of `ooc/catalog.og` and stops. `resolve_context` opens the selected route file and follows `:requires`. `:precedes` orders stages and does not load them. `:see-also` does not load. `::dense` is the second pass. `::full` is the third. A `::warning` is never skipped and does not quote `DISCLAIMER`. `skip-if-known` loads once per session. An intermediate file does not copy a closed list, a Prolog structure image, or a predicate. A terminal is an uncompressed specbase Markdown file. Every live Markdown file is the target of at least one `:requires` edge. `docs/read-repository.md` is the `router` node. `systems/seal-og.md` is the `seal` stage on the traces route. The index does not discharge §8.16, does not write `graph.json`, and does not admit a row.
 
 ### 1. Purpose
 
@@ -921,7 +913,7 @@ Implement from this section alone. Tags: **pure** = decidable from one file's by
 3. **File boundary.** Autonomous intake writes `proposals.json` only, and never writes `graph.json` on any branch. Admission is the act of reading the paper, and that act is what moves bytes from `proposals.json` into `graph.json`, choosing the dictionary per §4. **Trust is carried by the file, not by a branch:** a branch name is mutable and has no merge law, so a fence of the form "unverified rows live on branch X" dissolves at the first merge and relaunders those rows as verified, while `proposals.json` merges into `proposals.json` on every branch. Condition 16 is therefore discharged at the file move, by a reader, and never by the run that proposed the row.
 4. **`proposals.json`.** Root: a non-array object with exactly `version` (the number `2`) and `proposal` (an array). Each element has exactly `binder`, `target`, `pmid`, each satisfying §3. A proposal carries **no dictionary assignment**: `pair` versus `preclinical` is part of the oracle and is chosen when the paper is read. Serialise per §5; add-only per §8.19. It is not catalogue-shaped and must not be read as one.
 5. Intake procedure: [`skills/propose-pairs.md`](../skills/propose-pairs.md). It enumerates structured authorities; it does not crawl prose, and its own acceptance test is rediscovery of the rows already committed.
-6. This repository ships no catalogue updater, cron intake, or automated paper oracle. The Rust crate configures the agent organization and archives its typed actions; it is not the semantic falsifier. A user AI supplies the decision procedure from [`falsify.md`](falsify.md) and may drive the published agents without gaining a `graph.json` or `proposals.json` write path. A run proves only the pure conditions (§8) and extension predicates E1, E2, E4, E5, E6, and E7. It never proves §8.16. A green build confirms executable consistency, not paper truth.
+6. This repository ships no catalogue updater, cron intake, or automated paper oracle. The organization template names the agent organization and its archive; it is not the semantic falsifier. A user AI supplies the decision procedure from [`falsify.md`](falsify.md) and may drive the published agents without gaining a `graph.json` or `proposals.json` write path. A run proves only the pure conditions (§8) and extension predicates E1, E2, E4, E5, E6, and E7. It never proves §8.16. A test-time build confirms the template's shape, not paper truth.
 
 A proposed row failing any rule above is **refused**, naming the condition that failed.
 
@@ -965,9 +957,9 @@ The reader-facing warning is not a skill output file. The line lives in `DISCLAI
 
 **`fleet.campaign` is one run.** It is the spec on every system in the table below. The run has one core. `run` is the SHA-256 of `core.trace`. That file carries `bound-n` and `bound-tok`. The run ends on one `halt`. `core.bench` hashes its own bytes, and the executor writes this `run` into that file as the parameter `trace`. Workers that append bench lines or trace lines are members of that run. Set-union merge with no coordinator is a property of the bench store inside the run. Wikidata `wbsearchentities` for `fleet.campaign`, language `en`, limit 5, returned an empty `search` array on this retrieval.
 
-**`agent.swarm` is the spec of a falsifier.** The only header that carries it is `docs/falsify.md`. The decision laws are part of that falsifier; the Rust crate publishes its typed individuals, topology, lifecycle, and archive transport. It is not a run and not a header type. A run of this contract is a `fleet.campaign`. A header on any other path that carries `agent.swarm` fails E5. Dropping the spec from the falsifier fails E5. Its executable graph is `AGENT_SWARM`; the expanded Prolog DAG is its symbolic notebook projection (§0e).
+**`agent.swarm` is the spec of a falsifier.** The only header that carries it is `docs/falsify.md`. The decision laws are part of that falsifier; the organization template publishes its typed individuals, topology, lifecycle, and archive columns. It is not a run and not a header type. A run of this contract is a `fleet.campaign`. A header on any other path that carries `agent.swarm` fails E5. Dropping the spec from the falsifier fails E5. Its type image is the organization template; the expanded Prolog DAG is its symbolic notebook projection (§0e).
 
-**`agent.fleet` is not a spec and not a type.** The folder sort retired it. A header that carries it fails E5. The name of the run is `fleet.campaign`. The members of that run are its workers. Its structure image is the expanded Prolog projection in [`systems/run-campaign.md`](../systems/run-campaign.md) (§0e); Kubernetes does not turn that local term into a header spec. Wikidata `wbsearchentities` for `agent.fleet`, language `en`, limit 10, returned an empty `search` array on this retrieval, the same result as the query for `agent.swarm`.
+**`agent.fleet` is not a spec and not a type.** The folder sort retired it. A header that carries it fails E5. The name of the run is `fleet.campaign`. The members of that run are its workers. Its structure image is the expanded Prolog projection in [`systems/run-campaign.md`](../systems/run-campaign.md) (§0e); a test-time schedule does not turn that local term into a header spec. Wikidata `wbsearchentities` for `agent.fleet`, language `en`, limit 10, returned an empty `search` array on this retrieval, the same result as the query for `agent.swarm`.
 
 **One reading in a skill.** "The campaign" names the one `fleet.campaign` run. "Workers" names the members of that run. The phrase "fleet and design architectures" in `skills/design-binder.md` §5 names methods in the literature. It does not name this run.
 
@@ -1030,7 +1022,7 @@ Rows that name neither 3 Nov 2026 nor 9 Nov 2026 were retrieved 1 Nov 2026 (Aust
 | Run the workers in [`falsify.md`](falsify.md) | a survivor falsifies that prediction; a catch is not clinical proof |
 | Remove the Catalogue playground, wrap it, or put sandbox.playground in a header | E7 or E5 |
 | Treat playground Ti as predicate 16 or as the 2026-10-29 TLC model | the oracle stays not-discharged, and that TLC model stays off-repository |
-| Treat `ooc/*.md` as the contract or as catalogue bytes | this file still governs; the index admits nothing |
+| Treat `ooc/*.og` as the contract or as catalogue bytes | this file still governs; the index admits nothing |
 
 A user AI writes the falsifier from [`falsify.md`](falsify.md) and runs it outside this repository, including the predecessor check when a predecessor exists. A passing result is scoped evidence, never proof of clinical truth.
 

@@ -2,7 +2,7 @@
 
 `type: resource.reference` · `spec: agent.swarm` · subordinate to `docs/follow-agent-contract.md`.
 
-The falsifier holds the decision procedure and attacks the premises of this catalogue. Rust publishes the agent definitions and DAG, Kubernetes runs them, and the notebook cells are definitive symbolic or executable projections; a caught attack is still not clinical proof.
+The falsifier holds the decision procedure and attacks the premises of this catalogue. The organization template names the swarm, and a frontier model may write a program from it at test time. A caught attack is still not clinical proof.
 
 ## Specification
 
@@ -50,23 +50,23 @@ trace = "act-log refusals"
 
 ## Indications
 
-- Compile the published Rust definitions and validate `AGENT_SWARM` before running a worker.
-- Read a program template as an example. A frontier model writes the crate, images, manifest, and SQL from it at test time. Read every other code cell as normative serialization, a checked projection, or a runnable invocation.
+- Read the organization template before running a worker. A frontier model writes the program at test time.
+- Read a fence as a template, an example, a guide, or pseudocode.
 - Attack a premise before treating a passing decision as evidence.
 - Keep a `PEPTIDE` scope failure distinct from a monomer failure.
 - Carry `spec: agent.swarm` on this file, and show that any other header carrying it is refused.
-- Read the expanded Prolog cell as the symbolic swarm image and verify it against Rust and Kubernetes.
+- Read the expanded Prolog cell as the symbolic swarm image and verify it against the organization template.
 - Expand `checker literals`, `attacks`, and `carrier sets` when writing the runtime. Leave those labels closed when reading a premise.
 - Read the symbolic playground as the autoproof loop. Its Bend fence is the backward pass, not this falsifier.
 
 ## Contraindications
 
 - This is not a formulary, a prescription, or a design campaign. Grammar fixtures such as `aa:ACD` are not binder designs.
-- The seven workers are members of one falsification run. They do not vote. `spec: agent.swarm` is valid on this file only. `agent.fleet` is not a spec. Rust is the executable graph, Prolog is its symbolic projection, and Kubernetes schedules its containers.
+- The seven workers are members of one falsification run. They do not vote. `spec: agent.swarm` is valid on this file only. `agent.fleet` is not a spec. The organization template is the type image, Prolog is its symbolic projection, and a test-time schedule runs one role per agent.
 - A corroborated attack is not predicate 16, not a measurement, and not permission to write `graph.json` or `proposals.json`.
-- Do not confuse the organization runtime with the semantic paper oracle. The crate has no catalogue write path.
-- The Python notebook checks documentation cells. The Rust crate owns typed definitions, topology, lifecycle actions, and log archiving. The Bend fence in the symbolic playground is the backward pass, and this repository does not run that image.
-- The Rust tests check organization, archive shape, and playground shape. They do not execute the eighty-eight semantic attacks. A green forge check does not mean those attacks ran.
+- Do not confuse a test-time program with the semantic paper oracle. The template has no catalogue write path.
+- The Bend fence in the symbolic playground is the backward pass, and this repository does not run that image.
+- This repository does not run the eighty-eight semantic attacks. A test-time check of the template is not those attacks.
 - Naming `agent.swarm` as the spec of a skill or a run, or naming `agent.fleet` as a spec, is a document attack. The contract refuses both readings.
 
 ## Algorithm
@@ -86,7 +86,7 @@ verdict = "corroborated or falsified"
 [controlled]
 oracle = "not-discharged"
 workers = "independent and unvoted"
-program = "Rust organization plus caller-supplied semantic decision"
+program = "organization template plus caller-supplied semantic decision"
 ```
 
 ### Process
@@ -174,7 +174,7 @@ Workers run concurrently and share no verdict. The run reports the set of verdic
 
 ### Structure
 
-The cell below is the symbolic projection of `AGENT_SWARM`. Each worker publishes into `decide`; `decide` and `document` both publish into `literals`, so `literals` has two parents and the image is a DAG. The program templates are the examples a frontier model writes to match this projection at test time. A trace ramifies this DAG into one Merkle tree under [`systems/record-traces.md`](../systems/record-traces.md).
+The cell below is the symbolic projection of the organization template. Each worker publishes into `decide`; `decide` and `document` both publish into `literals`, so `literals` has two parents and the image is a DAG. A frontier model writes a program that matches this projection at test time. A trace ramifies this DAG into one Merkle tree under [`systems/record-traces.md`](../systems/record-traces.md).
 
 ```prolog { type: notebook.cell }
 image(agent_swarm).
@@ -199,186 +199,137 @@ edge(relation, decide).
 edge(trace, decide).
 ```
 
-### Executable notebooks
+### Organization template
 
-The cells below are definitive utilities and invocations for this repository. They neither duplicate the closed semantic lists nor discharge predicate 16.
-
-<details>
-<summary>decision notebook: python</summary>
-
-```python { type: notebook.cell }
-"""Validate the definitive notebook-cell envelope on every Markdown fence."""
-
-from pathlib import Path
-
-ROOT = Path.cwd()
-CELL_SUFFIX = " { type: notebook.cell }"
-
-
-def validate_markdown(path: Path) -> None:
-    inside = False
-    for number, line in enumerate(path.read_text(encoding="utf-8").splitlines(), 1):
-        if not line.startswith("```"):
-            continue
-        if inside:
-            if line != "```":
-                raise ValueError(f"{path}:{number}: closing fence must be ```")
-        elif not line.endswith(CELL_SUFFIX):
-            raise ValueError(f"{path}:{number}: missing notebook.cell metadata")
-        inside = not inside
-    if inside:
-        raise ValueError(f"{path}: unclosed fence")
-
-
-SKIP = {".git", "target", "archive"}
-for markdown in sorted(ROOT.rglob("*.md")):
-    if set(markdown.parts) & SKIP:
-        continue
-    validate_markdown(markdown)
-```
-</details>
+The organization template is the type-safe swarm. Expand that label to load it. An edge is valid only when the source publishes a capability the target consumes. The graph is a DAG and every node reaches `literals`. Workers do not vote. The template names no target, provider, image registry, or catalogue write. A frontier model may write a program, an image, a manifest, and an archive from the template at test time. Those files are not in this repository. The Prolog image is the symbolic projection of the same nodes and edges.
 
 <details>
-<summary>organization notebook: rust</summary>
-
-```rust { type: notebook.cell }
-use catalog_agent_organization::{
-    organization::OrganizationError, AgentId, AGENT_SWARM,
-};
-
-pub fn published_order() -> Result<Vec<AgentId>, OrganizationError> {
-    AGENT_SWARM.validate()?;
-    AGENT_SWARM.topological_order()
-}
-```
-</details>
-
-<details>
-<summary>runtime notebook: bash</summary>
-
-```bash { type: notebook.cell }
-cargo test --all-targets
-cargo run --bin catalog-agent -- topology
-cargo run --bin catalog-agent -- --agent bytes describe
-cargo run --bin catalog-agent -- --agent bytes emit \
-  --kind completed --trace-id notebook-1 --payload '{"predicate":"bytes"}' |
-  cargo run --bin catalog-tracer -- \
-    --jsonl /tmp/catalog-actions.jsonl \
-    --sql /tmp/catalog-actions.sql \
-    stdin
-```
-</details>
-
-<details>
-<summary>workflow notebook: text</summary>
-
-```text { type: notebook.cell }
-source  = Kubernetes pod logs selected by catalog.agent/component=agent
-record  = one catalog.agent.action/v1 JSON object per line
-archive = actions.jsonl || actions.sql
-order   = trace_id, sequence
-oracle  = not-discharged
-```
-</details>
-
-### Program templates
-
-Examples of the organization. A frontier model writes `src/`, `agent.dockerfile`, `tracer.dockerfile`, `k8s/organization.yaml`, and `sql/actions.sql` from these cells at test time. This repository does not commit those files.
-
-```rust { type: notebook.cell }
-// One leaf file per AgentId. mod.rs holds the DAG and no definition.
-pub enum Agent {}
-
-impl AgentDefinition for Agent {
-    const ID: AgentId = AgentId::Bytes;
-    const ROLE: Role = Role::Worker;
-    const MODULE: &'static str = "organization::workers::bytes";
-    const CONSUMES: &'static [Capability] = &[Capability::CatalogueBytes];
-    const PUBLISHES: &'static [Capability] = &[Capability::BytesVerdict];
-}
-
-pub const DEFINITION: Published<Agent> = Published::new();
-```
-
-```dockerfile { type: notebook.cell }
-# agent.dockerfile
-FROM rust:1.85.0-bookworm AS build
-WORKDIR /workspace
-COPY Cargo.toml Cargo.lock ./
-COPY src ./src
-COPY sql ./sql
-RUN cargo build --locked --release --bin catalog-agent
-FROM gcr.io/distroless/cc-debian12:nonroot
-COPY --from=build /workspace/target/release/catalog-agent /usr/local/bin/catalog-agent
-USER nonroot:nonroot
-ENTRYPOINT ["/usr/local/bin/catalog-agent"]
-CMD ["serve"]
-```
-
-```dockerfile { type: notebook.cell }
-# tracer.dockerfile
-FROM rust:1.85.0-bookworm AS build
-RUN cargo build --locked --release --bin catalog-tracer
-FROM debian:bookworm-slim
-ARG KUBECTL_VERSION=v1.31.2
-ARG KUBECTL_SHA256=399e9d1995da80b64d2ef3606c1a239018660d8b35209fba3f7b0bc11c631c68
-# dl.k8s.io/release/${KUBECTL_VERSION}/bin/linux/amd64/kubectl
-COPY --from=build /workspace/target/release/catalog-tracer /usr/local/bin/catalog-tracer
-ENTRYPOINT ["/usr/local/bin/catalog-tracer"]
-```
-
-```yaml { type: notebook.cell }
-apiVersion: apps/v1
-kind: Deployment
-metadata:
-  name: catalog-agent-organization
-  namespace: catalog-agents
-spec:
-  template:
-    spec:
-      containers:
-        - name: bytes
-          image: ghcr.io/wetware-hq/catalog-agent:0.1.0
-          env:
-            - name: AGENT_ID
-              value: bytes
-# one container per AgentId, same image
-# catalog-tracer image: ghcr.io/wetware-hq/catalog-tracer:0.1.0
-```
-
-```sql { type: notebook.cell }
--- sql/actions.sql
-CREATE TABLE IF NOT EXISTS agent_actions (
-  action_id TEXT PRIMARY KEY,
-  agent TEXT NOT NULL CHECK (
-    agent IN (
-      'bytes', 'grammar', 'identity', 'relation', 'oracle',
-      'document', 'trace', 'decide', 'literals'
-    )
-  ),
-  kind TEXT NOT NULL CHECK (
-    kind IN (
-      'started', 'ready', 'heartbeat', 'accepted',
-      'completed', 'refused', 'error', 'stopped'
-    )
-  )
-);
-```
+<summary>organization template</summary>
 
 ```json { type: notebook.cell }
 {
-  "schema": "catalog.agent.action/v1",
-  "action_id": "bytes-1-0-0",
-  "trace_id": "notebook-1",
-  "parent_action_id": null,
-  "organization": "agent_swarm",
-  "agent": "bytes",
-  "kind": "completed",
-  "sequence": 0,
-  "observed_at_unix_ms": 0,
-  "payload": {}
+  "name": "agent_swarm",
+  "shape": "dag",
+  "sink": "literals",
+  "join": "decide",
+  "materialize": "test-time",
+  "image": "caller-supplied",
+  "writes": [],
+  "agents": [
+    {
+      "id": "bytes",
+      "role": "worker",
+      "consumes": ["catalogue-bytes"],
+      "publishes": ["bytes-verdict"]
+    },
+    {
+      "id": "grammar",
+      "role": "worker",
+      "consumes": ["catalogue-bytes", "checker-literals"],
+      "publishes": ["grammar-verdict"]
+    },
+    {
+      "id": "identity",
+      "role": "worker",
+      "consumes": ["catalogue-bytes"],
+      "publishes": ["identity-verdict"]
+    },
+    {
+      "id": "relation",
+      "role": "worker",
+      "consumes": ["catalogue-bytes"],
+      "publishes": ["relation-verdict"]
+    },
+    {
+      "id": "oracle",
+      "role": "worker",
+      "consumes": ["catalogue-bytes"],
+      "publishes": ["oracle-status"]
+    },
+    {
+      "id": "document",
+      "role": "worker",
+      "consumes": ["repository-tree", "checker-literals"],
+      "publishes": ["document-verdict"]
+    },
+    {
+      "id": "trace",
+      "role": "worker",
+      "consumes": ["trace-store", "checker-literals"],
+      "publishes": ["trace-verdict"]
+    },
+    {
+      "id": "decide",
+      "role": "join",
+      "consumes": [
+        "bytes-verdict",
+        "grammar-verdict",
+        "identity-verdict",
+        "relation-verdict",
+        "oracle-status",
+        "document-verdict",
+        "trace-verdict"
+      ],
+      "publishes": ["decision"]
+    },
+    {
+      "id": "literals",
+      "role": "sink",
+      "consumes": ["decision", "document-verdict"],
+      "publishes": ["published-literals"]
+    }
+  ],
+  "edges": [
+    ["bytes", "decide"],
+    ["grammar", "decide"],
+    ["identity", "decide"],
+    ["relation", "decide"],
+    ["oracle", "decide"],
+    ["document", "decide"],
+    ["trace", "decide"],
+    ["decide", "literals"],
+    ["document", "literals"]
+  ],
+  "validate": "refuse a duplicate node, a self-edge, an edge whose capabilities do not meet, a cycle, or a node that cannot reach the sink",
+  "actions": {
+    "schema": "catalog.agent.action/v1",
+    "organization": "agent_swarm",
+    "kinds": [
+      "started",
+      "ready",
+      "heartbeat",
+      "accepted",
+      "completed",
+      "refused",
+      "error",
+      "stopped"
+    ],
+    "payload": "object",
+    "example": {
+      "agent": "bytes",
+      "kind": "completed",
+      "payload": {}
+    }
+  },
+  "archive": {
+    "sinks": ["jsonl", "sql"],
+    "sql": "insert-or-ignore",
+    "columns": [
+      "action_id",
+      "trace_id",
+      "parent_action_id",
+      "organization",
+      "agent",
+      "kind",
+      "sequence",
+      "observed_at_unix_ms",
+      "payload_json"
+    ]
+  },
+  "schedule": "one role per agent id; non-root; read-only root; drop capabilities; no catalogue write"
 }
 ```
+</details>
 
 ### Attacks
 
@@ -843,8 +794,8 @@ Eighty-eight attacks, seven workers, no vote. This object is the closed list, in
     {
       "worker": "document",
       "id": "kubernetes-graph-drift",
-      "premise": "Kubernetes executes the published Rust organization",
-      "prediction": "E7 fails when Kubernetes nodes or edges differ from Rust or Prolog"
+      "premise": "a test-time manifest names the same agents as the organization template",
+      "prediction": "E7 fails when that manifest or the archive columns differ from the template or the Prolog image"
     },
     {
       "worker": "trace",
@@ -962,7 +913,7 @@ Stated 3 Nov 2026 (Australia/Sydney). The decision procedure was folded into thi
 | Give `<details>` an attribute, wrap two fences or prose, wrap the process CSV or a diagram, or repeat a label | E7 fails |
 | Wrap one canonical fence in one `<details>` block with a new plain label | E7 passes |
 | Drop a swarm worker, add a cycle, move the image, or wrap it | E7 |
-| Diverge the Kubernetes graph from Rust or the Prolog projection | E7 |
+| Diverge the test-time manifest from the organization template or the Prolog image | E7 |
 | Set trace `oracle` to `discharged` | `value:oracle` |
 | Add `score` to an act | `fields` |
 | Pin twice | R5 |
@@ -970,7 +921,7 @@ Stated 3 Nov 2026 (Australia/Sydney). The decision procedure was folded into thi
 | Emit a binder with no passing control | R10 |
 | Treat a green pure run as closing the paper oracle | the oracle line stays not discharged |
 | Treat one re-run as reliability | no predicate id supports that inference |
-| Let a Rust agent, Kubernetes container, or SQL agent enum diverge | E7 |
+| Let the template, the Prolog image, or the archive columns name different agents | E7 |
 | Treat a fence as a run that already happened | no mutant was decided |
 | Remove the Falsifier playground, reorder it, or treat its Bend fence as this falsifier | E7, and the instrument stays the example outside this repository |
 

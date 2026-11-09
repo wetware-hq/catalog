@@ -146,7 +146,7 @@ def backward(ti_holds):
 
 - **Read:** this file, `docs/follow-agent-contract.md`, the run's own `.bench` files.
 - **Write:** `.bench` files inside a run directory, which lives outside this repository.
-- **Refuse:** `graph.json`, `proposals.json`, and every other file in this repository. This directory holds the `fleet.campaign` specifications. This file's write scope is `.bench` files inside a run directory. Campaign executors append them from this Markdown format under `systems/run-campaign.md`. The organization crate does not widen that scope (§11).
+- **Refuse:** `graph.json`, `proposals.json`, and every other file in this repository. This directory holds the `fleet.campaign` specifications. This file's write scope is `.bench` files inside a run directory. Campaign executors append them from this Markdown format under `systems/run-campaign.md`. The organization template does not widen that scope (§11).
 
 **`systems/` and `skills/`.** `skills/*.md` are *procedures*: a named thing an agent does, registered in `docs/follow-agent-contract.md` §10, each with a signature and a write scope. `systems/*.md` are the `fleet.campaign` specifications registered in §11. This file is a substrate: a format, a merge law and an invariant list. A system is not a skill, declares no signature over catalogue keys, and is not registered in §10. A skill may use a system; a system never discharges a skill's obligations, and neither widens `docs/follow-agent-contract.md` §0.
 
@@ -274,7 +274,7 @@ No joins, no subqueries, no cross-tier aggregate, no "latest". Appending costs o
 
 ### 8. Pose, and the one place geometric algebra earns its place
 
-A record may carry a rigid-body transform as `pose:M(...)`: a **motor** in 3D projective geometric algebra `Cl(3,0,1)`, eight coefficients, composing rotation and translation in one object, compared by `d(M,N) = ‖log(M̃N)‖` over the screw parameters — rotation angle about the screw axis, translation along it. It earns its place because workers produce transforms independently and the system must compare them, and this comparison is invariant under a change of either frame. The numbers in this section come from an uncommitted standard-library Python run made on 2026-10-30 with seed `20261030`; the current organization crate does not reproduce that experiment. Treat them as a dated snapshot. Over 20,000 random pairs it reported `max |d(AM,AN) - d(M,N)| = 4.663e-15` and `max |d(MA,NA) - d(M,N)| = 4.177e-15`, while the obvious alternative — comparing rotation angle and translation vector separately — drifts by `2.301e+00` and `3.201e+00` under the same change of frame. An earlier draft quoted `1e-13` and `5e-3`; that run did not reproduce `5e-3`, and the figures above are what it printed.
+A record may carry a rigid-body transform as `pose:M(...)`: a **motor** in 3D projective geometric algebra `Cl(3,0,1)`, eight coefficients, composing rotation and translation in one object, compared by `d(M,N) = ‖log(M̃N)‖` over the screw parameters — rotation angle about the screw axis, translation along it. It earns its place because workers produce transforms independently and the system must compare them, and this comparison is invariant under a change of either frame. The numbers in this section come from an uncommitted standard-library Python run made on 2026-10-30 with seed `20261030`; this repository does not reproduce that experiment. Treat them as a dated snapshot. Over 20,000 random pairs it reported `max |d(AM,AN) - d(M,N)| = 4.663e-15` and `max |d(MA,NA) - d(M,N)| = 4.177e-15`, while the obvious alternative — comparing rotation angle and translation vector separately — drifts by `2.301e+00` and `3.201e+00` under the same change of frame. An earlier draft quoted `1e-13` and `5e-3`; that run did not reproduce `5e-3`, and the figures above are what it printed.
 
 The same distance, in the equation fence:
 
@@ -324,7 +324,7 @@ Stated here rather than in a design note, because a reader of this file is the p
 
 ### 11. Status
 
-Licensed oversight is required for any use of this system; none has been performed to date.
+The notice is `DISCLAIMER`. No licensed oversight has been performed.
 
 This Markdown file is the BENCH format authority. A campaign executor materializes an immutable
 core and one head per participating worker under `systems/run-campaign.md`; this repository ships

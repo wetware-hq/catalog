@@ -2,7 +2,7 @@
 
 `type: agent.system` · `spec: fleet.campaign` · subordinate to `docs/follow-agent-contract.md`, which governs on any conflict.
 
-Define the content-addressed act log for one bounded `fleet.campaign` and its byte-level acceptance procedure. The Rust tracer additionally archives typed Kubernetes lifecycle actions to JSONL and idempotent SQL; neither channel proves that an act occurred or a paper supports a claim.
+Define the content-addressed act log for one bounded `fleet.campaign` and its byte-level acceptance procedure. A test-time tracer may archive typed lifecycle actions to JSONL and idempotent SQL. Neither channel proves that an act occurred or that a paper supports a claim.
 
 ## Specification
 
@@ -11,10 +11,10 @@ Define the content-addressed act log for one bounded `fleet.campaign` and its by
   "id": "systems/record-traces.md",
   "type": "agent.system",
   "role": "content-address campaign acts and ramify structure DAGs",
-  "reads": ["core.trace", "worker trace heads", "Kubernetes logs", "fleet and swarm structure images"],
+  "reads": ["core.trace", "worker trace heads", "scheduler logs", "fleet and swarm structure images"],
   "writes": [".trace files outside the repository", ".jsonl and .sql archives outside the repository"],
   "must": ["derive ids from bytes", "keep oracle not-discharged", "archive only typed actions", "ramify each DAG"],
-  "check": ["R1-R10", "fleet merkle root", "Rust tests", "E4", "E5", "E6", "E7"]
+  "check": ["R1-R10", "fleet merkle root", "archive shape", "E4", "E5", "E6", "E7"]
 }
 ```
 
@@ -575,9 +575,9 @@ halt 9d2001abc00391ea2c66714740c2ba9ec5c279405495498f51a72db31be4d6a3 ^2f3f73356
 
 ### 6. Status
 
-Licensed oversight is required for any use of this system; none has been performed to date.
+The notice is `DISCLAIMER`. No licensed oversight has been performed.
 
-The semantic falsifier decides `.trace` from this file and loads the carrier block in §1; it does not keep a second list. Separately, `catalog-agent` emits `catalog.agent.action/v1` JSON objects to standard output, Kubernetes preserves them as pod logs, and the Rust `catalog-tracer` validates each object before appending canonical `.jsonl` and `INSERT OR IGNORE` `.sql`. The SQL schema is `sql/actions.sql`; both sinks preserve `trace_id`, `sequence`, parent, agent, kind, timestamp, and JSON payload. This archive does not decide R1–R10 or §8.16.
+The semantic falsifier decides `.trace` from this file and loads the carrier block in §1; it does not keep a second list. A test-time tracer, written from the organization template, validates each `catalog.agent.action/v1` object before appending canonical `.jsonl` and an idempotent SQL insert. Both sinks preserve `trace_id`, `sequence`, parent, agent, kind, timestamp, and JSON payload. This archive does not decide R1–R10 or §8.16.
 
 A campaign executor still writes act lines from this Markdown grammar and `merkle.trace` from §7. Extension predicate E4 decides the bijection between `docs/follow-agent-contract.md` §11 and `systems/*.md`; E5 checks the identity line. The organization crate supplies the typed transport and no scientific claim.
 
@@ -656,8 +656,8 @@ Retrieved 1 Nov 2026 (Australia/Sydney). These sources explain adjacent intercha
 | change one fleet edge and keep the pinned root | `merkle-mismatch` |
 | hash one fleet preimage with its newline kept | the id differs from the pin |
 | treat the bench Merkle DAG as this tree | no predicate equates the two |
-| archive a scalar payload or unknown agent from Kubernetes logs | Rust tracer refuses the line before either sink |
-| change the SQL agent enum without changing Rust or Kubernetes | E7 executable consistency fails |
+| archive a scalar payload or unknown agent | the test-time tracer refuses the line before either sink |
+| change the archive agent list without changing the organization template | E7 executable consistency fails |
 | delete the Traces playground or move Ti off the ramified cardinalities | E7, and section 7 still has 7 and 23 vertices |
 
 The witness above is a `result`. Every mutation in the table fails for its named reason.

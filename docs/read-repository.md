@@ -2,7 +2,7 @@
 
 `type: initialization` · non-normative. `docs/follow-agent-contract.md` governs on any conflict.
 
-Route each task through the smallest sufficient path. The contract governs the Rust and Kubernetes organization.
+Route each task through the smallest sufficient path. The contract governs the organization template.
 
 ## Specification
 
@@ -11,7 +11,7 @@ Route each task through the smallest sufficient path. The contract governs the R
   "id": "docs/read-repository.md",
   "type": "initialization",
   "role": "route tasks through the documentation DAG",
-  "reads": ["DISCLAIMER", "graph.json", "neighbor Markdown on demand", "ooc/catalog.md"],
+  "reads": ["DISCLAIMER", "graph.json", "neighbor Markdown on demand", "ooc/catalog.og"],
   "writes": [],
   "must": ["read DISCLAIMER first", "load the contract before any procedure", "treat absence as unknown"],
   "check": ["E1", "E6", "E7"]
@@ -28,7 +28,7 @@ Route each task through the smallest sufficient path. The contract governs the R
 root = "this file"
 sink = "systems/run-campaign.md"
 stop = "first sufficient route"
-index = "ooc/catalog.md"
+index = "ooc/catalog.og"
 ```
 
 ## Indications
@@ -41,9 +41,9 @@ index = "ooc/catalog.md"
 | design | contract → [`falsify`](falsify.md) → [`pins`](pin-references.md) → [`design`](../skills/design-binder.md) → [`traces`](../systems/record-traces.md) → [`seal`](../systems/seal-og.md); [`bench`](../systems/use-bench.md) → [`record`](../tmp/record-egfr-calibration.md) → [`run`](../systems/run-campaign.md) |
 | falsify | contract → [`falsify`](falsify.md) |
 | traces | contract → [`traces`](../systems/record-traces.md) |
-| organize agents | contract → [`falsify`](falsify.md) program templates |
+| organize agents | contract → [`falsify`](falsify.md); expand `organization template` |
 
-Stop at the first sufficient row. Design continues to the sink. Index: `ooc/catalog.md`.
+Stop at the first sufficient row. Design continues to the sink. Index: `ooc/catalog.og`.
 
 ## Contraindications
 

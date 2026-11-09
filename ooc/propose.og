@@ -6,7 +6,7 @@ domain: catalog|propose|intake
 scope: all
 catalogue-version: 2
 governs: docs/follow-agent-contract.md
-checksum: sha256:8b3fc031017cb7f77c4b16857893fca7fd677a2b5cdaf0a7649dd7ad8c6db919
+checksum: sha256:7da632a9fc1e9ae45e458e7a36dae34d31c819ac07326dc91c885ea258fb2ae9
 ::end
 
 ::schema
