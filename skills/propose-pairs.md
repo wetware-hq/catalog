@@ -106,24 +106,17 @@ Symbolic reasoning. `type: sandbox.playground`.
 
 ```tla
 ---- MODULE ProposePairs ----
-\* model agent. source of nature.
-\* A Lisp variation is a proposal only when this module grounds it.
-\* A proposal has binder, target, and pmid. It assigns no dictionary and writes no catalogue.
 CONSTANTS binder, target, pmid, classified
 Propose == binder /\ target /\ pmid /\ ~classified
 ====
 ```
 
 ```lisp
-;; write agent. executable image. grounded in the tla module only.
 (defun proposep (binder target pmid classified)
   (and binder target pmid (not classified)))
 ```
 
 ```lean
--- model agent. forward pass. discharge and refinement check.
--- autoproof: tla source -> lisp image -> Ti -> bend breakpoint -> tla
--- E7 does not compile this fence.
 def lispPropose (binder target pmid classified : Bool) : Bool :=
   binder && target && pmid && !classified
 
@@ -148,10 +141,6 @@ theorem Ti :
 ```
 
 ```bend
-# proof agent. backward pass. search under Ti.
-# ti_holds is a number. 0 takes the refuse branch.
-# breakpoint: a complete triple with the study type still unassigned
-# This value is not a .trace file. E7 does not run this fence.
 object Trace { name, holds }
 
 def backward(ti_holds):

@@ -104,9 +104,6 @@ Symbolic reasoning. `type: sandbox.playground`.
 
 ```tla
 ---- MODULE ResolveKey ----
-\* model agent. source of nature.
-\* A Lisp variation is a proposal only when this module grounds it.
-\* The verdict is one of four strings. unresolved and unavailable are distinct. No network.
 CONSTANTS verdict
 Admitted == verdict \in {"identity", "unresolved", "unavailable", "refused"}
 Disjoint == "unresolved" # "unavailable"
@@ -114,7 +111,6 @@ Disjoint == "unresolved" # "unavailable"
 ```
 
 ```lisp
-;; write agent. executable image. grounded in the tla module only.
 (defun admitted (verdict)
   (cond ((string= verdict "identity") t)
         ((string= verdict "unresolved") t)
@@ -124,10 +120,6 @@ Disjoint == "unresolved" # "unavailable"
 ```
 
 ```lean
--- model agent. forward pass. discharge and refinement check.
--- autoproof: tla source -> lisp image -> Ti -> bend breakpoint -> tla
--- E7 does not compile this fence.
--- The Lisp cond keeps unresolved and unavailable in separate clauses.
 inductive Verdict where
   | identity
   | unresolved
@@ -139,10 +131,6 @@ theorem Ti : Not (Verdict.unresolved = Verdict.unavailable) :=
 ```
 
 ```bend
-# proof agent. backward pass. search under Ti.
-# ti_holds is a number. 0 takes the refuse branch.
-# breakpoint: unresolved stays distinct from unavailable
-# This value is not a .trace file. E7 does not run this fence.
 object Trace { name, holds }
 
 def backward(ti_holds):
@@ -152,132 +140,72 @@ def backward(ti_holds):
     return Trace { name: "refuse", holds: 0 }
 ```
 
-### Folder contract (all skills here)
+### Folder contract
 
-Notation: one per folder. Blocks below are formal algorithms, not sample programs.
+Every skill in this folder is total over its input domain, pure relative to a named authority release, and read-only unless `docs/follow-agent-contract.md` §10 grants a write scope.
 
 ```text { type: notebook.cell }
-skill   : input -> output | failure
-total   : every input returns; no undefined case
-pure    : output depends on input + named release only
-no-write: output goes to the caller, never into the database
+skill    : Input -> Output | Failure
+total    : forall x. defined(skill(x))
+pure     : (Input, Release) -> deterministic result
+no_write : writes = []
 ```
 
 ### Types
 
 ```text { type: notebook.cell }
-Key       = "aa:" Residues | "helm:" Helm | "uniprot:" Accession
-Identity  = { accession | inn_name , source , release , retrieved }
-Failure   = unresolved        -- record answered, says nothing. final. cacheable.
-          | unavailable       -- service did not answer. nothing learned. retry. cache nothing.
+Key      = "aa:" Residues | "helm:" Helm | "uniprot:" Accession
+Identity = { accession | inn_name, source, release, retrieved }
+Failure  = unresolved | unavailable
 ```
 
-`unresolved` and `unavailable` are never merged. One value for both writes outages into the catalogue as findings.
-
-No tier is computed and none is stored. A key is an admissible protein or it is refused.
+`unresolved` means the authority record answered and matched zero or more than one entry; it is final and cacheable. `unavailable` means the service did not answer; retry and cache nothing. Merging the two writes outages into the catalogue as findings. No tier is computed or stored: a key is an admissible protein or it is refused.
 
 ### Stage 0 — intrinsic
 
 ```text { type: notebook.cell }
 admit : Key -> { length, composition, shape } | refused
-total. no network. never fails. intrinsic: reads the bytes, needs no library and no date.
-
-ns, body = split(Key, ':', 1)
-    ns == "aa"                      -> assert body subset_of PROTEIN_MONOMERS ; admit
-    ns == "helm", all blocks PEPTIDE-> assert monomers(body) subset_of PROTEIN_MONOMERS ; admit
-    ns == "uniprot", body matches docs/follow-agent-contract.md §3 accession grammar -> admit
-    otherwise                       -> refuse (out of scope or ungrammatical)
-
-refuse is not a classification. an RNA or DNA block is refused unexamined;
-nothing downstream ever sees a non-protein key. the refusal is recorded.
-
-grammar is checked HERE, never at resolve. an ungrammatical accession makes the
-service answer 400: not unresolved (no record answered) and not unavailable (the
-service did answer). admitting it would force a third verdict. refusing it keeps
-stage 1 two-valued.
-
-PROTEIN_MONOMERS loads from docs/follow-agent-contract.md §0f and is not copied here.
-    one-letter tokens use residues.
-    a bracketed token uses monomer_symbol and is refused when it is an
-    all-uppercase run of length at least monomer_uppercase_run_min_length.
-    one block type, one alphabet, no per-block scoping.
-    d-prefixed tokens are D-stereoisomers, never deoxy: dA is D-alanine, dR is D-arginine.
-    with nucleic acids out of scope there is no second reading of d left to disambiguate.
-
-alphabet : refuse-if-illegal. never classify.
-    a letter test decides nothing about what a molecule is; it can only reject a
-    payload whose characters fall outside PROTEIN_MONOMERS.
-
-ascii : every byte of every Key <= 0x7F, no BOM.
-    assertion over existing bytes, never a re-serialisation.
-    a non-ASCII byte in a key is a wrong row, not lint: return it to verification.
-    closes homoglyph duplication (Cyrillic A != Latin A, identical on screen, two keys).
+ascii(Key) := forall b in bytes(Key). b <= 0x7F /\ no_bom(Key)
+ns, body := split(Key, ":", 1)
+  ns == "aa"       /\ body subset_of PROTEIN_MONOMERS           -> admit
+  ns == "helm"     /\ all_peptide(body) /\ monomers subset_of PROTEIN_MONOMERS -> admit
+  ns == "uniprot"  /\ matches(body, contract.patterns.uniprot)  -> admit
+  otherwise                                                     -> refused
 
 vectors:
-    admit  : helm:PEPTIDE1{A.dR.G}$$$$          -> admitted
-    refuse : helm:RNA1{R(A)P}$$$$               -> refused, out of scope
-    refuse : helm:PEPTIDE1{[CCO]}$$$$           -> refused, monomer outside PROTEIN_MONOMERS
+  helm:PEPTIDE1{A.dR.G}$$$$   -> admit
+  helm:RNA1{R(A)P}$$$$        -> refused (scope)
+  helm:PEPTIDE1{[CCO]}$$$$    -> refused (monomer)
 ```
+
+Stage 0 reads bytes only, with no network call and no library dependency. Refusal is not classification: an `RNA` or `DNA` block is refused unexamined so nothing downstream sees a non-protein key. Grammar is checked here rather than at Stage 1 because an ungrammatical accession causes HTTP 400 — neither `unresolved` nor `unavailable` — which keeps Stage 1 two-valued.
+
+`PROTEIN_MONOMERS` loads from `docs/follow-agent-contract.md` §0f (`residues`, `monomer_symbol`, and `monomer_uppercase_run_min_length`) and is not copied here. One block type and one alphabet govern every monomer; `d`-prefixed tokens (`dA`, `dR`) are D-stereoisomers, never deoxy sugars. Non-ASCII bytes (`> 0x7F` or BOM) are refused on existing bytes without re-serialisation, closing homoglyph duplication such as Cyrillic `А` versus Latin `A`.
 
 ### Stage 1 — resolve
 
 ```text { type: notebook.cell }
 resolve : Key -> Identity | unresolved | unavailable
-total. deterministic. no free-text search. single path, never fanned out.
-
-uniprot: / discovered sequence
-    crc64 <- CRC64, ISO polynomial 0xD800000000000000   (NOT the Jones variant)
-    GET https://rest.uniprot.org/uniparc/search?query=checksum:<crc64>
-    GET https://rest.uniprot.org/uniprotkb/<accession>
-    exact lookup. no alignment. no search engine.
-    snapshot 2026-10-29, catalog-systems, against the live UniParc service. not reproducible
-    from this checkout and not re-run since; treat as a record of one run, not a standing fact:
-      41/41 canonical keys -> exactly one UniParc entry.
-      hit  : P04626 canonical 1255 aa -> 39E9DFDA04DCF962 -> UPI000003F55F
-      miss : P04626 canonical, residue 100 R->A -> 08E37566D061ED3B -> zero hits -> unresolved
-             (one letter from a real protein: the lookup was exact, not approximate, on that date)
-    |hit| > 1 -> unresolved. more than one answer is not an answer.
-    5xx / 429 -> unavailable. cache nothing. retry.
-    MD5 is published in the record and was NOT searchable when checked on 2026-10-29.
-    a service can change this; re-check before relying on it. use CRC64.
-
-    canonical is the stored string. a mature chain is a different string with its own
-    UPI. snapshot 2026-10-29, catalog-systems, live service, not reproducible from this
-    checkout: 27 of 33 mature chains resolved and 6 did not
-    (P08069 P25092 P31358 P40238 P41180 Q02643), and no property of the key tells you
-    which. cross-references collapsed under maturation (canonical 54-1426, mature 1-336,
-    16 of 27 under 50), so a mature UPI keeps resolution and loses corroboration.
-    store canonical; any future sequence commit declares its boundary explicitly.
-
-aa: / helm: invented molecule (therapeutic antibody, de novo binder)
-    UNMEASURED. no route specified. return unresolved.
-    candidate authorities, untested as of 2026-10-29: WHO INN records, Thera-SAbDab.
-    do not substitute an endpoint.
-
-shard unit: a BATCH of keys, never one key per worker.
-    timing snapshot 2026-10-29, catalog-systems, one run on one network path, not
-    reproducible from this checkout: 41 single lookups = 103 s; 307 accessions batched = 35 s.
-    the ratio is the point; the seconds are not a benchmark.
+crc64 := crc64_iso(sequence, 0xD800000000000000)
+GET https://rest.uniprot.org/uniparc/search?query=checksum:<crc64>
+GET https://rest.uniprot.org/uniprotkb/<accession>
+  status in {429, 5xx} -> unavailable
+  |hits| == 1          -> Identity
+  |hits| != 1          -> unresolved
 ```
+
+Lookup is deterministic and exact, with no alignment and no free-text search. Compute CRC64 with the ISO polynomial `0xD800000000000000` (not the Jones variant); MD5 is published in UniParc records but was not searchable when checked on 29 Oct 2026. Store the canonical sequence rather than a mature chain. Invented `aa:` or `helm:` molecules (therapeutic antibodies or de novo binders) have no specified lookup route and return `unresolved`; candidate authorities (`WHO INN`, `Thera-SAbDab`) were untested as of 29 Oct 2026. Shard work as batches of keys rather than one key per worker.
+
+Dated snapshot (29 Oct 2026, `catalog-systems`, live UniParc service, not reproducible from this checkout): 41/41 canonical keys matched a single UniParc entry (`P04626` canonical 1,255 aa → `39E9DFDA04DCF962` → `UPI000003F55F`; residue 100 `R->A` → `08E37566D061ED3B` → zero hits → `unresolved`). Of 33 mature chains, 27 resolved and 6 did not (`P08069`, `P25092`, `P31358`, `P40238`, `P41180`, `Q02643`), and cross-reference counts collapsed from 54–1,426 on canonical sequences to 1–336 on mature chains (16 of 27 under 50). In one timing run on that path, 307 batched accessions took 35 s against 103 s for 41 single lookups.
 
 ### Stage 2 — enrich
 
 ```text { type: notebook.cell }
-enrich : Identity -> Findings        -- note the domain: Identity, NOT Key
-campaign. open. parallel. no coordinator. no shared mutable state.
-
-stage 1 returning unresolved HALTS enrichment for that key. fail-closed.
-no worker may put residues into a search. observed once, 2026-10-29, catalog-systems:
-a real 40-mer of P04626 returned an unrelated mouse Fab (PDB 1RIV), engine verdict
-"not identified". one dated observation against a live engine, not a reproducible test.
-
-merge law: UNION with per-worker attribution. never a vote, never a collapse to
-one value. N workers reading one page are not N confirmations.
-
-every finding carries source + release + retrieved. nothing a page merely said.
-rate limit: honour the service's published limit; a throttled campaign returns
-unavailable, never unresolved.
+enrich : Identity -> Set<{ claim, source, release, retrieved }> | unavailable
+merge(A, B) := A union B
 ```
+
+Enrichment takes an admitted `Identity`, never a raw `Key`; `unresolved` at Stage 1 halts enrichment fail-closed. Workers run in parallel without shared mutable state and merge findings by set union with per-worker attribution (`source`, `release`, `retrieved`), never by voting. Honour published rate limits and return `unavailable` on throttling. Never put residues into a free-text search engine: on 29 Oct 2026 (`catalog-systems`), searching a 40-mer of human `P04626` returned an unrelated mouse Fab (`PDB 1RIV`).
 
 ### Not derivable
 

@@ -2,7 +2,7 @@
 
 `type: initialization` · non-normative. `docs/follow-agent-contract.md` governs on any conflict.
 
-Route each task through the smallest sufficient path. The contract governs the organization template.
+Route each task through the smallest sufficient path. The contract governs the folded templates.
 
 ## Specification
 
@@ -41,7 +41,7 @@ index = "ooc/catalog.og"
 | design | contract → [`falsify`](falsify.md) → [`pins`](pin-references.md) → [`design`](../skills/design-binder.md) → [`traces`](../systems/record-traces.md) → [`seal`](../systems/seal-og.md); [`bench`](../systems/use-bench.md) → [`record`](../tmp/record-egfr-calibration.md) → [`run`](../systems/run-campaign.md) |
 | falsify | contract → [`falsify`](falsify.md) |
 | traces | contract → [`traces`](../systems/record-traces.md) |
-| organize agents | contract → [`falsify`](falsify.md); expand `organization template` |
+| organize agents | contract → [`falsify`](falsify.md); expand `template:*` |
 
 Stop at the first sufficient row. Design continues to the sink. Index: `ooc/catalog.og`.
 
@@ -115,24 +115,17 @@ Symbolic reasoning. `type: sandbox.playground`.
 
 ```tla
 ---- MODULE ReadRoute ----
-\* model agent. source of nature.
-\* A Lisp variation is a proposal only when this module grounds it.
-\* Stop when the contract is first and the route is sufficient.
 CONSTANTS contract_first, sufficient
 Stop == contract_first /\ sufficient
 ====
 ```
 
 ```lisp
-;; write agent. executable image. grounded in the tla module only.
 (defun stop (contract-first sufficient)
   (and contract-first sufficient))
 ```
 
 ```lean
--- model agent. forward pass. discharge and refinement check.
--- autoproof: tla source -> lisp image -> Ti -> bend breakpoint -> tla
--- E7 does not compile this fence.
 def lispStop (c s : Bool) : Bool := c && s
 
 theorem Ti :
@@ -144,10 +137,6 @@ theorem Ti :
 ```
 
 ```bend
-# proof agent. backward pass. search under Ti.
-# ti_holds is a number. 0 takes the refuse branch.
-# breakpoint: a route that still names the contract first
-# This value is not a .trace file. E7 does not run this fence.
 object Trace { name, holds }
 
 def backward(ti_holds):

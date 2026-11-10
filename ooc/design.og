@@ -6,7 +6,7 @@ domain: catalog|design|campaign
 scope: all
 catalogue-version: 2
 governs: docs/follow-agent-contract.md
-checksum: sha256:96416d2e433e70f862159a8063e9b6cba77b063649326877b31d8ad9e1d6be94
+checksum: sha256:e4b573f3358143ecf8225cdeb69e8cca6ab9973abb52927d001dbde95bef9085
 ::end
 
 ::schema
@@ -24,6 +24,7 @@ falsify | stage | all | 0.99 | premises, swarm, outside-repo
 pins | stage | all | 0.95 | digest, row-9, benchmark-scope, read-status
 design-binder | stage | all | 0.95 | epitope, control, screens, assays, disclaimer
 traces | stage | all | 0.95 | emit, context, halt, merkle
+seal | stage | all | 0.95 | og-root, merkle, context-tree, web3, rulebook
 bench | stage | all | 0.95 | tier, union, pose, no-pool
 record | stage | all | 0.90 | calibration, one-run, not-a-default
 run | stage | all | 0.95 | manifest, preflight, sink, verify
@@ -60,6 +61,7 @@ Stop on an unread or same-indication pair hit. A failed positive control emits n
 ->[:requires] docs/pin-references.md
 ->[:requires] skills/design-binder.md
 ->[:requires] systems/record-traces.md
+->[:requires] systems/seal-og.md
 ->[:requires] systems/use-bench.md
 ->[:requires] tmp/record-egfr-calibration.md
 ->[:requires] systems/run-campaign.md
@@ -141,6 +143,19 @@ Expand carrier sets only when judging a trace.
 ::end
 ::edges
 ->[:requires] systems/record-traces.md
+->[:precedes] seal
+::end
+::end
+
+::node [id=seal type=stage confidence=0.95 scope=all updated=2026-11-09]
+::dense
+context-tree|og-root|merkle|web3|rulebook
+::end
+::full
+Seal one context tree to one Merkle root before the campaign sink.
+::end
+::edges
+->[:requires] systems/seal-og.md
 ->[:precedes] run
 ::end
 ::end

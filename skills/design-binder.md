@@ -116,24 +116,17 @@ Symbolic reasoning. `type: sandbox.playground`.
 
 ```tla
 ---- MODULE DesignBinder ----
-\* model agent. source of nature.
-\* A Lisp variation is a proposal only when this module grounds it.
-\* Emit only with two assays, a passed control, and no unread hit. This module emits no sequence.
 CONSTANTS assays_two, control_pass, unread
 Emit == assays_two /\ control_pass /\ ~unread
 ====
 ```
 
 ```lisp
-;; write agent. executable image. grounded in the tla module only.
 (defun emitp (assays-two control-pass unread)
   (and assays-two control-pass (not unread)))
 ```
 
 ```lean
--- model agent. forward pass. discharge and refinement check.
--- autoproof: tla source -> lisp image -> Ti -> bend breakpoint -> tla
--- E7 does not compile this fence.
 def lispEmit (assays control unread : Bool) : Bool :=
   assays && control && !unread
 
@@ -150,10 +143,6 @@ theorem Ti :
 ```
 
 ```bend
-# proof agent. backward pass. search under Ti.
-# ti_holds is a number. 0 takes the refuse branch.
-# breakpoint: no emission while an unread hit or a failed control stands
-# This value is not a .trace file. E7 does not run this fence.
 object Trace { name, holds }
 
 def backward(ti_holds):

@@ -6,7 +6,7 @@ domain: catalog|orchestration
 scope: all
 catalogue-version: 2
 governs: docs/follow-agent-contract.md
-checksum: sha256:cdf1e1552578167f9d7eda9d0d0e39cef41eeef16379b78762ff74f38d7c28bd
+checksum: sha256:8f129861c3fcbcc845f3d59620c5c528144eb9e4cad1209e87f0ccce9abb5f06
 ::end
 
 ::schema
@@ -50,16 +50,16 @@ Read DISCLAIMER before any node.
 search-index|resolve-context|llm-router|requires-loads|precedes-orders|dense-then-full
 ::end
 ::full
-search_index reads this ::index and stops. Select one route id. resolve_context opens that Markdown index and follows :requires. A :precedes edge orders stages and does not load them. A :see-also edge does not load. ::dense is the second pass. ::full is the third. Read a terminal Markdown file only when the selected node names it. A ::warning is never skipped. skip-if-known loads once per session. A closed-list label stays closed until the task names it. Route stages are scope all. oracle-admit is scope orchestrator.
+search_index reads this ::index and stops. Select one route id. resolve_context opens that .og file and follows :requires. A :precedes edge orders stages and does not load them. A :see-also edge does not load. ::dense is the second pass. ::full is the third. Read a terminal Markdown file only when the selected node names it. A ::warning is never skipped. skip-if-known loads once per session. A closed-list label stays closed until the task names it. Route stages are scope all. oracle-admit is scope orchestrator.
 ::end
 ::table
 task | minimum read
 read or rank rows | contract
 resolve a key | contract → resolve-key
 propose a pair | contract → resolve-key → propose-pairs
-design | contract → falsify → pins → design → traces; bench → record → run
+design | contract → falsify → pins → design → traces → seal; bench → record → run
 falsify | contract → falsify; the runtime is written outside the repository
-organize | contract → falsify; expand organization template
+organize | contract → falsify; expand template:*
 traces | contract + traces → that runtime's trace judgement
 seal a context tree | traces → seal
 navigate | router
@@ -202,7 +202,7 @@ Choosing pair versus preclinical is the oracle. An unread paper is not a default
 organize|template|test-time|no-commit
 ::end
 ::full
-Open ooc/falsify.og. Expand organization template only when the task names that label.
+Open ooc/falsify.og. Expand a template:* label only when the task names that label.
 ::end
 ::edges
 ->[:requires] ooc/falsify.og

@@ -2,7 +2,7 @@
 
 `type: resource.reference` · `spec: agent.swarm` · subordinate to `docs/follow-agent-contract.md`.
 
-The falsifier holds the decision procedure and attacks the premises of this catalogue. The organization template names the swarm, and a frontier model may write a program from it at test time. A caught attack is still not clinical proof.
+The falsifier holds the decision procedure and attacks the premises of this catalogue. Folded language templates specify the swarm and its archive so a frontier model can write the runtime at test time. A caught attack is still not clinical proof.
 
 ## Specification
 
@@ -50,23 +50,23 @@ trace = "act-log refusals"
 
 ## Indications
 
-- Read the organization template before running a worker. A frontier model writes the program at test time.
+- Read the folded templates before running a worker. A frontier model writes the runtime at test time.
 - Read a fence as a template, an example, a guide, or pseudocode.
 - Attack a premise before treating a passing decision as evidence.
 - Keep a `PEPTIDE` scope failure distinct from a monomer failure.
 - Carry `spec: agent.swarm` on this file, and show that any other header carrying it is refused.
-- Read the expanded Prolog cell as the symbolic swarm image and verify it against the organization template.
-- Expand `checker literals`, `attacks`, and `carrier sets` when writing the runtime. Leave those labels closed when reading a premise.
+- Read the expanded Prolog cell as the symbolic swarm image and verify it against the folded templates.
+- Expand `checker literals`, `attacks`, `carrier sets`, and `template:*` labels when writing the runtime. Leave those labels closed when reading a premise.
 - Read the symbolic playground as the autoproof loop. Its Bend fence is the backward pass, not this falsifier.
 
 ## Contraindications
 
 - This is not a formulary, a prescription, or a design campaign. Grammar fixtures such as `aa:ACD` are not binder designs.
-- The seven workers are members of one falsification run. They do not vote. `spec: agent.swarm` is valid on this file only. `agent.fleet` is not a spec. The organization template is the type image, Prolog is its symbolic projection, and a test-time schedule runs one role per agent.
+- The seven workers are members of one falsification run. They do not vote. `spec: agent.swarm` is valid on this file only. `agent.fleet` is not a spec. The Rust template is the type image, Prolog is its symbolic projection, and the Kubernetes template schedules one role per agent.
 - A corroborated attack is not predicate 16, not a measurement, and not permission to write `graph.json` or `proposals.json`.
-- Do not confuse a test-time program with the semantic paper oracle. The template has no catalogue write path.
+- Do not confuse a test-time program with the semantic paper oracle. The templates have no catalogue write path.
 - The Bend fence in the symbolic playground is the backward pass, and this repository does not run that image.
-- This repository does not run the eighty-eight semantic attacks. A test-time check of the template is not those attacks.
+- This repository does not run the eighty-eight semantic attacks. A test-time check of the templates is not those attacks.
 - Naming `agent.swarm` as the spec of a skill or a run, or naming `agent.fleet` as a spec, is a document attack. The contract refuses both readings.
 
 ## Algorithm
@@ -86,7 +86,7 @@ verdict = "corroborated or falsified"
 [controlled]
 oracle = "not-discharged"
 workers = "independent and unvoted"
-program = "organization template plus caller-supplied semantic decision"
+program = "folded templates plus caller-supplied semantic decision"
 ```
 
 ### Process
@@ -125,24 +125,17 @@ Symbolic reasoning. `type: sandbox.playground`.
 
 ```tla
 ---- MODULE Falsifier ----
-\* model agent. source of nature.
-\* A Lisp variation is a proposal only when this module grounds it.
-\* A named predicate failure corroborates. Acceptance is a survivor. Workers do not vote.
 CONSTANTS named_failed, accepted
 Corroborated == named_failed /\ ~accepted
 ====
 ```
 
 ```lisp
-;; write agent. executable image. grounded in the tla module only.
 (defun corroborated (named-failed accepted)
   (and named-failed (not accepted)))
 ```
 
 ```lean
--- model agent. forward pass. discharge and refinement check.
--- autoproof: tla source -> lisp image -> Ti -> bend breakpoint -> tla
--- E7 does not compile this fence.
 def lispCorroborated (namedFailed accepted : Bool) : Bool :=
   namedFailed && !accepted
 
@@ -155,10 +148,6 @@ theorem Ti :
 ```
 
 ```bend
-# proof agent. backward pass. search under Ti.
-# ti_holds is a number. 0 takes the refuse branch.
-# breakpoint: a named predicate failure, else a survivor recorded as itself
-# This value is not a .trace file. E7 does not run this fence.
 object Trace { name, holds }
 
 def backward(ti_holds):
@@ -174,7 +163,7 @@ Workers run concurrently and share no verdict. The run reports the set of verdic
 
 ### Structure
 
-The cell below is the symbolic projection of the organization template. Each worker publishes into `decide`; `decide` and `document` both publish into `literals`, so `literals` has two parents and the image is a DAG. A frontier model writes a program that matches this projection at test time. A trace ramifies this DAG into one Merkle tree under [`systems/record-traces.md`](../systems/record-traces.md).
+The cell below is the symbolic projection of the organization. Each worker publishes into `decide`; `decide` and `document` both publish into `literals`, so `literals` has two parents and the image is a DAG. A frontier model writes a program that matches this projection at test time. A trace ramifies this DAG into one Merkle tree under [`systems/record-traces.md`](../systems/record-traces.md).
 
 ```prolog { type: notebook.cell }
 image(agent_swarm).
@@ -199,135 +188,161 @@ edge(relation, decide).
 edge(trace, decide).
 ```
 
-### Organization template
+### Templates
 
-The organization template is the type-safe swarm. Expand that label to load it. An edge is valid only when the source publishes a capability the target consumes. The graph is a DAG and every node reaches `literals`. Workers do not vote. The template names no target, provider, image registry, or catalogue write. A frontier model may write a program, an image, a manifest, and an archive from the template at test time. Those files are not in this repository. The Prolog image is the symbolic projection of the same nodes and edges.
+The collapsible cells below fold the decision procedure, the type-safe Rust organization, the container image, the Kubernetes schedule, the SQL archive, and the CLI wrapper into Markdown. Expand a `template:*` label only when writing that artifact at test time. In the Rust crate, each agent id is a published `AgentDefinition` in its own leaf module (`workers::<id>`, `decision::decide`, `sink::literals`), and `organization/mod.rs` holds `AGENT_SWARM` with no leaf definition. An edge is valid only when the source publishes a capability the target consumes; the graph is a DAG and every node reaches `literals`. The tracer reads `catalog.agent/component=agent` logs and archives validated `catalog.agent.action/v1` events to `.jsonl` and idempotent `.sql`. None of those files is committed to this repository.
 
 <details>
-<summary>organization template</summary>
+<summary>template: python</summary>
 
-```json { type: notebook.cell }
-{
-  "name": "agent_swarm",
-  "shape": "dag",
-  "sink": "literals",
-  "join": "decide",
-  "materialize": "test-time",
-  "image": "caller-supplied",
-  "writes": [],
-  "agents": [
-    {
-      "id": "bytes",
-      "role": "worker",
-      "consumes": ["catalogue-bytes"],
-      "publishes": ["bytes-verdict"]
-    },
-    {
-      "id": "grammar",
-      "role": "worker",
-      "consumes": ["catalogue-bytes", "checker-literals"],
-      "publishes": ["grammar-verdict"]
-    },
-    {
-      "id": "identity",
-      "role": "worker",
-      "consumes": ["catalogue-bytes"],
-      "publishes": ["identity-verdict"]
-    },
-    {
-      "id": "relation",
-      "role": "worker",
-      "consumes": ["catalogue-bytes"],
-      "publishes": ["relation-verdict"]
-    },
-    {
-      "id": "oracle",
-      "role": "worker",
-      "consumes": ["catalogue-bytes"],
-      "publishes": ["oracle-status"]
-    },
-    {
-      "id": "document",
-      "role": "worker",
-      "consumes": ["repository-tree", "checker-literals"],
-      "publishes": ["document-verdict"]
-    },
-    {
-      "id": "trace",
-      "role": "worker",
-      "consumes": ["trace-store", "checker-literals"],
-      "publishes": ["trace-verdict"]
-    },
-    {
-      "id": "decide",
-      "role": "join",
-      "consumes": [
-        "bytes-verdict",
-        "grammar-verdict",
-        "identity-verdict",
-        "relation-verdict",
-        "oracle-status",
-        "document-verdict",
-        "trace-verdict"
-      ],
-      "publishes": ["decision"]
-    },
-    {
-      "id": "literals",
-      "role": "sink",
-      "consumes": ["decision", "document-verdict"],
-      "publishes": ["published-literals"]
-    }
-  ],
-  "edges": [
-    ["bytes", "decide"],
-    ["grammar", "decide"],
-    ["identity", "decide"],
-    ["relation", "decide"],
-    ["oracle", "decide"],
-    ["document", "decide"],
-    ["trace", "decide"],
-    ["decide", "literals"],
-    ["document", "literals"]
-  ],
-  "validate": "refuse a duplicate node, a self-edge, an edge whose capabilities do not meet, a cycle, or a node that cannot reach the sink",
-  "actions": {
-    "schema": "catalog.agent.action/v1",
-    "organization": "agent_swarm",
-    "kinds": [
-      "started",
-      "ready",
-      "heartbeat",
-      "accepted",
-      "completed",
-      "refused",
-      "error",
-      "stopped"
-    ],
-    "payload": "object",
-    "example": {
-      "agent": "bytes",
-      "kind": "completed",
-      "payload": {}
-    }
-  },
-  "archive": {
-    "sinks": ["jsonl", "sql"],
-    "sql": "insert-or-ignore",
-    "columns": [
-      "action_id",
-      "trace_id",
-      "parent_action_id",
-      "organization",
-      "agent",
-      "kind",
-      "sequence",
-      "observed_at_unix_ms",
-      "payload_json"
-    ]
-  },
-  "schedule": "one role per agent id; non-root; read-only root; drop capabilities; no catalogue write"
+```python { type: notebook.cell }
+WORKERS = ("bytes", "grammar", "identity", "relation", "oracle", "document", "trace")
+EXITS = {"corroborated": 0, "survivor": 1, "error": 2}
+
+def load_cell(markdown: str, label: str) -> str: ...
+def literals(repo: str) -> dict: ...
+def carriers(repo: str) -> dict: ...
+def attacks(repo: str) -> list[dict]: ...
+def decide(catalogue=None, prev=None, repo=None, trace=None, online: bool = False) -> int: ...
+def mutate(repo: str, attack: dict): ...
+def judge(attack: dict, report: dict) -> str: ...
+def campaign(repo: str, worker: str | None = None) -> int: ...
+```
+</details>
+
+<details>
+<summary>template: rust</summary>
+
+```rust { type: notebook.cell }
+pub enum AgentId { Bytes, Grammar, Identity, Relation, Oracle, Document, Trace, Decide, Literals }
+pub enum Role { Worker, Join, Sink }
+pub enum Capability {
+    CatalogueBytes, CheckerLiterals, RepositoryTree, TraceStore,
+    BytesVerdict, GrammarVerdict, IdentityVerdict, RelationVerdict,
+    OracleStatus, DocumentVerdict, TraceVerdict, Decision, PublishedLiterals,
 }
+pub enum ActionKind { Started, Ready, Heartbeat, Accepted, Completed, Refused, Error, Stopped }
+
+pub trait AgentDefinition {
+    const ID: AgentId;
+    const ROLE: Role;
+    const MODULE: &'static str;
+    const CONSUMES: &'static [Capability];
+    const PUBLISHES: &'static [Capability];
+}
+pub struct Published<A: AgentDefinition>(core::marker::PhantomData<A>);
+
+pub struct Edge { pub from: AgentId, pub to: AgentId }
+pub struct Organization { pub name: &'static str, pub sink: AgentId, pub edges: &'static [Edge] }
+pub const AGENT_SWARM: Organization = Organization {
+    name: "agent_swarm",
+    sink: AgentId::Literals,
+    edges: &[
+        Edge { from: AgentId::Bytes, to: AgentId::Decide },
+        Edge { from: AgentId::Grammar, to: AgentId::Decide },
+        Edge { from: AgentId::Identity, to: AgentId::Decide },
+        Edge { from: AgentId::Relation, to: AgentId::Decide },
+        Edge { from: AgentId::Oracle, to: AgentId::Decide },
+        Edge { from: AgentId::Document, to: AgentId::Decide },
+        Edge { from: AgentId::Trace, to: AgentId::Decide },
+        Edge { from: AgentId::Decide, to: AgentId::Literals },
+        Edge { from: AgentId::Document, to: AgentId::Literals },
+    ],
+};
+
+pub struct ActionEnvelope<P> {
+    pub schema: &'static str,
+    pub action_id: String,
+    pub trace_id: String,
+    pub parent_action_id: Option<String>,
+    pub organization: &'static str,
+    pub agent: AgentId,
+    pub kind: ActionKind,
+    pub sequence: u64,
+    pub observed_at_unix_ms: u64,
+    pub payload: P,
+}
+pub fn trace_stream<R: std::io::BufRead>(logs: R, jsonl: &std::path::Path, sql: &std::path::Path) -> Result<(), String>;
+```
+</details>
+
+<details>
+<summary>template: dockerfile</summary>
+
+```dockerfile { type: notebook.cell }
+FROM rust:slim AS build
+WORKDIR /src
+COPY . .
+ARG BIN=catalog-agent
+RUN cargo build --release --locked --bin "$BIN"
+
+FROM gcr.io/distroless/cc-debian12:nonroot
+ARG BIN=catalog-agent
+COPY --from=build /src/target/release/$BIN /usr/local/bin/agent
+USER nonroot:nonroot
+ENTRYPOINT ["/usr/local/bin/agent"]
+```
+</details>
+
+<details>
+<summary>template: yaml</summary>
+
+```yaml { type: notebook.cell }
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: catalog-agent-organization
+  labels:
+    catalog.agent/organization: agent_swarm
+spec:
+  template:
+    metadata:
+      labels:
+        catalog.agent/component: agent
+    spec:
+      containers:
+        - name: "<agent-id>"
+          image: "<agent-image>"
+          env:
+            - name: AGENT_ID
+              value: "<agent-id>"
+          securityContext:
+            runAsNonRoot: true
+            readOnlyRootFilesystem: true
+```
+</details>
+
+<details>
+<summary>template: sql</summary>
+
+```sql { type: notebook.cell }
+CREATE TABLE IF NOT EXISTS agent_actions (
+  action_id TEXT PRIMARY KEY,
+  trace_id TEXT NOT NULL,
+  parent_action_id TEXT,
+  organization TEXT NOT NULL CHECK (organization = 'agent_swarm'),
+  agent TEXT NOT NULL CHECK (agent IN ('bytes','grammar','identity','relation','oracle','document','trace','decide','literals')),
+  kind TEXT NOT NULL CHECK (kind IN ('started','ready','heartbeat','accepted','completed','refused','error','stopped')),
+  sequence INTEGER NOT NULL CHECK (sequence >= 0),
+  observed_at_unix_ms INTEGER NOT NULL CHECK (observed_at_unix_ms >= 0),
+  payload_json TEXT NOT NULL CHECK (json_valid(payload_json) AND json_type(payload_json) = 'object')
+);
+INSERT OR IGNORE INTO agent_actions VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9);
+```
+</details>
+
+<details>
+<summary>template: bash</summary>
+
+```bash { type: notebook.cell }
+falsify --decide graph.json
+falsify --prev "$OLD" graph.json
+falsify --merge "$A" "$B"
+falsify --repo .
+falsify --trace core.trace worker.trace
+falsify --worker bytes --json
+catalog-agent --agent bytes emit --kind completed --trace-id "$TRACE" --payload '{}' |
+  catalog-tracer --jsonl "$OUT/actions.jsonl" --sql "$OUT/actions.sql" stdin
 ```
 </details>
 
@@ -794,8 +809,8 @@ Eighty-eight attacks, seven workers, no vote. This object is the closed list, in
     {
       "worker": "document",
       "id": "kubernetes-graph-drift",
-      "premise": "a test-time manifest names the same agents as the organization template",
-      "prediction": "E7 fails when that manifest or the archive columns differ from the template or the Prolog image"
+      "premise": "the Rust, Kubernetes, and SQL templates name the same agents as the Prolog swarm image",
+      "prediction": "E7 fails when an agent id, edge, or action kind drifts across the templates or the Prolog image"
     },
     {
       "worker": "trace",
@@ -913,7 +928,7 @@ Stated 3 Nov 2026 (Australia/Sydney). The decision procedure was folded into thi
 | Give `<details>` an attribute, wrap two fences or prose, wrap the process CSV or a diagram, or repeat a label | E7 fails |
 | Wrap one canonical fence in one `<details>` block with a new plain label | E7 passes |
 | Drop a swarm worker, add a cycle, move the image, or wrap it | E7 |
-| Diverge the test-time manifest from the organization template or the Prolog image | E7 |
+| Diverge the test-time manifest from the folded templates or the Prolog image | E7 |
 | Set trace `oracle` to `discharged` | `value:oracle` |
 | Add `score` to an act | `fields` |
 | Pin twice | R5 |
@@ -921,7 +936,7 @@ Stated 3 Nov 2026 (Australia/Sydney). The decision procedure was folded into thi
 | Emit a binder with no passing control | R10 |
 | Treat a green pure run as closing the paper oracle | the oracle line stays not discharged |
 | Treat one re-run as reliability | no predicate id supports that inference |
-| Let the template, the Prolog image, or the archive columns name different agents | E7 |
+| Let the Rust, Kubernetes, or SQL templates name different agents | E7 |
 | Treat a fence as a run that already happened | no mutant was decided |
 | Remove the Falsifier playground, reorder it, or treat its Bend fence as this falsifier | E7, and the instrument stays the example outside this repository |
 

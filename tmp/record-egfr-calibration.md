@@ -92,6 +92,69 @@ spec = "4108e940ee5f8c8aad7d8e1ae173bbe166c718cb"
 
 ### Process
 
+```mermaid { type: notebook.cell }
+flowchart LR
+    Rank --> Select
+    Select --> Halt
+    Halt --> Calibrate
+    Calibrate --> Refuse
+```
+
+```mermaid { type: notebook.cell }
+stateDiagram-v2
+    [*] --> Rank
+    Rank --> Gate
+    Gate --> SameHit
+    SameHit --> Calibrate
+    Calibrate --> Refuse
+    Refuse --> [*]
+```
+
+```csv { type: notebook.cell }
+operator,law
+controls,binding_confidence bar 0.7 and oracle not-discharged
+design,pair rank then blinded peptide calibration
+transport,Boltz run prot_des_6SDannvhmPSi293YAsJ2
+stopping,emit none when the bar fails
+search,oncology and immunology inside pair
+filters,withhold 1YY9 chains C and D
+recovery,do not substitute iptm for the binding bar
+```
+
+Symbolic reasoning. `type: sandbox.playground`.
+
+```tla
+---- MODULE EgfrRecord ----
+EXTENDS Integers
+Failed == 108 < 700 /\ 0 = 0
+====
+```
+
+```lisp
+(defun failed (confidence bar emitted)
+  (and (< confidence bar) (= emitted 0)))
+```
+
+```lean
+def lispFailed (confidence bar emitted : Nat) : Bool :=
+  decide (confidence < bar) && decide (emitted = 0)
+
+theorem Ti :
+    lispFailed 108 700 0 = true ∧
+    lispFailed 700 700 0 = false := by
+  decide
+```
+
+```bend
+object Trace { name, holds }
+
+def backward(ti_holds):
+  if ti_holds:
+    return Trace { name: "breakpoint", holds: 1 }
+  else:
+    return Trace { name: "refuse", holds: 0 }
+```
+
 ```text { type: notebook.cell }
 RANK pair FILTER area:oncology|immunology ORDER in_scope:desc,target:asc
 SELECT uniprot:P00533
@@ -135,81 +198,6 @@ VERDICT positive-control-failed emitted:0
 }
 ```
 </details>
-
-```mermaid { type: notebook.cell }
-flowchart LR
-    Rank --> Select
-    Select --> Halt
-    Halt --> Calibrate
-    Calibrate --> Refuse
-```
-
-```mermaid { type: notebook.cell }
-stateDiagram-v2
-    [*] --> Rank
-    Rank --> Gate
-    Gate --> SameHit
-    SameHit --> Calibrate
-    Calibrate --> Refuse
-    Refuse --> [*]
-```
-
-```csv { type: notebook.cell }
-operator,law
-controls,binding_confidence bar 0.7 and oracle not-discharged
-design,pair rank then blinded peptide calibration
-transport,Boltz run prot_des_6SDannvhmPSi293YAsJ2
-stopping,emit none when the bar fails
-search,oncology and immunology inside pair
-filters,withhold 1YY9 chains C and D
-recovery,do not substitute iptm for the binding bar
-```
-
-Symbolic reasoning. `type: sandbox.playground`.
-
-```tla
----- MODULE EgfrRecord ----
-\* model agent. source of nature.
-\* A Lisp variation is a proposal only when this module grounds it.
-\* 108 thousandths is the integer part of recorded confidence 0.10832766083050813. The bar is 700 thousandths. Emitted is 0.
-\* iptm is not this comparison.
-EXTENDS Integers
-Failed == 108 < 700 /\ 0 = 0
-====
-```
-
-```lisp
-;; write agent. executable image. grounded in the tla module only.
-(defun failed (confidence bar emitted)
-  (and (< confidence bar) (= emitted 0)))
-```
-
-```lean
--- model agent. forward pass. discharge and refinement check.
--- autoproof: tla source -> lisp image -> Ti -> bend breakpoint -> tla
--- E7 does not compile this fence.
-def lispFailed (confidence bar emitted : Nat) : Bool :=
-  decide (confidence < bar) && decide (emitted = 0)
-
-theorem Ti :
-    lispFailed 108 700 0 = true ∧
-    lispFailed 700 700 0 = false := by
-  decide
-```
-
-```bend
-# proof agent. backward pass. search under Ti.
-# ti_holds is a number. 0 takes the refuse branch.
-# breakpoint: recorded confidence stays under the bar and emitted stays 0
-# This value is not a .trace file. E7 does not run this fence.
-object Trace { name, holds }
-
-def backward(ti_holds):
-  if ti_holds:
-    return Trace { name: "breakpoint", holds: 1 }
-  else:
-    return Trace { name: "refuse", holds: 0 }
-```
 
 ## Citations
 

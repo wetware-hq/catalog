@@ -6,7 +6,7 @@ domain: catalog|falsify|swarm
 scope: all
 catalogue-version: 2
 governs: docs/follow-agent-contract.md
-checksum: sha256:b2a2481f0df3046c7bf04b9638d3d07a73dc1d44f67a3e4b86ef4fac311ddeb0
+checksum: sha256:45db6923ab908323f8dc1ef1fa96ba95efe55c21aa1cdddca1abd2ea1d7ee091
 ::end
 
 ::schema
@@ -75,7 +75,7 @@ seven-workers|prolog-dag|decide|attacks|no-commit
 Endpoint of the falsify route.
 ::end
 ::note
-Expand attacks or organization template only when the task names that label. The Prolog image stays outside compression.
+Expand attacks or a template:* label only when the task names that label. The Prolog image stays outside compression.
 ::end
 ::edges
 ->[:requires] docs/falsify.md

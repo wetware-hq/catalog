@@ -102,9 +102,6 @@ Symbolic reasoning. `type: sandbox.playground`.
 
 ```tla
 ---- MODULE Seal ----
-\* model agent. source of nature.
-\* A Lisp variation is a proposal only when this module grounds it.
-\* One root and tree cardinality. The root is not ciphertext.
 EXTENDS Integers
 CONSTANTS roots, v, e
 Safe == roots = 1 /\ e + 1 = v
@@ -112,15 +109,11 @@ Safe == roots = 1 /\ e + 1 = v
 ```
 
 ```lisp
-;; write agent. executable image. grounded in the tla module only.
 (defun safe (roots v e)
   (and (= roots 1) (= (+ e 1) v)))
 ```
 
 ```lean
--- model agent. forward pass. discharge and refinement check.
--- autoproof: tla source -> lisp image -> Ti -> bend breakpoint -> tla
--- E7 does not compile this fence.
 def lispSafe (roots v e : Nat) : Bool :=
   decide (roots = 1) && decide (e + 1 = v)
 
@@ -132,10 +125,6 @@ theorem Ti :
 ```
 
 ```bend
-# proof agent. backward pass. search under Ti.
-# ti_holds is a number. 0 takes the refuse branch.
-# breakpoint: one root and tree cardinality
-# This value is not og.root. E7 does not run this fence.
 object Trace { name, holds }
 
 def backward(ti_holds):

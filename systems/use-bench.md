@@ -105,23 +105,16 @@ Symbolic reasoning. `type: sandbox.playground`.
 
 ```tla
 ---- MODULE BenchPlay ----
-\* model agent. source of nature.
-\* A Lisp variation is a proposal only when this module grounds it.
-\* Two-point image of set union. Not the 2026-10-29 TLC model and not the merge-sketch fence.
 Merge(x, y) == x \/ y
 ====
 ```
 
 ```lisp
-;; write agent. executable image. grounded in the tla module only.
 (defun merge-bit (a b)
   (or a b))
 ```
 
 ```lean
--- model agent. forward pass. discharge and refinement check.
--- autoproof: tla source -> lisp image -> Ti -> bend breakpoint -> tla
--- E7 does not compile this fence.
 def lispMerge (a b : Bool) : Bool := a || b
 
 theorem Ti (a b : Bool) : lispMerge a b = lispMerge b a := by
@@ -129,10 +122,6 @@ theorem Ti (a b : Bool) : lispMerge a b = lispMerge b a := by
 ```
 
 ```bend
-# proof agent. backward pass. search under Ti.
-# ti_holds is a number. 0 takes the refuse branch.
-# breakpoint: the two-point merge stays commutative
-# This value is not a .trace file. E7 does not run this fence.
 object Trace { name, holds }
 
 def backward(ti_holds):
@@ -146,7 +135,7 @@ def backward(ti_holds):
 
 - **Read:** this file, `docs/follow-agent-contract.md`, the run's own `.bench` files.
 - **Write:** `.bench` files inside a run directory, which lives outside this repository.
-- **Refuse:** `graph.json`, `proposals.json`, and every other file in this repository. This directory holds the `fleet.campaign` specifications. This file's write scope is `.bench` files inside a run directory. Campaign executors append them from this Markdown format under `systems/run-campaign.md`. The organization template does not widen that scope (§11).
+- **Refuse:** `graph.json`, `proposals.json`, and every other file in this repository. This directory holds the `fleet.campaign` specifications. This file's write scope is `.bench` files inside a run directory. Campaign executors append them from this Markdown format under `systems/run-campaign.md`. The folded templates do not widen that scope (§11).
 
 **`systems/` and `skills/`.** `skills/*.md` are *procedures*: a named thing an agent does, registered in `docs/follow-agent-contract.md` §10, each with a signature and a write scope. `systems/*.md` are the `fleet.campaign` specifications registered in §11. This file is a substrate: a format, a merge law and an invariant list. A system is not a skill, declares no signature over catalogue keys, and is not registered in §10. A skill may use a system; a system never discharges a skill's obligations, and neither widens `docs/follow-agent-contract.md` §0.
 
@@ -237,7 +226,6 @@ The fence `merge sketch` records that law. It is not the off-repo TLC model (§9
 
 ```tla { type: notebook.cell }
 ---- MODULE bench_sketch ----
-\* Definitive merge law. This cell is not the uncommitted 2026-10-29 TLC model.
 Merge(A, B) == A \union B
 ====
 ```
@@ -263,11 +251,12 @@ A run whose core changed is not a tainted run to be discarded by policy; it is a
 Per worker, local, derived, rebuildable, never shared: an inverted index over `key:value` terms, sorted arrays per numeric key, and the DAG adjacency. All three are **add-only**, which is the only reason concurrent search works — the node set only grows, so the index only gains postings, with no tombstones and no reader invalidation. Segments merge on a size ladder.
 
 ```text { type: notebook.cell }
-at <head>                                every query is evaluated at a head
-where tier=T and <key> <op> <value>      op ∈ { =, !=, <, <=, >, >=, ~ }
-ancestors(<id>) / descendants(<id>)
-near(pose, M(...), <radius>)             linear scan only, §8
-count | mean | sd | top-k  BY tier       aggregates are per tier, always
+at <head>
+where tier=<1|2|3> and <key> <op> <value>
+op := = | != | < | <= | > | >= | ~
+ancestors(<id>) | descendants(<id>)
+near(pose, M(<8-numbers>), <radius>)
+(count | mean | sd | top-k) BY tier
 ```
 
 No joins, no subqueries, no cross-tier aggregate, no "latest". Appending costs one posting insert per field, cheaper than hashing the node; segment merging is amortised `O(log n)`. **Freshness is not a safety property here; soundness is.** The index may lag the store, and the only guarantee is that it never returns a node the store does not hold. A worker needing a fresh view merges, then queries; that sequence is the only synchronisation BENCH has.
@@ -282,7 +271,6 @@ The same distance, in the equation fence:
 <summary>pose distance</summary>
 
 ```tex { type: notebook.cell }
-% Definitive distance declaration; not the uncommitted experiment program.
 \[ d(M,N)=\lVert\log(\tilde{M} N)\rVert \]
 ```
 </details>

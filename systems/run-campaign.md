@@ -2,7 +2,7 @@
 
 `type: agent.system` · `spec: fleet.campaign` · subordinate to `docs/follow-agent-contract.md`, which governs on any conflict.
 
-Specify one bounded design campaign from catalogue gate through positive-control calibration, epitope-conditioned generation, reporting, and trace verification. The caller supplies the scientific configuration; the organization template names worker identity and lifecycle only, with no hidden target, model, or request body.
+Specify one bounded design campaign from catalogue gate through positive-control calibration, epitope-conditioned generation, reporting, and trace verification. The caller supplies the scientific configuration; the folded templates name worker identity and lifecycle only, with no hidden target, model, or request body.
 
 ## Specification
 
@@ -26,7 +26,7 @@ Specify one bounded design campaign from catalogue gate through positive-control
 ## Composition
 
 ```toml { type: notebook.cell }
-authority = "this Markdown contract plus the organization template"
+authority = "this Markdown contract plus the folded templates"
 inputs = ["target", "model composition"]
 phases = ["preflight", "catalogue gate", "target preparation", "positive control", "design", "screen", "verify"]
 stores = [".bench", ".trace"]
@@ -122,24 +122,17 @@ Symbolic reasoning. `type: sandbox.playground`.
 
 ```tla
 ---- MODULE Campaign ----
-\* model agent. source of nature.
-\* A Lisp variation is a proposal only when this module grounds it.
-\* Novel launch requires a passed control and a manifest target.
 CONSTANTS control_pass, manifest_target
 Launch == control_pass /\ manifest_target
 ====
 ```
 
 ```lisp
-;; write agent. executable image. grounded in the tla module only.
 (defun launchp (control-pass manifest-target)
   (and control-pass manifest-target))
 ```
 
 ```lean
--- model agent. forward pass. discharge and refinement check.
--- autoproof: tla source -> lisp image -> Ti -> bend breakpoint -> tla
--- E7 does not compile this fence.
 def lispLaunch (control manifest : Bool) : Bool :=
   control && manifest
 
@@ -152,10 +145,6 @@ theorem Ti :
 ```
 
 ```bend
-# proof agent. backward pass. search under Ti.
-# ti_holds is a number. 0 takes the refuse branch.
-# breakpoint: launch only after the binding control and a manifest target
-# This value is not a .trace file. E7 does not run this fence.
 object Trace { name, holds }
 
 def backward(ti_holds):
@@ -167,7 +156,7 @@ def backward(ti_holds):
 
 #### Structure image
 
-The phase diagram above is control flow. The cell below is the symbolic membership DAG of one `fleet.campaign`; it is downstream of the typed organization, not executable deployment syntax. `core` is the root, `halt` ends the run, `worker` is the member role, and `bench` and `trace` are stores. The bench Merkle DAG stays inside `bench`; the trace Merkle tree ramifies this DAG under [`record-traces.md`](record-traces.md). E7 checks this projection. The test-time manifest, written from the organization template, schedules the concrete agent containers.
+The phase diagram above is control flow. The cell below is the symbolic membership DAG of one `fleet.campaign`; it is downstream of the typed organization, not executable deployment syntax. `core` is the root, `halt` ends the run, `worker` is the member role, and `bench` and `trace` are stores. The bench Merkle DAG stays inside `bench`; the trace Merkle tree ramifies this DAG under [`record-traces.md`](record-traces.md). E7 checks this projection. The test-time manifest, written from the folded templates, schedules the concrete agent containers.
 
 ```prolog { type: notebook.cell }
 image(agent_fleet).
@@ -186,7 +175,7 @@ edge(worker, trace).
 
 #### 0. The manifest supplies the target and the composition
 
-The caller supplies a run manifest; the executing agent reads this file at a pinned commit and follows it. The repository-local crate defines identity, topology, and action transport only: it contains no default target, model composition, length range, vendor request body, or provider credential. A runtime may use any current client or tool that satisfies the semantics below and may not fill a scientific blank from infrastructure defaults.
+The caller supplies a run manifest; the executing agent reads this file at a pinned commit and follows it. The test-time organization defines identity, topology, and action transport only: it contains no default target, model composition, length range, vendor request body, or provider credential. A runtime may use any current client or tool that satisfies the semantics below and may not fill a scientific blank from infrastructure defaults.
 
 The manifest fixes before any paid call:
 
@@ -262,16 +251,15 @@ Every sequence that leaves the run carries the line of `DISCLAIMER` in its own b
 
 #### 5. Materialize and verify
 
-Write `core.bench`, `core.trace`, `merkle.trace`, and one worker head per participating component outside the repository under `systems/use-bench.md` and `systems/record-traces.md`. A failed control records a `refuse` act with gate `positive-control`, then one `halt`; an unavailable provider records `unavailable` at `generator`. The runtime falsifier written from [`docs/falsify.md`](../docs/falsify.md) decides every completed trace. The guide below is the surface. It is not a path in this repository.
+Write `core.bench`, `core.trace`, `merkle.trace`, and one worker head per participating component outside the repository under `systems/use-bench.md` and `systems/record-traces.md`. A failed control records a `refuse` act with gate `positive-control`, then one `halt`; an unavailable provider records `unavailable` at `generator`. The runtime falsifier written from [`docs/falsify.md`](../docs/falsify.md) decides every completed trace. The invocation below is a test-time guide and not a path in this repository.
 
-```text { type: notebook.cell }
-apply the organization template outside this repository
-one role per agent id
-tracer reads logs for catalog.agent/component=agent
-append jsonl and idempotent sql beside the run
+```bash { type: notebook.cell }
+falsify --trace "$RUN/core.trace" "$RUN"/*.trace
+kubectl logs -n catalog-agents -l catalog.agent/component=agent |
+  catalog-tracer --jsonl "$RUN/actions.jsonl" --sql "$RUN/actions.sql" stdin
 ```
 
-A test-time program checks the organization template, action shape, and archive columns. It is not a semantic catalogue checker and does not mock provider execution. Scientific execution remains evidenced by materialized requests, responses, the control result, and the campaign trace.
+A test-time program checks the folded templates, action shape, and archive columns. It is not a semantic catalogue checker and does not mock provider execution. Scientific execution remains evidenced by materialized requests, responses, the control result, and the campaign trace.
 
 ## Citations
 

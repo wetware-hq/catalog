@@ -109,10 +109,6 @@ Symbolic reasoning. `type: sandbox.playground`.
 
 ```tla
 ---- MODULE Traces ----
-\* model agent. source of nature.
-\* A Lisp variation is a proposal only when this module grounds it.
-\* The oracle string stays not-discharged. A tree has one more vertex than it has edges.
-\* 7 and 23 are the ramified cardinalities in section 7.
 EXTENDS Integers
 CONSTANTS oracle, v, e
 Safe == oracle = "not-discharged" /\ e + 1 = v
@@ -120,15 +116,11 @@ Safe == oracle = "not-discharged" /\ e + 1 = v
 ```
 
 ```lisp
-;; write agent. executable image. grounded in the tla module only.
 (defun safe (oracle v e)
   (and (string= oracle "not-discharged") (= (+ e 1) v)))
 ```
 
 ```lean
--- model agent. forward pass. discharge and refinement check.
--- autoproof: tla source -> lisp image -> Ti -> bend breakpoint -> tla
--- E7 does not compile this fence.
 def lispSafe (oracle : String) (v e : Nat) : Bool :=
   decide (oracle = "not-discharged") && decide (e + 1 = v)
 
@@ -141,10 +133,6 @@ theorem Ti :
 ```
 
 ```bend
-# proof agent. backward pass. search under Ti.
-# ti_holds is a number. 0 takes the refuse branch.
-# breakpoint: oracle not-discharged, with ramified cardinalities 7 and 23
-# This value is not a .trace file. E7 does not run this fence.
 object Trace { name, holds }
 
 def backward(ti_holds):
@@ -577,9 +565,9 @@ halt 9d2001abc00391ea2c66714740c2ba9ec5c279405495498f51a72db31be4d6a3 ^2f3f73356
 
 The notice is `DISCLAIMER`. No licensed oversight has been performed.
 
-The semantic falsifier decides `.trace` from this file and loads the carrier block in §1; it does not keep a second list. A test-time tracer, written from the organization template, validates each `catalog.agent.action/v1` object before appending canonical `.jsonl` and an idempotent SQL insert. Both sinks preserve `trace_id`, `sequence`, parent, agent, kind, timestamp, and JSON payload. This archive does not decide R1–R10 or §8.16.
+The semantic falsifier decides `.trace` from this file and loads the carrier block in §1; it does not keep a second list. A test-time tracer, written from the folded templates, validates each `catalog.agent.action/v1` object before appending canonical `.jsonl` and an idempotent SQL insert. Both sinks preserve `trace_id`, `sequence`, parent, agent, kind, timestamp, and JSON payload. This archive does not decide R1–R10 or §8.16.
 
-A campaign executor still writes act lines from this Markdown grammar and `merkle.trace` from §7. Extension predicate E4 decides the bijection between `docs/follow-agent-contract.md` §11 and `systems/*.md`; E5 checks the identity line. The organization crate supplies the typed transport and no scientific claim.
+A campaign executor still writes act lines from this Markdown grammar and `merkle.trace` from §7. Extension predicate E4 decides the bijection between `docs/follow-agent-contract.md` §11 and `systems/*.md`; E5 checks the identity line. The test-time organization supplies the typed transport and no scientific claim.
 
 ### 7. Ramify
 
@@ -657,7 +645,7 @@ Retrieved 1 Nov 2026 (Australia/Sydney). These sources explain adjacent intercha
 | hash one fleet preimage with its newline kept | the id differs from the pin |
 | treat the bench Merkle DAG as this tree | no predicate equates the two |
 | archive a scalar payload or unknown agent | the test-time tracer refuses the line before either sink |
-| change the archive agent list without changing the organization template | E7 executable consistency fails |
+| change the archive agent list without changing the folded templates | E7 executable consistency fails |
 | delete the Traces playground or move Ti off the ramified cardinalities | E7, and section 7 still has 7 and 23 vertices |
 
 The witness above is a `result`. Every mutation in the table fails for its named reason.

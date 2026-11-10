@@ -103,24 +103,17 @@ Symbolic reasoning. `type: sandbox.playground`.
 
 ```tla
 ---- MODULE Pins ----
-\* model agent. source of nature.
-\* A Lisp variation is a proposal only when this module grounds it.
-\* A pin has a version, a retrieval, and a recorded digest scope. Resolution is not a read.
 CONSTANTS versioned, retrieved, digest_recorded
 Pinned == versioned /\ retrieved /\ digest_recorded
 ====
 ```
 
 ```lisp
-;; write agent. executable image. grounded in the tla module only.
 (defun pinned (versioned retrieved digest-recorded)
   (and versioned retrieved digest-recorded))
 ```
 
 ```lean
--- model agent. forward pass. discharge and refinement check.
--- autoproof: tla source -> lisp image -> Ti -> bend breakpoint -> tla
--- E7 does not compile this fence.
 def lispPinned (versioned retrieved digest : Bool) : Bool :=
   versioned && retrieved && digest
 
@@ -137,10 +130,6 @@ theorem Ti :
 ```
 
 ```bend
-# proof agent. backward pass. search under Ti.
-# ti_holds is a number. 0 takes the refuse branch.
-# breakpoint: a versioned retrieval with its digest scope recorded
-# This value is not a .trace file. E7 does not run this fence.
 object Trace { name, holds }
 
 def backward(ti_holds):
